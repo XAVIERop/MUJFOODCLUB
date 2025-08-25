@@ -2,11 +2,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { QrCode, Smartphone, Gift, Zap, Shield, Crown } from "lucide-react";
+import { useAuth } from '@/hooks/useAuth';
 import qrFeature from "@/assets/qr-feature.jpg";
+import QRCodeDisplay from "./QRCodeDisplay";
 
 const QRCodeSection = () => {
+  const { user, profile } = useAuth();
+
   return (
-    <section className="py-16 bg-background">
+    <section id="qr-code" className="py-16 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
@@ -67,37 +71,51 @@ const QRCodeSection = () => {
               </div>
             </div>
 
-            <Button variant="hero" size="lg" className="animate-pulse-glow">
-              <QrCode className="w-5 h-5 mr-2" />
-              Generate My QR Code
-            </Button>
+            {!user ? (
+              <Button variant="hero" size="lg" className="animate-pulse-glow">
+                <QrCode className="w-5 h-5 mr-2" />
+                Generate My QR Code
+              </Button>
+            ) : (
+              <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-4 border border-primary/20">
+                <p className="text-sm text-primary font-medium">
+                  ✅ You're logged in! Your QR code is ready below.
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* Right Image/Visual */}
+          {/* Right Content - Show QR Code if logged in, otherwise show image */}
           <div className="relative">
-            <div className="relative rounded-2xl overflow-hidden shadow-card animate-float">
-              <img 
-                src={qrFeature} 
-                alt="QR Code Feature" 
-                className="w-full h-auto"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-            </div>
+            {user && profile ? (
+              <QRCodeDisplay />
+            ) : (
+              <>
+                <div className="relative rounded-2xl overflow-hidden shadow-card animate-float">
+                  <img 
+                    src={qrFeature} 
+                    alt="QR Code Feature" 
+                    className="w-full h-auto"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                </div>
 
-            {/* Floating Cards */}
-            <Card className="absolute -top-4 -left-4 w-32 animate-bounce-soft shadow-glow border-0">
-              <CardContent className="p-4 text-center">
-                <Gift className="w-6 h-6 text-primary mx-auto mb-2" />
-                <p className="text-xs font-semibold">Instant Rewards</p>
-              </CardContent>
-            </Card>
+                {/* Floating Cards */}
+                <Card className="absolute -top-4 -left-4 w-32 animate-bounce-soft shadow-glow border-0">
+                  <CardContent className="p-4 text-center">
+                    <Gift className="w-6 h-6 text-primary mx-auto mb-2" />
+                    <p className="text-xs font-semibold">Instant Rewards</p>
+                  </CardContent>
+                </Card>
 
-            <Card className="absolute -bottom-4 -right-4 w-32 animate-float shadow-glow border-0">
-              <CardContent className="p-4 text-center">
-                <Crown className="w-6 h-6 text-yellow-500 mx-auto mb-2" />
-                <p className="text-xs font-semibold">VIP Status</p>
-              </CardContent>
-            </Card>
+                <Card className="absolute -bottom-4 -right-4 w-32 animate-float shadow-glow border-0">
+                  <CardContent className="p-4 text-center">
+                    <Crown className="w-6 h-6 text-yellow-500 mx-auto mb-2" />
+                    <p className="text-xs font-semibold">VIP Status</p>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
         </div>
       </div>

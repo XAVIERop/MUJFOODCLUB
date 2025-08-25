@@ -101,6 +101,16 @@ const Header = () => {
                       </div>
                     </div>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => {
+                      // Scroll to QR code section
+                      const qrSection = document.querySelector('#qr-code');
+                      if (qrSection) {
+                        qrSection.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}>
+                      <QrCode className="mr-2 h-4 w-4" />
+                      <span>My QR Code</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={signOut}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
