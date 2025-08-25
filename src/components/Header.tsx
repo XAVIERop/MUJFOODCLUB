@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { QrCode, User, LogOut, Trophy, Settings, Menu, Home, Coffee, Gift, Utensils } from 'lucide-react';
+import { QrCode, User, LogOut, Trophy, Settings, Menu, Home, Coffee, Gift, Utensils, Bell } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import NotificationCenter from './NotificationCenter';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -25,6 +29,62 @@ const Header = () => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
+
+  // Fetch unread notifications count
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('order_notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false);
+
+        if (!error && count !== null) {
+          setUnreadNotifications(count);
+        }
+      } catch (error) {
+        console.error('Error fetching unread notifications:', error);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Set up real-time subscription for notifications
+    const channel = supabase
+      .channel(`header-notifications-${user.id}`)
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'order_notifications',
+          filter: `user_id=eq.${user.id}`
+        }, 
+        (payload) => {
+          setUnreadNotifications(prev => prev + 1);
+        }
+      )
+      .on('postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'order_notifications',
+          filter: `user_id=eq.${user.id}`
+        }, 
+        (payload) => {
+          if (payload.new.is_read) {
+            setUnreadNotifications(prev => Math.max(0, prev - 1));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const navItems = [
     { href: "/#home", label: "Home", icon: Home },
@@ -75,6 +135,21 @@ const Header = () => {
                   <Trophy className="w-3 h-3 mr-1" />
                   {profile.loyalty_points} pts
                 </Badge>
+
+                {/* Notifications */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="relative"
+                  onClick={() => setIsNotificationOpen(true)}
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadNotifications > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-500">
+                      {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                    </Badge>
+                  )}
+                </Button>
 
                 {/* User Menu */}
                 <DropdownMenu>
@@ -186,6 +261,13 @@ const Header = () => {
           </div>
         </div>
       </div>
+
+      {/* Notification Center */}
+      <NotificationCenter
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+        userType="user"
+      />
     </header>
   );
 };

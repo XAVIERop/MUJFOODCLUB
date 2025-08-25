@@ -7,6 +7,7 @@ import { Clock, CheckCircle, AlertCircle, Truck, ChefHat, Receipt, Bell } from "
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import NotificationCenter from './NotificationCenter';
 
 interface Order {
   id: string;
@@ -49,6 +50,8 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
   const [orderItems, setOrderItems] = useState<{[key: string]: OrderItem[]}>({});
   const [loading, setLoading] = useState(true);
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const fetchOrders = async () => {
     try {
@@ -138,6 +141,7 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
             description: `Order #${payload.new.order_number} received`,
           });
           fetchOrders();
+          setUnreadNotifications(prev => prev + 1);
         }
       )
       .on('postgres_changes', 
@@ -158,6 +162,27 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
       supabase.removeChannel(channel);
     };
   }, [cafeId, toast]);
+
+  // Fetch unread notifications count for cafe
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('order_notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('cafe_id', cafeId)
+          .eq('is_read', false);
+
+        if (!error && count !== null) {
+          setUnreadNotifications(count);
+        }
+      } catch (error) {
+        console.error('Error fetching unread notifications:', error);
+      }
+    };
+
+    fetchUnreadCount();
+  }, [cafeId]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -220,10 +245,25 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Cafe Dashboard</h2>
-        <Button onClick={fetchOrders} variant="outline">
-          <Clock className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            onClick={() => setIsNotificationOpen(true)}
+            className="relative"
+          >
+            <Bell className="w-4 h-4 mr-2" />
+            Notifications
+            {unreadNotifications > 0 && (
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-500">
+                {unreadNotifications > 9 ? '9+' : unreadNotifications}
+              </Badge>
+            )}
+          </Button>
+          <Button onClick={fetchOrders} variant="outline">
+            <Clock className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="received" className="w-full">
@@ -365,6 +405,14 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
           </TabsContent>
         ))}
       </Tabs>
+
+      {/* Notification Center */}
+      <NotificationCenter
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+        userType="cafe_staff"
+        cafeId={cafeId}
+      />
     </div>
   );
 };
