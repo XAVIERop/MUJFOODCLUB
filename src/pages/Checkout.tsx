@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, MapPin, Clock, CreditCard, Banknote, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, CreditCard, Banknote, AlertCircle, CheckCircle, Trophy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -63,6 +63,11 @@ const Checkout = () => {
     paymentMethod: 'cod'
   });
 
+  // Points redemption state
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [pointsDiscount, setPointsDiscount] = useState(0);
+  const [finalAmount, setFinalAmount] = useState(totalAmount);
+
   // Redirect if no cart data
   useEffect(() => {
     if (!cart || Object.keys(cart).length === 0) {
@@ -106,6 +111,23 @@ const Checkout = () => {
     return Math.floor(amount / 10);
   };
 
+  const calculatePointsDiscount = (points: number) => {
+    // 1 point = ₹1 discount (1:1 ratio)
+    return Math.min(points, Math.floor(totalAmount * 0.5)); // Max 50% discount
+  };
+
+  const handlePointsRedeem = (points: number) => {
+    const discount = calculatePointsDiscount(points);
+    setPointsToRedeem(points);
+    setPointsDiscount(discount);
+    setFinalAmount(Math.max(0, totalAmount - discount));
+  };
+
+  // Update final amount when total amount changes
+  useEffect(() => {
+    setFinalAmount(Math.max(0, totalAmount - pointsDiscount));
+  }, [totalAmount, pointsDiscount]);
+
   const handlePlaceOrder = async () => {
     if (!user || !profile) {
       toast({
@@ -125,8 +147,8 @@ const Checkout = () => {
       // Generate order number
       const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       
-      // Calculate points to earn
-      const pointsToEarn = calculatePoints(totalAmount);
+      // Calculate points to earn (based on final amount after discount)
+      const pointsToEarn = calculatePoints(finalAmount);
 
       console.log('Creating order with data:', {
         user_id: user.id,
@@ -146,7 +168,7 @@ const Checkout = () => {
           user_id: user.id,
           cafe_id: cafe.id,
           order_number: orderNumber,
-          total_amount: totalAmount,
+          total_amount: finalAmount,
           delivery_block: deliveryDetails.block,
           delivery_notes: deliveryDetails.deliveryNotes,
           payment_method: deliveryDetails.paymentMethod,
@@ -205,14 +227,34 @@ const Checkout = () => {
           throw pointsError;
         }
 
-        // Update user profile with new points
-        const newTotalPoints = (profile.loyalty_points || 0) + pointsToEarn;
+        // Add points redemption transaction if points were redeemed
+        if (pointsToRedeem > 0) {
+          console.log('Adding points redemption transaction:', pointsToRedeem);
+          
+          const { error: redemptionError } = await supabase
+            .from('loyalty_transactions')
+            .insert({
+              user_id: user.id,
+              order_id: order.id,
+              points_change: -pointsToRedeem,
+              transaction_type: 'redeemed',
+              description: `Redeemed ${pointsToRedeem} points for order ${orderNumber}`
+            });
+
+          if (redemptionError) {
+            console.error('Points redemption error:', redemptionError);
+            throw redemptionError;
+          }
+        }
+
+        // Update user profile with new points and deduct redeemed points
+        const newTotalPoints = (profile.loyalty_points || 0) + pointsToEarn - pointsToRedeem;
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
             loyalty_points: newTotalPoints,
             total_orders: (profile.total_orders || 0) + 1,
-            total_spent: (profile.total_spent || 0) + totalAmount
+            total_spent: (profile.total_spent || 0) + finalAmount
           })
           .eq('id', user.id);
 
@@ -320,11 +362,98 @@ const Checkout = () => {
                     ))}
                   </div>
 
+                  {/* Points Redemption */}
+                  {profile && profile.loyalty_points > 0 && (
+                    <div className="border-t border-border pt-4 mt-4">
+                      <div className="mb-4">
+                        <h4 className="font-semibold mb-2 flex items-center">
+                          <Trophy className="w-4 h-4 mr-2 text-yellow-500" />
+                          Redeem Loyalty Points
+                        </h4>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          You have {profile.loyalty_points} points available
+                        </p>
+                        
+                        <div className="space-y-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePointsRedeem(10)}
+                            disabled={profile.loyalty_points < 10 || pointsToRedeem === 10}
+                            className="w-full justify-between"
+                          >
+                            <span>Redeem 10 points</span>
+                            <span className="text-green-600">-₹10</span>
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePointsRedeem(25)}
+                            disabled={profile.loyalty_points < 25 || pointsToRedeem === 25}
+                            className="w-full justify-between"
+                          >
+                            <span>Redeem 25 points</span>
+                            <span className="text-green-600">-₹25</span>
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePointsRedeem(50)}
+                            disabled={profile.loyalty_points < 50 || pointsToRedeem === 50}
+                            className="w-full justify-between"
+                          >
+                            <span>Redeem 50 points</span>
+                            <span className="text-green-600">-₹50</span>
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePointsRedeem(profile.loyalty_points)}
+                            disabled={pointsToRedeem === profile.loyalty_points}
+                            className="w-full justify-between"
+                          >
+                            <span>Redeem all points</span>
+                            <span className="text-green-600">-₹{Math.min(profile.loyalty_points, Math.floor(totalAmount * 0.5))}</span>
+                          </Button>
+                        </div>
+                        
+                        {pointsToRedeem > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setPointsToRedeem(0);
+                              setPointsDiscount(0);
+                            }}
+                            className="w-full mt-2 text-red-600 hover:text-red-700"
+                          >
+                            Remove points redemption
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Total */}
                   <div className="border-t border-border pt-4 mt-4">
-                    <div className="flex justify-between items-center text-lg font-bold">
-                      <span>Total Amount</span>
-                      <span className="text-primary">₹{totalAmount}</span>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span>Subtotal</span>
+                        <span>₹{totalAmount}</span>
+                      </div>
+                      {pointsDiscount > 0 && (
+                        <div className="flex justify-between items-center text-green-600">
+                          <span>Points Discount</span>
+                          <span>-₹{pointsDiscount}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center text-lg font-bold border-t border-border pt-2">
+                        <span>Final Amount</span>
+                        <span className="text-primary">₹{finalAmount}</span>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center text-sm text-muted-foreground mt-2">
                       <span>Points to Earn</span>
