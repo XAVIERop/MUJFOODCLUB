@@ -186,6 +186,10 @@ const Header = () => {
                       <QrCode className="mr-2 h-4 w-4" />
                       <span>My QR Code</span>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/orders')}>
+                      <Receipt className="mr-2 h-4 w-4" />
+                      <span>My Orders</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={signOut}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>

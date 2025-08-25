@@ -144,8 +144,11 @@ const Checkout = () => {
     try {
       console.log('Starting order placement...', { user: user.id, profile, cafe, totalAmount });
       
-      // Generate order number
-      const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      // Generate unique order number with better uniqueness
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substr(2, 8).toUpperCase();
+      const userSuffix = user.id.substr(-4).toUpperCase();
+      const orderNumber = `ORD-${timestamp}-${random}-${userSuffix}`;
       
       // Calculate points to earn (based on final amount after discount)
       const pointsToEarn = calculatePoints(finalAmount);

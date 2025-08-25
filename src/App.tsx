@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Menu from "./pages/Menu";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import OrderTracking from "./pages/OrderTracking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,8 +26,9 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/menu/:cafeId" element={<Menu />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/order-confirmation" element={<OrderConfirmation />} />
+                  <Route path="/checkout" element={<Checkout />} />
+      <Route path="/order-confirmation" element={<OrderConfirmation />} />
+      <Route path="/orders" element={<OrderTracking />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
