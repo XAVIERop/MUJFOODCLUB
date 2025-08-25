@@ -208,47 +208,27 @@ const Checkout = () => {
 
       console.log('Order items created successfully');
 
-      // Add loyalty points
-      if (pointsToEarn > 0) {
-        console.log('Adding loyalty points:', pointsToEarn);
+      // Handle points redemption transaction if points were redeemed
+      if (pointsToRedeem > 0) {
+        console.log('Adding points redemption transaction:', pointsToRedeem);
         
-        const { error: pointsError } = await supabase
+        const { error: redemptionError } = await supabase
           .from('loyalty_transactions')
           .insert({
             user_id: user.id,
             order_id: order.id,
-            points_change: pointsToEarn,
-            transaction_type: 'earned',
-            description: `Earned ${pointsToEarn} points for order ${orderNumber}`
+            points_change: -pointsToRedeem,
+            transaction_type: 'redeemed',
+            description: `Redeemed ${pointsToRedeem} points for order ${orderNumber}`
           });
 
-        if (pointsError) {
-          console.error('Loyalty points error:', pointsError);
-          throw pointsError;
+        if (redemptionError) {
+          console.error('Points redemption error:', redemptionError);
+          throw redemptionError;
         }
 
-        // Add points redemption transaction if points were redeemed
-        if (pointsToRedeem > 0) {
-          console.log('Adding points redemption transaction:', pointsToRedeem);
-          
-          const { error: redemptionError } = await supabase
-            .from('loyalty_transactions')
-            .insert({
-              user_id: user.id,
-              order_id: order.id,
-              points_change: -pointsToRedeem,
-              transaction_type: 'redeemed',
-              description: `Redeemed ${pointsToRedeem} points for order ${orderNumber}`
-            });
-
-          if (redemptionError) {
-            console.error('Points redemption error:', redemptionError);
-            throw redemptionError;
-          }
-        }
-
-        // Update user profile with new points and deduct redeemed points
-        const newTotalPoints = (profile.loyalty_points || 0) + pointsToEarn - pointsToRedeem;
+        // Update user profile to deduct redeemed points immediately
+        const newTotalPoints = (profile.loyalty_points || 0) - pointsToRedeem;
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
@@ -262,9 +242,29 @@ const Checkout = () => {
           console.error('Profile update error:', profileError);
           throw profileError;
         }
+      } else {
+        // Update user profile without points (points will be credited on completion)
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ 
+            total_orders: (profile.total_orders || 0) + 1,
+            total_spent: (profile.total_spent || 0) + finalAmount
+          })
+          .eq('id', user.id);
 
-        console.log('Profile updated successfully');
+        if (profileError) {
+          console.error('Profile update error:', profileError);
+          throw profileError;
+        }
       }
+
+        if (profileError) {
+          console.error('Profile update error:', profileError);
+          throw profileError;
+        }
+      }
+
+      console.log('Profile updated successfully');
 
       toast({
         title: "Order Placed Successfully!",
