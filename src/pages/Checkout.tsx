@@ -261,12 +261,6 @@ const Checkout = () => {
         }
       }
 
-        if (profileError) {
-          console.error('Profile update error:', profileError);
-          throw profileError;
-        }
-      }
-
       console.log('Profile updated successfully');
 
       toast({
