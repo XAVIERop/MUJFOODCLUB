@@ -166,6 +166,7 @@ export type Database = {
           special_instructions: string | null
           total_price: number
           unit_price: number
+          notes: string | null
         }
         Insert: {
           id?: string
@@ -175,6 +176,7 @@ export type Database = {
           special_instructions?: string | null
           total_price: number
           unit_price: number
+          notes?: string | null
         }
         Update: {
           id?: string
@@ -184,6 +186,7 @@ export type Database = {
           special_instructions?: string | null
           total_price?: number
           unit_price?: number
+          notes?: string | null
         }
         Relationships: [
           {
@@ -217,6 +220,12 @@ export type Database = {
           total_amount: number
           updated_at: string
           user_id: string
+          status_updated_at: string
+          points_credited: boolean
+          accepted_at: string | null
+          preparing_at: string | null
+          out_for_delivery_at: string | null
+          completed_at: string | null
         }
         Insert: {
           cafe_id: string
@@ -232,6 +241,12 @@ export type Database = {
           total_amount: number
           updated_at?: string
           user_id: string
+          status_updated_at?: string
+          points_credited?: boolean
+          accepted_at?: string | null
+          preparing_at?: string | null
+          out_for_delivery_at?: string | null
+          completed_at?: string | null
         }
         Update: {
           cafe_id?: string
@@ -247,6 +262,12 @@ export type Database = {
           total_amount?: number
           updated_at?: string
           user_id?: string
+          status_updated_at?: string
+          points_credited?: boolean
+          accepted_at?: string | null
+          preparing_at?: string | null
+          out_for_delivery_at?: string | null
+          completed_at?: string | null
         }
         Relationships: [
           {
@@ -312,6 +333,96 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      cafe_staff: {
+        Row: {
+          id: string
+          cafe_id: string
+          user_id: string
+          role: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          cafe_id: string
+          user_id: string
+          role: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          cafe_id?: string
+          user_id?: string
+          role?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cafe_staff_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cafe_staff_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      order_notifications: {
+        Row: {
+          id: string
+          order_id: string
+          cafe_id: string
+          notification_type: string
+          message: string
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          cafe_id: string
+          notification_type: string
+          message: string
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          cafe_id?: string
+          notification_type?: string
+          message?: string
+          is_read?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_notifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_notifications_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {

@@ -144,7 +144,12 @@ const CafeDashboard = () => {
   }, [user]);
 
   const fetchOrders = async () => {
-    if (!cafeId) return;
+    if (!cafeId) {
+      console.log('❌ No cafeId available for fetchOrders');
+      return;
+    }
+
+    console.log('🔍 Fetching orders for cafeId:', cafeId);
 
     try {
       const { data, error } = await supabase
@@ -163,7 +168,14 @@ const CafeDashboard = () => {
         .eq('cafe_id', cafeId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      console.log('📊 Orders query result:', { data, error });
+
+      if (error) {
+        console.error('❌ Error fetching orders:', error);
+        throw error;
+      }
+
+      console.log('✅ Orders fetched successfully:', data?.length || 0, 'orders');
       setOrders(data || []);
       setFilteredOrders(data || []);
     } catch (error) {
