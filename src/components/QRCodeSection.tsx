@@ -3,11 +3,17 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { QrCode, Smartphone, Gift, Zap, Shield, Crown } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import qrFeature from "@/assets/qr-feature.jpg";
 import QRCodeDisplay from "./QRCodeDisplay";
 
 const QRCodeSection = () => {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
+
+  const handleGenerateQRCode = () => {
+    navigate('/auth');
+  };
 
   return (
     <section id="qr-code" className="py-16 bg-background">
@@ -72,7 +78,12 @@ const QRCodeSection = () => {
             </div>
 
             {!user ? (
-              <Button variant="hero" size="lg" className="animate-pulse-glow">
+              <Button 
+                variant="hero" 
+                size="lg" 
+                className="animate-pulse-glow"
+                onClick={handleGenerateQRCode}
+              >
                 <QrCode className="w-5 h-5 mr-2" />
                 Generate My QR Code
               </Button>
