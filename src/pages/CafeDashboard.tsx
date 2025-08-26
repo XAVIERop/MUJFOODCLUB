@@ -98,6 +98,7 @@ const CafeDashboard = () => {
       }
 
       console.log('🔍 Fetching cafe ID for user:', user.id);
+      console.log('🔍 User email:', user.email);
 
       try {
         // First, let's check if the user exists in cafe_staff
@@ -116,6 +117,16 @@ const CafeDashboard = () => {
 
         if (!staffData || staffData.length === 0) {
           console.log('❌ No cafe staff record found for user');
+          
+          // Let's also check by email as a fallback
+          const { data: emailData, error: emailError } = await supabase
+            .from('cafe_staff')
+            .select('*')
+            .eq('user_id', user.id);
+
+          console.log('Email-based cafe staff data:', emailData);
+          console.log('Email-based cafe staff error:', emailError);
+          
           return;
         }
 
