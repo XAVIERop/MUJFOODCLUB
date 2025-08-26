@@ -41,7 +41,7 @@ const CafeScanner = ({ cafeId }: { cafeId: string }) => {
   const [qrInput, setQrInput] = useState('');
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [selectedItems, setSelectedItems] = useState<{[key: string]: {item: MenuItem, quantity: number, notes: string}}>({});
+  const [selectedItems, setSelectedItems] = useState<{[key: string]: {item: MenuItem, quantity: number, special_instructions: string}}>({});
   const [loading, setLoading] = useState(false);
   const [menuLoading, setMenuLoading] = useState(true);
   const [showScanner, setShowScanner] = useState(false);
@@ -173,7 +173,7 @@ const CafeScanner = ({ cafeId }: { cafeId: string }) => {
       [item.id]: {
         item,
         quantity: (prev[item.id]?.quantity || 0) + 1,
-        notes: prev[item.id]?.notes || ''
+        special_instructions: prev[item.id]?.special_instructions || ''
       }
     }));
   };
@@ -190,10 +190,10 @@ const CafeScanner = ({ cafeId }: { cafeId: string }) => {
     });
   };
 
-  const updateNotes = (itemId: string, notes: string) => {
+  const updateNotes = (itemId: string, special_instructions: string) => {
     setSelectedItems(prev => ({
       ...prev,
-      [itemId]: { ...prev[itemId], notes }
+      [itemId]: { ...prev[itemId], special_instructions }
     }));
   };
 
@@ -253,13 +253,13 @@ const CafeScanner = ({ cafeId }: { cafeId: string }) => {
       if (orderError) throw orderError;
 
       // Create order items
-      const orderItems = Object.values(selectedItems).map(({ item, quantity, notes }) => ({
+      const orderItems = Object.values(selectedItems).map(({ item, quantity, special_instructions }) => ({
         order_id: order.id,
         menu_item_id: item.id,
         quantity,
         unit_price: item.price,
         total_price: item.price * quantity,
-        special_instructions: notes
+        special_instructions: special_instructions
       }));
 
       const { error: itemsError } = await supabase
@@ -445,7 +445,7 @@ const CafeScanner = ({ cafeId }: { cafeId: string }) => {
                               <p className="text-white/70 text-sm mt-1">{item.description}</p>
                             )}
                             <p className="text-white font-bold text-lg mt-2">₹{item.price}</p>
-                            <Badge variant="secondary" className="mt-1 text-xs">
+                            <Badge variant="secondary" className="mt-1 text-xs bg-white/20 text-white border-white/30">
                               {item.category}
                             </Badge>
                           </div>
@@ -476,7 +476,7 @@ const CafeScanner = ({ cafeId }: { cafeId: string }) => {
                             </div>
                             <Input
                               placeholder="Special instructions (optional)..."
-                              value={selectedItems[item.id].notes}
+                              value={selectedItems[item.id].special_instructions}
                               onChange={(e) => updateNotes(item.id, e.target.value)}
                               className="text-sm bg-white/10 border-white/30 text-white placeholder:text-white/50"
                             />
@@ -497,12 +497,12 @@ const CafeScanner = ({ cafeId }: { cafeId: string }) => {
                 <CardTitle className="text-white">Order Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {Object.values(selectedItems).map(({ item, quantity, notes }) => (
+                {Object.values(selectedItems).map(({ item, quantity, special_instructions }) => (
                   <div key={item.id} className="flex justify-between items-center">
                     <div>
                       <span className="text-white font-medium">{item.name}</span>
                       <span className="text-white/70 text-sm ml-2">x{quantity}</span>
-                      {notes && <p className="text-white/60 text-xs">{notes}</p>}
+                      {special_instructions && <p className="text-white/60 text-xs">{special_instructions}</p>}
                     </div>
                     <span className="text-white">₹{item.price * quantity}</span>
                   </div>

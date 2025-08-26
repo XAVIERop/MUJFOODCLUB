@@ -17,7 +17,7 @@ interface OrderItem {
   id: string;
   menu_item_id: string;
   quantity: number;
-  notes?: string;
+  special_instructions?: string;
   menu_item: {
     name: string;
     price: number;
@@ -143,7 +143,7 @@ const CafeDashboard = () => {
             id,
             menu_item_id,
             quantity,
-            notes,
+            special_instructions,
             menu_item:menu_items(name, price, category)
           )
         `)
@@ -921,9 +921,9 @@ const CafeDashboard = () => {
                                   <p className="text-sm text-muted-foreground">
                                     Qty: {item.quantity} × ₹{item.menu_item?.price || 0}
                                   </p>
-                                  {item.notes && (
+                                  {item.special_instructions && (
                                     <p className="text-sm text-blue-600 italic mt-1">
-                                      Note: {item.notes}
+                                      Note: {item.special_instructions}
                                     </p>
                                   )}
                                 </div>
