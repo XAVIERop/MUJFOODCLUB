@@ -73,6 +73,7 @@ const CafeDashboard = () => {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [cafeId, setCafeId] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -80,21 +81,49 @@ const CafeDashboard = () => {
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
+  // Debug logging
+  useEffect(() => {
+    console.log('🔧 CafeDashboard Debug Info:');
+    console.log('User:', user);
+    console.log('Profile:', profile);
+    console.log('CafeId:', cafeId);
+  }, [user, profile, cafeId]);
+
   // Get cafe ID for the current user
   useEffect(() => {
     const getCafeId = async () => {
-      if (!user) return;
+      if (!user) {
+        console.log('❌ No user found');
+        return;
+      }
+
+      console.log('🔍 Fetching cafe ID for user:', user.id);
 
       try {
-        const { data, error } = await supabase
+        // First, let's check if the user exists in cafe_staff
+        const { data: staffData, error: staffError } = await supabase
           .from('cafe_staff')
-          .select('cafe_id')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .single();
+          .select('*')
+          .eq('user_id', user.id);
 
-        if (error) throw error;
-        setCafeId(data?.cafe_id);
+        console.log('Cafe staff data:', staffData);
+        console.log('Cafe staff error:', staffError);
+
+        if (staffError) {
+          console.error('Error fetching cafe staff:', staffError);
+          return;
+        }
+
+        if (!staffData || staffData.length === 0) {
+          console.log('❌ No cafe staff record found for user');
+          return;
+        }
+
+        // Get the cafe_id from the first record
+        const cafeStaffRecord = staffData[0];
+        console.log('✅ Found cafe staff record:', cafeStaffRecord);
+        setCafeId(cafeStaffRecord.cafe_id);
+
       } catch (error) {
         console.error('Error fetching cafe ID:', error);
       }
@@ -536,6 +565,17 @@ const CafeDashboard = () => {
             <CardContent className="p-8 text-center">
               <h2 className="text-2xl font-bold mb-4">Not Authorized</h2>
               <p className="text-muted-foreground">You are not authorized to access any cafe dashboard.</p>
+              
+              {/* Debug Information */}
+              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-left">
+                <h4 className="font-medium text-yellow-900 mb-2">Debug Information:</h4>
+                <pre className="text-xs text-yellow-800 overflow-auto">
+                  {JSON.stringify(debugInfo, null, 2)}
+                </pre>
+                <p className="text-sm text-yellow-700 mt-2">
+                  Check browser console for more details.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
