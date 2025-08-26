@@ -11,6 +11,8 @@ import Menu from "./pages/Menu";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import OrderTracking from "./pages/OrderTracking";
+import Cafes from "./pages/Cafes";
+import Rewards from "./pages/Rewards";
 
 import CafeDashboard from "./pages/CafeDashboard";
 import NotFound from "./pages/NotFound";
@@ -28,9 +30,11 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/menu/:cafeId" element={<Menu />} />
-                  <Route path="/checkout" element={<Checkout />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/order-confirmation" element={<OrderConfirmation />} />
             <Route path="/orders" element={<OrderTracking />} />
+            <Route path="/cafes" element={<Cafes />} />
+            <Route path="/rewards" element={<Rewards />} />
 
             <Route path="/cafe-dashboard" element={<CafeDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

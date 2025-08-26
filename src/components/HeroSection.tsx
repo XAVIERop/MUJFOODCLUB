@@ -1,9 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Utensils, Star, Gift } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-food.jpg";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+
+  const handleExploreCafes = () => {
+    navigate('/cafes');
+  };
+
+  const handleViewRewards = () => {
+    navigate('/rewards');
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Background Image with Overlay */}
@@ -65,6 +76,7 @@ const HeroSection = () => {
               variant="hero" 
               size="lg" 
               className="text-lg px-8 py-4 h-auto hover:scale-105 transition-bounce"
+              onClick={handleExploreCafes}
             >
               <Utensils className="w-5 h-5 mr-2" />
               Explore Cafes
@@ -75,6 +87,7 @@ const HeroSection = () => {
               variant="outline" 
               size="lg"
               className="text-lg px-8 py-4 h-auto bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm"
+              onClick={handleViewRewards}
             >
               <Gift className="w-5 h-5 mr-2" />
               View Rewards

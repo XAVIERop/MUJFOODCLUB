@@ -87,9 +87,9 @@ const Header = () => {
   }, [user]);
 
   const navItems = [
-    { href: "/#home", label: "Home", icon: Home },
-    { href: "/#cafes", label: "Cafes", icon: Coffee },
-    { href: "/#rewards", label: "Rewards", icon: Gift },
+    { href: "/", label: "Home", icon: Home },
+    { href: "/cafes", label: "Cafes", icon: Coffee },
+    { href: "/rewards", label: "Rewards", icon: Gift },
   ];
 
   return (
