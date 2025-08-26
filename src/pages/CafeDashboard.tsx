@@ -7,8 +7,8 @@ import { Clock, CheckCircle, AlertCircle, Truck, ChefHat, Receipt, Bell, User, M
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import NotificationCenter from './NotificationCenter';
-import Header from './Header';
+import NotificationCenter from '../components/NotificationCenter';
+import Header from '../components/Header';
 
 interface OrderItem {
   id: string;
