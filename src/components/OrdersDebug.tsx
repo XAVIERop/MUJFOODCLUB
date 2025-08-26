@@ -8,6 +8,16 @@ const OrdersDebug = () => {
   const { user } = useAuth();
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Trigger dashboard refresh when button is clicked
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      // Dispatch a custom event to trigger dashboard refresh
+      window.dispatchEvent(new CustomEvent('refreshDashboard'));
+      console.log('🔄 Dashboard refresh triggered');
+    }
+  }, [refreshTrigger]);
 
   const runDebugTest = async () => {
     setLoading(true);
@@ -79,9 +89,17 @@ const OrdersDebug = () => {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           Orders Debug Panel
-          <Button onClick={runDebugTest} disabled={loading}>
-            {loading ? 'Testing...' : 'Run Debug Test'}
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={runDebugTest} disabled={loading}>
+              {loading ? 'Testing...' : 'Run Debug Test'}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setRefreshTrigger(prev => prev + 1)}
+            >
+              Refresh Dashboard
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>

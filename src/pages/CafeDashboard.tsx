@@ -558,9 +558,30 @@ const CafeDashboard = () => {
 
   useEffect(() => {
     if (cafeId) {
+      console.log('🔄 useEffect triggered - cafeId:', cafeId);
       fetchOrders();
       fetchAnalytics();
     }
+  }, [cafeId]);
+
+  // Add a manual refresh function
+  const refreshData = () => {
+    console.log('🔄 Manual refresh triggered');
+    if (cafeId) {
+      fetchOrders();
+      fetchAnalytics();
+    }
+  };
+
+  // Listen for refresh events from debug panel
+  useEffect(() => {
+    const handleRefresh = () => {
+      console.log('🔄 Refresh event received');
+      refreshData();
+    };
+
+    window.addEventListener('refreshDashboard', handleRefresh);
+    return () => window.removeEventListener('refreshDashboard', handleRefresh);
   }, [cafeId]);
 
   // Check if user is cafe staff
@@ -636,6 +657,23 @@ const CafeDashboard = () => {
 
         {/* Debug Panel */}
         <OrdersDebug />
+        
+        {/* Orders Status */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium">Orders Status</h3>
+                <p className="text-sm text-muted-foreground">
+                  {loading ? 'Loading orders...' : `Loaded ${orders.length} orders`}
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={refreshData}>
+                Refresh Orders
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Analytics Dashboard */}
         {analytics && (
