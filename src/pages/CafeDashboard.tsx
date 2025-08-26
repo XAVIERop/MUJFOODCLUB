@@ -95,6 +95,7 @@ const CafeDashboard = () => {
     const getCafeId = async () => {
       if (!user) {
         console.log('❌ No user found');
+        setDebugInfo({ error: 'No user found' });
         return;
       }
 
@@ -103,6 +104,7 @@ const CafeDashboard = () => {
 
       try {
         // First, let's check if the user exists in cafe_staff
+        console.log('🔍 Step 1: Querying cafe_staff table...');
         const { data: staffData, error: staffError } = await supabase
           .from('cafe_staff')
           .select('*')
@@ -113,21 +115,17 @@ const CafeDashboard = () => {
 
         if (staffError) {
           console.error('Error fetching cafe staff:', staffError);
+          setDebugInfo({ error: staffError, user: { id: user.id, email: user.email } });
           return;
         }
 
         if (!staffData || staffData.length === 0) {
           console.log('❌ No cafe staff record found for user');
-          
-          // Let's also check by email as a fallback
-          const { data: emailData, error: emailError } = await supabase
-            .from('cafe_staff')
-            .select('*')
-            .eq('user_id', user.id);
-
-          console.log('Email-based cafe staff data:', emailData);
-          console.log('Email-based cafe staff error:', emailError);
-          
+          setDebugInfo({ 
+            error: 'No cafe staff record found', 
+            user: { id: user.id, email: user.email },
+            staffData: staffData 
+          });
           return;
         }
 
@@ -135,9 +133,16 @@ const CafeDashboard = () => {
         const cafeStaffRecord = staffData[0];
         console.log('✅ Found cafe staff record:', cafeStaffRecord);
         setCafeId(cafeStaffRecord.cafe_id);
+        setDebugInfo({ 
+          success: true, 
+          cafeId: cafeStaffRecord.cafe_id,
+          user: { id: user.id, email: user.email },
+          staffRecord: cafeStaffRecord 
+        });
 
       } catch (error) {
         console.error('Error fetching cafe ID:', error);
+        setDebugInfo({ error: error, user: { id: user.id, email: user.email } });
       }
     };
 
