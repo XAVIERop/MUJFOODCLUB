@@ -45,7 +45,7 @@ SELECT 'Verifying order items:' as status;
 SELECT 
   oi.id,
   oi.quantity,
-  oi.notes,
+  oi.special_instructions,
   mi.name as menu_item_name,
   mi.price as menu_item_price,
   o.order_number
