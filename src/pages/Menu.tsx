@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Minus, ShoppingCart, Clock, Star, ArrowLeft } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Clock, Star, ArrowLeft, Filter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -41,6 +41,7 @@ const Menu = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [cart, setCart] = useState<{[key: string]: {item: MenuItem, quantity: number, notes: string}}>({});
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
     if (cafeId) {
@@ -159,6 +160,14 @@ const Menu = () => {
     return groups;
   }, {} as {[key: string]: MenuItem[]});
 
+  // Get unique categories for the filter
+  const categories = Object.keys(groupedItems);
+  
+  // Filter items based on selected category
+  const filteredItems = selectedCategory === 'all' 
+    ? groupedItems 
+    : { [selectedCategory]: groupedItems[selectedCategory] || [] };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -222,12 +231,58 @@ const Menu = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Category Filter System */}
+        <div className="mb-8">
+          <div className="flex items-center mb-4">
+            <Filter className="w-5 h-5 mr-2 text-primary" />
+            <h3 className="text-lg font-semibold text-foreground">Filter by Category</h3>
+          </div>
+          
+          <div className="flex flex-wrap gap-3">
+            {/* All Categories Button */}
+            <Button
+              variant={selectedCategory === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedCategory('all')}
+              className={`transition-all duration-200 ${
+                selectedCategory === 'all' 
+                  ? 'bg-primary text-white shadow-lg scale-105' 
+                  : 'hover:bg-primary/10'
+              }`}
+            >
+              All Categories ({menuItems.length})
+            </Button>
+            
+            {/* Individual Category Buttons */}
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCategory(category)}
+                className={`transition-all duration-200 ${
+                  selectedCategory === category 
+                    ? 'bg-primary text-white shadow-lg scale-105' 
+                    : 'hover:bg-primary/10'
+                }`}
+              >
+                {category} ({groupedItems[category].length})
+              </Button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Menu Items */}
           <div className="lg:col-span-2 space-y-8">
-            {Object.entries(groupedItems).map(([category, items]) => (
+            {Object.entries(filteredItems).map(([category, items]) => (
               <div key={category}>
-                <h2 className="text-2xl font-bold text-foreground mb-6">{category}</h2>
+                <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center">
+                  <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm mr-3">
+                    {items.length} items
+                  </span>
+                  {category}
+                </h2>
                 <div className="grid gap-4">
                   {items.map((item) => (
                     <Card key={item.id} className="food-card border-0">
