@@ -762,7 +762,10 @@ const CafeDashboard = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold">Cafe Dashboard</h1>
-            <p className="text-muted-foreground">Manage orders, track analytics, and maintain your business</p>
+            <p className="text-muted-foreground">
+              Managing: <span className="font-semibold text-primary">Mini Meals</span> • 
+              Manage orders, track analytics, and maintain your business
+            </p>
           </div>
           
           {/* Notifications button */}
@@ -998,23 +1001,41 @@ const CafeDashboard = () => {
 
                         {/* Order Items */}
                         <div className="space-y-2">
-                          <h4 className="font-semibold">Order Items:</h4>
-                          {order.order_items.map((item) => (
-                            <div key={item.id} className="flex justify-between items-center p-2 bg-muted/30 rounded">
-                              <div>
-                                <p className="font-medium">{item.menu_item.name}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  Qty: {item.quantity} × ₹{item.menu_item.price}
-                                </p>
-                                {item.notes && (
-                                  <p className="text-sm text-muted-foreground italic">
-                                    Note: {item.notes}
+                          <h4 className="font-semibold flex items-center gap-2">
+                            <ChefHat className="w-4 h-4" />
+                            Order Items ({order.order_items.length} items):
+                          </h4>
+                          {order.order_items && order.order_items.length > 0 ? (
+                            order.order_items.map((item) => (
+                              <div key={item.id} className="flex justify-between items-center p-3 bg-muted/30 rounded border">
+                                <div className="flex-1">
+                                  <p className="font-medium text-foreground">{item.menu_item?.name || 'Unknown Item'}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    Qty: {item.quantity} × ₹{item.menu_item?.price || 0}
                                   </p>
-                                )}
+                                  {item.notes && (
+                                    <p className="text-sm text-blue-600 italic mt-1">
+                                      Note: {item.notes}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-semibold text-foreground">
+                                    ₹{(item.menu_item?.price || 0) * item.quantity}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {item.menu_item?.category || 'Unknown'}
+                                  </p>
+                                </div>
                               </div>
-                              <p className="font-semibold">₹{item.menu_item.price * item.quantity}</p>
+                            ))
+                          ) : (
+                            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded text-center">
+                              <p className="text-sm text-yellow-800">
+                                No items found for this order
+                              </p>
                             </div>
-                          ))}
+                          )}
                         </div>
 
                         {/* Delivery Info */}
