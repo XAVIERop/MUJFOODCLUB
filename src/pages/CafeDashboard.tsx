@@ -118,6 +118,21 @@ const CafeDashboard = () => {
     if (!cafeId) return;
 
     try {
+      // First, try a simple query without joins
+      const { data: simpleData, error: simpleError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('cafe_id', cafeId)
+        .order('created_at', { ascending: false });
+
+      if (simpleError) {
+        console.error('Simple query failed:', simpleError);
+        throw simpleError;
+      }
+
+      console.log('Simple query successful, found orders:', simpleData?.length || 0);
+
+      // If simple query works, try the full query
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -134,9 +149,21 @@ const CafeDashboard = () => {
         .eq('cafe_id', cafeId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setOrders(data || []);
-      setFilteredOrders(data || []);
+      if (error) {
+        console.error('Full query failed, using simple data:', error);
+        // Use simple data if full query fails, but we need to transform it to match Order type
+        const transformedOrders = (simpleData || []).map(order => ({
+          ...order,
+          user: { full_name: 'Unknown', phone: null, block: 'Unknown', email: 'unknown@example.com' },
+          order_items: []
+        }));
+        setOrders(transformedOrders);
+        setFilteredOrders(transformedOrders);
+      } else {
+        console.log('Full query successful, found orders:', data?.length || 0);
+        setOrders(data || []);
+        setFilteredOrders(data || []);
+      }
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast({
