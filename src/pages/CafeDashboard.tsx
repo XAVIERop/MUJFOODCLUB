@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import NotificationCenter from '../components/NotificationCenter';
+import CafeScanner from '../components/CafeScanner';
 import Header from '../components/Header';
 
 interface OrderItem {
@@ -764,8 +765,9 @@ const CafeDashboard = () => {
         )}
 
         <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="orders">Orders Management</TabsTrigger>
+            <TabsTrigger value="scanner">QR Scanner</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="database">Database</TabsTrigger>
           </TabsList>
@@ -985,6 +987,25 @@ const CafeDashboard = () => {
                 </div>
               )}
             </div>
+          </TabsContent>
+
+          {/* QR Scanner Tab */}
+          <TabsContent value="scanner" className="space-y-6">
+            {cafeId ? (
+              <CafeScanner cafeId={cafeId} />
+            ) : (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Clock className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Loading Cafe Information</h3>
+                  <p className="text-muted-foreground">
+                    Please wait while we load your cafe details.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Analytics Tab */}
