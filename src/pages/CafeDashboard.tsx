@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, CheckCircle, AlertCircle, Truck, ChefHat, Receipt, Bell, User, MapPin, Phone, Download, Search, BarChart3, Calendar, DollarSign, TrendingUp, Users, Package } from 'lucide-react';
+import { Clock, CheckCircle, AlertCircle, Truck, ChefHat, Receipt, Bell, User, MapPin, Phone, Download, Search, BarChart3, Calendar, DollarSign, TrendingUp, Users, Package, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -408,6 +408,103 @@ const CafeDashboard = () => {
       toast({
         title: "Error",
         description: "Failed to export orders",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const clearCompletedOrders = async () => {
+    if (!confirm('Are you sure you want to clear all completed orders? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('status', 'completed')
+        .eq('cafe_id', cafeId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Orders Cleared",
+        description: "All completed orders have been cleared",
+      });
+
+      // Refresh orders and analytics
+      fetchOrders();
+      fetchAnalytics();
+    } catch (error) {
+      console.error('Error clearing orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to clear completed orders",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const clearAllOrders = async () => {
+    if (!confirm('Are you sure you want to clear ALL orders? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('cafe_id', cafeId);
+
+      if (error) throw error;
+
+      toast({
+        title: "All Orders Cleared",
+        description: "All orders have been cleared",
+      });
+
+      // Refresh orders and analytics
+      fetchOrders();
+      fetchAnalytics();
+    } catch (error) {
+      console.error('Error clearing all orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to clear all orders",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const cancelOrder = async (orderId: string) => {
+    if (!confirm('Are you sure you want to cancel this order?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          status: 'cancelled',
+          status_updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Order Cancelled",
+        description: "Order has been cancelled",
+      });
+
+      // Refresh orders and analytics
+      fetchOrders();
+      fetchAnalytics();
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel order",
         variant: "destructive"
       });
     }
@@ -817,10 +914,20 @@ const CafeDashboard = () => {
                     </SelectContent>
                   </Select>
 
-                  <Button onClick={exportOrders} variant="outline" className="flex items-center gap-2">
-                    <Download className="h-4 w-4" />
-                    Export CSV
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button onClick={exportOrders} variant="outline" className="flex items-center gap-2">
+                      <Download className="h-4 w-4" />
+                      Export CSV
+                    </Button>
+                    <Button onClick={clearCompletedOrders} variant="outline" className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4" />
+                      Clear Completed
+                    </Button>
+                    <Button onClick={clearAllOrders} variant="destructive" className="flex items-center gap-2">
+                      <Trash2 className="h-4 w-4" />
+                      Clear All
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -936,10 +1043,10 @@ const CafeDashboard = () => {
                             </Button>
                           )}
                           
-                          {order.status === 'received' && (
+                          {order.status !== 'completed' && order.status !== 'cancelled' && (
                             <Button
                               variant="destructive"
-                              onClick={() => updateOrderStatus(order.id, 'cancelled')}
+                              onClick={() => cancelOrder(order.id)}
                             >
                               Cancel Order
                             </Button>
