@@ -153,6 +153,23 @@ const CafeDashboard = () => {
     console.log('🔍 Fetching orders for cafeId:', cafeId);
 
     try {
+      // First, try a simple query without joins
+      console.log('🔍 Step 1: Testing simple orders query...');
+      const { data: simpleData, error: simpleError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('cafe_id', cafeId)
+        .order('created_at', { ascending: false });
+
+      console.log('📊 Simple orders query result:', { data: simpleData, error: simpleError });
+
+      if (simpleError) {
+        console.error('❌ Simple query failed:', simpleError);
+        throw simpleError;
+      }
+
+      // If simple query works, try the full query
+      console.log('🔍 Step 2: Testing full query with joins...');
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -169,16 +186,23 @@ const CafeDashboard = () => {
         .eq('cafe_id', cafeId)
         .order('created_at', { ascending: false });
 
-      console.log('📊 Orders query result:', { data, error });
+      console.log('📊 Full orders query result:', { data, error });
 
       if (error) {
-        console.error('❌ Error fetching orders:', error);
-        throw error;
+        console.error('❌ Full query failed, using simple data:', error);
+        // Use simple data if full query fails, but we need to transform it to match Order type
+        const transformedOrders = (simpleData || []).map(order => ({
+          ...order,
+          user: { full_name: 'Unknown', phone: null, block: 'Unknown', email: 'unknown@example.com' },
+          order_items: []
+        }));
+        setOrders(transformedOrders);
+        setFilteredOrders(transformedOrders);
+      } else {
+        console.log('✅ Full query successful:', data?.length || 0, 'orders');
+        setOrders(data || []);
+        setFilteredOrders(data || []);
       }
-
-      console.log('✅ Orders fetched successfully:', data?.length || 0, 'orders');
-      setOrders(data || []);
-      setFilteredOrders(data || []);
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast({
