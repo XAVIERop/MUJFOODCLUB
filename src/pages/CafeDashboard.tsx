@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import NotificationCenter from '../components/NotificationCenter';
 import Header from '../components/Header';
+import OrdersDebug from '../components/OrdersDebug';
 
 interface OrderItem {
   id: string;
@@ -632,6 +633,9 @@ const CafeDashboard = () => {
             )}
           </Button>
         </div>
+
+        {/* Debug Panel */}
+        <OrdersDebug />
 
         {/* Analytics Dashboard */}
         {analytics && (
