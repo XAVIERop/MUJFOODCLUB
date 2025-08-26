@@ -162,6 +162,26 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
     }
   }, [isOpen, user?.id, cafeId]);
 
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
   useEffect(() => {
     // Set up real-time subscription for new notifications
     if (!user) return;
@@ -198,7 +218,15 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div 
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      onClick={(e) => {
+        // Close when clicking on the overlay
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <Card className="w-full max-w-2xl max-h-[80vh] overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="flex items-center">
@@ -216,7 +244,13 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
                 Mark all read
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onClose}
+              className="hover:bg-red-50 hover:text-red-600"
+              title="Close notifications"
+            >
               <X className="w-4 h-4" />
             </Button>
           </div>
@@ -275,6 +309,17 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
                 })}
               </div>
             )}
+          </div>
+          
+          {/* Bottom close button */}
+          <div className="p-4 border-t bg-muted/30">
+            <Button 
+              onClick={onClose} 
+              className="w-full"
+              variant="outline"
+            >
+              Close Notifications
+            </Button>
           </div>
         </CardContent>
       </Card>
