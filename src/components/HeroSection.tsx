@@ -41,10 +41,19 @@ const HeroSection = () => {
           </Badge>
 
           {/* Main Heading */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 animate-slide-up">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 animate-slide-up leading-tight">
             Discover Amazing Food at{" "}
-            <span className="gradient-hero bg-clip-text text-transparent">
-              GHS Hostel
+            <span className="relative inline-block">
+              <span className="gradient-hero bg-clip-text text-transparent relative z-10 drop-shadow-2xl font-extrabold tracking-wide">
+                GHS Hostel
+              </span>
+              {/* Glowing background effect */}
+              <span className="absolute inset-0 bg-gradient-to-r from-yellow-400/30 via-orange-400/30 to-red-400/30 blur-2xl rounded-full transform scale-125 animate-pulse"></span>
+              {/* Additional glow layers */}
+              <span className="absolute inset-0 bg-gradient-to-r from-yellow-300/20 via-orange-300/20 to-red-300/20 blur-xl rounded-full transform scale-110 animate-pulse" style={{ animationDelay: '0.5s' }}></span>
+              <span className="absolute inset-0 bg-gradient-to-r from-yellow-500/15 via-orange-500/15 to-red-500/15 blur-lg rounded-full transform scale-105"></span>
+              {/* Subtle text shadow for better readability */}
+              <span className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 via-orange-400/10 to-red-400/10 blur-sm rounded-full transform scale-150"></span>
             </span>
           </h1>
 
