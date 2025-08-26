@@ -9,14 +9,23 @@ const DebugSection = () => {
   const { user, profile } = useAuth();
   const [testResults, setTestResults] = useState<any>({});
   const [loading, setLoading] = useState(false);
-  const [showDebug, setShowDebug] = useState(false);
+  const [showDebug, setShowDebug] = useState(true); // Always show by default
+
+  // Add console logs to debug
+  useEffect(() => {
+    console.log('🔧 DebugSection mounted');
+    console.log('User:', user);
+    console.log('Profile:', profile);
+  }, [user, profile]);
 
   const runTests = async () => {
+    console.log('🔍 Running database tests...');
     setLoading(true);
     const results: any = {};
 
     try {
       // Test 1: Check if order_notifications table exists
+      console.log('Testing notifications table...');
       const { data: notifications, error: notificationsError } = await supabase
         .from('order_notifications')
         .select('*')
@@ -26,8 +35,10 @@ const DebugSection = () => {
         exists: !notificationsError,
         error: notificationsError?.message
       };
+      console.log('Notifications test result:', results.notificationsTable);
 
       // Test 2: Check if orders table has new columns
+      console.log('Testing orders table columns...');
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
         .select('status_updated_at, points_credited, accepted_at, preparing_at, out_for_delivery_at, completed_at')
@@ -38,6 +49,7 @@ const DebugSection = () => {
         error: ordersError?.message,
         hasColumns: orders && orders.length > 0
       };
+      console.log('Orders columns test result:', results.ordersColumns);
 
       // Test 3: Check user profile
       results.userProfile = {
@@ -45,9 +57,11 @@ const DebugSection = () => {
         hasProfile: !!profile,
         profileData: profile
       };
+      console.log('User profile test result:', results.userProfile);
 
       // Test 4: Check if we can create a test notification
       if (user && profile) {
+        console.log('Testing notification creation...');
         const { data: testOrder, error: orderError } = await supabase
           .from('orders')
           .select('id, cafe_id')
@@ -75,19 +89,20 @@ const DebugSection = () => {
             error: 'No orders found for testing'
           };
         }
+        console.log('Notification creation test result:', results.notificationCreation);
       }
 
     } catch (error) {
+      console.error('Test error:', error);
       results.generalError = error;
     }
 
     setTestResults(results);
     setLoading(false);
+    console.log('🔍 All tests completed:', results);
   };
 
-  // Only show debug section if user is logged in
-  if (!user) return null;
-
+  // Show debug section for everyone (not just logged in users)
   return (
     <section className="py-8 bg-muted/50">
       <div className="container mx-auto px-4">
@@ -106,6 +121,14 @@ const DebugSection = () => {
           </CardHeader>
           {showDebug && (
             <CardContent className="space-y-4">
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h4 className="font-medium text-yellow-900 mb-2">Debug Info:</h4>
+                <p className="text-sm text-yellow-800">
+                  User: {user ? '✅ Logged in' : '❌ Not logged in'} | 
+                  Profile: {profile ? '✅ Loaded' : '❌ Not loaded'}
+                </p>
+              </div>
+
               <Button onClick={runTests} disabled={loading} className="w-full">
                 {loading ? 'Running Tests...' : '🔍 Test Database Features'}
               </Button>
@@ -139,6 +162,7 @@ const DebugSection = () => {
                   <li>• Check if notification bell appears in header</li>
                   <li>• Try visiting /orders to see order tracking</li>
                   <li>• If tests fail, apply the database migration</li>
+                  <li>• Check browser console for debug logs</li>
                 </ul>
               </div>
             </CardContent>

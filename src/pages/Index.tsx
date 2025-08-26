@@ -14,6 +14,10 @@ const Index = () => {
       <QRCodeSection />
       <LoyaltyProgram />
       <DebugSection />
+      {/* Debug timestamp - remove after testing */}
+      <div className="text-center text-xs text-muted-foreground py-2">
+        Last updated: {new Date().toLocaleString()}
+      </div>
     </main>
   );
 };
