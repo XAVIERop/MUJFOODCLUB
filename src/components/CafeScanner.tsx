@@ -43,6 +43,7 @@ const CafeScanner = ({ cafeId }: { cafeId: string }) => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<{[key: string]: {item: MenuItem, quantity: number, notes: string}}>({});
   const [loading, setLoading] = useState(false);
+  const [menuLoading, setMenuLoading] = useState(true);
   const [showScanner, setShowScanner] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -53,6 +54,9 @@ const CafeScanner = ({ cafeId }: { cafeId: string }) => {
 
   const fetchMenuItems = async () => {
     try {
+      setMenuLoading(true);
+      console.log('Fetching menu items for cafe:', cafeId);
+      
       const { data, error } = await supabase
         .from('menu_items')
         .select('*')
@@ -61,6 +65,8 @@ const CafeScanner = ({ cafeId }: { cafeId: string }) => {
         .order('category', { ascending: true });
 
       if (error) throw error;
+      
+      console.log('Menu items fetched:', data);
       setMenuItems(data || []);
     } catch (error) {
       console.error('Error fetching menu items:', error);
@@ -69,6 +75,8 @@ const CafeScanner = ({ cafeId }: { cafeId: string }) => {
         description: "Failed to load menu items",
         variant: "destructive"
       });
+    } finally {
+      setMenuLoading(false);
     }
   };
 
@@ -393,52 +401,92 @@ const CafeScanner = ({ cafeId }: { cafeId: string }) => {
           {/* Menu Selection */}
           {studentProfile && (
             <div className="space-y-4">
-              <h4 className="text-white font-semibold">Select Menu Items</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {menuItems.map((item) => (
-                  <Card key={item.id} className="bg-white/10 border-white/20">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <h5 className="font-semibold text-white">{item.name}</h5>
-                          <p className="text-white/70 text-sm">{item.description}</p>
-                          <p className="text-white font-bold">₹{item.price}</p>
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={() => addToOrder(item)}
-                          className="bg-primary hover:bg-primary/80"
-                        >
-                          <ShoppingCart className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      {selectedItems[item.id] && (
-                        <div className="mt-2 p-2 bg-white/20 rounded">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-white text-sm">
-                              Quantity: {selectedItems[item.id].quantity}
-                            </span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => removeFromOrder(item.id)}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                          <Input
-                            placeholder="Special instructions..."
-                            value={selectedItems[item.id].notes}
-                            onChange={(e) => updateNotes(item.id, e.target.value)}
-                            className="text-sm"
-                          />
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+              <h4 className="text-white font-semibold text-lg">Select Menu Items</h4>
+              
+              {/* Debug Info */}
+              <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3">
+                <p className="text-blue-300 text-sm">
+                  <strong>Debug:</strong> Found {menuItems.length} menu items for cafe {cafeId}
+                </p>
+                <p className="text-blue-300 text-sm mt-1">
+                  <strong>Status:</strong> {menuLoading ? 'Loading menu...' : 'Menu loaded'}
+                </p>
               </div>
+              
+              {/* Loading State */}
+              {menuLoading && (
+                <Card className="bg-white/10 border-white/20">
+                  <CardContent className="p-8 text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+                    <p className="text-white">Loading menu items...</p>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {menuItems.length === 0 ? (
+                <Card className="bg-white/10 border-white/20">
+                  <CardContent className="p-8 text-center">
+                    <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                      <ShoppingCart className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-white mb-2">No Menu Items Available</h3>
+                    <p className="text-white/70">This cafe doesn't have any menu items yet.</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {menuItems.map((item) => (
+                    <Card key={item.id} className="bg-white/10 border-white/20 hover:bg-white/20 transition-colors">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex-1">
+                            <h5 className="font-semibold text-white text-lg">{item.name}</h5>
+                            {item.description && (
+                              <p className="text-white/70 text-sm mt-1">{item.description}</p>
+                            )}
+                            <p className="text-white font-bold text-lg mt-2">₹{item.price}</p>
+                            <Badge variant="secondary" className="mt-1 text-xs">
+                              {item.category}
+                            </Badge>
+                          </div>
+                          <Button
+                            size="sm"
+                            onClick={() => addToOrder(item)}
+                            className="bg-primary hover:bg-primary/80 ml-4"
+                          >
+                            <ShoppingCart className="w-4 h-4 mr-2" />
+                            Add
+                          </Button>
+                        </div>
+                        
+                        {selectedItems[item.id] && (
+                          <div className="mt-3 p-3 bg-white/20 rounded-lg border border-white/30">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-white text-sm font-medium">
+                                Quantity: {selectedItems[item.id].quantity}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => removeFromOrder(item.id)}
+                                className="h-6 w-6 p-0 text-white border-white/30 hover:bg-white/20"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                            <Input
+                              placeholder="Special instructions (optional)..."
+                              value={selectedItems[item.id].notes}
+                              onChange={(e) => updateNotes(item.id, e.target.value)}
+                              className="text-sm bg-white/10 border-white/30 text-white placeholder:text-white/50"
+                            />
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
