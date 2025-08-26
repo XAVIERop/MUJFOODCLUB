@@ -11,7 +11,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import NotificationCenter from '../components/NotificationCenter';
 import Header from '../components/Header';
-import OrdersDebug from '../components/OrdersDebug';
 
 interface OrderItem {
   id: string;
@@ -74,7 +73,6 @@ const CafeDashboard = () => {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [cafeId, setCafeId] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,67 +80,34 @@ const CafeDashboard = () => {
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // Debug logging
-  useEffect(() => {
-    console.log('🔧 CafeDashboard Debug Info:');
-    console.log('User:', user);
-    console.log('Profile:', profile);
-    console.log('CafeId:', cafeId);
-  }, [user, profile, cafeId]);
+
 
   // Get cafe ID for the current user
   useEffect(() => {
     const getCafeId = async () => {
-      if (!user) {
-        console.log('❌ No user found');
-        setDebugInfo({ error: 'No user found' });
-        return;
-      }
-
-      console.log('🔍 Fetching cafe ID for user:', user.id);
-      console.log('🔍 User email:', user.email);
+      if (!user) return;
 
       try {
-        // First, let's check if the user exists in cafe_staff
-        console.log('🔍 Step 1: Querying cafe_staff table...');
         const { data: staffData, error: staffError } = await supabase
           .from('cafe_staff')
           .select('*')
           .eq('user_id', user.id);
 
-        console.log('Cafe staff data:', staffData);
-        console.log('Cafe staff error:', staffError);
-
         if (staffError) {
           console.error('Error fetching cafe staff:', staffError);
-          setDebugInfo({ error: staffError, user: { id: user.id, email: user.email } });
           return;
         }
 
         if (!staffData || staffData.length === 0) {
-          console.log('❌ No cafe staff record found for user');
-          setDebugInfo({ 
-            error: 'No cafe staff record found', 
-            user: { id: user.id, email: user.email },
-            staffData: staffData 
-          });
           return;
         }
 
         // Get the cafe_id from the first record
         const cafeStaffRecord = staffData[0];
-        console.log('✅ Found cafe staff record:', cafeStaffRecord);
         setCafeId(cafeStaffRecord.cafe_id);
-        setDebugInfo({ 
-          success: true, 
-          cafeId: cafeStaffRecord.cafe_id,
-          user: { id: user.id, email: user.email },
-          staffRecord: cafeStaffRecord 
-        });
 
       } catch (error) {
         console.error('Error fetching cafe ID:', error);
-        setDebugInfo({ error: error, user: { id: user.id, email: user.email } });
       }
     };
 
@@ -150,31 +115,9 @@ const CafeDashboard = () => {
   }, [user]);
 
   const fetchOrders = async () => {
-    if (!cafeId) {
-      console.log('❌ No cafeId available for fetchOrders');
-      return;
-    }
-
-    console.log('🔍 Fetching orders for cafeId:', cafeId);
+    if (!cafeId) return;
 
     try {
-      // First, try a simple query without joins
-      console.log('🔍 Step 1: Testing simple orders query...');
-      const { data: simpleData, error: simpleError } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('cafe_id', cafeId)
-        .order('created_at', { ascending: false });
-
-      console.log('📊 Simple orders query result:', { data: simpleData, error: simpleError });
-
-      if (simpleError) {
-        console.error('❌ Simple query failed:', simpleError);
-        throw simpleError;
-      }
-
-      // If simple query works, try the full query
-      console.log('🔍 Step 2: Testing full query with joins...');
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -191,23 +134,9 @@ const CafeDashboard = () => {
         .eq('cafe_id', cafeId)
         .order('created_at', { ascending: false });
 
-      console.log('📊 Full orders query result:', { data, error });
-
-      if (error) {
-        console.error('❌ Full query failed, using simple data:', error);
-        // Use simple data if full query fails, but we need to transform it to match Order type
-        const transformedOrders = (simpleData || []).map(order => ({
-          ...order,
-          user: { full_name: 'Unknown', phone: null, block: 'Unknown', email: 'unknown@example.com' },
-          order_items: []
-        }));
-        setOrders(transformedOrders);
-        setFilteredOrders(transformedOrders);
-      } else {
-        console.log('✅ Full query successful:', data?.length || 0, 'orders');
-        setOrders(data || []);
-        setFilteredOrders(data || []);
-      }
+      if (error) throw error;
+      setOrders(data || []);
+      setFilteredOrders(data || []);
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast({
@@ -649,7 +578,6 @@ const CafeDashboard = () => {
           filter: `cafe_id=eq.${cafeId}`
         }, 
         (payload) => {
-          console.log('New order received:', payload.new);
           fetchOrders();
           fetchAnalytics();
           toast({
@@ -666,7 +594,6 @@ const CafeDashboard = () => {
           filter: `cafe_id=eq.${cafeId}`
         }, 
         (payload) => {
-          console.log('Order updated:', payload.new);
           setOrders(prev => 
             prev.map(order => 
               order.id === payload.new.id ? { ...order, ...payload.new } : order
@@ -684,31 +611,12 @@ const CafeDashboard = () => {
 
   useEffect(() => {
     if (cafeId) {
-      console.log('🔄 useEffect triggered - cafeId:', cafeId);
       fetchOrders();
       fetchAnalytics();
     }
   }, [cafeId]);
 
-  // Add a manual refresh function
-  const refreshData = () => {
-    console.log('🔄 Manual refresh triggered');
-    if (cafeId) {
-      fetchOrders();
-      fetchAnalytics();
-    }
-  };
 
-  // Listen for refresh events from debug panel
-  useEffect(() => {
-    const handleRefresh = () => {
-      console.log('🔄 Refresh event received');
-      refreshData();
-    };
-
-    window.addEventListener('refreshDashboard', handleRefresh);
-    return () => window.removeEventListener('refreshDashboard', handleRefresh);
-  }, [cafeId]);
 
   // Check if user is cafe staff
   if (!user || !profile) {
@@ -736,17 +644,6 @@ const CafeDashboard = () => {
             <CardContent className="p-8 text-center">
               <h2 className="text-2xl font-bold mb-4">Not Authorized</h2>
               <p className="text-muted-foreground">You are not authorized to access any cafe dashboard.</p>
-              
-              {/* Debug Information */}
-              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-left">
-                <h4 className="font-medium text-yellow-900 mb-2">Debug Information:</h4>
-                <pre className="text-xs text-yellow-800 overflow-auto">
-                  {JSON.stringify(debugInfo, null, 2)}
-                </pre>
-                <p className="text-sm text-yellow-700 mt-2">
-                  Check browser console for more details.
-                </p>
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -784,25 +681,7 @@ const CafeDashboard = () => {
           </Button>
         </div>
 
-        {/* Debug Panel */}
-        <OrdersDebug />
-        
-        {/* Orders Status */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium">Orders Status</h3>
-                <p className="text-sm text-muted-foreground">
-                  {loading ? 'Loading orders...' : `Loaded ${orders.length} orders`}
-                </p>
-              </div>
-              <Button variant="outline" size="sm" onClick={refreshData}>
-                Refresh Orders
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+
 
         {/* Analytics Dashboard */}
         {analytics && (
