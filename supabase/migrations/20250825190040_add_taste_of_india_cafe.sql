@@ -3,16 +3,22 @@
 INSERT INTO public.cafes (
     id,
     name,
+    type,
     description,
+    location,
     phone,
+    hours,
     accepting_orders,
     created_at,
     updated_at
 ) VALUES (
     gen_random_uuid(),
     'Taste of India',
+    'North Indian',
     'Authentic Indian cuisine featuring curries, biryanis, and more. Specializing in traditional Indian dishes with a modern twist. From spicy curries to aromatic biryanis, we bring the authentic taste of India to your plate.',
+    'Ground Floor, GHS',
     '+91-72970 17744',
+    '11:00 AM - 10:00 PM',
     true,
     NOW(),
     NOW()
