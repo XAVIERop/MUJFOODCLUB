@@ -5,7 +5,6 @@ INSERT INTO public.cafes (
     name,
     description,
     phone,
-    delivery_available,
     accepting_orders,
     created_at,
     updated_at
@@ -14,7 +13,6 @@ INSERT INTO public.cafes (
     'Taste of India',
     'Authentic Indian cuisine featuring curries, biryanis, and more. Specializing in traditional Indian dishes with a modern twist. From spicy curries to aromatic biryanis, we bring the authentic taste of India to your plate.',
     '+91-72970 17744',
-    true,
     true,
     NOW(),
     NOW()
