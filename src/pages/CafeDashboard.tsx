@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, CheckCircle, AlertCircle, Truck, ChefHat, Receipt, Bell, User, MapPin, Phone, Download, Search, BarChart3, Calendar, DollarSign, TrendingUp, Users, Package, Trash2 } from 'lucide-react';
+import { Clock, CheckCircle, AlertCircle, Truck, ChefHat, Receipt, Bell, User, MapPin, Phone, Download, Search, BarChart3, Calendar, DollarSign, TrendingUp, Users, Package, Trash2, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -67,6 +68,7 @@ interface Analytics {
 const CafeDashboard = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -693,20 +695,32 @@ const CafeDashboard = () => {
             </p>
           </div>
           
-          {/* Notifications button */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="relative"
-            onClick={() => setIsNotificationOpen(true)}
-          >
-            <Bell className="w-5 h-5" />
-            {unreadNotifications > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-500">
-                {unreadNotifications > 9 ? '9+' : unreadNotifications}
-              </Badge>
-            )}
-          </Button>
+          <div className="flex items-center space-x-3">
+            {/* Management button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/cafe-management')}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Management
+            </Button>
+            
+            {/* Notifications button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="relative"
+              onClick={() => setIsNotificationOpen(true)}
+            >
+              <Bell className="w-5 h-5" />
+              {unreadNotifications > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-500">
+                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                </Badge>
+              )}
+            </Button>
+          </div>
         </div>
 
 

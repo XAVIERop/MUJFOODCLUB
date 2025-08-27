@@ -17,6 +17,7 @@ interface Cafe {
   hours: string;
   rating: number;
   total_reviews: number;
+  accepting_orders: boolean;
 }
 
 const CafeGrid = () => {
@@ -113,8 +114,8 @@ const CafeGrid = () => {
                 </div>
                 
                 {/* Status Badge */}
-                <Badge className="absolute top-4 left-4 bg-green-500 text-white">
-                  Open
+                <Badge className={`absolute top-4 left-4 ${cafe.accepting_orders ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+                  {cafe.accepting_orders ? 'Open' : 'Closed'}
                 </Badge>
 
                 {/* Discount Badge */}
@@ -179,9 +180,11 @@ const CafeGrid = () => {
                     variant="order" 
                     size="sm" 
                     onClick={() => handleOrderNow(cafe.id)}
+                    disabled={!cafe.accepting_orders}
+                    className={!cafe.accepting_orders ? 'opacity-50 cursor-not-allowed' : ''}
                   >
                     <ShoppingCart className="w-4 h-4 mr-1" />
-                    Order
+                    {cafe.accepting_orders ? 'Order' : 'Closed'}
                   </Button>
                   <Button 
                     variant="outline" 

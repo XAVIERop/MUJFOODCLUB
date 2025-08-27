@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { QrCode, User, LogOut, Trophy, Settings, Menu, Home, Coffee, Gift, Utensils, Bell, Receipt } from 'lucide-react';
+import { QrCode, User, LogOut, Trophy, Settings, Menu, Home, Coffee, Gift, Utensils, Bell, Receipt, Store } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import NotificationCenter from './NotificationCenter';
@@ -14,8 +14,40 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [isCafeOwner, setIsCafeOwner] = useState(false);
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+
+  // Check if user is a cafe owner
+  useEffect(() => {
+    if (!user) {
+      setIsCafeOwner(false);
+      return;
+    }
+
+    const checkCafeOwnership = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('cafe_staff')
+          .select('role')
+          .eq('user_id', user.id)
+          .in('role', ['owner', 'manager'])
+          .eq('is_active', true)
+          .single();
+
+        if (!error && data) {
+          setIsCafeOwner(true);
+        } else {
+          setIsCafeOwner(false);
+        }
+      } catch (error) {
+        console.error('Error checking cafe ownership:', error);
+        setIsCafeOwner(false);
+      }
+    };
+
+    checkCafeOwnership();
+  }, [user]);
 
   const handleAuthAction = () => {
     if (user) {
@@ -190,6 +222,15 @@ const Header = () => {
                       <Receipt className="mr-2 h-4 w-4" />
                       <span>My Orders</span>
                     </DropdownMenuItem>
+                    {isCafeOwner && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => navigate('/cafe-dashboard')}>
+                          <Store className="mr-2 h-4 w-4" />
+                          <span>Cafe Dashboard</span>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuItem onClick={signOut}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>

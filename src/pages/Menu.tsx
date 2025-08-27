@@ -18,6 +18,7 @@ interface MenuItem {
   category: string;
   preparation_time: number;
   is_available: boolean;
+  out_of_stock: boolean;
 }
 
 interface Cafe {
@@ -289,9 +290,16 @@ const Menu = () => {
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-foreground mb-2">
-                              {item.name}
-                            </h3>
+                            <div className="flex items-center space-x-2 mb-2">
+                              <h3 className="text-lg font-semibold text-foreground">
+                                {item.name}
+                              </h3>
+                              {item.out_of_stock && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Out of Stock
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-muted-foreground mb-3">
                               {item.description}
                             </p>
@@ -307,7 +315,16 @@ const Menu = () => {
                           </div>
                           
                           <div className="ml-4">
-                            {cart[item.id] ? (
+                            {item.out_of_stock ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled
+                                className="opacity-50 cursor-not-allowed"
+                              >
+                                Out of Stock
+                              </Button>
+                            ) : cart[item.id] ? (
                               <div className="flex items-center space-x-2">
                                 <Button
                                   variant="outline"

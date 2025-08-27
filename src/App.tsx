@@ -15,6 +15,7 @@ import Cafes from "./pages/Cafes";
 import Rewards from "./pages/Rewards";
 
 import CafeDashboard from "./pages/CafeDashboard";
+import CafeManagement from "./pages/CafeManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/rewards" element={<Rewards />} />
 
             <Route path="/cafe-dashboard" element={<CafeDashboard />} />
+            <Route path="/cafe-management" element={<CafeManagement />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
