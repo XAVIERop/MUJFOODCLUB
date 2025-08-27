@@ -1,133 +1,56 @@
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { QrCode, Smartphone, Gift, Zap, Shield, Crown } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { QrCode, ArrowRight } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
-import qrFeature from "@/assets/qr-feature.jpg";
-import QRCodeDisplay from "./QRCodeDisplay";
+import QRCodeDisplay from './QRCodeDisplay';
 
 const QRCodeSection = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
 
-  const handleGenerateQRCode = () => {
-    navigate('/auth');
-  };
-
   return (
-    <section id="qr-code" className="py-16 bg-background">
+    <section id="qr-code" className="py-16 bg-gradient-to-br from-primary/5 to-secondary/5">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left Content */}
-          <div className="space-y-8">
-            <div>
-              <Badge className="mb-4 gradient-primary text-white">
-                <QrCode className="w-4 h-4 mr-2" />
-                Smart QR System
-              </Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-                Your Personal Food{" "}
-                <span className="gradient-primary bg-clip-text text-transparent">
-                  Loyalty ID
-                </span>
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Get your unique QR code after logging in with your MUJ email. 
-                Scan it at any cafe to earn rewards and unlock exclusive discounts!
-              </p>
-            </div>
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+            Your Personal QR Code
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Get your unique QR code to earn rewards, track orders, and enjoy exclusive discounts at all partner cafes
+          </p>
+        </div>
 
-            {/* Features */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full gradient-success flex items-center justify-center">
-                  <Smartphone className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground">Instant Access</h4>
-                  <p className="text-muted-foreground text-sm">
-                    Login with @muj.manipal.edu and get your QR instantly
+        <div className="flex justify-center">
+          {user && profile ? (
+            <QRCodeDisplay profile={profile} />
+          ) : (
+            <Card className="w-full max-w-md mx-auto">
+              <CardHeader className="text-center">
+                <CardTitle className="flex items-center justify-center space-x-2">
+                  <QrCode className="w-6 h-6 text-primary" />
+                  <span>Get Your QR Code</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="text-center">
+                  <div className="w-48 h-48 bg-muted/30 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <QrCode className="w-16 h-16 text-muted-foreground" />
+                  </div>
+                  <p className="text-muted-foreground mb-6">
+                    Sign in to get your personalized QR code and start earning rewards
                   </p>
+                  <Button 
+                    onClick={() => navigate('/auth')}
+                    className="w-full"
+                  >
+                    Generate My QR Code
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
                 </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full gradient-warm flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground">Fast Scanning</h4>
-                  <p className="text-muted-foreground text-sm">
-                    Quick scan at checkout for instant rewards
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground">Secure & Private</h4>
-                  <p className="text-muted-foreground text-sm">
-                    Your data is encrypted and only used for rewards
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {!user ? (
-              <Button 
-                variant="hero" 
-                size="lg" 
-                className="animate-pulse-glow"
-                onClick={handleGenerateQRCode}
-              >
-                <QrCode className="w-5 h-5 mr-2" />
-                Generate My QR Code
-              </Button>
-            ) : (
-              <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-4 border border-primary/20">
-                <p className="text-sm text-primary font-medium">
-                  ✅ You're logged in! Your QR code is ready below.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Right Content - Show QR Code if logged in, otherwise show image */}
-          <div className="relative">
-            {user && profile ? (
-              <QRCodeDisplay />
-            ) : (
-              <>
-                <div className="relative rounded-2xl overflow-hidden shadow-card animate-float">
-                  <img 
-                    src={qrFeature} 
-                    alt="QR Code Feature" 
-                    className="w-full h-auto"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-                </div>
-
-                {/* Floating Cards */}
-                <Card className="absolute -top-4 -left-4 w-32 animate-bounce-soft shadow-glow border-0">
-                  <CardContent className="p-4 text-center">
-                    <Gift className="w-6 h-6 text-primary mx-auto mb-2" />
-                    <p className="text-xs font-semibold">Instant Rewards</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="absolute -bottom-4 -right-4 w-32 animate-float shadow-glow border-0">
-                  <CardContent className="p-4 text-center">
-                    <Crown className="w-6 h-6 text-yellow-500 mx-auto mb-2" />
-                    <p className="text-xs font-semibold">VIP Status</p>
-                  </CardContent>
-                </Card>
-              </>
-            )}
-          </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </section>
