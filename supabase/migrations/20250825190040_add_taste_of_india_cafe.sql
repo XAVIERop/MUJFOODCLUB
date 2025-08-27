@@ -33,7 +33,7 @@ BEGIN
     SELECT id INTO cafe_id FROM public.cafes WHERE name = 'Taste of India';
     
     -- INDIAN STARTERS
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Harabhara Kabab / Falafel Kabab', 'Fresh green kababs made with spinach and herbs', 150, 'Indian Starters', true),
     (cafe_id, 'Cheese Balls', 'Crispy cheese balls with a golden crust', 160, 'Indian Starters', true),
     (cafe_id, 'Paneer Tikka', 'Marinated cottage cheese grilled to perfection', 230, 'Indian Starters', true),
@@ -45,12 +45,12 @@ BEGIN
     (cafe_id, 'Chicken Pudina Tikka', 'Mint-flavored chicken tikka', 300, 'Indian Starters', true);
 
     -- RICE
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Steamed Rice', 'Perfectly cooked white rice', 120, 'Rice', true),
     (cafe_id, 'Jeera Rice', 'Fragrant rice with cumin seeds', 140, 'Rice', true);
 
     -- ORIENTAL STARTERS
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Veg Spring Roll', 'Crispy vegetable spring rolls', 130, 'Oriental Starters', true),
     (cafe_id, 'Honey Chili Potato', 'Sweet and spicy potato dish', 130, 'Oriental Starters', true),
     (cafe_id, 'Chili Garlic Potato', 'Spicy garlic-flavored potatoes', 140, 'Oriental Starters', true),
@@ -72,7 +72,7 @@ BEGIN
     (cafe_id, 'Paneer/Chicken 65', 'Spicy 65-style paneer or chicken', 210, 'Oriental Starters', true);
 
     -- CHAAP STARTERS
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Masala Chaap', 'Spiced soya chaap', 150, 'Chaap Starters', true),
     (cafe_id, 'Malai Chaap / Masala Malai Chaap', 'Creamy or spiced malai chaap', 170, 'Chaap Starters', true),
     (cafe_id, 'Malai Cheese / Masala Cheese Chaap', 'Creamy cheese or spiced cheese chaap', 190, 'Chaap Starters', true),
@@ -80,7 +80,7 @@ BEGIN
     (cafe_id, 'Peri Peri Chaap', 'Peri peri spiced chaap', 170, 'Chaap Starters', true);
 
     -- APPETIZERS
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Green Salad', 'Fresh green salad', 90, 'Appetizers', true),
     (cafe_id, 'Kachumbar Salad', 'Traditional Indian salad', 100, 'Appetizers', true),
     (cafe_id, 'Mutter Milk', 'Sweet green pea milk', 50, 'Appetizers', true),
@@ -90,7 +90,7 @@ BEGIN
     (cafe_id, 'Masala Papad', 'Spiced papadum', 60, 'Appetizers', true);
 
     -- COMBO MEALS
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Dal Combo (Rice / Bread)', 'Dal with rice or bread', 150, 'Combo Meals', true),
     (cafe_id, 'Paneer Combo', 'Paneer dish with accompaniments', 170, 'Combo Meals', true),
     (cafe_id, 'Chicken Combo (Bone / Boneless)', 'Chicken dish with accompaniments', 190, 'Combo Meals', true),
@@ -104,7 +104,7 @@ BEGIN
     (cafe_id, 'Special Chicken Combo', 'Special chicken combination', 230, 'Combo Meals', true);
 
     -- BIRYANI
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Veg Biryani', 'Traditional vegetable biryani', 200, 'Biryani', true),
     (cafe_id, 'Paneer Tikka Biryani', 'Biryani with paneer tikka', 240, 'Biryani', true),
     (cafe_id, 'Paneer 65 Biryani', 'Biryani with paneer 65', 250, 'Biryani', true),
@@ -122,7 +122,7 @@ BEGIN
     (cafe_id, 'Hyderabadi Chicken Biryani', 'Hyderabadi-style chicken biryani', 310, 'Biryani', true);
 
     -- CHAAP GRAVIES
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Masala Chaap', 'Spiced soya chaap gravy', 190, 'Chaap Gravies', true),
     (cafe_id, 'Tawa Chaap Masala', 'Griddle-cooked chaap masala', 200, 'Chaap Gravies', true),
     (cafe_id, 'Chaap Butter Masala', 'Creamy butter masala chaap', 210, 'Chaap Gravies', true),
@@ -133,13 +133,13 @@ BEGIN
     (cafe_id, 'Handi Chaap', 'Handi-style chaap preparation', 210, 'Chaap Gravies', true);
 
     -- EXTRA
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'S2 Sauce', 'Special S2 sauce', 15, 'Extra', true),
     (cafe_id, 'Extra Onion', 'Additional onions', 10, 'Extra', true),
     (cafe_id, 'Green Chutney', 'Fresh green chutney', 10, 'Extra', true);
 
     -- INDIAN CURRIES
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Kadhai Mushroom / Mutter Mushroom', 'Kadhai-style mushroom or green pea mushroom', 230, 'Indian Curries', true),
     (cafe_id, 'Jeera Aloo / Aloo Mutter', 'Cumin potatoes or potato with peas', 150, 'Indian Curries', true),
     (cafe_id, 'Mix Veg Jhalfrezi', 'Mixed vegetables in jhalfrezi style', 210, 'Indian Curries', true),
@@ -176,7 +176,7 @@ BEGIN
     (cafe_id, 'Chicken Rara', 'Rara-style chicken preparation', 300, 'Indian Curries', true);
 
     -- RICE / NOODLES
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Veg Fried Rice', 'Vegetable fried rice', 130, 'Rice/Noodles', true),
     (cafe_id, 'Veg Hakka Noodles', 'Vegetable hakka noodles', 130, 'Rice/Noodles', true),
     (cafe_id, 'Szechwan / Chili Garlic Veg Fried Rice', 'Spicy Szechwan or chili garlic vegetable fried rice', 150, 'Rice/Noodles', true),
@@ -197,14 +197,14 @@ BEGIN
     (cafe_id, 'Thai Noodles Veg / Chicken', 'Thai-style vegetable or chicken noodles', 170, 'Rice/Noodles', true);
 
     -- SOUP
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Tomato Soup', 'Fresh tomato soup', 100, 'Soup', true),
     (cafe_id, 'Sweet Corn Veg / Chicken', 'Sweet corn vegetable or chicken soup', 100, 'Soup', true),
     (cafe_id, 'Hot n Sour Veg / Chicken', 'Hot and sour vegetable or chicken soup', 100, 'Soup', true),
     (cafe_id, 'Manchow Veg / Chicken', 'Manchow vegetable or chicken soup', 100, 'Soup', true);
 
     -- BREAD
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Roti', 'Whole wheat flatbread', 15, 'Bread', true),
     (cafe_id, 'Butter Roti', 'Buttered whole wheat flatbread', 18, 'Bread', true),
     (cafe_id, 'Missi Roti', 'Spiced gram flour flatbread', 20, 'Bread', true),
@@ -219,14 +219,14 @@ BEGIN
     (cafe_id, 'Paneer Paratha', 'Paneer-stuffed flatbread', 100, 'Bread', true);
 
     -- RICE / BIRYANI (under Chaap Gravies)
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Soya Chaap Biryani', 'Biryani with soya chaap', 200, 'Rice/Biryani', true),
     (cafe_id, 'Soya Tikka Biryani', 'Biryani with soya tikka', 210, 'Rice/Biryani', true),
     (cafe_id, 'Achari Soya Biryani', 'Biryani with pickled soya', 210, 'Rice/Biryani', true),
     (cafe_id, 'Hyderabadi Soya Biryani', 'Hyderabadi-style soya biryani', 220, 'Rice/Biryani', true);
 
     -- BEVERAGES
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Lemonade', 'Fresh lemonade', 40, 'Beverages', true),
     (cafe_id, 'Iced Tea', 'Refreshing iced tea', 50, 'Beverages', true),
     (cafe_id, 'Fresh Lime Soda', 'Fresh lime soda', 50, 'Beverages', true),
@@ -245,7 +245,7 @@ BEGIN
     (cafe_id, 'Frappe - Coffee / Chocolate', 'Coffee or chocolate frappe', 100, 'Beverages', true);
 
     -- COMBO MEALS (under Rice/Noodles)
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Veg Combo', 'Vegetarian combo meal', 180, 'Combo Meals', true),
     (cafe_id, 'Paneer Combo', 'Paneer combo meal', 200, 'Combo Meals', true),
     (cafe_id, 'Chicken Combo', 'Chicken combo meal', 220, 'Combo Meals', true),
@@ -253,7 +253,7 @@ BEGIN
     (cafe_id, 'Chinese Sampler Non-Veg', 'Assorted non-vegetarian Chinese dishes', 320, 'Combo Meals', true);
 
     -- BREAD (under Rice/Biryani)
-    INSERT INTO public.menu_items (cafe_id, name, description, price, category, available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (cafe_id, 'Roomali Roti', 'Thin handkerchief bread', 15, 'Bread', true),
     (cafe_id, 'Butter Roomali Roti', 'Buttered thin handkerchief bread', 20, 'Bread', true);
 
