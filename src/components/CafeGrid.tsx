@@ -37,20 +37,53 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
 
   const fetchCafes = async () => {
     try {
-      const { data, error } = await supabase
+      console.log('Fetching cafes...');
+      
+      // First, try to get all cafes without filtering to see what's available
+      let { data, error } = await supabase
         .from('cafes')
         .select('*')
-        .eq('accepting_orders', true)
-        .order('average_rating', { ascending: false, nullsLast: true })
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching cafes:', error);
+        throw error;
+      }
+
+      console.log('Raw cafes data:', data);
+
+      // Filter cafes that are accepting orders (if the column exists)
+      let filteredCafes = data || [];
+      
+      // Check if accepting_orders column exists and filter accordingly
+      if (data && data.length > 0 && 'accepting_orders' in data[0]) {
+        filteredCafes = data.filter((cafe: any) => cafe.accepting_orders !== false);
+      }
+
+      // Sort by rating if available, otherwise by name
+      if (filteredCafes.length > 0 && 'average_rating' in filteredCafes[0]) {
+        filteredCafes.sort((a: any, b: any) => {
+          const ratingA = a.average_rating || 0;
+          const ratingB = b.average_rating || 0;
+          if (ratingA !== ratingB) {
+            return ratingB - ratingA; // Descending order
+          }
+          return a.name.localeCompare(b.name); // Alphabetical fallback
+        });
+      } else {
+        filteredCafes.sort((a: any, b: any) => a.name.localeCompare(b.name));
+      }
+
+      console.log('Filtered and sorted cafes:', filteredCafes);
 
       // Limit cafes if not showing all
-      const limitedCafes = showAll ? data : data?.slice(0, maxCafes);
+      const limitedCafes = showAll ? filteredCafes : filteredCafes.slice(0, maxCafes);
       setCafes(limitedCafes || []);
+      
     } catch (error) {
       console.error('Error fetching cafes:', error);
+      // Set empty array on error to prevent infinite loading
+      setCafes([]);
     } finally {
       setLoading(false);
     }
