@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
@@ -29,6 +29,9 @@ export type Database = {
           total_reviews: number | null
           type: string
           updated_at: string
+          average_rating: number | null
+          total_ratings: number | null
+          cuisine_categories: string[] | null
         }
         Insert: {
           created_at?: string
@@ -44,6 +47,9 @@ export type Database = {
           total_reviews?: number | null
           type: string
           updated_at?: string
+          average_rating?: number | null
+          total_ratings?: number | null
+          cuisine_categories?: string[] | null
         }
         Update: {
           created_at?: string
@@ -59,6 +65,9 @@ export type Database = {
           total_reviews?: number | null
           type?: string
           updated_at?: string
+          average_rating?: number | null
+          total_ratings?: number | null
+          cuisine_categories?: string[] | null
         }
         Relationships: []
       }
@@ -423,6 +432,55 @@ export type Database = {
             referencedColumns: ["id"]
           }
         ]
+      }
+      cafe_ratings: {
+        Row: {
+          id: string
+          cafe_id: string
+          user_id: string
+          rating: number
+          review: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          cafe_id: string
+          user_id: string
+          rating: number
+          review?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          cafe_id?: string
+          user_id?: string
+          rating?: number
+          review?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      user_favorites: {
+        Row: {
+          id: string
+          user_id: string
+          cafe_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          cafe_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          cafe_id?: string
+          created_at?: string
+        }
       }
     }
     Views: {

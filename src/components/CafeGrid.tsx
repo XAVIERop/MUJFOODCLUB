@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Star, Phone, MessageCircle, MapPin, Clock, Heart } from 'lucide-react';
+import { supabase } from '../integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Star, Clock, MapPin, Phone, ShoppingCart, MessageCircle } from "lucide-react";
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useFavorites } from '../hooks/useFavorites';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 
 interface Cafe {
   id: string;
@@ -15,16 +14,22 @@ interface Cafe {
   location: string;
   phone: string;
   hours: string;
-  rating: number;
-  total_reviews: number;
   accepting_orders: boolean;
+  average_rating: number | null;
+  total_ratings: number | null;
+  cuisine_categories: string[] | null;
 }
 
-const CafeGrid = () => {
+interface CafeGridProps {
+  showAll?: boolean;
+  maxCafes?: number;
+}
+
+export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 3 }) => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   useEffect(() => {
     fetchCafes();
@@ -35,21 +40,34 @@ const CafeGrid = () => {
       const { data, error } = await supabase
         .from('cafes')
         .select('*')
-        .eq('is_active', true)
-        .order('rating', { ascending: false });
+        .eq('accepting_orders', true)
+        .order('average_rating', { ascending: false, nullsLast: true })
+        .order('name');
 
       if (error) throw error;
-      setCafes(data || []);
+
+      // Limit cafes if not showing all
+      const limitedCafes = showAll ? data : data?.slice(0, maxCafes);
+      setCafes(limitedCafes || []);
     } catch (error) {
       console.error('Error fetching cafes:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load cafes",
-        variant: "destructive"
-      });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCall = (phone: string) => {
+    window.open(`tel:${phone}`, '_blank');
+  };
+
+  const handleWhatsApp = (phone: string, cafeName: string) => {
+    const message = `Hi! I'm interested in ordering from ${cafeName}. Can you tell me more about your menu?`;
+    const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const handleFavoriteToggle = async (cafeId: string) => {
+    await toggleFavorite(cafeId);
   };
 
   const handleViewMenu = (cafeId: string) => {
@@ -60,156 +78,168 @@ const CafeGrid = () => {
     navigate(`/menu/${cafeId}`);
   };
 
-  const handleCall = (phoneNumber: string) => {
-    window.open(`tel:${phoneNumber}`, '_self');
-  };
-
-  const handleWhatsApp = (phoneNumber: string, cafeName: string) => {
-    const message = `Hi ${cafeName}! I'd like to place an order.`;
-    const whatsappUrl = `https://wa.me/${phoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-  };
-
   if (loading) {
     return (
-      <section id="cafes" className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading cafes...</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(maxCafes)].map((_, i) => (
+          <div key={i} className="bg-white rounded-lg shadow-md p-6 animate-pulse">
+            <div className="h-4 bg-gray-200 rounded mb-2"></div>
+            <div className="h-3 bg-gray-200 rounded mb-4"></div>
+            <div className="h-20 bg-gray-200 rounded mb-4"></div>
+            <div className="h-8 bg-gray-200 rounded"></div>
           </div>
-        </div>
-      </section>
+        ))}
+      </div>
     );
   }
 
   return (
-    <section id="cafes" className="py-16 bg-muted/30">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div className="text-center mb-12">
-          <Badge className="mb-4 gradient-success text-white">
-            Popular Cafes
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            Choose Your Favorite Cafe
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover delicious food from our partner cafes and earn rewards with every order
-          </p>
-        </div>
-
-        {/* Cafe Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {cafes.map((cafe, index) => (
-            <Card 
-              key={cafe.id} 
-              className="group food-card animate-fade-in border-0 overflow-hidden"
-              style={{ animationDelay: `${index * 150}ms` }}
-            >
-              {/* Image Section */}
-              <div className="relative h-48 bg-gradient-to-br from-primary/20 to-accent/20 overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-4xl font-bold text-primary/30">{cafe.name}</div>
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {cafes.map((cafe) => (
+          <div key={cafe.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            {/* Cafe Header */}
+            <div className="p-6 pb-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-1">{cafe.name}</h3>
+                  <p className="text-sm text-gray-600 mb-2">{cafe.type}</p>
                 </div>
-                
-                {/* Status Badge */}
-                <Badge className={`absolute top-4 left-4 ${cafe.accepting_orders ? 'bg-green-500' : 'bg-red-500'} text-white`}>
-                  {cafe.accepting_orders ? 'Open' : 'Closed'}
-                </Badge>
-
-                {/* Discount Badge */}
-                <Badge className="absolute top-4 right-4 gradient-primary text-white">
-                  15% Off
-                </Badge>
+                <button
+                  onClick={() => handleFavoriteToggle(cafe.id)}
+                  className={`p-2 rounded-full transition-colors ${
+                    isFavorite(cafe.id)
+                      ? 'text-red-500 hover:text-red-600'
+                      : 'text-gray-400 hover:text-red-500'
+                  }`}
+                >
+                  <Heart
+                    className={`w-5 h-5 ${
+                      isFavorite(cafe.id) ? 'fill-current' : ''
+                    }`}
+                  />
+                </button>
               </div>
 
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-smooth">
-                      {cafe.name}
-                    </h3>
-                    <p className="text-muted-foreground font-medium">{cafe.type}</p>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-semibold">{cafe.rating}</span>
-                    <span className="text-muted-foreground text-sm">({cafe.total_reviews})</span>
-                  </div>
+              {/* Rating */}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-4 h-4 ${
+                        i < (cafe.average_rating || 0)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  ))}
                 </div>
-              </CardHeader>
+                <span className="text-sm text-gray-600">
+                  {cafe.average_rating ? cafe.average_rating.toFixed(1) : '0.0'}
+                  {cafe.total_ratings && ` (${cafe.total_ratings})`}
+                </span>
+              </div>
 
-              <CardContent className="space-y-4">
-                {/* Description */}
-                <p className="text-sm text-muted-foreground">{cafe.description}</p>
+              {/* Description */}
+              <p className="text-gray-700 text-sm leading-relaxed mb-4 line-clamp-3">
+                {cafe.description}
+              </p>
 
-                {/* Info */}
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <div className="flex items-center">
-                    <MapPin className="w-4 h-4 mr-2 text-primary" />
-                    {cafe.location}
-                  </div>
-                  <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-2 text-primary" />
-                    {cafe.hours}
-                  </div>
-                  <div className="flex items-center">
-                    <Phone className="w-4 h-4 mr-2 text-primary" />
-                    {cafe.phone}
-                  </div>
+              {/* Cuisine Categories */}
+              {cafe.cuisine_categories && cafe.cuisine_categories.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {cafe.cuisine_categories.slice(0, 3).map((category, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {category}
+                    </Badge>
+                  ))}
                 </div>
+              )}
 
-                {/* Delivery Time */}
-                <div className="flex items-center justify-between pt-2 border-t border-border">
-                  <span className="text-sm font-medium text-foreground">
-                    Delivery: 15-20 min
-                  </span>
+              {/* Location and Hours */}
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <MapPin className="w-4 h-4" />
+                  <span>{cafe.location}</span>
                 </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Clock className="w-4 h-4" />
+                  <span>{cafe.hours}</span>
+                </div>
+              </div>
 
-                {/* All Action Buttons in 2x2 Grid */}
-                <div className="grid grid-cols-2 gap-2 pt-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleViewMenu(cafe.id)}
-                  >
-                    View Menu
-                  </Button>
-                  <Button 
-                    variant="order" 
-                    size="sm" 
-                    onClick={() => handleOrderNow(cafe.id)}
-                    disabled={!cafe.accepting_orders}
-                    className={!cafe.accepting_orders ? 'opacity-50 cursor-not-allowed' : ''}
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-1" />
-                    {cafe.accepting_orders ? 'Order' : 'Closed'}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleCall(cafe.phone)}
-                  >
-                    <Phone className="w-4 h-4 mr-1" />
-                    Call
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleWhatsApp(cafe.phone, cafe.name)}
-                  >
-                    <MessageCircle className="w-4 h-4 mr-1" />
-                    WhatsApp
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              {/* Order Status */}
+              <div className="mb-4">
+                <Badge
+                  variant={cafe.accepting_orders ? "default" : "destructive"}
+                  className="text-xs"
+                >
+                  {cafe.accepting_orders ? "Accepting Orders" : "Not Accepting Orders"}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="px-6 pb-4">
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleViewMenu(cafe.id)}
+                  className="text-xs"
+                >
+                  View Menu
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => handleOrderNow(cafe.id)}
+                  disabled={!cafe.accepting_orders}
+                  className="text-xs"
+                >
+                  Order Now
+                </Button>
+              </div>
+
+              {/* Contact Buttons */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCall(cafe.phone)}
+                  className="text-xs flex items-center gap-1"
+                >
+                  <Phone className="w-3 h-3" />
+                  Call
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleWhatsApp(cafe.phone, cafe.name)}
+                  className="text-xs flex items-center gap-1"
+                >
+                  <MessageCircle className="w-3 h-3" />
+                  WhatsApp
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
-    </section>
+
+      {/* Show More Link */}
+      {!showAll && cafes.length >= maxCafes && (
+        <div className="text-center">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/cafes')}
+            className="px-8"
+          >
+            Show All Cafes
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };
-
-export default CafeGrid;
