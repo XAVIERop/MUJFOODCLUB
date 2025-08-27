@@ -1,9 +1,8 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { QrCode, ArrowRight } from "lucide-react";
+import { QrCode, ArrowRight, Star, Gift, TrendingUp } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
-import QRCodeDisplay from './QRCodeDisplay';
 
 const QRCodeSection = () => {
   const { user, profile } = useAuth();
@@ -21,35 +20,90 @@ const QRCodeSection = () => {
           </p>
         </div>
 
-        <div className="flex justify-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          {/* Feature 1 */}
+          <Card className="text-center border-0 shadow-lg">
+            <CardHeader>
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <QrCode className="w-8 h-8 text-primary" />
+              </div>
+              <CardTitle className="text-xl">Quick & Easy</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Simply show your QR code to cafe staff for instant order linking and automatic rewards
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Feature 2 */}
+          <Card className="text-center border-0 shadow-lg">
+            <CardHeader>
+              <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="w-8 h-8 text-green-500" />
+              </div>
+              <CardTitle className="text-xl">Earn Rewards</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Automatically earn loyalty points with every purchase and unlock tier-based discounts
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Feature 3 */}
+          <Card className="text-center border-0 shadow-lg">
+            <CardHeader>
+              <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="w-8 h-8 text-purple-500" />
+              </div>
+              <CardTitle className="text-xl">Track Progress</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Monitor your order history, loyalty tier progress, and total savings in real-time
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="text-center mt-12">
           {user && profile ? (
-            <QRCodeDisplay profile={profile} variant="simple" />
+            <div className="space-y-4">
+              <p className="text-lg text-muted-foreground">
+                Welcome back, <span className="font-semibold text-foreground">{profile.full_name}</span>!
+              </p>
+              <div className="flex items-center justify-center space-x-6">
+                <Button 
+                  onClick={() => navigate('/rewards')}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <Gift className="w-4 h-4 mr-2" />
+                  View My Rewards
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate('/qr-code')}
+                >
+                  <QrCode className="w-4 h-4 mr-2" />
+                  My QR Code
+                </Button>
+              </div>
+            </div>
           ) : (
-            <Card className="w-full max-w-md mx-auto">
-              <CardHeader className="text-center">
-                <CardTitle className="flex items-center justify-center space-x-2">
-                  <QrCode className="w-6 h-6 text-primary" />
-                  <span>Get Your QR Code</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="text-center">
-                  <div className="w-48 h-48 bg-muted/30 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <QrCode className="w-16 h-16 text-muted-foreground" />
-                  </div>
-                  <p className="text-muted-foreground mb-6">
-                    Sign in to get your personalized QR code and start earning rewards
-                  </p>
-                  <Button 
-                    onClick={() => navigate('/auth')}
-                    className="w-full"
-                  >
-                    Generate My QR Code
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <p className="text-lg text-muted-foreground">
+                Join thousands of students already earning rewards
+              </p>
+              <Button 
+                onClick={() => navigate('/auth')}
+                size="lg"
+                className="bg-primary hover:bg-primary/90"
+              >
+                Get Started Today
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
           )}
         </div>
       </div>
