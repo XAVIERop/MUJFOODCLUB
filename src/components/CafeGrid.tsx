@@ -159,28 +159,6 @@ const CafeGrid = () => {
                   </div>
                 </div>
 
-                {/* Contact Buttons */}
-                <div className="flex gap-2 pt-2 border-t border-border">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => handleCall(cafe.phone)}
-                  >
-                    <Phone className="w-4 h-4 mr-2" />
-                    Call
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => handleWhatsApp(cafe.phone, cafe.name)}
-                  >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    WhatsApp
-                  </Button>
-                </div>
-
                 {/* Delivery Time */}
                 <div className="flex items-center justify-between pt-2 border-t border-border">
                   <span className="text-sm font-medium text-foreground">
@@ -188,12 +166,11 @@ const CafeGrid = () => {
                   </span>
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-2 pt-2">
+                {/* All Action Buttons in 2x2 Grid */}
+                <div className="grid grid-cols-2 gap-2 pt-2">
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="flex-1"
                     onClick={() => handleViewMenu(cafe.id)}
                   >
                     View Menu
@@ -201,11 +178,26 @@ const CafeGrid = () => {
                   <Button 
                     variant="order" 
                     size="sm" 
-                    className="flex-1"
                     onClick={() => handleOrderNow(cafe.id)}
                   >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Order Now
+                    <ShoppingCart className="w-4 h-4 mr-1" />
+                    Order
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleCall(cafe.phone)}
+                  >
+                    <Phone className="w-4 h-4 mr-1" />
+                    Call
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleWhatsApp(cafe.phone, cafe.name)}
+                  >
+                    <MessageCircle className="w-4 h-4 mr-1" />
+                    WhatsApp
                   </Button>
                 </div>
               </CardContent>
