@@ -132,9 +132,9 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
         {cafes.map((cafe) => (
           <div key={cafe.id} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 group">
             {/* Cafe Header with Original Theme */}
-            <div className="relative h-32 bg-gradient-to-br from-primary/10 to-secondary/10 p-6">
+            <div className="relative h-20 bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
               {/* Favorite Button and Rating - Top Right */}
-              <div className="absolute top-4 right-4 flex items-center gap-2">
+              <div className="absolute top-3 right-3 flex items-center gap-2">
                 {/* Overall Rating Display */}
                 <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 flex items-center gap-1 shadow-sm">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -166,8 +166,8 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
               </div>
 
               {/* Cafe Name and Type */}
-              <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-primary transition-colors">
+              <div className="absolute bottom-3 left-3 right-3">
+                <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-primary transition-colors">
                   {cafe.name}
                 </h3>
                 <p className="text-sm text-gray-600 font-medium">{cafe.type}</p>
