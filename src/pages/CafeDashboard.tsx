@@ -6,12 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, CheckCircle, AlertCircle, Truck, ChefHat, Receipt, Bell, User, MapPin, Phone, Download, Search, BarChart3, Calendar, DollarSign, TrendingUp, Users, Package, Trash2, Settings } from 'lucide-react';
+import { Clock, CheckCircle, AlertCircle, Truck, ChefHat, Receipt, Bell, User, MapPin, Phone, Download, Search, BarChart3, Calendar, DollarSign, TrendingUp, Users, Package, Trash2, Settings, Volume2, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useSoundNotifications } from '@/hooks/useSoundNotifications';
+import { soundNotificationService } from '@/services/soundNotificationService';
 import NotificationCenter from '../components/NotificationCenter';
 import CafeScanner from '../components/CafeScanner';
+import OrderNotificationSound from '../components/OrderNotificationSound';
 import Header from '../components/Header';
 
 interface OrderItem {
@@ -73,6 +76,7 @@ const CafeDashboard = () => {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isSoundSettingsOpen, setIsSoundSettingsOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [cafeId, setCafeId] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
@@ -82,6 +86,14 @@ const CafeDashboard = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Sound notification settings
+  const {
+    isEnabled: soundEnabled,
+    volume: soundVolume,
+    toggleSound,
+    setVolume,
+  } = useSoundNotifications();
 
 
 
@@ -607,9 +619,17 @@ const CafeDashboard = () => {
           table: 'orders',
           filter: `cafe_id=eq.${cafeId}`
         }, 
-        (payload) => {
+        async (payload) => {
           fetchOrders();
           fetchAnalytics();
+          setUnreadNotifications(prev => prev + 1);
+          
+          // Play sound notification for new orders
+          if (soundEnabled) {
+            soundNotificationService.updateSettings(soundEnabled, soundVolume);
+            await soundNotificationService.playOrderReceivedSound();
+          }
+          
           toast({
             title: "New Order!",
             description: `Order #${payload.new.order_number} received`,
@@ -696,6 +716,16 @@ const CafeDashboard = () => {
           </div>
           
           <div className="flex items-center space-x-3">
+            {/* Sound Settings button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSoundSettingsOpen(true)}
+            >
+              <Volume2 className="w-4 h-4 mr-2" />
+              Sound
+            </Button>
+            
             {/* Management button */}
             <Button
               variant="outline"
@@ -1136,6 +1166,40 @@ const CafeDashboard = () => {
         userType="cafe_staff"
         cafeId={cafeId}
       />
+
+      {/* Sound Settings Modal */}
+      {isSoundSettingsOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center">
+                <Volume2 className="w-5 h-5 mr-2 text-primary" />
+                Sound Notifications
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSoundSettingsOpen(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <OrderNotificationSound
+              isEnabled={soundEnabled}
+              onToggle={toggleSound}
+              volume={soundVolume}
+              onVolumeChange={setVolume}
+            />
+            
+            <div className="mt-4 flex justify-end">
+              <Button onClick={() => setIsSoundSettingsOpen(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
