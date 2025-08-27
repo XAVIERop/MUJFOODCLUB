@@ -51,17 +51,36 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
       }
 
       console.log('Raw cafes data:', data);
+      console.log('Total cafes found:', data?.length || 0);
+      
+      // Log each cafe name to see what's available
+      if (data) {
+        data.forEach((cafe: any, index) => {
+          console.log(`Cafe ${index + 1}:`, {
+            name: cafe.name,
+            accepting_orders: cafe.accepting_orders,
+            average_rating: cafe.average_rating,
+            total_ratings: cafe.total_ratings,
+            cuisine_categories: cafe.cuisine_categories
+          });
+        });
+      }
 
       // Filter cafes that are accepting orders (if the column exists)
       let filteredCafes = data || [];
       
       // Check if accepting_orders column exists and filter accordingly
       if (data && data.length > 0 && 'accepting_orders' in data[0]) {
+        console.log('accepting_orders column exists, filtering...');
         filteredCafes = data.filter((cafe: any) => cafe.accepting_orders !== false);
+        console.log('After accepting_orders filter:', filteredCafes.length, 'cafes');
+      } else {
+        console.log('accepting_orders column does not exist, skipping filter');
       }
 
       // Sort by rating if available, otherwise by name
       if (filteredCafes.length > 0 && 'average_rating' in filteredCafes[0]) {
+        console.log('average_rating column exists, sorting by rating...');
         filteredCafes.sort((a: any, b: any) => {
           const ratingA = a.average_rating || 0;
           const ratingB = b.average_rating || 0;
@@ -71,13 +90,17 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
           return a.name.localeCompare(b.name); // Alphabetical fallback
         });
       } else {
+        console.log('average_rating column does not exist, sorting by name...');
         filteredCafes.sort((a: any, b: any) => a.name.localeCompare(b.name));
       }
 
       console.log('Filtered and sorted cafes:', filteredCafes);
+      console.log('Final cafe names:', filteredCafes.map(c => c.name));
 
       // Limit cafes if not showing all
       const limitedCafes = showAll ? filteredCafes : filteredCafes.slice(0, maxCafes);
+      console.log('Limited cafes for display:', limitedCafes.map(c => c.name));
+      
       setCafes(limitedCafes || []);
       
     } catch (error) {

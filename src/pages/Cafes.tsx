@@ -71,7 +71,7 @@ const Cafes = () => {
 
   const fetchCafes = async () => {
     try {
-      console.log('Fetching cafes for Cafes page...');
+      console.log('Cafes page: Fetching cafes...');
       
       // First, try to get all cafes without filtering to see what's available
       let { data, error } = await supabase
@@ -80,22 +80,41 @@ const Cafes = () => {
         .order('name');
 
       if (error) {
-        console.error('Error fetching cafes:', error);
+        console.error('Cafes page: Error fetching cafes:', error);
         throw error;
       }
 
-      console.log('Raw cafes data:', data);
+      console.log('Cafes page: Raw cafes data:', data);
+      console.log('Cafes page: Total cafes found:', data?.length || 0);
+      
+      // Log each cafe name to see what's available
+      if (data) {
+        data.forEach((cafe: any, index) => {
+          console.log(`Cafes page: Cafe ${index + 1}:`, {
+            name: cafe.name,
+            accepting_orders: cafe.accepting_orders,
+            average_rating: cafe.average_rating,
+            total_ratings: cafe.total_ratings,
+            cuisine_categories: cafe.cuisine_categories
+          });
+        });
+      }
 
       // Filter cafes that are accepting orders (if the column exists)
       let filteredCafes = data || [];
       
       // Check if accepting_orders column exists and filter accordingly
       if (data && data.length > 0 && 'accepting_orders' in data[0]) {
+        console.log('Cafes page: accepting_orders column exists, filtering...');
         filteredCafes = data.filter((cafe: any) => cafe.accepting_orders !== false);
+        console.log('Cafes page: After accepting_orders filter:', filteredCafes.length, 'cafes');
+      } else {
+        console.log('Cafes page: accepting_orders column does not exist, skipping filter');
       }
 
       // Sort by rating if available, otherwise by name
       if (filteredCafes.length > 0 && 'average_rating' in filteredCafes[0]) {
+        console.log('Cafes page: average_rating column exists, sorting by rating...');
         filteredCafes.sort((a: any, b: any) => {
           const ratingA = a.average_rating || 0;
           const ratingB = b.average_rating || 0;
@@ -105,14 +124,17 @@ const Cafes = () => {
           return a.name.localeCompare(b.name); // Alphabetical fallback
         });
       } else {
+        console.log('Cafes page: average_rating column does not exist, sorting by name...');
         filteredCafes.sort((a: any, b: any) => a.name.localeCompare(b.name));
       }
 
-      console.log('Filtered and sorted cafes:', filteredCafes);
+      console.log('Cafes page: Filtered and sorted cafes:', filteredCafes);
+      console.log('Cafes page: Final cafe names:', filteredCafes.map(c => c.name));
+      
       setCafes(filteredCafes || []);
       
     } catch (error) {
-      console.error('Error fetching cafes:', error);
+      console.error('Cafes page: Error fetching cafes:', error);
       // Set empty array on error to prevent infinite loading
       setCafes([]);
     } finally {
