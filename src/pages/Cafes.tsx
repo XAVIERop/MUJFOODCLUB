@@ -6,7 +6,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { CafeRating } from '../components/CafeRating';
+
 
 interface Cafe {
   id: string;
@@ -29,7 +29,7 @@ const Cafes = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [selectedCafeForRating, setSelectedCafeForRating] = useState<string | null>(null);
+
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite, getFavoriteCafes } = useFavorites();
 
@@ -316,8 +316,8 @@ const Cafes = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCafes.map((cafe) => (
               <div key={cafe.id} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 group">
-                {/* Cafe Header with Gradient Background */}
-                <div className="relative h-32 bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+                {/* Cafe Header with Original Theme */}
+                <div className="relative h-32 bg-gradient-to-br from-primary/10 to-secondary/10 p-6">
                   {/* Favorite Button - Top Right */}
                   <button
                     onClick={() => handleFavoriteToggle(cafe.id)}
@@ -336,7 +336,7 @@ const Cafes = () => {
 
                   {/* Cafe Name and Type */}
                   <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors">
+                    <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-primary transition-colors">
                       {cafe.name}
                     </h3>
                     <p className="text-sm text-gray-600 font-medium">{cafe.type}</p>
@@ -388,7 +388,7 @@ const Cafes = () => {
                   {cafe.cuisine_categories && cafe.cuisine_categories.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-4">
                       {cafe.cuisine_categories.slice(0, 2).map((category, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 border-blue-200">
+                        <Badge key={index} variant="secondary" className="text-xs px-2 py-1">
                           {category}
                         </Badge>
                       ))}
@@ -403,11 +403,11 @@ const Cafes = () => {
                   {/* Location and Hours - Compact */}
                   <div className="space-y-2 mb-6">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="w-4 h-4 text-indigo-500" />
+                      <MapPin className="w-4 h-4 text-primary" />
                       <span className="truncate">{cafe.location}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Clock className="w-4 h-4 text-indigo-500" />
+                      <Clock className="w-4 h-4 text-primary" />
                       <span>{cafe.hours}</span>
                     </div>
                   </div>
@@ -428,7 +428,7 @@ const Cafes = () => {
                         size="sm"
                         onClick={() => handleOrderNow(cafe.id)}
                         disabled={!cafe.accepting_orders}
-                        className="text-xs font-medium bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                        className="text-xs font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
                       >
                         Order Now
                       </Button>
@@ -440,7 +440,7 @@ const Cafes = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleCall(cafe.phone)}
-                        className="text-xs text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
+                        className="text-xs text-gray-600 hover:text-primary hover:bg-primary/10"
                       >
                         <Phone className="w-3 h-3 mr-1" />
                         Call
@@ -455,16 +455,6 @@ const Cafes = () => {
                         WhatsApp
                       </Button>
                     </div>
-
-                    {/* Rate Cafe Button */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedCafeForRating(cafe.id)}
-                      className="w-full text-xs font-medium hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-300"
-                    >
-                      ⭐ Rate This Cafe
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -472,34 +462,7 @@ const Cafes = () => {
           </div>
         )}
 
-        {/* Rating Modal */}
-        {selectedCafeForRating && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Rate Cafe</h3>
-                  <button
-                    onClick={() => setSelectedCafeForRating(null)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                
-                <CafeRating
-                  cafeId={selectedCafeForRating}
-                  averageRating={cafes.find(c => c.id === selectedCafeForRating)?.average_rating || 0}
-                  totalRatings={cafes.find(c => c.id === selectedCafeForRating)?.total_ratings || 0}
-                  onRatingChange={() => {
-                    setSelectedCafeForRating(null);
-                    fetchCafes(); // Refresh to get updated ratings
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+
       </div>
     </div>
   );

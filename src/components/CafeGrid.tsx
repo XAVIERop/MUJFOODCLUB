@@ -131,8 +131,8 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cafes.map((cafe) => (
           <div key={cafe.id} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 group">
-            {/* Cafe Header with Gradient Background */}
-            <div className="relative h-32 bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+            {/* Cafe Header with Original Theme */}
+            <div className="relative h-32 bg-gradient-to-br from-primary/10 to-secondary/10 p-6">
               {/* Favorite Button - Top Right */}
               <button
                 onClick={() => handleFavoriteToggle(cafe.id)}
@@ -151,7 +151,7 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
 
               {/* Cafe Name and Type */}
               <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors">
+                <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-primary transition-colors">
                   {cafe.name}
                 </h3>
                 <p className="text-sm text-gray-600 font-medium">{cafe.type}</p>
@@ -203,7 +203,7 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
               {cafe.cuisine_categories && cafe.cuisine_categories.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-4">
                   {cafe.cuisine_categories.slice(0, 2).map((category, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 border-blue-200">
+                    <Badge key={index} variant="secondary" className="text-xs px-2 py-1">
                       {category}
                     </Badge>
                   ))}
@@ -218,11 +218,11 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
               {/* Location and Hours - Compact */}
               <div className="space-y-2 mb-6">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <MapPin className="w-4 h-4 text-indigo-500" />
+                  <MapPin className="w-4 h-4 text-primary" />
                   <span className="truncate">{cafe.location}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Clock className="w-4 h-4 text-indigo-500" />
+                  <Clock className="w-4 h-4 text-primary" />
                   <span>{cafe.hours}</span>
                 </div>
               </div>
@@ -243,7 +243,7 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
                     size="sm"
                     onClick={() => handleOrderNow(cafe.id)}
                     disabled={!cafe.accepting_orders}
-                    className="text-xs font-medium bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    className="text-xs font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
                     Order Now
                   </Button>
@@ -255,7 +255,7 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
                     variant="ghost"
                     size="sm"
                     onClick={() => handleCall(cafe.phone)}
-                    className="text-xs text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
+                    className="text-xs text-gray-600 hover:text-primary hover:bg-primary/10"
                   >
                     <Phone className="w-3 h-3 mr-1" />
                     Call
@@ -283,7 +283,7 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
             variant="outline"
             size="lg"
             onClick={() => navigate('/cafes')}
-            className="px-8 py-3 text-base font-medium hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 transition-all duration-200"
+            className="px-8 py-3 text-base font-medium hover:bg-primary/10 hover:text-primary hover:border-primary transition-all duration-200"
           >
             Show All Cafes
           </Button>
