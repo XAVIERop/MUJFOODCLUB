@@ -318,21 +318,37 @@ const Cafes = () => {
               <div key={cafe.id} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 group">
                 {/* Cafe Header with Original Theme */}
                 <div className="relative h-32 bg-gradient-to-br from-primary/10 to-secondary/10 p-6">
-                  {/* Favorite Button - Top Right */}
-                  <button
-                    onClick={() => handleFavoriteToggle(cafe.id)}
-                    className={`absolute top-4 right-4 p-2 rounded-full transition-all duration-200 ${
-                      isFavorite(cafe.id)
-                        ? 'bg-red-500 text-white shadow-lg scale-110'
-                        : 'bg-white/80 text-gray-400 hover:bg-white hover:text-red-500 hover:scale-110'
-                    }`}
-                  >
-                    <Heart
-                      className={`w-4 h-4 ${
-                        isFavorite(cafe.id) ? 'fill-current' : ''
+                  {/* Favorite Button and Rating - Top Right */}
+                  <div className="absolute top-4 right-4 flex items-center gap-2">
+                    {/* Overall Rating Display */}
+                    <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 flex items-center gap-1 shadow-sm">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="text-sm font-semibold text-gray-800">
+                        {cafe.average_rating ? cafe.average_rating.toFixed(1) : '0.0'}
+                      </span>
+                      {cafe.total_ratings && cafe.total_ratings > 0 && (
+                        <span className="text-xs text-gray-500 ml-1">
+                          ({cafe.total_ratings})
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Favorite Button */}
+                    <button
+                      onClick={() => handleFavoriteToggle(cafe.id)}
+                      className={`p-2 rounded-full transition-all duration-200 ${
+                        isFavorite(cafe.id)
+                          ? 'bg-red-500 text-white shadow-lg scale-110'
+                          : 'bg-white/80 text-gray-400 hover:bg-white hover:text-red-500 hover:scale-110'
                       }`}
-                    />
-                  </button>
+                    >
+                      <Heart
+                        className={`w-4 h-4 ${
+                          isFavorite(cafe.id) ? 'fill-current' : ''
+                        }`}
+                      />
+                    </button>
+                  </div>
 
                   {/* Cafe Name and Type */}
                   <div className="absolute bottom-4 left-4 right-4">
@@ -343,43 +359,19 @@ const Cafes = () => {
                   </div>
                 </div>
 
-                {/* Main Content */}
-                <div className="p-6">
-                  {/* Rating Section */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < (cafe.average_rating || 0)
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm font-medium text-gray-700">
-                        {cafe.average_rating ? cafe.average_rating.toFixed(1) : '0.0'}
-                      </span>
-                      {cafe.total_ratings && (
-                        <span className="text-xs text-gray-500">
-                          ({cafe.total_ratings})
-                        </span>
-                      )}
-                    </div>
-                    
+                                  {/* Main Content */}
+                  <div className="p-6">
                     {/* Order Status Badge */}
-                    <Badge
-                      variant={cafe.accepting_orders ? "default" : "destructive"}
-                      className="text-xs px-2 py-1"
-                    >
-                      {cafe.accepting_orders ? "Open" : "Closed"}
-                    </Badge>
-                  </div>
+                    <div className="flex justify-end mb-4">
+                      <Badge
+                        variant={cafe.accepting_orders ? "default" : "destructive"}
+                        className="text-xs px-2 py-1"
+                      >
+                        {cafe.accepting_orders ? "Open" : "Closed"}
+                      </Badge>
+                    </div>
 
-                  {/* Description */}
+                    {/* Description */}
                   <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2">
                     {cafe.description}
                   </p>
