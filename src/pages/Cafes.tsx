@@ -350,6 +350,16 @@ const Cafes = () => {
                     </button>
                   </div>
 
+                  {/* Open/Close Status - Below Favorite Button */}
+                  <div className="absolute top-16 right-3">
+                    <Badge
+                      variant={cafe.accepting_orders ? "default" : "destructive"}
+                      className="text-xs px-2 py-1"
+                    >
+                      {cafe.accepting_orders ? "Open" : "Closed"}
+                    </Badge>
+                  </div>
+
                   {/* Cafe Name and Type */}
                   <div className="absolute bottom-3 left-3 right-3">
                     <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-primary transition-colors">
@@ -359,19 +369,9 @@ const Cafes = () => {
                   </div>
                 </div>
 
-                                  {/* Main Content */}
-                  <div className="p-6">
-                    {/* Order Status Badge */}
-                    <div className="flex justify-end mb-4">
-                      <Badge
-                        variant={cafe.accepting_orders ? "default" : "destructive"}
-                        className="text-xs px-2 py-1"
-                      >
-                        {cafe.accepting_orders ? "Open" : "Closed"}
-                      </Badge>
-                    </div>
-
-                    {/* Description */}
+                {/* Main Content */}
+                <div className="p-6">
+                  {/* Description */}
                   <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2">
                     {cafe.description}
                   </p>
