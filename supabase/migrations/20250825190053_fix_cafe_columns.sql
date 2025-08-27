@@ -35,6 +35,8 @@ BEGIN
     ) THEN
         ALTER TABLE public.cafes ADD COLUMN cuisine_categories TEXT[] DEFAULT ARRAY['Multi-Cuisine'];
     END IF;
+
+    RAISE NOTICE 'Cafe columns checked and added if needed.';
 END $$;
 
 -- Update existing cafes to have default values
@@ -60,4 +62,5 @@ UPDATE public.cafes
 SET accepting_orders = true 
 WHERE accepting_orders IS NULL;
 
-RAISE NOTICE 'Cafe columns fixed successfully. All existing cafes now have required columns.';
+-- Final confirmation
+SELECT 'Cafe columns fixed successfully. All existing cafes now have required columns.' as status;
