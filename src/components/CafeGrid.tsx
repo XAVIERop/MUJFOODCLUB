@@ -130,130 +130,146 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cafes.map((cafe) => (
-          <div key={cafe.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-            {/* Cafe Header */}
-            <div className="p-6 pb-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-1">{cafe.name}</h3>
-                  <p className="text-sm text-gray-600 mb-2">{cafe.type}</p>
-                </div>
-                <button
-                  onClick={() => handleFavoriteToggle(cafe.id)}
-                  className={`p-2 rounded-full transition-colors ${
-                    isFavorite(cafe.id)
-                      ? 'text-red-500 hover:text-red-600'
-                      : 'text-gray-400 hover:text-red-500'
+          <div key={cafe.id} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 group">
+            {/* Cafe Header with Gradient Background */}
+            <div className="relative h-32 bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+              {/* Favorite Button - Top Right */}
+              <button
+                onClick={() => handleFavoriteToggle(cafe.id)}
+                className={`absolute top-4 right-4 p-2 rounded-full transition-all duration-200 ${
+                  isFavorite(cafe.id)
+                    ? 'bg-red-500 text-white shadow-lg scale-110'
+                    : 'bg-white/80 text-gray-400 hover:bg-white hover:text-red-500 hover:scale-110'
+                }`}
+              >
+                <Heart
+                  className={`w-4 h-4 ${
+                    isFavorite(cafe.id) ? 'fill-current' : ''
                   }`}
-                >
-                  <Heart
-                    className={`w-5 h-5 ${
-                      isFavorite(cafe.id) ? 'fill-current' : ''
-                    }`}
-                  />
-                </button>
-              </div>
+                />
+              </button>
 
-              {/* Rating */}
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-4 h-4 ${
-                        i < (cafe.average_rating || 0)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
+              {/* Cafe Name and Type */}
+              <div className="absolute bottom-4 left-4 right-4">
+                <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors">
+                  {cafe.name}
+                </h3>
+                <p className="text-sm text-gray-600 font-medium">{cafe.type}</p>
+              </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="p-6">
+              {/* Rating Section */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-4 h-4 ${
+                          i < (cafe.average_rating || 0)
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">
+                    {cafe.average_rating ? cafe.average_rating.toFixed(1) : '0.0'}
+                  </span>
+                  {cafe.total_ratings && (
+                    <span className="text-xs text-gray-500">
+                      ({cafe.total_ratings})
+                    </span>
+                  )}
                 </div>
-                <span className="text-sm text-gray-600">
-                  {cafe.average_rating ? cafe.average_rating.toFixed(1) : '0.0'}
-                  {cafe.total_ratings && ` (${cafe.total_ratings})`}
-                </span>
+                
+                {/* Order Status Badge */}
+                <Badge
+                  variant={cafe.accepting_orders ? "default" : "destructive"}
+                  className="text-xs px-2 py-1"
+                >
+                  {cafe.accepting_orders ? "Open" : "Closed"}
+                </Badge>
               </div>
 
               {/* Description */}
-              <p className="text-gray-700 text-sm leading-relaxed mb-4 line-clamp-3">
+              <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2">
                 {cafe.description}
               </p>
 
               {/* Cuisine Categories */}
               {cafe.cuisine_categories && cafe.cuisine_categories.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {cafe.cuisine_categories.slice(0, 3).map((category, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {cafe.cuisine_categories.slice(0, 2).map((category, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs px-2 py-1 bg-blue-50 text-blue-700 border-blue-200">
                       {category}
                     </Badge>
                   ))}
+                  {cafe.cuisine_categories.length > 2 && (
+                    <Badge variant="outline" className="text-xs px-2 py-1 text-gray-500">
+                      +{cafe.cuisine_categories.length - 2} more
+                    </Badge>
+                  )}
                 </div>
               )}
 
-              {/* Location and Hours */}
-              <div className="space-y-2 mb-4">
+              {/* Location and Hours - Compact */}
+              <div className="space-y-2 mb-6">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <MapPin className="w-4 h-4" />
-                  <span>{cafe.location}</span>
+                  <MapPin className="w-4 h-4 text-indigo-500" />
+                  <span className="truncate">{cafe.location}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Clock className="w-4 h-4" />
+                  <Clock className="w-4 h-4 text-indigo-500" />
                   <span>{cafe.hours}</span>
                 </div>
               </div>
 
-              {/* Order Status */}
-              <div className="mb-4">
-                <Badge
-                  variant={cafe.accepting_orders ? "default" : "destructive"}
-                  className="text-xs"
-                >
-                  {cafe.accepting_orders ? "Accepting Orders" : "Not Accepting Orders"}
-                </Badge>
-              </div>
-            </div>
+              {/* Action Buttons - Clean Grid */}
+              <div className="space-y-3">
+                {/* Primary Actions */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleViewMenu(cafe.id)}
+                    className="text-xs font-medium hover:bg-gray-50"
+                  >
+                    View Menu
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleOrderNow(cafe.id)}
+                    disabled={!cafe.accepting_orders}
+                    className="text-xs font-medium bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    Order Now
+                  </Button>
+                </div>
 
-            {/* Action Buttons */}
-            <div className="px-6 pb-4">
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleViewMenu(cafe.id)}
-                  className="text-xs"
-                >
-                  View Menu
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => handleOrderNow(cafe.id)}
-                  disabled={!cafe.accepting_orders}
-                  className="text-xs"
-                >
-                  Order Now
-                </Button>
-              </div>
-
-              {/* Contact Buttons */}
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleCall(cafe.phone)}
-                  className="text-xs flex items-center gap-1"
-                >
-                  <Phone className="w-3 h-3" />
-                  Call
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleWhatsApp(cafe.phone, cafe.name)}
-                  className="text-xs flex items-center gap-1"
-                >
-                  <MessageCircle className="w-3 h-3" />
-                  WhatsApp
-                </Button>
+                {/* Contact Actions */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleCall(cafe.phone)}
+                    className="text-xs text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
+                  >
+                    <Phone className="w-3 h-3 mr-1" />
+                    Call
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleWhatsApp(cafe.phone, cafe.name)}
+                    className="text-xs text-gray-600 hover:text-green-600 hover:bg-green-50"
+                  >
+                    <MessageCircle className="w-3 h-3 mr-1" />
+                    WhatsApp
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -267,7 +283,7 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
             variant="outline"
             size="lg"
             onClick={() => navigate('/cafes')}
-            className="px-8"
+            className="px-8 py-3 text-base font-medium hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 transition-all duration-200"
           >
             Show All Cafes
           </Button>
