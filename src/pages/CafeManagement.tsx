@@ -102,12 +102,25 @@ const CafeManagement = () => {
     setUpdating(true);
     try {
       const newStatus = !cafe.accepting_orders;
-      const { error } = await supabase
+      
+      console.log('Attempting to update cafe order acceptance:', {
+        cafeId: cafe.id,
+        newStatus,
+        userId: user?.id
+      });
+
+      const { data, error } = await supabase
         .from('cafes')
         .update({ accepting_orders: newStatus })
-        .eq('id', cafe.id);
+        .eq('id', cafe.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Update successful:', data);
 
       setCafe(prev => prev ? { ...prev, accepting_orders: newStatus } : null);
       toast({
@@ -117,9 +130,16 @@ const CafeManagement = () => {
       });
     } catch (error) {
       console.error('Error updating order acceptance:', error);
+      
+      // More detailed error message
+      let errorMessage = "Failed to update order acceptance status";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to update order acceptance status",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
