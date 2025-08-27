@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Volume2, VolumeX, Bell, Settings } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import { soundNotificationService } from '@/services/soundNotificationService';
 
 interface OrderNotificationSoundProps {
   isEnabled: boolean;
@@ -19,55 +20,53 @@ const OrderNotificationSound = ({
   volume, 
   onVolumeChange 
 }: OrderNotificationSoundProps) => {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isAudioSupported, setIsAudioSupported] = useState(true);
   const { toast } = useToast();
 
-  // Initialize audio element
+  // Check audio support on mount
   useEffect(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-      audioRef.current.preload = 'auto';
-      
-      // Set default notification sound (you can replace with your own audio file)
-      audioRef.current.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT';
-      
-      audioRef.current.addEventListener('ended', () => {
-        setIsPlaying(false);
-      });
-      
-      audioRef.current.addEventListener('error', (e) => {
-        console.error('Audio error:', e);
-        toast({
-          title: "Audio Error",
-          description: "Failed to load notification sound",
-          variant: "destructive"
-        });
-      });
-    }
-  }, [toast]);
+    const checkAudioSupport = () => {
+      try {
+        // Check if Web Audio API is supported
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContext) {
+          setIsAudioSupported(false);
+          return;
+        }
 
-  // Update volume when it changes
+        // Test creating an audio context
+        const testContext = new AudioContext();
+        testContext.close();
+        setIsAudioSupported(true);
+      } catch (error) {
+        console.error('Audio not supported:', error);
+        setIsAudioSupported(false);
+      }
+    };
+
+    checkAudioSupport();
+  }, []);
+
+  // Update service settings when props change
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume / 100;
-    }
-  }, [volume]);
+    soundNotificationService.updateSettings(isEnabled, volume);
+  }, [isEnabled, volume]);
 
   const playNotificationSound = async () => {
-    if (!audioRef.current || !isEnabled) return;
+    if (!isEnabled || !isAudioSupported) return;
 
     try {
       setIsPlaying(true);
-      audioRef.current.currentTime = 0;
-      await audioRef.current.play();
+      await soundNotificationService.playNotificationSound();
     } catch (error) {
-      console.error('Failed to play notification sound:', error);
+      console.error('Error playing notification sound:', error);
       toast({
         title: "Audio Error",
-        description: "Failed to play notification sound",
+        description: "Failed to play notification sound. Please check your browser's audio settings.",
         variant: "destructive"
       });
+    } finally {
       setIsPlaying(false);
     }
   };
@@ -77,12 +76,31 @@ const OrderNotificationSound = ({
   };
 
   const stopSound = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-    }
+    soundNotificationService.stopSound();
+    setIsPlaying(false);
   };
+
+  if (!isAudioSupported) {
+    return (
+      <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Bell className="w-5 h-5 text-primary" />
+            <Label className="text-sm font-medium">
+              Sound Notifications
+            </Label>
+          </div>
+          <Switch disabled />
+        </div>
+        
+        <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm text-yellow-800">
+            Audio is not supported in your browser. Sound notifications will not work.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
@@ -170,6 +188,7 @@ const OrderNotificationSound = ({
               <li>• Volume can be adjusted (0-100%)</li>
               <li>• Test sound to verify audio works</li>
               <li>• Settings are saved automatically</li>
+              <li>• Works with browser autoplay policies</li>
             </ul>
           </div>
         </div>

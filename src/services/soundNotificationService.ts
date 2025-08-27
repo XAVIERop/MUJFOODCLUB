@@ -3,6 +3,7 @@ class SoundNotificationService {
   private isEnabled: boolean = true;
   private volume: number = 70;
   private isInitialized: boolean = false;
+  private audioContext: AudioContext | null = null;
 
   constructor() {
     this.initializeAudio();
@@ -12,19 +13,65 @@ class SoundNotificationService {
     if (this.isInitialized) return;
 
     try {
+      // Try to create audio element first
       this.audio = new Audio();
       this.audio.preload = 'auto';
       
-      // Set a pleasant notification sound (you can replace this with your own audio file)
-      this.audio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT';
+      // Use a simple beep sound that's more reliable
+      this.createBeepSound();
       
       this.audio.addEventListener('error', (e) => {
         console.error('Audio initialization error:', e);
+        // Fallback to Web Audio API
+        this.initializeWebAudio();
       });
 
       this.isInitialized = true;
     } catch (error) {
       console.error('Failed to initialize audio:', error);
+      // Fallback to Web Audio API
+      this.initializeWebAudio();
+    }
+  }
+
+  private createBeepSound() {
+    if (!this.audio) return;
+
+    try {
+      // Create a simple beep using Web Audio API
+      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      // Generate a simple beep sound
+      const oscillator = this.audioContext.createOscillator();
+      const gainNode = this.audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
+      
+      oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime);
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
+      
+      oscillator.start(this.audioContext.currentTime);
+      oscillator.stop(this.audioContext.currentTime + 0.5);
+      
+      // Store the audio context for reuse
+      this.audioContext = null;
+    } catch (error) {
+      console.error('Failed to create beep sound:', error);
+    }
+  }
+
+  private initializeWebAudio() {
+    try {
+      // Create a simple beep using Web Audio API as fallback
+      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      console.log('Web Audio API initialized as fallback');
+    } catch (error) {
+      console.error('Failed to initialize Web Audio API:', error);
     }
   }
 
@@ -38,29 +85,77 @@ class SoundNotificationService {
   }
 
   public async playNotificationSound(): Promise<void> {
-    if (!this.isEnabled || !this.audio) return;
+    if (!this.isEnabled) return;
 
     try {
-      // Reset audio to beginning
-      this.audio.currentTime = 0;
+      // Try Web Audio API first (more reliable)
+      if (this.audioContext) {
+        await this.playWebAudioBeep();
+        return;
+      }
+
+      // Fallback to HTML5 Audio
+      if (this.audio) {
+        this.audio.currentTime = 0;
+        await this.audio.play();
+        console.log('Notification sound played successfully (HTML5 Audio)');
+        return;
+      }
+
+      // Final fallback - create a new audio context
+      await this.playWebAudioBeep();
       
-      // Play the notification sound
-      await this.audio.play();
-      
-      console.log('Notification sound played successfully');
     } catch (error) {
       console.error('Failed to play notification sound:', error);
       
-      // Try to play again after a short delay (sometimes needed for autoplay policies)
-      setTimeout(async () => {
-        try {
-          if (this.audio) {
-            await this.audio.play();
-          }
-        } catch (retryError) {
-          console.error('Retry failed to play notification sound:', retryError);
-        }
-      }, 100);
+      // Try Web Audio API as final fallback
+      try {
+        await this.playWebAudioBeep();
+      } catch (fallbackError) {
+        console.error('All audio methods failed:', fallbackError);
+      }
+    }
+  }
+
+  private async playWebAudioBeep(): Promise<void> {
+    try {
+      // Resume audio context if suspended
+      if (this.audioContext?.state === 'suspended') {
+        await this.audioContext.resume();
+      }
+
+      // Create new audio context if needed
+      if (!this.audioContext) {
+        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+
+      // Generate beep sound
+      const oscillator = this.audioContext.createOscillator();
+      const gainNode = this.audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
+      
+      // Set frequency and type
+      oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime);
+      oscillator.type = 'sine';
+      
+      // Set volume based on settings
+      const normalizedVolume = (this.volume / 100) * 0.3;
+      
+      // Create envelope
+      gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(normalizedVolume, this.audioContext.currentTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+      
+      // Play the sound
+      oscillator.start(this.audioContext.currentTime);
+      oscillator.stop(this.audioContext.currentTime + 0.3);
+      
+      console.log('Notification sound played successfully (Web Audio API)');
+    } catch (error) {
+      console.error('Web Audio API failed:', error);
+      throw error;
     }
   }
 
@@ -88,6 +183,10 @@ class SoundNotificationService {
       this.audio.pause();
       this.audio.src = '';
       this.audio = null;
+    }
+    if (this.audioContext) {
+      this.audioContext.close();
+      this.audioContext = null;
     }
     this.isInitialized = false;
   }
