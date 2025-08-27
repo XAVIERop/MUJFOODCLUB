@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Star, Clock, MapPin, Phone, ShoppingCart } from "lucide-react";
+import { Star, Clock, MapPin, Phone, ShoppingCart, MessageCircle } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -57,6 +57,16 @@ const CafeGrid = () => {
 
   const handleOrderNow = (cafeId: string) => {
     navigate(`/menu/${cafeId}`);
+  };
+
+  const handleCall = (phoneNumber: string) => {
+    window.open(`tel:${phoneNumber}`, '_self');
+  };
+
+  const handleWhatsApp = (phoneNumber: string, cafeName: string) => {
+    const message = `Hi ${cafeName}! I'd like to place an order.`;
+    const whatsappUrl = `https://wa.me/${phoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   if (loading) {
@@ -147,6 +157,28 @@ const CafeGrid = () => {
                     <Phone className="w-4 h-4 mr-2 text-primary" />
                     {cafe.phone}
                   </div>
+                </div>
+
+                {/* Contact Buttons */}
+                <div className="flex gap-2 pt-2 border-t border-border">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleCall(cafe.phone)}
+                  >
+                    <Phone className="w-4 h-4 mr-2" />
+                    Call
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleWhatsApp(cafe.phone, cafe.name)}
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    WhatsApp
+                  </Button>
                 </div>
 
                 {/* Delivery Time */}
