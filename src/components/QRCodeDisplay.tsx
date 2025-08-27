@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Download, QrCode, User, MapPin, Trophy, Star } from "lucide-react";
+import { Copy, Download, QrCode, User, MapPin, Trophy } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import QRCode from 'qrcode';
 
@@ -21,9 +21,10 @@ interface Profile {
 
 interface QRCodeDisplayProps {
   profile: Profile;
+  variant?: 'simple' | 'detailed';
 }
 
-const QRCodeDisplay = ({ profile }: QRCodeDisplayProps) => {
+const QRCodeDisplay = ({ profile, variant = 'simple' }: QRCodeDisplayProps) => {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(true);
   const { toast } = useToast();
@@ -36,7 +37,7 @@ const QRCodeDisplay = ({ profile }: QRCodeDisplayProps) => {
     try {
       setIsGenerating(true);
       const dataUrl = await QRCode.toDataURL(profile.qr_code, {
-        width: 200,
+        width: variant === 'simple' ? 150 : 200,
         margin: 2,
         color: {
           dark: '#000000',
@@ -119,6 +120,97 @@ const QRCodeDisplay = ({ profile }: QRCodeDisplayProps) => {
     }
   };
 
+  // Simple variant for homepage
+  if (variant === 'simple') {
+    return (
+      <Card className="food-card border-0">
+        <CardHeader>
+          <CardTitle className="flex items-center text-white">
+            <QrCode className="w-5 h-5 mr-2" />
+            Your QR Code
+          </CardTitle>
+          <p className="text-white/70 text-sm">
+            Show this QR code at any cafe to earn rewards and track your orders
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* QR Code Display */}
+          <div className="flex justify-center">
+            {isGenerating ? (
+              <div className="w-36 h-36 bg-muted rounded-lg flex items-center justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              </div>
+            ) : qrCodeDataUrl ? (
+              <div className="text-center">
+                <img 
+                  src={qrCodeDataUrl} 
+                  alt="Your QR Code" 
+                  className="w-36 h-36 mx-auto rounded-lg border-4 border-white shadow-lg"
+                />
+                <p className="text-sm text-white/60 mt-2 font-mono">
+                  {profile.qr_code}
+                </p>
+              </div>
+            ) : (
+              <div className="w-36 h-36 bg-muted rounded-lg flex items-center justify-center">
+                <QrCode className="w-12 h-12 text-muted-foreground" />
+              </div>
+            )}
+          </div>
+
+          {/* User Info */}
+          <div className="text-center space-y-2">
+            <h3 className="font-semibold text-white">{profile.full_name}</h3>
+            <Badge variant="secondary" className="text-xs">
+              Block {profile.block}
+            </Badge>
+            <div className="flex items-center justify-center space-x-4 text-sm text-white/70">
+              <span>{profile.loyalty_points} points</span>
+              <span>•</span>
+              <span className="capitalize">{profile.loyalty_tier}</span>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex space-x-2">
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              className="flex-1"
+              onClick={downloadQRCode}
+              disabled={!qrCodeDataUrl}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download
+            </Button>
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              className="flex-1"
+              onClick={copyQRCode}
+              disabled={!profile.qr_code}
+            >
+              <Copy className="w-4 h-4 mr-2" />
+              Copy Code
+            </Button>
+          </div>
+
+          {/* Instructions */}
+          <div className="bg-white/10 rounded-lg p-4">
+            <h4 className="font-semibold text-white mb-2">How to use:</h4>
+            <ul className="text-sm text-white/80 space-y-1">
+              <li>• Show this QR code when ordering at any cafe</li>
+              <li>• Staff will scan it to link your order to your account</li>
+              <li>• Earn loyalty points with every purchase</li>
+              <li>• Track your order history and rewards</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Detailed variant for dedicated page
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">

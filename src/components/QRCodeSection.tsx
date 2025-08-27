@@ -23,7 +23,7 @@ const QRCodeSection = () => {
 
         <div className="flex justify-center">
           {user && profile ? (
-            <QRCodeDisplay profile={profile} />
+            <QRCodeDisplay profile={profile} variant="simple" />
           ) : (
             <Card className="w-full max-w-md mx-auto">
               <CardHeader className="text-center">
