@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Utensils, Star, Gift } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import heroImage from "@/assets/hero-food.jpg";
+import heroImage from "@/assets/img.png";
 
 const HeroSection = () => {
   const navigate = useNavigate();
