@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Minus, ShoppingCart, Clock, Star, ArrowLeft, Filter, Search } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Clock, Star, ArrowLeft, Filter, Search, Phone, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -355,6 +355,26 @@ const Menu = () => {
                 <div className="flex items-center">
                   <Clock className="w-4 h-4 mr-1" />
                   <span>{cafe.hours}</span>
+                </div>
+                <div className="flex items-center">
+                  <Phone className="w-4 h-4 mr-1 text-green-400" />
+                  <a 
+                    href={`tel:${cafe.phone}`} 
+                    className="text-white hover:text-green-300 transition-colors duration-200 hover:underline"
+                  >
+                    {cafe.phone}
+                  </a>
+                </div>
+                <div className="flex items-center">
+                  <MessageCircle className="w-4 h-4 mr-1 text-blue-400" />
+                  <a 
+                    href={`https://wa.me/${cafe.phone.replace(/\D/g, '')}?text=Hi ${cafe.name}, I have a question about your menu.`} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-white hover:text-blue-300 transition-colors duration-200 hover:underline"
+                  >
+                    WhatsApp
+                  </a>
                 </div>
               </div>
             </div>
