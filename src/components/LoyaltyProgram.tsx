@@ -8,31 +8,32 @@ import { Trophy, Star, Gift, Crown, Zap, Target } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { TIER_CONFIG, LOYALTY_TIERS } from '@/lib/constants';
 
 const loyaltyTiers = [
   {
     name: "Foodie",
     icon: Star,
-    points: "0 - 99",
+    points: "0 - 150",
     color: "text-gray-500",
     bgColor: "bg-gray-100",
-    benefits: ["5% discount on all orders", "Birthday special offer"],
+    benefits: TIER_CONFIG[LOYALTY_TIERS.FOODIE].benefits,
   },
   {
     name: "Gourmet",
     icon: Trophy,
-    points: "100 - 299", 
+    points: "151 - 500", 
     color: "text-orange-500",
     bgColor: "bg-orange-100",
-    benefits: ["10% discount", "Free delivery", "Priority support"],
+    benefits: TIER_CONFIG[LOYALTY_TIERS.GOURMET].benefits,
   },
   {
     name: "Connoisseur", 
     icon: Crown,
-    points: "300+",
+    points: "501+",
     color: "text-purple-500",
     bgColor: "bg-purple-100",
-    benefits: ["15% discount", "Exclusive menu items", "VIP events"],
+    benefits: TIER_CONFIG[LOYALTY_TIERS.CONNOISSEUR].benefits,
   }
 ];
 
@@ -71,15 +72,15 @@ const LoyaltyProgram = () => {
 
   const getCurrentTier = () => {
     const points = profile?.loyalty_points || 0;
-    if (points < 100) return { ...loyaltyTiers[0], current: true, progress: points };
-    if (points < 300) return { ...loyaltyTiers[1], current: true, progress: ((points - 100) / 200) * 100 };
+    if (points < 151) return { ...loyaltyTiers[0], current: true, progress: (points / 151) * 100 };
+    if (points < 501) return { ...loyaltyTiers[1], current: true, progress: ((points - 151) / (501 - 151)) * 100 };
     return { ...loyaltyTiers[2], current: true, progress: 100 };
   };
 
   const getNextTierPoints = () => {
     const points = profile?.loyalty_points || 0;
-    if (points < 100) return 100 - points;
-    if (points < 300) return 300 - points;
+    if (points < 151) return 151 - points;
+    if (points < 501) return 501 - points;
     return 0;
   };
 
@@ -174,10 +175,20 @@ const LoyaltyProgram = () => {
                     </div>
                   </div>
 
-                <Button variant="secondary" className="w-full">
-                  <Gift className="w-4 h-4 mr-2" />
-                  Redeem Points ({profile?.loyalty_points || 0} Available)
-                </Button>
+                <div className="space-y-3">
+                  <Button variant="secondary" className="w-full">
+                    <Gift className="w-4 h-4 mr-2" />
+                    Redeem Points ({profile?.loyalty_points || 0} Available)
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full text-white border-white/30 hover:bg-white/10"
+                    onClick={() => navigate('/rewards')}
+                  >
+                    <Trophy className="w-4 h-4 mr-2" />
+                    View Full Rewards Dashboard
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 

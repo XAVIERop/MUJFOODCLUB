@@ -16,6 +16,7 @@ import NotificationCenter from '../components/NotificationCenter';
 import CafeScanner from '../components/CafeScanner';
 import OrderNotificationSound from '../components/OrderNotificationSound';
 import Header from '../components/Header';
+import PasswordProtectedSection from '../components/PasswordProtectedSection';
 
 interface OrderItem {
   id: string;
@@ -82,6 +83,8 @@ const CafeDashboard = () => {
   const [cafeInfo, setCafeInfo] = useState<any | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   
+
+  
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -134,6 +137,8 @@ const CafeDashboard = () => {
 
     getCafeId();
   }, [user, profile]);
+
+
 
   const fetchOrders = async () => {
     if (!cafeId) return;
@@ -796,6 +801,11 @@ const CafeDashboard = () => {
 
         {/* Analytics Dashboard */}
         {analytics && (
+          <PasswordProtectedSection
+            title="Analytics Dashboard"
+            description="View revenue, orders, and business metrics"
+            passwordKey="analytics"
+          >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
               <CardContent className="p-6">
@@ -845,6 +855,8 @@ const CafeDashboard = () => {
               </CardContent>
             </Card>
           </div>
+
+          </PasswordProtectedSection>
         )}
 
         <Tabs defaultValue="orders" className="space-y-6">
@@ -1094,75 +1106,86 @@ const CafeDashboard = () => {
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
             {analytics && (
-              <>
-                {/* Revenue Chart */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5" />
-                      Revenue Trend (Last 7 Days)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-7 gap-2">
-                      {analytics.revenueByDay.map((day, index) => (
-                        <div key={index} className="text-center">
-                          <div className="text-sm font-medium">{day.date}</div>
-                          <div className="text-lg font-bold text-green-600">₹{day.revenue}</div>
-                          <div className="text-xs text-muted-foreground">{day.orders} orders</div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Top Items */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Top Selling Items</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {analytics.topItems.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded">
-                          <div>
-                            <p className="font-medium">{item.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {item.quantity} orders • ₹{item.revenue} revenue
-                            </p>
+              <PasswordProtectedSection
+                title="Analytics Data"
+                description="View detailed analytics and reports"
+                passwordKey="analytics"
+              >
+                <>
+                  {/* Revenue Chart */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5" />
+                        Revenue Trend (Last 7 Days)
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-7 gap-2">
+                        {analytics.revenueByDay.map((day, index) => (
+                          <div key={index} className="text-center">
+                            <div className="text-sm font-medium">{day.date}</div>
+                            <div className="text-lg font-bold text-green-600">₹{day.revenue}</div>
+                            <div className="text-xs text-muted-foreground">{day.orders} orders</div>
                           </div>
-                          <Badge variant="secondary">#{index + 1}</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                {/* Order Status Distribution */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Order Status Distribution</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {Object.entries(analytics.ordersByStatus).map(([status, count]) => (
-                        <div key={status} className="text-center p-4 bg-muted/30 rounded">
-                          <div className="text-2xl font-bold">{count}</div>
-                          <div className="text-sm text-muted-foreground capitalize">
-                            {status.replace('_', ' ')}
+                  {/* Top Items */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Top Selling Items</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {analytics.topItems.map((item, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded">
+                            <div>
+                              <p className="font-medium">{item.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {item.quantity} orders • ₹{item.revenue} revenue
+                              </p>
+                            </div>
+                            <Badge variant="secondary">#{index + 1}</Badge>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Order Status Distribution */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Order Status Distribution</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {Object.entries(analytics.ordersByStatus).map(([status, count]) => (
+                          <div key={status} className="text-center p-4 bg-muted/30 rounded">
+                            <div className="text-2xl font-bold">{count}</div>
+                            <div className="text-sm text-muted-foreground capitalize">
+                              {status.replace('_', ' ')}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              </PasswordProtectedSection>
             )}
           </TabsContent>
 
           {/* Database Tab */}
           <TabsContent value="database" className="space-y-6">
-            <Card>
+            <PasswordProtectedSection
+              title="Database Management"
+              description="Export data and view database statistics"
+              passwordKey="database"
+            >
+              <Card>
               <CardHeader>
                 <CardTitle>Database Management</CardTitle>
               </CardHeader>
@@ -1194,6 +1217,7 @@ const CafeDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+            </PasswordProtectedSection>
           </TabsContent>
         </Tabs>
       </div>
@@ -1239,6 +1263,7 @@ const CafeDashboard = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

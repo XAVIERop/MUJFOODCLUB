@@ -67,6 +67,7 @@ const Checkout = () => {
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
   const [pointsDiscount, setPointsDiscount] = useState(0);
   const [finalAmount, setFinalAmount] = useState(totalAmount);
+  const [pointsToEarn, setPointsToEarn] = useState(0);
 
   // Redirect if no cart data
   useEffect(() => {
@@ -106,9 +107,30 @@ const Checkout = () => {
     'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'
   ];
 
-  const calculatePoints = (amount: number) => {
-    // Earn 1 point per ₹10 spent
-    return Math.floor(amount / 10);
+  const calculatePoints = async (amount: number) => {
+    if (!user || !profile) return 0;
+    
+    try {
+      // Use the enhanced point calculation function
+      const { data, error } = await supabase.rpc('calculate_enhanced_points', {
+        order_amount: amount,
+        user_id: user.id,
+        is_new_user: profile.is_new_user || false,
+        new_user_orders_count: profile.new_user_orders_count || 0
+      });
+
+      if (error) {
+        console.error('Error calculating enhanced points:', error);
+        // Fallback to basic calculation
+        return Math.floor(amount / 10);
+      }
+
+      return data || 0;
+    } catch (error) {
+      console.error('Error calculating enhanced points:', error);
+      // Fallback to basic calculation
+      return Math.floor(amount / 10);
+    }
   };
 
   const calculatePointsDiscount = (points: number) => {
@@ -127,6 +149,18 @@ const Checkout = () => {
   useEffect(() => {
     setFinalAmount(Math.max(0, totalAmount - pointsDiscount));
   }, [totalAmount, pointsDiscount]);
+
+  // Calculate points to earn when component loads or total amount changes
+  useEffect(() => {
+    const calculateInitialPoints = async () => {
+      if (user && profile && totalAmount > 0) {
+        const points = await calculatePoints(totalAmount);
+        setPointsToEarn(points);
+      }
+    };
+    
+    calculateInitialPoints();
+  }, [user, profile, totalAmount]);
 
   const handlePlaceOrder = async () => {
     if (!user || !profile) {
@@ -150,8 +184,8 @@ const Checkout = () => {
       const userSuffix = user.id.substr(-4).toUpperCase();
       const orderNumber = `ORD-${timestamp}-${random}-${userSuffix}`;
       
-      // Calculate points to earn (based on final amount after discount)
-      const pointsToEarn = calculatePoints(finalAmount);
+      // Use the pre-calculated points (based on original total amount, not final amount after discount)
+      // This ensures users get points based on what they spent, not what they paid after discounts
 
       console.log('Creating order with data:', {
         user_id: user.id,
@@ -165,6 +199,18 @@ const Checkout = () => {
       });
 
       // Create order
+      console.log('Attempting to create order with data:', {
+        user_id: user.id,
+        cafe_id: cafe.id,
+        order_number: orderNumber,
+        total_amount: finalAmount,
+        delivery_block: deliveryDetails.block,
+        delivery_notes: deliveryDetails.deliveryNotes,
+        payment_method: deliveryDetails.paymentMethod,
+        points_earned: pointsToEarn,
+        estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString()
+      });
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -183,10 +229,49 @@ const Checkout = () => {
 
       if (orderError) {
         console.error('Order creation error:', orderError);
+        console.error('Order creation error details:', {
+          code: orderError.code,
+          message: orderError.message,
+          details: orderError.details,
+          hint: orderError.hint
+        });
         throw orderError;
       }
 
       console.log('Order created successfully:', order);
+      console.log('Order ID:', order.id);
+      console.log('Order Number:', order.order_number);
+
+      // Handle enhanced rewards system
+      try {
+        // Track maintenance spending for tier maintenance
+        await supabase.rpc('track_maintenance_spending', {
+          user_id: user.id,
+          order_amount: totalAmount // Use original amount for maintenance tracking
+        });
+
+        // Handle new user first order bonus
+        if (profile.is_new_user && (!profile.new_user_orders_count || profile.new_user_orders_count === 0)) {
+          await supabase.rpc('handle_new_user_first_order', {
+            user_id: user.id
+          });
+        }
+
+        // Update user's new user orders count
+        if (profile.is_new_user && profile.new_user_orders_count !== null) {
+          const newCount = Math.min(profile.new_user_orders_count + 1, 20);
+          await supabase
+            .from('profiles')
+            .update({ 
+              new_user_orders_count: newCount,
+              is_new_user: newCount < 20
+            })
+            .eq('id', user.id);
+        }
+      } catch (error) {
+        console.error('Error handling enhanced rewards:', error);
+        // Don't fail the order for rewards errors
+      }
 
       // Create order items
       const orderItems = Object.values(cart).map(({item, quantity, notes}) => ({
@@ -271,10 +356,9 @@ const Checkout = () => {
       // Refresh profile to update loyalty points
       await refreshProfile();
 
-      // Navigate to order confirmation
-      navigate('/order-confirmation', { 
+      // Navigate to order confirmation with the ACTUAL order number from database
+      navigate(`/order-confirmation/${order.order_number}`, { 
         state: { 
-          orderNumber,
           order,
           pointsEarned: pointsToEarn
         } 
@@ -454,8 +538,18 @@ const Checkout = () => {
                     </div>
                     <div className="flex justify-between items-center text-sm text-muted-foreground mt-2">
                       <span>Points to Earn</span>
-                      <span className="text-green-600">+{calculatePoints(totalAmount)} pts</span>
+                      <span className="text-green-600">+{pointsToEarn} pts</span>
                     </div>
+                    {profile && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        <span className="font-medium">Tier:</span> {profile.loyalty_tier} 
+                        {profile.is_new_user && profile.new_user_orders_count && profile.new_user_orders_count <= 20 && (
+                          <span className="ml-2 text-yellow-600">
+                            • {profile.new_user_orders_count === 1 ? '50%' : '25%'} bonus active
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

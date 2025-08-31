@@ -306,11 +306,11 @@ const CafeScanner = ({ cafeId }: { cafeId: string }) => {
     <div className="space-y-6">
       <Card className="food-card border-0">
         <CardHeader>
-          <CardTitle className="flex items-center text-white">
+          <CardTitle className="flex items-center text-foreground">
             <QrCode className="w-5 h-5 mr-2" />
             Cafe Scanner - Offline Orders
           </CardTitle>
-          <p className="text-white/70 text-sm">
+          <p className="text-muted-foreground text-sm">
             Scan student QR codes or manually enter QR IDs to place offline orders
           </p>
         </CardHeader>

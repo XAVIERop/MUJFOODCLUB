@@ -312,7 +312,7 @@ const OrderTracking = () => {
                           <div className="flex space-x-2">
                             <Button
                               variant="outline"
-                              onClick={() => navigate(`/order-confirmation?order=${order.order_number}`)}
+                              onClick={() => navigate(`/order-confirmation/${order.order_number}`)}
                               className="flex-1"
                             >
                               <Eye className="w-4 h-4 mr-2" />

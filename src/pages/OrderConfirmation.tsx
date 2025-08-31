@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,8 +33,9 @@ const OrderConfirmation = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Get order data from navigation state or URL params
-  const orderNumber = location.state?.orderNumber || new URLSearchParams(window.location.search).get('order');
+  const { orderId } = useParams();
+  // Get order data from URL params, navigation state, or fallback
+  const orderNumber = orderId || location.state?.orderNumber || new URLSearchParams(window.location.search).get('order');
 
   const statusSteps = [
     { key: 'received', label: 'Order Received', icon: Receipt, color: 'bg-blue-500' },
@@ -46,17 +47,35 @@ const OrderConfirmation = () => {
 
   const fetchOrder = async () => {
     if (!orderNumber) {
+      console.log('No order number provided');
       navigate('/');
       return;
     }
 
+    console.log('Fetching order with:', { orderNumber, userId: user?.id });
+
     try {
+      // First, let's check what orders exist with this order number
+      const { data: allOrders, error: listError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('order_number', orderNumber);
+
+      console.log('All orders with this order number:', allOrders, 'Error:', listError);
+
+      if (listError) {
+        console.error('Error listing orders:', listError);
+      }
+
+      // Now try to get the specific order for this user
       const { data, error } = await supabase
         .from('orders')
         .select('*')
         .eq('order_number', orderNumber)
         .eq('user_id', user?.id)
         .single();
+
+      console.log('Specific order result:', { data, error });
 
       if (error) throw error;
       setOrder(data);

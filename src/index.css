@@ -7,6 +7,21 @@ All colors MUST be HSL.
 */
 
 @layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  html {
+    margin: 0;
+    padding: 0;
+  }
   :root {
     /* Food-themed color palette */
     --background: 20 20% 98%;

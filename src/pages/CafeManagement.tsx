@@ -33,7 +33,7 @@ const CafeManagement = () => {
   const [updating, setUpdating] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   useEffect(() => {
     if (!user) {
@@ -45,19 +45,44 @@ const CafeManagement = () => {
 
   const fetchCafeData = async () => {
     try {
-      // First, get the cafe that the user owns
-      const { data: cafeStaff, error: staffError } = await supabase
-        .from('cafe_staff')
-        .select('cafe_id')
-        .eq('user_id', user?.id)
-        .in('role', ['owner', 'manager'])
-        .eq('is_active', true)
-        .single();
+      let cafeId: string | null = null;
 
-      if (staffError || !cafeStaff) {
+      // Check if user is cafe owner
+      if (profile?.user_type === 'cafe_owner') {
+        cafeId = profile.cafe_id;
+      } else if (profile?.user_type === 'cafe_staff') {
+        // Cafe staff get cafe_id from cafe_staff table
+        const { data: staffData, error: staffError } = await supabase
+          .from('cafe_staff')
+          .select('cafe_id')
+          .eq('user_id', user?.id)
+          .eq('is_active', true)
+          .single();
+
+        if (staffError || !staffData) {
+          toast({
+            title: "Access Denied",
+            description: "You don't have permission to access cafe management",
+            variant: "destructive"
+          });
+          navigate('/');
+          return;
+        }
+        cafeId = staffData.cafe_id;
+      } else {
         toast({
           title: "Access Denied",
           description: "You don't have permission to access cafe management",
+          variant: "destructive"
+        });
+        navigate('/');
+        return;
+      }
+
+      if (!cafeId) {
+        toast({
+          title: "Access Denied",
+          description: "No cafe associated with your account",
           variant: "destructive"
         });
         navigate('/');
@@ -68,7 +93,7 @@ const CafeManagement = () => {
       const { data: cafeData, error: cafeError } = await supabase
         .from('cafes')
         .select('*')
-        .eq('id', cafeStaff.cafe_id)
+        .eq('id', cafeId)
         .single();
 
       if (cafeError) throw cafeError;
@@ -78,7 +103,7 @@ const CafeManagement = () => {
       const { data: menuData, error: menuError } = await supabase
         .from('menu_items')
         .select('*')
-        .eq('cafe_id', cafeStaff.cafe_id)
+        .eq('cafe_id', cafeId)
         .order('category', { ascending: true })
         .order('name', { ascending: true });
 

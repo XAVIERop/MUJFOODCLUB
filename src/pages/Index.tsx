@@ -8,7 +8,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main>
+      <main className="m-0 p-0">
         <HeroSection />
         {/* Cafe Grid Section */}
         <section id="cafes" className="py-16 bg-muted/30">

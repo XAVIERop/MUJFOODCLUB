@@ -27,7 +27,20 @@ const Header = () => {
 
     const checkCafeOwnership = async () => {
       try {
-        const { data, error } = await supabase
+        // First check profiles table for cafe_owner user_type
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_type')
+          .eq('id', user.id)
+          .single();
+
+        if (!profileError && profileData && profileData.user_type === 'cafe_owner') {
+          setIsCafeOwner(true);
+          return;
+        }
+
+        // If not cafe_owner in profiles, check cafe_staff table
+        const { data: staffData, error: staffError } = await supabase
           .from('cafe_staff')
           .select('role')
           .eq('user_id', user.id)
@@ -35,7 +48,7 @@ const Header = () => {
           .eq('is_active', true)
           .single();
 
-        if (!error && data) {
+        if (!staffError && staffData) {
           setIsCafeOwner(true);
         } else {
           setIsCafeOwner(false);
@@ -125,20 +138,16 @@ const Header = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 m-0">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 hover:scale-105 transition-transform">
-            <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center shadow-lg">
-              <Utensils className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-bold gradient-primary bg-clip-text text-transparent leading-none">
-                FoodClub
-              </span>
-              <span className="text-xs text-muted-foreground -mt-1">MUJ Campus Food</span>
-            </div>
+            <img 
+              src="/foc.png" 
+              alt="FoodClub Logo" 
+              className="w-48 h-auto object-contain"
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -255,8 +264,11 @@ const Header = () => {
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                 <SheetHeader>
                   <SheetTitle className="flex items-center">
-                    <Coffee className="w-5 h-5 mr-2 text-primary" />
-                    FoodClub
+                    <img 
+                      src="/foc.png" 
+                      alt="FoodClub Logo" 
+                      className="w-32 h-auto mr-2"
+                    />
                   </SheetTitle>
                   <SheetDescription>
                     Your campus food companion
@@ -279,17 +291,34 @@ const Header = () => {
                   })}
                   
                   {user ? (
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        signOut();
-                        setIsMenuOpen(false);
-                      }}
-                      className="mt-4"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </Button>
+                    <>
+                      {/* Cafe Dashboard for cafe owners */}
+                      {isCafeOwner && (
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {
+                            navigate('/cafe-dashboard');
+                            setIsMenuOpen(false);
+                          }}
+                          className="mt-4"
+                        >
+                          <Store className="w-4 h-4 mr-2" />
+                          Cafe Dashboard
+                        </Button>
+                      )}
+                      
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          signOut();
+                          setIsMenuOpen(false);
+                        }}
+                        className="mt-4"
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sign Out
+                      </Button>
+                    </>
                   ) : (
                     <Button variant="hero" onClick={() => {
                       navigate('/auth');

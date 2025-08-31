@@ -312,6 +312,13 @@ export interface Database {
           updated_at: string
           user_type: string
           cafe_id: string | null
+          tier_expiry_date: string | null
+          maintenance_spent: number | null
+          new_user_orders_count: number | null
+          is_new_user: boolean | null
+          first_order_date: string | null
+          tier_warning_sent: boolean | null
+          last_maintenance_check: string | null
         }
         Insert: {
           block: Database["public"]["Enums"]["block_type"]
@@ -488,12 +495,191 @@ export interface Database {
           created_at?: string
         }
       }
+      tier_maintenance: {
+        Row: {
+          id: string
+          user_id: string
+          tier: string
+          maintenance_amount: number
+          current_spent: number
+          period_start_date: string
+          period_end_date: string
+          is_completed: boolean
+          warning_sent: boolean
+          grace_period_start: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          tier: string
+          maintenance_amount: number
+          current_spent?: number
+          period_start_date?: string
+          period_end_date?: string
+          is_completed?: boolean
+          warning_sent?: boolean
+          grace_period_start?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          tier?: string
+          maintenance_amount?: number
+          current_spent?: number
+          period_start_date?: string
+          period_end_date?: string
+          is_completed?: boolean
+          warning_sent?: boolean
+          grace_period_start?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tier_maintenance_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      user_bonuses: {
+        Row: {
+          id: string
+          user_id: string
+          bonus_type: string
+          points_awarded: number
+          description: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          bonus_type: string
+          points_awarded: number
+          description?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          bonus_type?: string
+          points_awarded?: number
+          description?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_bonuses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      maintenance_periods: {
+        Row: {
+          id: string
+          user_id: string
+          tier: string
+          start_date: string
+          period_end_date: string
+          required_amount: number
+          actual_spent: number
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          tier: string
+          start_date?: string
+          period_end_date?: string
+          required_amount: number
+          actual_spent?: number
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          tier?: string
+          start_date?: string
+          period_end_date?: string
+          required_amount?: number
+          actual_spent?: number
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_periods_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_enhanced_points: {
+        Args: {
+          order_amount: number
+          user_id: string
+          is_new_user: boolean
+          new_user_orders_count: number
+        }
+        Returns: number
+      }
+      handle_new_user_first_order: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
+      }
+      track_maintenance_spending: {
+        Args: {
+          user_id: string
+          order_amount: number
+        }
+        Returns: undefined
+      }
+      check_maintenance_expiry: {
+        Args: {}
+        Returns: undefined
+      }
+      get_user_enhanced_rewards_summary: {
+        Args: {
+          user_id: string
+        }
+        Returns: {
+          current_tier: string
+          current_points: number
+          tier_discount: number
+          next_tier: string | null
+          points_to_next_tier: number
+          maintenance_required: boolean
+          maintenance_amount: number
+          maintenance_spent: number
+          maintenance_progress: number
+          days_until_expiry: number
+          is_new_user: boolean
+          new_user_orders_count: number
+        }[]
+      }
     }
     Enums: {
       block_type:

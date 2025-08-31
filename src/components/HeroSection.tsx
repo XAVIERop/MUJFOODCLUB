@@ -16,7 +16,7 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+    <section className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -26,7 +26,7 @@ const HeroSection = () => {
       </div>
 
       {/* Content - Enhanced centering and alignment */}
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center min-h-screen">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center min-h-[calc(100vh-4rem)]">
         <div className="text-center max-w-4xl mx-auto w-full">
           {/* Brand Badge */}
           <Badge className="mb-4 animate-fade-in bg-white/20 text-white border-white/30 backdrop-blur-sm text-lg px-4 py-2 inline-flex items-center justify-center">
@@ -66,7 +66,7 @@ const HeroSection = () => {
           {/* Stats - Enhanced grid alignment */}
           <div className="grid grid-cols-3 gap-4 sm:gap-8 mb-8 animate-slide-up max-w-md mx-auto">
             <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-white">3+</div>
+              <div className="text-2xl sm:text-3xl font-bold text-white">16</div>
               <div className="text-white/80 text-sm sm:text-base">Cafes</div>
             </div>
             <div className="text-center">
