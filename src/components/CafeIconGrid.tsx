@@ -1,8 +1,7 @@
-import React from 'react';
-import { MapPin, Star, Clock } from 'lucide-react';
+import React, { useRef } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
 
 interface Cafe {
   id: string;
@@ -24,6 +23,7 @@ interface CafeIconGridProps {
 
 const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
   const navigate = useNavigate();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleCafeClick = (cafeId: string) => {
     navigate(`/menu/${cafeId}`);
@@ -33,8 +33,22 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
     navigate('/cafes');
   };
 
-  // Generate cafe icon based on name
-  const getCafeIcon = (name: string) => {
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+    }
+  };
+
+  // Placeholder for cafe logos - you'll replace these with actual images
+  const getCafeLogo = (name: string) => {
+    // For now, using colored circles as placeholders
+    // You'll replace these with actual cafe logo images
     const cafeName = name.toLowerCase();
     
     if (cafeName.includes('mini') || cafeName.includes('meals')) return '🍱';
@@ -64,43 +78,7 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
     if (cafeName.includes('quick') || cafeName.includes('bite')) return '🍽️';
     if (cafeName.includes('multi') || cafeName.includes('cuisine')) return '🌍';
     
-    // Default icons for other cafes
     return '🍽️';
-  };
-
-  // Get cafe color based on name
-  const getCafeColor = (name: string) => {
-    const cafeName = name.toLowerCase();
-    
-    if (cafeName.includes('mini') || cafeName.includes('meals')) return 'bg-orange-100 border-orange-300';
-    if (cafeName.includes('chat') || cafeName.includes('kara')) return 'bg-red-100 border-red-300';
-    if (cafeName.includes('dialog')) return 'bg-blue-100 border-blue-300';
-    if (cafeName.includes('zero') || cafeName.includes('degree')) return 'bg-cyan-100 border-cyan-300';
-    if (cafeName.includes('star') || cafeName.includes('dom')) return 'bg-yellow-100 border-yellow-300';
-    if (cafeName.includes('hav') || cafeName.includes('mor')) return 'bg-green-100 border-green-300';
-    if (cafeName.includes('cook') || cafeName.includes('house')) return 'bg-purple-100 border-purple-300';
-    if (cafeName.includes('waffle') || cafeName.includes('fit')) return 'bg-pink-100 border-pink-300';
-    if (cafeName.includes('food') || cafeName.includes('court')) return 'bg-indigo-100 border-indigo-300';
-    if (cafeName.includes('kitchen') || cafeName.includes('curry')) return 'bg-amber-100 border-amber-300';
-    if (cafeName.includes('crazy') || cafeName.includes('chef')) return 'bg-rose-100 border-rose-300';
-    if (cafeName.includes('zaika')) return 'bg-emerald-100 border-emerald-300';
-    if (cafeName.includes('italian') || cafeName.includes('oven')) return 'bg-red-100 border-red-300';
-    if (cafeName.includes('american')) return 'bg-blue-100 border-blue-300';
-    if (cafeName.includes('fast') || cafeName.includes('food')) return 'bg-yellow-100 border-yellow-300';
-    if (cafeName.includes('burger')) return 'bg-orange-100 border-orange-300';
-    if (cafeName.includes('pasta') || cafeName.includes('lasagna')) return 'bg-purple-100 border-purple-300';
-    if (cafeName.includes('biryani')) return 'bg-amber-100 border-amber-300';
-    if (cafeName.includes('pizza')) return 'bg-red-100 border-red-300';
-    if (cafeName.includes('wrap') || cafeName.includes('shawarma')) return 'bg-green-100 border-green-300';
-    if (cafeName.includes('dessert') || cafeName.includes('sweet')) return 'bg-pink-100 border-pink-300';
-    if (cafeName.includes('coffee') || cafeName.includes('cafe')) return 'bg-brown-100 border-brown-300';
-    if (cafeName.includes('north') || cafeName.includes('indian')) return 'bg-orange-100 border-orange-300';
-    if (cafeName.includes('chinese')) return 'bg-red-100 border-red-300';
-    if (cafeName.includes('quick') || cafeName.includes('bite')) return 'bg-blue-100 border-blue-300';
-    if (cafeName.includes('multi') || cafeName.includes('cuisine')) return 'bg-indigo-100 border-indigo-300';
-    
-    // Default color
-    return 'bg-gray-100 border-gray-300';
   };
 
   return (
@@ -116,43 +94,54 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
           </p>
         </div>
 
-        {/* Cafe Icons Grid */}
-        <div className="grid grid-cols-5 md:grid-cols-8 lg:grid-cols-10 gap-4 mb-8">
-          {cafes.map((cafe) => (
-            <div
-              key={cafe.id}
-              onClick={() => handleCafeClick(cafe.id)}
-              className={`
-                group cursor-pointer transition-all duration-200 hover:scale-105
-                ${getCafeColor(cafe.name)}
-                rounded-lg p-3 text-center border-2 hover:shadow-lg
-              `}
-            >
-              {/* Cafe Icon */}
-              <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">
-                {getCafeIcon(cafe.name)}
+        {/* Cafe Icons Row with Slide Buttons */}
+        <div className="relative">
+          {/* Left Slide Button */}
+          <button
+            onClick={scrollLeft}
+            className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
+          </button>
+
+          {/* Right Slide Button */}
+          <button
+            onClick={scrollRight}
+            className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-600" />
+          </button>
+
+          {/* Scrollable Cafe Icons Container */}
+          <div
+            ref={scrollContainerRef}
+            className="flex gap-6 px-8 overflow-x-auto scrollbar-hide scroll-smooth"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {cafes.map((cafe) => (
+              <div
+                key={cafe.id}
+                onClick={() => handleCafeClick(cafe.id)}
+                className="flex flex-col items-center cursor-pointer group transition-all duration-200 hover:scale-105 min-w-[80px]"
+              >
+                {/* Cafe Logo/Icon - Very Small Size */}
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 flex items-center justify-center mb-2 group-hover:border-primary transition-colors">
+                  <span className="text-xl">
+                    {getCafeLogo(cafe.name)}
+                  </span>
+                </div>
+                
+                {/* Cafe Name - Very Small Text */}
+                <div className="text-xs font-medium text-gray-800 text-center leading-tight max-w-[80px]">
+                  {cafe.name.length > 10 ? cafe.name.substring(0, 10) + '...' : cafe.name}
+                </div>
               </div>
-              
-              {/* Cafe Name */}
-              <div className="text-xs font-medium text-gray-800 leading-tight">
-                {cafe.name.length > 12 ? cafe.name.substring(0, 12) + '...' : cafe.name}
-              </div>
-              
-              {/* Status Badge */}
-              <div className="mt-2">
-                <Badge 
-                  variant={cafe.accepting_orders ? "default" : "secondary"}
-                  className="text-xs px-2 py-1"
-                >
-                  {cafe.accepting_orders ? "Open" : "Closed"}
-                </Badge>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* Explore All Cafes Button */}
-        <div className="text-center">
+        <div className="text-center mt-8">
           <Button
             onClick={handleExploreAll}
             size="lg"
@@ -162,6 +151,13 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
           </Button>
         </div>
       </div>
+
+      {/* Custom CSS to hide scrollbar */}
+      <style jsx>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </section>
   );
 };
