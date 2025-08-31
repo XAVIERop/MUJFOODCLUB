@@ -100,7 +100,10 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
         .update({ status: newStatus })
         .eq('id', orderId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error updating order status:', error);
+        throw new Error(`Database error: ${error.message || 'Unknown database error'}`);
+      }
 
       toast({
         title: "Status Updated",
@@ -111,9 +114,10 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
       await fetchOrders();
     } catch (error) {
       console.error('Error updating order status:', error);
+      const errorMessage = error.message || 'Unknown error occurred';
       toast({
-        title: "Error",
-        description: "Failed to update order status",
+        title: "Update Failed",
+        description: `Failed to update order status: ${errorMessage}`,
         variant: "destructive"
       });
     } finally {
