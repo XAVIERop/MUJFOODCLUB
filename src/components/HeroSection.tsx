@@ -82,9 +82,7 @@ const HeroSection = () => {
           {/* CTA Buttons - Enhanced button alignment */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in w-full">
             <Button 
-              variant="hero" 
-              size="lg" 
-              className="text-lg px-8 py-4 h-auto hover:scale-105 transition-bounce w-full sm:w-auto"
+              className="text-lg px-8 py-4 h-auto hover:scale-105 transition-bounce w-full sm:w-auto gradient-light-orange text-gray-800 font-semibold shadow-glow hover:shadow-xl border-0"
               onClick={handleExploreCafes}
             >
               <Utensils className="w-5 h-5 mr-2" />
