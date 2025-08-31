@@ -69,19 +69,47 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
       };
     }
     
+    if (cafeName.includes('hav') || cafeName.includes('mor')) {
+      return {
+        type: 'image',
+        src: '/havmor_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
+    if (cafeName.includes('food') && cafeName.includes('court')) {
+      return {
+        type: 'image',
+        src: '/foodcourt_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
+    if (cafeName.includes('italian') && cafeName.includes('oven')) {
+      return {
+        type: 'image',
+        src: '/italianoven_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
+    if (cafeName.includes('mini') && cafeName.includes('meals')) {
+      return {
+        type: 'image',
+        src: '/minimeals_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
     // Fallback to emojis for other cafes
     let emoji = '🍽️'; // default
     
-    if (cafeName.includes('mini') || cafeName.includes('meals')) emoji = '🍱';
-    else if (cafeName.includes('zero') || cafeName.includes('degree')) emoji = '🍦';
+    if (cafeName.includes('zero') || cafeName.includes('degree')) emoji = '🍦';
     else if (cafeName.includes('star') || cafeName.includes('dom')) emoji = '⭐';
-    else if (cafeName.includes('hav') || cafeName.includes('mor')) emoji = '🍦';
     else if (cafeName.includes('waffle') || cafeName.includes('fit')) emoji = '🧇';
-    else if (cafeName.includes('food') || cafeName.includes('court')) emoji = '🏢';
     else if (cafeName.includes('kitchen') || cafeName.includes('curry')) emoji = '🍛';
     else if (cafeName.includes('crazy') || cafeName.includes('chef')) emoji = '👨‍🍳';
     else if (cafeName.includes('zaika')) emoji = '🍽️';
-    else if (cafeName.includes('italian') || cafeName.includes('oven')) emoji = '🍕';
     else if (cafeName.includes('american')) emoji = '🍔';
     else if (cafeName.includes('fast') || cafeName.includes('food')) emoji = '🍟';
     else if (cafeName.includes('burger')) emoji = '🍔';
