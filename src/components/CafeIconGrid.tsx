@@ -82,74 +82,62 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
   };
 
   return (
-    <section className="py-12 bg-gradient-to-br from-gray-50 to-white">
-      <div className="container mx-auto px-4">
-        {/* Section Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Choose From Trusted Cafes in One Single Order
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Discover and order from all our partner cafes with just one click
-          </p>
-        </div>
+    <div>
+      {/* Cafe Icons Row with Slide Buttons */}
+      <div className="relative mb-8">
+        {/* Left Slide Button */}
+        <button
+          onClick={scrollLeft}
+          className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-200"
+        >
+          <ChevronLeft className="w-5 h-5 text-gray-600" />
+        </button>
 
-        {/* Cafe Icons Row with Slide Buttons */}
-        <div className="relative">
-          {/* Left Slide Button */}
-          <button
-            onClick={scrollLeft}
-            className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-200"
-          >
-            <ChevronLeft className="w-5 h-5 text-gray-600" />
-          </button>
+        {/* Right Slide Button */}
+        <button
+          onClick={scrollRight}
+          className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-200"
+        >
+          <ChevronRight className="w-5 h-5 text-gray-600" />
+        </button>
 
-          {/* Right Slide Button */}
-          <button
-            onClick={scrollRight}
-            className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-200"
-          >
-            <ChevronRight className="w-5 h-5 text-gray-600" />
-          </button>
-
-          {/* Scrollable Cafe Icons Container */}
-          <div
-            ref={scrollContainerRef}
-            className="flex gap-6 px-8 overflow-x-auto scrollbar-hide scroll-smooth"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {cafes.map((cafe) => (
-              <div
-                key={cafe.id}
-                onClick={() => handleCafeClick(cafe.id)}
-                className="flex flex-col items-center cursor-pointer group transition-all duration-200 hover:scale-105 min-w-[80px]"
-              >
-                {/* Cafe Logo/Icon - Very Small Size */}
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 flex items-center justify-center mb-2 group-hover:border-primary transition-colors">
-                  <span className="text-xl">
-                    {getCafeLogo(cafe.name)}
-                  </span>
-                </div>
-                
-                {/* Cafe Name - Very Small Text */}
-                <div className="text-xs font-medium text-gray-800 text-center leading-tight max-w-[80px]">
-                  {cafe.name.length > 10 ? cafe.name.substring(0, 10) + '...' : cafe.name}
-                </div>
+        {/* Scrollable Cafe Icons Container */}
+        <div
+          ref={scrollContainerRef}
+          className="flex gap-6 px-8 overflow-x-auto scrollbar-hide scroll-smooth"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {cafes.map((cafe) => (
+            <div
+              key={cafe.id}
+              onClick={() => handleCafeClick(cafe.id)}
+              className="flex flex-col items-center cursor-pointer group transition-all duration-200 hover:scale-105 min-w-[80px]"
+            >
+              {/* Cafe Logo/Icon - Very Small Size */}
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 flex items-center justify-center mb-2 group-hover:border-primary transition-colors">
+                <span className="text-xl">
+                  {getCafeLogo(cafe.name)}
+                </span>
               </div>
-            ))}
-          </div>
+              
+              {/* Cafe Name - Very Small Text */}
+              <div className="text-xs font-medium text-gray-800 text-center leading-tight max-w-[80px]">
+                {cafe.name.length > 10 ? cafe.name.substring(0, 10) + '...' : cafe.name}
+              </div>
+            </div>
+          ))}
         </div>
+      </div>
 
-        {/* Explore All Cafes Button */}
-        <div className="text-center mt-8">
-          <Button
-            onClick={handleExploreAll}
-            size="lg"
-            className="bg-primary hover:bg-primary/90 text-white px-8 py-3 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
-          >
-            Explore All Cafes →
-          </Button>
-        </div>
+      {/* Explore All Cafes Button */}
+      <div className="text-center">
+        <Button
+          onClick={handleExploreAll}
+          size="lg"
+          className="bg-primary hover:bg-primary/90 text-white px-8 py-3 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+        >
+          Explore All Cafes →
+        </Button>
       </div>
 
       {/* Custom CSS to hide scrollbar */}
@@ -158,7 +146,7 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
           display: none;
         }
       `}</style>
-    </section>
+    </div>
   );
 };
 

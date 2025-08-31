@@ -55,26 +55,28 @@ const Index = () => {
       <main className="m-0 p-0">
         <HeroSection />
         
-        {/* Cafe Icon Grid Section - NEW BETA 1.1 FEATURE */}
-        {!loading && cafes.length > 0 && (
-          <CafeIconGrid cafes={cafes} />
-        )}
-
-        {/* Cafe Grid Section - EXISTING */}
+        {/* Unified Cafe Section - Merged Icon Grid + Cafe Cards */}
         <section id="cafes" className="py-16 bg-muted/30">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Section Header */}
+            {/* Single Section Header */}
             <div className="text-center mb-12">
               <Badge className="mb-4 gradient-success text-white">
                 Popular Cafes
               </Badge>
               <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-                Choose Your Favorite Cafe
+                Choose From Trusted Cafes in One Single Order
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Discover delicious food from our partner cafes and earn rewards with every order
               </p>
             </div>
+
+            {/* Cafe Icon Grid with Slide Buttons */}
+            {!loading && cafes.length > 0 && (
+              <div className="mb-12">
+                <CafeIconGrid cafes={cafes} />
+              </div>
+            )}
 
             {/* Limited Cafe Grid - Show only 3 cafes */}
             <CafeGrid showAll={false} maxCafes={3} />
