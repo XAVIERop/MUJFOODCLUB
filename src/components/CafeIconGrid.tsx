@@ -101,11 +101,42 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
       };
     }
     
+    if (cafeName.includes('munch') && cafeName.includes('box')) {
+      return {
+        type: 'image',
+        src: '/munchbox_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
+    if (cafeName.includes('punjabi') && cafeName.includes('tadka')) {
+      return {
+        type: 'image',
+        src: '/punjabitadka_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
+    if (cafeName.includes('star') && cafeName.includes('dom')) {
+      return {
+        type: 'image',
+        src: '/stardom_logo.jpg',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
+    if (cafeName.includes('taste') && cafeName.includes('india')) {
+      return {
+        type: 'image',
+        src: '/tasteofindia_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
     // Fallback to emojis for other cafes
     let emoji = '🍽️'; // default
     
     if (cafeName.includes('zero') || cafeName.includes('degree')) emoji = '🍦';
-    else if (cafeName.includes('star') || cafeName.includes('dom')) emoji = '⭐';
     else if (cafeName.includes('waffle') || cafeName.includes('fit')) emoji = '🧇';
     else if (cafeName.includes('kitchen') || cafeName.includes('curry')) emoji = '🍛';
     else if (cafeName.includes('crazy') || cafeName.includes('chef')) emoji = '👨‍🍳';
