@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Minus, ShoppingCart, Clock, Star, ArrowLeft, Filter } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Clock, Star, ArrowLeft, Filter, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -44,6 +44,7 @@ const Menu = () => {
   const [cart, setCart] = useState<{[key: string]: {item: MenuItem, quantity: number, notes: string}}>({});
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
     if (cafeId) {
@@ -200,10 +201,34 @@ const Menu = () => {
   // Get unique categories for the filter
   const categories = Object.keys(groupedItems);
   
-  // Filter items based on selected category
-  const filteredItems = selectedCategory === 'all' 
-    ? groupedItems 
-    : { [selectedCategory]: groupedItems[selectedCategory] || [] };
+  // Filter items based on selected category and search query
+  const getFilteredItems = () => {
+    let filtered = selectedCategory === 'all' 
+      ? menuItems 
+      : menuItems.filter(item => item.category === selectedCategory);
+    
+    // Apply search filter if search query exists
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(item => 
+        item.name.toLowerCase().includes(query) || 
+        item.description.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query)
+      );
+    }
+    
+    return filtered;
+  };
+  
+  // Group filtered items by category
+  const filteredItems = getFilteredItems().reduce((groups, item) => {
+    const category = item.category;
+    if (!groups[category]) {
+      groups[category] = [];
+    }
+    groups[category].push(item);
+    return groups;
+  }, {} as {[key: string]: MenuItem[]});
 
   if (loading) {
     return (
@@ -313,6 +338,61 @@ const Menu = () => {
             ))}
           </div>
         </div>
+
+        {/* Search Functionality */}
+        <div className="mb-8">
+          <div className="flex items-center mb-4">
+            <Search className="w-5 h-5 mr-2 text-primary" />
+            <h3 className="text-lg font-semibold text-foreground">Search Menu Items</h3>
+          </div>
+          
+          <div className="max-w-md">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search for food items, drinks, desserts..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-3 pr-12 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 placeholder:text-muted-foreground"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {searchQuery && (
+            <div className="mt-2 text-sm text-muted-foreground">
+              Searching for: <span className="font-medium text-primary">"{searchQuery}"</span>
+              {Object.keys(filteredItems).length > 0 && (
+                <span className="ml-2">• Found {Object.values(filteredItems).flat().length} items</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* No Results Message */}
+        {searchQuery && Object.keys(filteredItems).length === 0 && (
+          <div className="mb-8 text-center py-12">
+            <Search className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-foreground mb-2">No items found</h3>
+            <p className="text-muted-foreground mb-4">
+              No menu items match your search for "{searchQuery}"
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={() => setSearchQuery('')}
+              className="hover:bg-primary hover:text-white"
+            >
+              Clear Search
+            </Button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Menu Items */}
