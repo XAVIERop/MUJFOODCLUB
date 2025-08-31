@@ -300,9 +300,33 @@ const Menu = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Category Filter System */}
         <div className="mb-8">
-          <div className="flex items-center mb-4">
-            <Filter className="w-5 h-5 mr-2 text-primary" />
-            <h3 className="text-lg font-semibold text-foreground">Filter by Category</h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <Filter className="w-5 h-5 mr-2 text-primary" />
+              <h3 className="text-lg font-semibold text-foreground">Filter by Category</h3>
+            </div>
+            
+            {/* Search Bar */}
+            <div className="flex items-center space-x-3">
+              <Search className="w-5 h-5 text-primary" />
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search menu items..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-64 px-4 py-2 pr-10 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 placeholder:text-muted-foreground text-sm"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
           
           <div className="flex flex-wrap gap-3">
@@ -337,37 +361,10 @@ const Menu = () => {
               </Button>
             ))}
           </div>
-        </div>
-
-        {/* Search Functionality */}
-        <div className="mb-8">
-          <div className="flex items-center mb-4">
-            <Search className="w-5 h-5 mr-2 text-primary" />
-            <h3 className="text-lg font-semibold text-foreground">Search Menu Items</h3>
-          </div>
           
-          <div className="max-w-md">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search for food items, drinks, desserts..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 pr-12 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 placeholder:text-muted-foreground"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          </div>
-          
+          {/* Search Status */}
           {searchQuery && (
-            <div className="mt-2 text-sm text-muted-foreground">
+            <div className="mt-3 text-sm text-muted-foreground">
               Searching for: <span className="font-medium text-primary">"{searchQuery}"</span>
               {Object.keys(filteredItems).length > 0 && (
                 <span className="ml-2">• Found {Object.values(filteredItems).flat().length} items</span>
