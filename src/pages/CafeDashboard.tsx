@@ -54,6 +54,7 @@ interface Order {
     email: string;
   };
   order_items: OrderItem[];
+  phone_number?: string; // Added for phone number display
 }
 
 interface Analytics {
@@ -993,10 +994,10 @@ const CafeDashboard = () => {
                               <MapPin className="w-4 h-4 text-muted-foreground" />
                               <span className="text-sm">Block {order.user.block}</span>
                             </div>
-                            {order.user.phone && (
+                            {(order.phone_number || order.user?.phone) && (
                               <div className="flex items-center space-x-2">
                                 <Phone className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-sm">{order.user.phone}</span>
+                                <span className="text-sm">{order.phone_number || order.user?.phone}</span>
                               </div>
                             )}
                           </div>
@@ -1047,6 +1048,9 @@ const CafeDashboard = () => {
                           <div className="space-y-1 text-sm text-blue-800">
                             <p><strong>Block:</strong> {order.delivery_block}</p>
                             <p><strong>Payment:</strong> {order.payment_method}</p>
+                            {(order.phone_number || order.user?.phone) && (
+                              <p><strong>Phone:</strong> {order.phone_number || order.user?.phone}</p>
+                            )}
                             {order.delivery_notes && (
                               <p><strong>Notes:</strong> {order.delivery_notes}</p>
                             )}
