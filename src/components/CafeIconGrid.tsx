@@ -53,15 +53,29 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
       };
     }
     
+    if (cafeName.includes('dialog')) {
+      return {
+        type: 'image',
+        src: '/dialog_logo.JPG',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
+    if (cafeName.includes('cook') && cafeName.includes('house')) {
+      return {
+        type: 'image',
+        src: '/cookhouse_logo.jpg',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
     // Fallback to emojis for other cafes
     let emoji = '🍽️'; // default
     
     if (cafeName.includes('mini') || cafeName.includes('meals')) emoji = '🍱';
-    else if (cafeName.includes('dialog')) emoji = '☕';
     else if (cafeName.includes('zero') || cafeName.includes('degree')) emoji = '🍦';
     else if (cafeName.includes('star') || cafeName.includes('dom')) emoji = '⭐';
     else if (cafeName.includes('hav') || cafeName.includes('mor')) emoji = '🍦';
-    else if (cafeName.includes('cook') || cafeName.includes('house')) emoji = '🏠';
     else if (cafeName.includes('waffle') || cafeName.includes('fit')) emoji = '🧇';
     else if (cafeName.includes('food') || cafeName.includes('court')) emoji = '🏢';
     else if (cafeName.includes('kitchen') || cafeName.includes('curry')) emoji = '🍛';
