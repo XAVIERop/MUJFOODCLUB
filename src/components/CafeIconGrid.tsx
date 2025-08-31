@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from './ui/button';
 
 interface Cafe {
   id: string;
@@ -27,10 +26,6 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
 
   const handleCafeClick = (cafeId: string) => {
     navigate(`/menu/${cafeId}`);
-  };
-
-  const handleExploreAll = () => {
-    navigate('/cafes');
   };
 
   const scrollLeft = () => {
@@ -84,7 +79,7 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
   return (
     <div>
       {/* Cafe Icons Row with Slide Buttons */}
-      <div className="relative mb-8">
+      <div className="relative">
         {/* Left Slide Button */}
         <button
           onClick={scrollLeft}
@@ -128,24 +123,6 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
           ))}
         </div>
       </div>
-
-      {/* Explore All Cafes Button */}
-      <div className="text-center">
-        <Button
-          onClick={handleExploreAll}
-          size="lg"
-          className="bg-primary hover:bg-primary/90 text-white px-8 py-3 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
-        >
-          Explore All Cafes →
-        </Button>
-      </div>
-
-      {/* Custom CSS to hide scrollbar */}
-      <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
     </div>
   );
 };
