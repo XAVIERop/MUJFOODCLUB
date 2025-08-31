@@ -21,6 +21,27 @@ interface MenuItem {
   out_of_stock: boolean;
 }
 
+interface GroupedMenuItem {
+  baseName: string;
+  category: string;
+  description: string;
+  preparation_time: number;
+  portions: {
+    id: string;
+    name: string;
+    price: number;
+    is_available: boolean;
+    out_of_stock: boolean;
+  }[];
+}
+
+interface CartItem {
+  item: GroupedMenuItem;
+  selectedPortion: string; // portion ID
+  quantity: number;
+  notes: string;
+}
+
 interface Cafe {
   id: string;
   name: string;
@@ -41,7 +62,8 @@ const Menu = () => {
   
   const [cafe, setCafe] = useState<Cafe | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [cart, setCart] = useState<{[key: string]: {item: MenuItem, quantity: number, notes: string}}>({});
+  const [groupedMenuItems, setGroupedMenuItems] = useState<GroupedMenuItem[]>([]);
+  const [cart, setCart] = useState<{[key: string]: CartItem}>({});
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -102,6 +124,10 @@ const Menu = () => {
 
       if (menuError) throw menuError;
       setMenuItems(menuData || []);
+      
+      // Group menu items by name and portion
+      const grouped = groupMenuItems(menuData || []);
+      setGroupedMenuItems(grouped);
     } catch (error) {
       console.error('Error fetching cafe data:', error);
       toast({
@@ -114,6 +140,38 @@ const Menu = () => {
     }
   };
 
+  // Function to group menu items by name and portion
+  const groupMenuItems = (items: MenuItem[]): GroupedMenuItem[] => {
+    const grouped: { [key: string]: GroupedMenuItem } = {};
+    
+    items.forEach(item => {
+      // Extract base name (remove portion indicators like " - Full", " - Half")
+      const baseName = item.name.replace(/\s*-\s*(Full|Half|Small|Large|Regular)$/i, '').trim();
+      const portionMatch = item.name.match(/\s*-\s*(Full|Half|Small|Large|Regular)$/i);
+      const portionName = portionMatch ? portionMatch[1] : 'Regular';
+      
+      if (!grouped[baseName]) {
+        grouped[baseName] = {
+          baseName,
+          category: item.category,
+          description: item.description,
+          preparation_time: item.preparation_time,
+          portions: []
+        };
+      }
+      
+      grouped[baseName].portions.push({
+        id: item.id,
+        name: portionName,
+        price: item.price,
+        is_available: item.is_available,
+        out_of_stock: item.out_of_stock
+      });
+    });
+    
+    return Object.values(grouped);
+  };
+
   // Function to manually refresh cafe data (useful for testing)
   const refreshCafeData = () => {
     if (cafeId) {
@@ -121,43 +179,46 @@ const Menu = () => {
     }
   };
 
-  const addToCart = (item: MenuItem) => {
+  const addToCart = (item: GroupedMenuItem, portionId: string) => {
+    const cartKey = item.baseName;
     setCart(prev => ({
       ...prev,
-      [item.id]: {
+      [cartKey]: {
         item,
-        quantity: (prev[item.id]?.quantity || 0) + 1,
-        notes: prev[item.id]?.notes || ''
+        selectedPortion: portionId,
+        quantity: (prev[cartKey]?.quantity || 0) + 1,
+        notes: prev[cartKey]?.notes || ''
       }
     }));
   };
 
-  const removeFromCart = (itemId: string) => {
+  const removeFromCart = (cartKey: string) => {
     setCart(prev => {
       const newCart = { ...prev };
-      if (newCart[itemId].quantity > 1) {
-        newCart[itemId].quantity -= 1;
+      if (newCart[cartKey].quantity > 1) {
+        newCart[cartKey].quantity -= 1;
       } else {
-        delete newCart[itemId];
+        delete newCart[cartKey];
       }
       return newCart;
     });
   };
 
-  const updateNotes = (itemId: string, notes: string) => {
+  const updateNotes = (cartKey: string, notes: string) => {
     setCart(prev => ({
       ...prev,
-      [itemId]: {
-        ...prev[itemId],
+      [cartKey]: {
+        ...prev[cartKey],
         notes
       }
     }));
   };
 
   const getTotalAmount = () => {
-    return Object.values(cart).reduce((total, {item, quantity}) => 
-      total + (item.price * quantity), 0
-    );
+    return Object.values(cart).reduce((total, {item, quantity, selectedPortion}) => {
+      const portion = item.portions.find(p => p.id === selectedPortion);
+      return total + (portion?.price || 0) * quantity;
+    }, 0);
   };
 
   const getCartItemCount = () => {
@@ -204,14 +265,14 @@ const Menu = () => {
   // Filter items based on selected category and search query
   const getFilteredItems = () => {
     let filtered = selectedCategory === 'all' 
-      ? menuItems 
-      : menuItems.filter(item => item.category === selectedCategory);
+      ? groupedMenuItems 
+      : groupedMenuItems.filter(item => item.category === selectedCategory);
     
     // Apply search filter if search query exists
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(item => 
-        item.name.toLowerCase().includes(query) || 
+        item.baseName.toLowerCase().includes(query) || 
         item.description.toLowerCase().includes(query) ||
         item.category.toLowerCase().includes(query)
       );
@@ -228,7 +289,7 @@ const Menu = () => {
     }
     groups[category].push(item);
     return groups;
-  }, {} as {[key: string]: MenuItem[]});
+  }, {} as {[key: string]: GroupedMenuItem[]});
 
   if (loading) {
     return (
@@ -341,7 +402,7 @@ const Menu = () => {
                   : 'hover:bg-primary/10'
               }`}
             >
-              All Categories ({menuItems.length})
+              All Categories ({groupedMenuItems.length})
             </Button>
             
             {/* Individual Category Buttons */}
@@ -404,15 +465,15 @@ const Menu = () => {
                 </h2>
                 <div className="grid gap-4">
                   {items.map((item) => (
-                    <Card key={item.id} className="food-card border-0">
+                    <Card key={item.baseName} className="food-card border-0">
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-2">
                               <h3 className="text-lg font-semibold text-foreground">
-                                {item.name}
+                                {item.baseName}
                               </h3>
-                              {item.out_of_stock && (
+                              {item.portions.every(p => p.out_of_stock) && (
                                 <Badge variant="destructive" className="text-xs">
                                   Out of Stock
                                 </Badge>
@@ -421,19 +482,53 @@ const Menu = () => {
                             <p className="text-muted-foreground mb-3">
                               {item.description}
                             </p>
+                            
+                            {/* Portion Selection */}
+                            {item.portions.length > 1 && (
+                              <div className="mb-3">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <span className="text-sm font-medium text-foreground">Portion:</span>
+                                  {item.portions.map((portion) => (
+                                    <Button
+                                      key={portion.id}
+                                      variant={cart[item.baseName]?.selectedPortion === portion.id ? 'default' : 'outline'}
+                                      size="sm"
+                                      onClick={() => {
+                                        if (cart[item.baseName]) {
+                                          setCart(prev => ({
+                                            ...prev,
+                                            [item.baseName]: {
+                                              ...prev[item.baseName],
+                                              selectedPortion: portion.id
+                                            }
+                                          }));
+                                        }
+                                      }}
+                                      disabled={portion.out_of_stock}
+                                      className="text-xs"
+                                    >
+                                      {portion.name} - ₹{portion.price}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
                             <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                               <div className="flex items-center">
                                 <Clock className="w-4 h-4 mr-1" />
                                 {item.preparation_time} min
                               </div>
-                              <div className="text-xl font-bold text-primary">
-                                ₹{item.price}
-                              </div>
+                              {item.portions.length === 1 && (
+                                <div className="text-xl font-bold text-primary">
+                                  ₹{item.portions[0].price}
+                                </div>
+                              )}
                             </div>
                           </div>
                           
                           <div className="ml-4">
-                            {item.out_of_stock ? (
+                            {item.portions.every(p => p.out_of_stock) ? (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -442,22 +537,22 @@ const Menu = () => {
                               >
                                 Out of Stock
                               </Button>
-                            ) : cart[item.id] ? (
+                            ) : cart[item.baseName] ? (
                               <div className="flex items-center space-x-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => removeFromCart(item.id)}
+                                  onClick={() => removeFromCart(item.baseName)}
                                 >
                                   <Minus className="w-4 h-4" />
                                 </Button>
                                 <span className="w-8 text-center font-semibold">
-                                  {cart[item.id].quantity}
+                                  {cart[item.baseName].quantity}
                                 </span>
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => addToCart(item)}
+                                  onClick={() => addToCart(item, cart[item.baseName].selectedPortion)}
                                 >
                                   <Plus className="w-4 h-4" />
                                 </Button>
@@ -466,7 +561,7 @@ const Menu = () => {
                               <Button
                                 variant="order"
                                 size="sm"
-                                onClick={() => addToCart(item)}
+                                onClick={() => addToCart(item, item.portions[0].id)}
                               >
                                 <Plus className="w-4 h-4 mr-2" />
                                 Add
@@ -475,12 +570,12 @@ const Menu = () => {
                           </div>
                         </div>
                         
-                        {cart[item.id] && (
+                        {cart[item.baseName] && (
                           <div className="mt-4 pt-4 border-t border-border">
                             <Textarea
                               placeholder="Special instructions (optional)"
-                              value={cart[item.id].notes}
-                              onChange={(e) => updateNotes(item.id, e.target.value)}
+                              value={cart[item.baseName].notes}
+                              onChange={(e) => updateNotes(item.baseName, e.target.value)}
                               className="text-sm"
                               rows={2}
                             />
@@ -510,16 +605,16 @@ const Menu = () => {
                   </p>
                 ) : (
                   <div className="space-y-4">
-                    {Object.values(cart).map(({item, quantity}) => (
-                      <div key={item.id} className="flex justify-between items-center">
+                    {Object.values(cart).map(({item, quantity, selectedPortion}) => (
+                      <div key={item.baseName} className="flex justify-between items-center">
                         <div className="flex-1">
-                          <p className="font-medium text-foreground">{item.name}</p>
+                          <p className="font-medium text-foreground">{item.baseName}</p>
                           <p className="text-sm text-muted-foreground">
-                            ₹{item.price} × {quantity}
+                            ₹{item.portions.find(p => p.id === selectedPortion)?.price || 0} × {quantity}
                           </p>
                         </div>
                         <p className="font-semibold text-primary">
-                          ₹{item.price * quantity}
+                          ₹{(item.portions.find(p => p.id === selectedPortion)?.price || 0) * quantity}
                         </p>
                       </div>
                     ))}
