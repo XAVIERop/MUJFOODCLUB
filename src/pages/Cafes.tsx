@@ -209,7 +209,7 @@ const Cafes = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-muted/30 py-16">
+      <div className="min-h-screen bg-muted/30 pt-4">
         <Header />
         <div className="container mx-auto px-4">
           <div className="text-center">
@@ -222,7 +222,7 @@ const Cafes = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 py-16">
+    <div className="min-h-screen bg-muted/30 pt-4">
       <Header />
       <div className="container mx-auto px-4">
         {/* Page Header */}
