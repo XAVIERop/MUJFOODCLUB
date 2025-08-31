@@ -141,14 +141,42 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
       };
     }
     
+    if (cafeName.includes('waffle') && (cafeName.includes('fit') || cafeName.includes('fresh'))) {
+      return {
+        type: 'image',
+        src: '/wafflefit&fresh_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
+    if (cafeName.includes('zaika')) {
+      return {
+        type: 'image',
+        src: '/zaika_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
+    if (cafeName.includes('zero') && cafeName.includes('degree')) {
+      return {
+        type: 'image',
+        src: '/zerodegreecafe_logo.jpg',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
+    if (cafeName.includes('kitchen') && cafeName.includes('curry')) {
+      return {
+        type: 'image',
+        src: '/thekitchencurry_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
     // Fallback to emojis for other cafes
     let emoji = '🍽️'; // default
     
-    if (cafeName.includes('zero') || cafeName.includes('degree')) emoji = '🍦';
-    else if (cafeName.includes('waffle') || cafeName.includes('fit')) emoji = '🧇';
-    else if (cafeName.includes('kitchen') || cafeName.includes('curry')) emoji = '🍛';
-    else if (cafeName.includes('zaika')) emoji = '🍽️';
-    else if (cafeName.includes('american')) emoji = '🍔';
+    if (cafeName.includes('american')) emoji = '🍔';
     else if (cafeName.includes('fast') || cafeName.includes('food')) emoji = '🍟';
     else if (cafeName.includes('burger')) emoji = '🍔';
     else if (cafeName.includes('pasta') || cafeName.includes('lasagna')) emoji = '🍝';
