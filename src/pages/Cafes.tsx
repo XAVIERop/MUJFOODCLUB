@@ -106,11 +106,12 @@ const Cafes = () => {
       
       // Check if accepting_orders column exists and filter accordingly
       if (data && data.length > 0 && 'accepting_orders' in data[0]) {
-        console.log('Cafes page: accepting_orders column exists, filtering...');
-        filteredCafes = data.filter((cafe: any) => cafe.accepting_orders !== false);
-        console.log('Cafes page: After accepting_orders filter:', filteredCafes.length, 'cafes');
+        console.log('Cafes page: accepting_orders column exists, showing all cafes...');
+        filteredCafes = data; // Show all cafes, don't filter out closed ones
+        console.log('Cafes page: Showing all cafes:', filteredCafes.length, 'cafes');
       } else {
         console.log('Cafes page: accepting_orders column does not exist, skipping filter');
+        filteredCafes = data;
       }
 
       // Sort by rating if available, otherwise by name
@@ -340,7 +341,18 @@ const Cafes = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCafes.map((cafe) => (
-              <div key={cafe.id} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 group">
+              <div 
+                key={cafe.id} 
+                className={`relative bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group cursor-pointer ${
+                  !cafe.accepting_orders ? 'opacity-75 grayscale' : ''
+                }`}
+                onClick={() => handleViewMenu(cafe.id)}
+              >
+                {/* Closed Cafe Overlay */}
+                {!cafe.accepting_orders && (
+                  <div className="absolute inset-0 bg-black/10 z-10 pointer-events-none" />
+                )}
+                
                 {/* Cafe Header with Original Theme */}
                 <div className="relative h-24 bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
                   {/* Favorite Button and Rating - Top Right */}
