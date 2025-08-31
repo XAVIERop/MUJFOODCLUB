@@ -206,6 +206,29 @@ const Checkout = () => {
       return;
     }
 
+    // Validate phone number
+    if (!deliveryDetails.phoneNumber || deliveryDetails.phoneNumber.trim() === '') {
+      setError('Phone number is required');
+      toast({
+        title: "Missing Information",
+        description: "Please enter your phone number",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate phone number format (basic validation)
+    const phoneRegex = /^[0-9]{10,15}$/;
+    if (!phoneRegex.test(deliveryDetails.phoneNumber.replace(/\s+/g, ''))) {
+      setError('Please enter a valid phone number (10-15 digits)');
+      toast({
+        title: "Invalid Phone Number",
+        description: "Please enter a valid phone number",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
@@ -596,14 +619,22 @@ const Checkout = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phoneNumber">Phone Number</Label>
+                    <Label htmlFor="phoneNumber" className="flex items-center">
+                      Phone Number
+                      <span className="text-red-500 ml-1">*</span>
+                    </Label>
                     <Input
                       id="phoneNumber"
                       type="tel"
-                      placeholder="Enter your phone number"
+                      placeholder="Enter your phone number (required)"
                       value={deliveryDetails.phoneNumber}
                       onChange={(e) => setDeliveryDetails(prev => ({...prev, phoneNumber: e.target.value}))}
+                      required
+                      className={!deliveryDetails.phoneNumber || deliveryDetails.phoneNumber.trim() === '' ? 'border-red-300 focus:border-red-500' : ''}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Required for delivery coordination
+                    </p>
                   </div>
                 </CardContent>
               </Card>

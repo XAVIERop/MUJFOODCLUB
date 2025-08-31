@@ -24,6 +24,7 @@ interface Order {
   user_id: string;
   cafe_id: string;
   points_credited: boolean;
+  phone_number?: string;
 }
 
 interface OrderItem {
@@ -323,6 +324,9 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
                           </CardTitle>
                           <p className="text-sm text-muted-foreground">
                             {formatTime(order.created_at)} • Block {order.delivery_block}
+                            {order.phone_number && (
+                              <span className="ml-2">• 📞 {order.phone_number}</span>
+                            )}
                           </p>
                         </div>
                         <div className="text-right">
@@ -357,6 +361,15 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
                         <div className="bg-muted/50 rounded-lg p-3">
                           <p className="text-sm">
                             <span className="font-medium">Delivery Notes:</span> {order.delivery_notes}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Contact Information */}
+                      {order.phone_number && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                          <p className="text-sm text-green-800">
+                            <span className="font-medium">📞 Contact:</span> {order.phone_number}
                           </p>
                         </div>
                       )}
