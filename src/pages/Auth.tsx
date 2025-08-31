@@ -71,13 +71,11 @@ const Auth = () => {
         return;
       }
     } else if (signUpData.email.endsWith('@mujfoodclub.in')) {
-      if (!signUpData.cafeName) {
-        setError('Please enter your cafe name');
-        setIsLoading(false);
-        return;
-      }
+      setError('Cafe owner accounts are pre-created. Please contact admin for login credentials.');
+      setIsLoading(false);
+      return;
     } else {
-      setError('Please use a valid MUJ email (@muj.manipal.edu) or FoodClub email (@mujfoodclub.in)');
+      setError('Please use a valid MUJ email (@muj.manipal.edu)');
       setIsLoading(false);
       return;
     }
@@ -205,7 +203,7 @@ const Auth = () => {
                     <Input
                       id="signup-email"
                       type="email"
-                      placeholder="your.name@muj.manipal.edu or cafe@mujfoodclub.in"
+                      placeholder="your.name@muj.manipal.edu"
                       value={signUpData.email}
                       onChange={(e) => setSignUpData({...signUpData, email: e.target.value})}
                       required
@@ -238,7 +236,11 @@ const Auth = () => {
                         value={signUpData.cafeName}
                         onChange={(e) => setSignUpData({...signUpData, cafeName: e.target.value})}
                         required={signUpData.email.endsWith('@mujfoodclub.in')}
+                        disabled={true}
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Cafe accounts are pre-created. Please contact admin for access.
+                      </p>
                     </div>
                   )}
                   <div className="space-y-2">
@@ -274,7 +276,7 @@ const Auth = () => {
         </Card>
         
         <p className="text-center text-sm text-muted-foreground mt-4">
-          MUJ students (@muj.manipal.edu) and Cafe Owners (@mujfoodclub.in) can register
+          Only MUJ students (@muj.manipal.edu) can register. Cafe owners use pre-created accounts.
         </p>
       </div>
     </div>
