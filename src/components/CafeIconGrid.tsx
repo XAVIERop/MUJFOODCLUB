@@ -40,40 +40,52 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
     }
   };
 
-  // Placeholder for cafe logos - you'll replace these with actual images
-  const getCafeLogo = (name: string) => {
-    // For now, using colored circles as placeholders
-    // You'll replace these with actual cafe logo images
-    const cafeName = name.toLowerCase();
+  // Get cafe logo image or fallback to emoji
+  const getCafeLogo = (cafe: Cafe) => {
+    const cafeName = cafe.name.toLowerCase();
     
-    if (cafeName.includes('mini') || cafeName.includes('meals')) return '🍱';
-    if (cafeName.includes('chat') || cafeName.includes('kara')) return '🍛';
-    if (cafeName.includes('dialog')) return '☕';
-    if (cafeName.includes('zero') || cafeName.includes('degree')) return '🍦';
-    if (cafeName.includes('star') || cafeName.includes('dom')) return '⭐';
-    if (cafeName.includes('hav') || cafeName.includes('mor')) return '🍦';
-    if (cafeName.includes('cook') || cafeName.includes('house')) return '🏠';
-    if (cafeName.includes('waffle') || cafeName.includes('fit')) return '🧇';
-    if (cafeName.includes('food') || cafeName.includes('court')) return '🏢';
-    if (cafeName.includes('kitchen') || cafeName.includes('curry')) return '🍛';
-    if (cafeName.includes('crazy') || cafeName.includes('chef')) return '👨‍🍳';
-    if (cafeName.includes('zaika')) return '🍽️';
-    if (cafeName.includes('italian') || cafeName.includes('oven')) return '🍕';
-    if (cafeName.includes('american')) return '🍔';
-    if (cafeName.includes('fast') || cafeName.includes('food')) return '🍟';
-    if (cafeName.includes('burger')) return '🍔';
-    if (cafeName.includes('pasta') || cafeName.includes('lasagna')) return '🍝';
-    if (cafeName.includes('biryani')) return '🍚';
-    if (cafeName.includes('pizza')) return '🍕';
-    if (cafeName.includes('wrap') || cafeName.includes('shawarma')) return '🌯';
-    if (cafeName.includes('dessert') || cafeName.includes('sweet')) return '🍰';
-    if (cafeName.includes('coffee') || cafeName.includes('cafe')) return '☕';
-    if (cafeName.includes('north') || cafeName.includes('indian')) return '🍛';
-    if (cafeName.includes('chinese')) return '🥢';
-    if (cafeName.includes('quick') || cafeName.includes('bite')) return '🍽️';
-    if (cafeName.includes('multi') || cafeName.includes('cuisine')) return '🌍';
+    // Check if we have a logo for this cafe
+    if (cafeName.includes('chatkara')) {
+      return {
+        type: 'image',
+        src: '/chatkara_logo.jpg',
+        alt: `${cafe.name} Logo`
+      };
+    }
     
-    return '🍽️';
+    // Fallback to emojis for other cafes
+    let emoji = '🍽️'; // default
+    
+    if (cafeName.includes('mini') || cafeName.includes('meals')) emoji = '🍱';
+    else if (cafeName.includes('dialog')) emoji = '☕';
+    else if (cafeName.includes('zero') || cafeName.includes('degree')) emoji = '🍦';
+    else if (cafeName.includes('star') || cafeName.includes('dom')) emoji = '⭐';
+    else if (cafeName.includes('hav') || cafeName.includes('mor')) emoji = '🍦';
+    else if (cafeName.includes('cook') || cafeName.includes('house')) emoji = '🏠';
+    else if (cafeName.includes('waffle') || cafeName.includes('fit')) emoji = '🧇';
+    else if (cafeName.includes('food') || cafeName.includes('court')) emoji = '🏢';
+    else if (cafeName.includes('kitchen') || cafeName.includes('curry')) emoji = '🍛';
+    else if (cafeName.includes('crazy') || cafeName.includes('chef')) emoji = '👨‍🍳';
+    else if (cafeName.includes('zaika')) emoji = '🍽️';
+    else if (cafeName.includes('italian') || cafeName.includes('oven')) emoji = '🍕';
+    else if (cafeName.includes('american')) emoji = '🍔';
+    else if (cafeName.includes('fast') || cafeName.includes('food')) emoji = '🍟';
+    else if (cafeName.includes('burger')) emoji = '🍔';
+    else if (cafeName.includes('pasta') || cafeName.includes('lasagna')) emoji = '🍝';
+    else if (cafeName.includes('biryani')) emoji = '🍚';
+    else if (cafeName.includes('pizza')) emoji = '🍕';
+    else if (cafeName.includes('wrap') || cafeName.includes('shawarma')) emoji = '🌯';
+    else if (cafeName.includes('dessert') || cafeName.includes('sweet')) emoji = '🍰';
+    else if (cafeName.includes('coffee') || cafeName.includes('cafe')) emoji = '☕';
+    else if (cafeName.includes('north') || cafeName.includes('indian')) emoji = '🍛';
+    else if (cafeName.includes('chinese')) emoji = '🥢';
+    else if (cafeName.includes('quick') || cafeName.includes('bite')) emoji = '🍽️';
+    else if (cafeName.includes('multi') || cafeName.includes('cuisine')) emoji = '🌍';
+    
+    return {
+      type: 'emoji',
+      emoji: emoji
+    };
   };
 
   return (
@@ -102,25 +114,46 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
           className="flex gap-6 px-8 overflow-x-auto scrollbar-hide scroll-smooth"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {cafes.map((cafe) => (
-            <div
-              key={cafe.id}
-              onClick={() => handleCafeClick(cafe.id)}
-              className="flex flex-col items-center cursor-pointer group transition-all duration-200 hover:scale-105 min-w-[80px]"
-            >
-              {/* Cafe Logo/Icon - Very Small Size */}
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 flex items-center justify-center mb-2 group-hover:border-primary transition-colors">
-                <span className="text-xl">
-                  {getCafeLogo(cafe.name)}
-                </span>
+          {cafes.map((cafe) => {
+            const logoData = getCafeLogo(cafe);
+            
+            return (
+              <div
+                key={cafe.id}
+                onClick={() => handleCafeClick(cafe.id)}
+                className="flex flex-col items-center cursor-pointer group transition-all duration-200 hover:scale-105 min-w-[80px]"
+              >
+                {/* Cafe Logo/Icon - Very Small Size */}
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 flex items-center justify-center mb-2 group-hover:border-primary transition-colors overflow-hidden">
+                  {logoData.type === 'image' ? (
+                    <img
+                      src={logoData.src}
+                      alt={logoData.alt}
+                      className="w-full h-full object-cover rounded-full"
+                      onError={(e) => {
+                        // Fallback to emoji if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  {/* Fallback emoji - hidden if image is shown */}
+                  <span 
+                    className={`text-xl ${logoData.type === 'image' ? 'hidden' : 'block'}`}
+                  >
+                    {logoData.emoji}
+                  </span>
+                </div>
+                
+                {/* Cafe Name - Very Small Text */}
+                <div className="text-xs font-medium text-gray-800 text-center leading-tight max-w-[80px]">
+                  {cafe.name.length > 10 ? cafe.name.substring(0, 10) + '...' : cafe.name}
+                </div>
               </div>
-              
-              {/* Cafe Name - Very Small Text */}
-              <div className="text-xs font-medium text-gray-800 text-center leading-tight max-w-[80px]">
-                {cafe.name.length > 10 ? cafe.name.substring(0, 10) + '...' : cafe.name}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
