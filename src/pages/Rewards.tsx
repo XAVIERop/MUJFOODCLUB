@@ -6,6 +6,7 @@ import { Trophy, Star, TrendingUp, Gift, Crown, Gem, Diamond, Clock, AlertTriang
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import { useEffect, useState } from 'react';
 import { TIER_CONFIG, LOYALTY_TIERS, POINTS_CONFIG, MAINTENANCE_CONFIG } from '@/lib/constants';
+import Header from '@/components/Header';
 
 interface RewardsSummary {
   current_tier: string;
@@ -91,6 +92,7 @@ const Rewards = () => {
   if (!user || !profile) {
     return (
       <div className="min-h-screen bg-background">
+        <Header />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <Trophy className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -105,6 +107,7 @@ const Rewards = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
+        <Header />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
@@ -153,7 +156,9 @@ const Rewards = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      <Header />
+      
+      {/* Page Header */}
       <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-border">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h1 className="text-3xl font-bold text-foreground flex items-center">
