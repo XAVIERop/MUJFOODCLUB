@@ -79,6 +79,7 @@ const CafeDashboard = () => {
   const [isSoundSettingsOpen, setIsSoundSettingsOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [cafeId, setCafeId] = useState<string | null>(null);
+  const [cafeInfo, setCafeInfo] = useState<any | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   
   // Filter states
@@ -100,34 +101,39 @@ const CafeDashboard = () => {
   // Get cafe ID for the current user
   useEffect(() => {
     const getCafeId = async () => {
-      if (!user) return;
+      if (!user || !profile) return;
 
       try {
-        const { data: staffData, error: staffError } = await supabase
-          .from('cafe_staff')
-          .select('*')
-          .eq('user_id', user.id);
+        if (profile.user_type === 'cafe_owner') {
+          // Cafe owners get cafe_id directly from their profile
+          setCafeId(profile.cafe_id);
+        } else if (profile.user_type === 'cafe_staff') {
+          // Cafe staff get cafe_id from cafe_staff table
+          const { data: staffData, error: staffError } = await supabase
+            .from('cafe_staff')
+            .select('*')
+            .eq('user_id', user.id);
 
-        if (staffError) {
-          console.error('Error fetching cafe staff:', staffError);
-          return;
+          if (staffError) {
+            console.error('Error fetching cafe staff:', staffError);
+            return;
+          }
+
+          if (!staffData || staffData.length === 0) {
+            return;
+          }
+
+          // Get the cafe_id from the first record
+          const cafeStaffRecord = staffData[0];
+          setCafeId(cafeStaffRecord.cafe_id);
         }
-
-        if (!staffData || staffData.length === 0) {
-          return;
-        }
-
-        // Get the cafe_id from the first record
-        const cafeStaffRecord = staffData[0];
-        setCafeId(cafeStaffRecord.cafe_id);
-
       } catch (error) {
         console.error('Error fetching cafe ID:', error);
       }
     };
 
     getCafeId();
-  }, [user]);
+  }, [user, profile]);
 
   const fetchOrders = async () => {
     if (!cafeId) return;
@@ -188,6 +194,21 @@ const CafeDashboard = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCafeInfo = async (cafeId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('cafes')
+        .select('name, description, location, type')
+        .eq('id', cafeId)
+        .single();
+      
+      if (error) throw error;
+      setCafeInfo(data);
+    } catch (error) {
+      console.error('Error fetching cafe info:', error);
     }
   };
 
@@ -661,6 +682,7 @@ const CafeDashboard = () => {
 
   useEffect(() => {
     if (cafeId) {
+      fetchCafeInfo(cafeId);
       fetchOrders();
       fetchAnalytics();
     }
@@ -668,7 +690,7 @@ const CafeDashboard = () => {
 
 
 
-  // Check if user is cafe staff
+  // Check if user is cafe owner or staff
   if (!user || !profile) {
     return (
       <div className="min-h-screen bg-background">
@@ -678,6 +700,23 @@ const CafeDashboard = () => {
             <CardContent className="p-8 text-center">
               <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
               <p className="text-muted-foreground">You need to be logged in to access the cafe dashboard.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user is cafe owner or staff
+  if (profile.user_type !== 'cafe_owner' && profile.user_type !== 'cafe_staff') {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
+              <p className="text-muted-foreground">Only cafe owners and staff can access the cafe dashboard.</p>
             </CardContent>
           </Card>
         </div>
@@ -710,7 +749,7 @@ const CafeDashboard = () => {
           <div>
             <h1 className="text-3xl font-bold">Cafe Dashboard</h1>
             <p className="text-muted-foreground">
-              Managing: <span className="font-semibold text-primary">Mini Meals</span> • 
+              Managing: <span className="font-semibold text-primary">{cafeInfo?.name || 'Loading...'}</span> • 
               Manage orders, track analytics, and maintain your business
             </p>
           </div>

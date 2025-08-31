@@ -310,6 +310,8 @@ export interface Database {
           total_orders: number
           total_spent: number
           updated_at: string
+          user_type: string
+          cafe_id: string | null
         }
         Insert: {
           block: Database["public"]["Enums"]["block_type"]
@@ -325,6 +327,8 @@ export interface Database {
           total_orders?: number
           total_spent?: number
           updated_at?: string
+          user_type?: string
+          cafe_id?: string | null
         }
         Update: {
           block?: Database["public"]["Enums"]["block_type"]
@@ -340,6 +344,8 @@ export interface Database {
           total_orders?: number
           total_spent?: number
           updated_at?: string
+          user_type?: string
+          cafe_id?: string | null
         }
         Relationships: []
       }

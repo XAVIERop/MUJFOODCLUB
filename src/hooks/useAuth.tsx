@@ -7,7 +7,7 @@ interface AuthContextType {
   session: Session | null;
   profile: any | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, block: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, block: string, cafeName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: any) => Promise<{ error: any }>;
@@ -42,6 +42,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setProfile(data);
     } catch (error) {
       console.error('Error fetching profile:', error);
+    }
+  };
+
+  const createProfile = async (userId: string, email: string, fullName: string, block: string, cafeName?: string) => {
+    try {
+      const userType = email.endsWith('@mujfoodclub.in') ? 'cafe_owner' : 'student';
+      
+      if (userType === 'cafe_owner' && cafeName) {
+        // For cafe owners, find the cafe and create profile
+        const { data: cafe } = await supabase
+          .from('cafes')
+          .select('id')
+          .eq('name', cafeName)
+          .single();
+        
+        if (cafe) {
+          await supabase.from('profiles').insert({
+            id: userId,
+            email: email,
+            full_name: fullName,
+            user_type: userType,
+            cafe_id: cafe.id,
+            loyalty_points: 0,
+            loyalty_tier: 'foodie',
+            total_orders: 0,
+            total_spent: 0,
+            qr_code: `CAFE_${cafe.id}_${userId}`
+          });
+        }
+      } else {
+        // For students, create regular profile
+        await supabase.from('profiles').insert({
+          id: userId,
+          email: email,
+          full_name: fullName,
+          user_type: userType,
+          block: block,
+          loyalty_points: 0,
+          loyalty_tier: 'foodie',
+          total_orders: 0,
+          total_spent: 0,
+          qr_code: `STUDENT_${block}_${userId}`
+        });
+      }
+    } catch (error) {
+      console.error('Error creating profile:', error);
     }
   };
 
@@ -89,26 +135,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string, block: string) => {
+  const signUp = async (email: string, password: string, fullName: string, block: string, cafeName?: string) => {
     try {
-      // Validate MUJ email
-      if (!email.endsWith('@muj.manipal.edu')) {
-        return { error: { message: 'Please use your MUJ email address (@muj.manipal.edu)' } };
+      // Validate email domain
+      if (!email.endsWith('@muj.manipal.edu') && !email.endsWith('@mujfoodclub.in')) {
+        return { error: { message: 'Please use a valid MUJ email (@muj.manipal.edu) or FoodClub email (@mujfoodclub.in)' } };
       }
 
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
-            block: block
+            block: block,
+            cafe_name: cafeName
           }
         }
       });
+      
+      if (data.user && !error) {
+        // Create profile based on user type
+        await createProfile(data.user.id, email, fullName, block, cafeName);
+      }
       
       return { error };
     } catch (error) {
@@ -128,9 +180,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) throw error;
       
+      // Determine user type and route accordingly
+      const userType = email.endsWith('@mujfoodclub.in') ? 'cafe_owner' : 'student';
+      
       // Force page reload for clean state
       setTimeout(() => {
-        window.location.href = '/';
+        if (userType === 'cafe_owner') {
+          window.location.href = '/cafe-dashboard';
+        } else {
+          window.location.href = '/';
+        }
       }, 100);
       
       return { error: null };

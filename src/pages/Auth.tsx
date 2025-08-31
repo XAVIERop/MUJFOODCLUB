@@ -24,7 +24,8 @@ const Auth = () => {
     email: '', 
     password: '', 
     fullName: '', 
-    block: '' 
+    block: '',
+    cafeName: ''
   });
 
   // Redirect if already authenticated
@@ -62,8 +63,21 @@ const Auth = () => {
     setIsLoading(true);
     setError('');
 
-    if (!signUpData.block) {
-      setError('Please select your block');
+    // Validate based on email domain
+    if (signUpData.email.endsWith('@muj.manipal.edu')) {
+      if (!signUpData.block) {
+        setError('Please select your block');
+        setIsLoading(false);
+        return;
+      }
+    } else if (signUpData.email.endsWith('@mujfoodclub.in')) {
+      if (!signUpData.cafeName) {
+        setError('Please enter your cafe name');
+        setIsLoading(false);
+        return;
+      }
+    } else {
+      setError('Please use a valid MUJ email (@muj.manipal.edu) or FoodClub email (@mujfoodclub.in)');
       setIsLoading(false);
       return;
     }
@@ -72,7 +86,8 @@ const Auth = () => {
       signUpData.email, 
       signUpData.password, 
       signUpData.fullName, 
-      signUpData.block
+      signUpData.block,
+      signUpData.cafeName
     );
     
     if (error) {
@@ -122,11 +137,11 @@ const Auth = () => {
               <CardContent>
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email">MUJ Email</Label>
+                    <Label htmlFor="signin-email">Email</Label>
                     <Input
                       id="signin-email"
                       type="email"
-                      placeholder="your.name@muj.manipal.edu"
+                      placeholder="your.name@muj.manipal.edu or cafe@mujfoodclub.in"
                       value={signInData.email}
                       onChange={(e) => setSignInData({...signInData, email: e.target.value})}
                       required
@@ -186,11 +201,11 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">MUJ Email</Label>
+                    <Label htmlFor="signup-email">Email</Label>
                     <Input
                       id="signup-email"
                       type="email"
-                      placeholder="your.name@muj.manipal.edu"
+                      placeholder="your.name@muj.manipal.edu or cafe@mujfoodclub.in"
                       value={signUpData.email}
                       onChange={(e) => setSignUpData({...signUpData, email: e.target.value})}
                       required
@@ -211,6 +226,21 @@ const Auth = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  
+                  {/* Cafe Name field - only show for cafe owners */}
+                  {signUpData.email.endsWith('@mujfoodclub.in') && (
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-cafe">Cafe Name</Label>
+                      <Input
+                        id="signup-cafe"
+                        type="text"
+                        placeholder="Enter your cafe name (e.g., Chatkara)"
+                        value={signUpData.cafeName}
+                        onChange={(e) => setSignUpData({...signUpData, cafeName: e.target.value})}
+                        required={signUpData.email.endsWith('@mujfoodclub.in')}
+                      />
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
                     <Input
@@ -244,7 +274,7 @@ const Auth = () => {
         </Card>
         
         <p className="text-center text-sm text-muted-foreground mt-4">
-          Only MUJ students with @muj.manipal.edu email can register
+          MUJ students (@muj.manipal.edu) and Cafe Owners (@mujfoodclub.in) can register
         </p>
       </div>
     </div>
