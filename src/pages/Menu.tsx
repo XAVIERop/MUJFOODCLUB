@@ -142,13 +142,16 @@ const Menu = () => {
 
   // Function to group menu items by name and portion
   const groupMenuItems = (items: MenuItem[]): GroupedMenuItem[] => {
+    console.log('Original menu items:', items);
     const grouped: { [key: string]: GroupedMenuItem } = {};
     
     items.forEach(item => {
-      // Extract base name (remove portion indicators like " - Full", " - Half")
-      const baseName = item.name.replace(/\s*-\s*(Full|Half|Small|Large|Regular)$/i, '').trim();
-      const portionMatch = item.name.match(/\s*-\s*(Full|Half|Small|Large|Regular)$/i);
+      // Extract base name (remove portion indicators like " (Half)", " (Full)", " - Full", " - Half")
+      const baseName = item.name.replace(/\s*[-\s]*\(?(Half|Full|Small|Large|Regular)\)?$/i, '').trim();
+      const portionMatch = item.name.match(/\s*[-\s]*\(?(Half|Full|Small|Large|Regular)\)?$/i);
       const portionName = portionMatch ? portionMatch[1] : 'Regular';
+      
+      console.log(`Item: "${item.name}" -> Base: "${baseName}", Portion: "${portionName}"`);
       
       if (!grouped[baseName]) {
         grouped[baseName] = {
@@ -169,6 +172,7 @@ const Menu = () => {
       });
     });
     
+    console.log('Grouped menu items:', grouped);
     return Object.values(grouped);
   };
 
