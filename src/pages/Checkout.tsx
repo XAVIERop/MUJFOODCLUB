@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, MapPin, Clock, CreditCard, Banknote, AlertCircle, CheckCircle, Trophy } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Banknote, AlertCircle, CheckCircle, Trophy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -60,7 +60,8 @@ const Checkout = () => {
   const [deliveryDetails, setDeliveryDetails] = useState({
     block: profile?.block || 'B1',
     deliveryNotes: '',
-    paymentMethod: 'cod'
+    paymentMethod: 'cod',
+    phoneNumber: profile?.phone || ''
   });
 
   // Points redemption state
@@ -68,6 +69,7 @@ const Checkout = () => {
   const [pointsDiscount, setPointsDiscount] = useState(0);
   const [finalAmount, setFinalAmount] = useState(totalAmount);
   const [pointsToEarn, setPointsToEarn] = useState(0);
+  const [customPointsInput, setCustomPointsInput] = useState('');
 
   // Redirect if no cart data
   useEffect(() => {
@@ -85,20 +87,14 @@ const Checkout = () => {
     }
     
     // Check if user is verified
-    console.log('User verification status:', {
-      user: user.id,
-      email: user.email,
-      email_confirmed_at: user.email_confirmed_at,
-      profile: profile
-    });
-    
     if (!user.email_confirmed_at) {
       setError('Please verify your email address before placing an order. Check your email for the verification link.');
       toast({
         title: "Email Not Verified",
-        description: "Please verify your email address before placing an order.",
+        description: "Please check your email and click the verification link before placing an order.",
         variant: "destructive"
       });
+      return;
     }
   }, [user, navigate, profile, toast]);
 
@@ -112,7 +108,7 @@ const Checkout = () => {
     
     try {
       // Use the enhanced point calculation function
-      const { data, error } = await supabase.rpc('calculate_enhanced_points', {
+      const { data, error } = await (supabase.rpc as any)('calculate_enhanced_points', {
         order_amount: amount,
         user_id: user.id,
         is_new_user: profile.is_new_user || false,
@@ -133,9 +129,39 @@ const Checkout = () => {
     }
   };
 
+  // Enhanced points calculation with fallback
+  const calculateEnhancedPoints = (amount: number) => {
+    if (!profile) return Math.floor(amount / 10);
+    
+    let basePoints = Math.floor(amount / 10); // 10 points per ₹100
+    
+    // Apply tier multiplier
+    let tierMultiplier = 1.0;
+    if (profile.loyalty_tier === 'connoisseur') {
+      tierMultiplier = 1.5;
+    } else if (profile.loyalty_tier === 'gourmet') {
+      tierMultiplier = 1.2;
+    }
+    
+    // Apply new user bonus
+    let newUserMultiplier = 1.0;
+    if (profile.is_new_user && profile.new_user_orders_count && profile.new_user_orders_count <= 20) {
+      if (profile.new_user_orders_count === 1) {
+        newUserMultiplier = 1.5; // 50% bonus for first order
+      } else {
+        newUserMultiplier = 1.25; // 25% bonus for orders 2-20
+      }
+    }
+    
+    const finalPoints = Math.floor(basePoints * tierMultiplier * newUserMultiplier);
+    
+    return finalPoints;
+  };
+
   const calculatePointsDiscount = (points: number) => {
-    // 1 point = ₹1 discount (1:1 ratio)
-    return Math.min(points, Math.floor(totalAmount * 0.5)); // Max 50% discount
+    // 1 point = ₹0.25 discount (4:1 ratio)
+    const discount = points * 0.25;
+    return Math.min(discount, Math.floor(totalAmount * 0.5)); // Max 50% discount
   };
 
   const handlePointsRedeem = (points: number) => {
@@ -143,6 +169,14 @@ const Checkout = () => {
     setPointsToRedeem(points);
     setPointsDiscount(discount);
     setFinalAmount(Math.max(0, totalAmount - discount));
+  };
+
+  const handleCustomPointsRedeem = () => {
+    const customPoints = parseInt(customPointsInput);
+    if (customPoints && customPoints > 0 && customPoints <= profile.loyalty_points) {
+      handlePointsRedeem(customPoints);
+      setCustomPointsInput('');
+    }
   };
 
   // Update final amount when total amount changes
@@ -154,7 +188,7 @@ const Checkout = () => {
   useEffect(() => {
     const calculateInitialPoints = async () => {
       if (user && profile && totalAmount > 0) {
-        const points = await calculatePoints(totalAmount);
+        const points = await calculateEnhancedPoints(totalAmount);
         setPointsToEarn(points);
       }
     };
@@ -176,8 +210,6 @@ const Checkout = () => {
     setError('');
 
     try {
-      console.log('Starting order placement...', { user: user.id, profile, cafe, totalAmount });
-      
       // Generate unique order number with better uniqueness
       const timestamp = Date.now();
       const random = Math.random().toString(36).substr(2, 8).toUpperCase();
@@ -187,30 +219,7 @@ const Checkout = () => {
       // Use the pre-calculated points (based on original total amount, not final amount after discount)
       // This ensures users get points based on what they spent, not what they paid after discounts
 
-      console.log('Creating order with data:', {
-        user_id: user.id,
-        cafe_id: cafe.id,
-        order_number: orderNumber,
-        total_amount: totalAmount,
-        delivery_block: deliveryDetails.block,
-        delivery_notes: deliveryDetails.deliveryNotes,
-        payment_method: deliveryDetails.paymentMethod,
-        points_earned: pointsToEarn
-      });
-
       // Create order
-      console.log('Attempting to create order with data:', {
-        user_id: user.id,
-        cafe_id: cafe.id,
-        order_number: orderNumber,
-        total_amount: finalAmount,
-        delivery_block: deliveryDetails.block,
-        delivery_notes: deliveryDetails.deliveryNotes,
-        payment_method: deliveryDetails.paymentMethod,
-        points_earned: pointsToEarn,
-        estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString()
-      });
-
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -222,7 +231,8 @@ const Checkout = () => {
           delivery_notes: deliveryDetails.deliveryNotes,
           payment_method: deliveryDetails.paymentMethod,
           points_earned: pointsToEarn,
-          estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutes from now
+          estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes from now
+          phone_number: deliveryDetails.phoneNumber
         })
         .select()
         .single();
@@ -238,44 +248,52 @@ const Checkout = () => {
         throw orderError;
       }
 
-      console.log('Order created successfully:', order);
-      console.log('Order ID:', order.id);
-      console.log('Order Number:', order.order_number);
-
-      // Handle enhanced rewards system
+      // Handle enhanced rewards system (only if database functions exist)
       try {
-        // Track maintenance spending for tier maintenance
-        await supabase.rpc('track_maintenance_spending', {
+        // Check if enhanced rewards functions exist before calling them
+        const { data: functionCheck } = await (supabase.rpc as any)('calculate_enhanced_points', {
+          order_amount: totalAmount,
           user_id: user.id,
-          order_amount: totalAmount // Use original amount for maintenance tracking
+          is_new_user: profile.is_new_user || false,
+          new_user_orders_count: profile.new_user_orders_count || 0
         });
 
-        // Handle new user first order bonus
-        if (profile.is_new_user && (!profile.new_user_orders_count || profile.new_user_orders_count === 0)) {
-          await supabase.rpc('handle_new_user_first_order', {
-            user_id: user.id
+        if (functionCheck !== undefined) {
+          // Enhanced rewards system is available
+          
+          // Track maintenance spending for tier maintenance
+          await (supabase.rpc as any)('track_maintenance_spending', {
+            user_id: user.id,
+            order_amount: totalAmount
           });
-        }
 
-        // Update user's new user orders count
-        if (profile.is_new_user && profile.new_user_orders_count !== null) {
-          const newCount = Math.min(profile.new_user_orders_count + 1, 20);
-          await supabase
-            .from('profiles')
-            .update({ 
-              new_user_orders_count: newCount,
-              is_new_user: newCount < 20
-            })
-            .eq('id', user.id);
+          // Handle new user first order bonus
+          if (profile.is_new_user && (!profile.new_user_orders_count || profile.new_user_orders_count === 0)) {
+            await (supabase.rpc as any)('handle_new_user_first_order', {
+              user_id: user.id
+            });
+          }
+
+          // Update user's new user orders count
+          if (profile.is_new_user && profile.new_user_orders_count !== null) {
+            const newCount = Math.min(profile.new_user_orders_count + 1, 20);
+            await supabase
+              .from('profiles')
+              .update({ 
+                new_user_orders_count: newCount,
+                is_new_user: newCount < 20
+              })
+              .eq('id', user.id);
+          }
         }
       } catch (error) {
-        console.error('Error handling enhanced rewards:', error);
+        console.error('Enhanced rewards system not available or error occurred:', error);
         // Don't fail the order for rewards errors
       }
 
       // Create order items
       const orderItems = Object.values(cart).map(({item, quantity, notes}) => ({
-        order_id: order.id,
+        order_id: order!.id,
         menu_item_id: item.id,
         quantity,
         unit_price: item.price,
@@ -283,32 +301,27 @@ const Checkout = () => {
         special_instructions: notes
       }));
 
-      console.log('Creating order items:', orderItems);
-
-      const { error: itemsError } = await supabase
+      const { error: itemsError } = await (supabase
         .from('order_items')
-        .insert(orderItems);
+        .insert(orderItems) as any);
 
       if (itemsError) {
         console.error('Order items creation error:', itemsError);
         throw itemsError;
       }
 
-      console.log('Order items created successfully');
-
       // Handle points redemption transaction if points were redeemed
       if (pointsToRedeem > 0) {
-        console.log('Adding points redemption transaction:', pointsToRedeem);
         
-        const { error: redemptionError } = await supabase
+        const { error: redemptionError } = await (supabase
           .from('loyalty_transactions')
           .insert({
             user_id: user.id,
-            order_id: order.id,
+            order_id: order!.id,
             points_change: -pointsToRedeem,
             transaction_type: 'redeemed',
             description: `Redeemed ${pointsToRedeem} points for order ${orderNumber}`
-          });
+          }) as any);
 
         if (redemptionError) {
           console.error('Points redemption error:', redemptionError);
@@ -320,9 +333,7 @@ const Checkout = () => {
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
-            loyalty_points: newTotalPoints,
-            total_orders: (profile.total_orders || 0) + 1,
-            total_spent: (profile.total_spent || 0) + finalAmount
+            loyalty_points: newTotalPoints
           })
           .eq('id', user.id);
 
@@ -331,33 +342,27 @@ const Checkout = () => {
           throw profileError;
         }
       } else {
-        // Update user profile without points (points will be credited on completion)
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ 
-            total_orders: (profile.total_orders || 0) + 1,
-            total_spent: (profile.total_spent || 0) + finalAmount
-          })
-          .eq('id', user.id);
-
-        if (profileError) {
-          console.error('Profile update error:', profileError);
-          throw profileError;
-        }
+        // No points redeemed, just log the order placement
+        console.log('Order placed without points redemption');
       }
 
-      console.log('Profile updated successfully');
+      // Create loyalty transaction to earn points for the order
+      if (pointsToEarn > 0) {
+        // Points will be earned when order is completed, not immediately
+        // Store the points to earn in the order for later processing
+        console.log(`Order placed with ${pointsToEarn} points to earn upon completion`);
+      }
 
       toast({
         title: "Order Placed Successfully!",
-        description: `Your order #${orderNumber} has been confirmed. Estimated delivery: 30 minutes.`,
+        description: `Your order #${order!.order_number} has been confirmed. Estimated delivery: 30 minutes.`,
       });
 
       // Refresh profile to update loyalty points
       await refreshProfile();
 
       // Navigate to order confirmation with the ACTUAL order number from database
-      navigate(`/order-confirmation/${order.order_number}`, { 
+      navigate(`/order-confirmation/${order!.order_number}`, { 
         state: { 
           order,
           pointsEarned: pointsToEarn
@@ -456,49 +461,30 @@ const Checkout = () => {
                         </p>
                         
                         <div className="space-y-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePointsRedeem(10)}
-                            disabled={profile.loyalty_points < 10 || pointsToRedeem === 10}
-                            className="w-full justify-between"
-                          >
-                            <span>Redeem 10 points</span>
-                            <span className="text-green-600">-₹10</span>
-                          </Button>
+                          {/* Custom Points Input */}
+                          <div className="flex space-x-2">
+                            <Input
+                              type="number"
+                              placeholder="Custom points"
+                              value={customPointsInput}
+                              onChange={(e) => setCustomPointsInput(e.target.value)}
+                              min="1"
+                              max={profile.loyalty_points}
+                              className="flex-1"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleCustomPointsRedeem}
+                              disabled={!customPointsInput || parseInt(customPointsInput) <= 0 || parseInt(customPointsInput) > profile.loyalty_points}
+                            >
+                              Redeem
+                            </Button>
+                          </div>
                           
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePointsRedeem(25)}
-                            disabled={profile.loyalty_points < 25 || pointsToRedeem === 25}
-                            className="w-full justify-between"
-                          >
-                            <span>Redeem 25 points</span>
-                            <span className="text-green-600">-₹25</span>
-                          </Button>
-                          
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePointsRedeem(50)}
-                            disabled={profile.loyalty_points < 50 || pointsToRedeem === 50}
-                            className="w-full justify-between"
-                          >
-                            <span>Redeem 50 points</span>
-                            <span className="text-green-600">-₹50</span>
-                          </Button>
-                          
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePointsRedeem(profile.loyalty_points)}
-                            disabled={pointsToRedeem === profile.loyalty_points}
-                            className="w-full justify-between"
-                          >
-                            <span>Redeem all points</span>
-                            <span className="text-green-600">-₹{Math.min(profile.loyalty_points, Math.floor(totalAmount * 0.5))}</span>
-                          </Button>
+                          <p className="text-xs text-muted-foreground text-center">
+                            1 point = ₹0.25 discount • Max 50% of order total
+                          </p>
                         </div>
                         
                         {pointsToRedeem > 0 && (
@@ -518,6 +504,20 @@ const Checkout = () => {
                     </div>
                   )}
 
+                  {/* No Points Message */}
+                  {profile && profile.loyalty_points === 0 && (
+                    <div className="border-t border-border pt-4 mt-4">
+                      <div className="text-center p-4 bg-muted/50 rounded-lg">
+                        <Trophy className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          You don't have any loyalty points yet. 
+                          <br />
+                          Complete this order to start earning points!
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Total */}
                   <div className="border-t border-border pt-4 mt-4">
                     <div className="space-y-2">
@@ -527,7 +527,7 @@ const Checkout = () => {
                       </div>
                       {pointsDiscount > 0 && (
                         <div className="flex justify-between items-center text-green-600">
-                          <span>Points Discount</span>
+                          <span>Loyalty Points Discount</span>
                           <span>-₹{pointsDiscount}</span>
                         </div>
                       )}
@@ -540,6 +540,9 @@ const Checkout = () => {
                       <span>Points to Earn</span>
                       <span className="text-green-600">+{pointsToEarn} pts</span>
                     </div>
+                    <p className="text-xs text-muted-foreground text-center mt-1">
+                      Points will be awarded when your order is completed
+                    </p>
                     {profile && (
                       <div className="text-xs text-muted-foreground mt-1">
                         <span className="font-medium">Tier:</span> {profile.loyalty_tier} 
@@ -591,6 +594,17 @@ const Checkout = () => {
                       rows={3}
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phoneNumber">Phone Number</Label>
+                    <Input
+                      id="phoneNumber"
+                      type="tel"
+                      placeholder="Enter your phone number"
+                      value={deliveryDetails.phoneNumber}
+                      onChange={(e) => setDeliveryDetails(prev => ({...prev, phoneNumber: e.target.value}))}
+                    />
+                  </div>
                 </CardContent>
               </Card>
 
@@ -600,14 +614,13 @@ const Checkout = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex items-center space-x-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50"
-                         onClick={() => setDeliveryDetails(prev => ({...prev, paymentMethod: 'cod'}))}>
+                    <div className="flex items-center space-x-3 p-3 border border-border rounded-lg bg-muted/30">
                       <input
                         type="radio"
                         name="payment"
                         value="cod"
-                        checked={deliveryDetails.paymentMethod === 'cod'}
-                        onChange={() => setDeliveryDetails(prev => ({...prev, paymentMethod: 'cod'}))}
+                        checked={true}
+                        disabled={true}
                         className="text-primary"
                       />
                       <Banknote className="w-5 h-5 text-muted-foreground" />
@@ -616,24 +629,10 @@ const Checkout = () => {
                         <div className="text-sm text-muted-foreground">Pay when you receive your order</div>
                       </div>
                     </div>
-
-                    <div className="flex items-center space-x-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50"
-                         onClick={() => setDeliveryDetails(prev => ({...prev, paymentMethod: 'online'}))}>
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="online"
-                        checked={deliveryDetails.paymentMethod === 'online'}
-                        onChange={() => setDeliveryDetails(prev => ({...prev, paymentMethod: 'online'}))}
-                        className="text-primary"
-                      />
-                      <CreditCard className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">Online Payment</div>
-                        <div className="text-sm text-muted-foreground">Pay securely online (Coming Soon)</div>
-                      </div>
-                    </div>
                   </div>
+                  <p className="text-xs text-muted-foreground mt-2 text-center">
+                    Currently accepting Cash on Delivery only
+                  </p>
                 </CardContent>
               </Card>
 
@@ -651,7 +650,7 @@ const Checkout = () => {
                 size="lg"
                 variant="hero"
               >
-                {isLoading ? 'Placing Order...' : `Place Order - ₹${totalAmount}`}
+                {isLoading ? 'Placing Order...' : `Place Order - ₹${finalAmount}`}
               </Button>
 
               <div className="text-center text-sm text-muted-foreground">

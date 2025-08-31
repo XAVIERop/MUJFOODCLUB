@@ -14,6 +14,7 @@ import OrderTracking from "./pages/OrderTracking";
 import Cafes from "./pages/Cafes";
 import Rewards from "./pages/Rewards";
 import QRCodePage from "./pages/QRCodePage";
+import Profile from "./pages/Profile";
 
 import CafeDashboard from "./pages/CafeDashboard";
 import CafeManagement from "./pages/CafeManagement";
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/cafes" element={<Cafes />} />
             <Route path="/rewards" element={<Rewards />} />
             <Route path="/qr-code" element={<QRCodePage />} />
+            <Route path="/profile" element={<Profile />} />
 
             <Route path="/cafe-dashboard" element={<CafeDashboard />} />
             <Route path="/cafe-management" element={<CafeManagement />} />

@@ -339,9 +339,9 @@ const Cafes = () => {
             {filteredCafes.map((cafe) => (
               <div key={cafe.id} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 group">
                 {/* Cafe Header with Original Theme */}
-                <div className="relative h-20 bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
+                <div className="relative h-24 bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
                   {/* Favorite Button and Rating - Top Right */}
-                  <div className="absolute top-3 right-3 flex items-center gap-2">
+                  <div className="flex items-center gap-2 justify-end mb-2">
                     {/* Overall Rating Display */}
                     <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 flex items-center gap-1 shadow-sm">
                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -373,7 +373,7 @@ const Cafes = () => {
                   </div>
 
                   {/* Open/Close Status - Below Favorite Button */}
-                  <div className="absolute top-16 right-3">
+                  <div className="flex justify-end mb-2">
                     <Badge
                       variant={cafe.accepting_orders ? "default" : "destructive"}
                       className="text-xs px-2 py-1"
@@ -382,7 +382,7 @@ const Cafes = () => {
                     </Badge>
                   </div>
 
-                  {/* Cafe Name and Type */}
+                  {/* Cafe Name and Type - Bottom Left */}
                   <div className="absolute bottom-3 left-3 right-3">
                     <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-primary transition-colors">
                       {cafe.name}
@@ -434,7 +434,7 @@ const Cafes = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => handleViewMenu(cafe.id)}
-                        className="text-xs font-medium hover:bg-gray-50"
+                        className="text-xs font-medium hover:bg-primary/10 hover:text-primary hover:border-primary transition-all duration-200"
                       >
                         View Menu
                       </Button>

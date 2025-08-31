@@ -216,67 +216,58 @@ export interface Database {
       }
       orders: {
         Row: {
-          cafe_id: string
-          created_at: string
-          delivery_block: Database["public"]["Enums"]["block_type"]
-          delivery_notes: string | null
-          estimated_delivery: string | null
           id: string
+          user_id: string
+          cafe_id: string
           order_number: string
+          total_amount: number
+          delivery_block: string
+          delivery_notes: string | null
           payment_method: string
           points_earned: number
-          status: Database["public"]["Enums"]["order_status"]
-          total_amount: number
-          updated_at: string
-          user_id: string
+          estimated_delivery: string
+          created_at: string
           status_updated_at: string
           points_credited: boolean
-          accepted_at: string | null
-          preparing_at: string | null
-          out_for_delivery_at: string | null
-          completed_at: string | null
+          has_rating?: boolean
+          rating_submitted_at?: string | null
+          phone_number?: string | null
         }
         Insert: {
-          cafe_id: string
-          created_at?: string
-          delivery_block: Database["public"]["Enums"]["block_type"]
-          delivery_notes?: string | null
-          estimated_delivery?: string | null
           id?: string
-          order_number: string
-          payment_method?: string
-          points_earned?: number
-          status?: Database["public"]["Enums"]["order_status"]
-          total_amount: number
-          updated_at?: string
           user_id: string
+          cafe_id: string
+          order_number: string
+          total_amount: number
+          delivery_block: string
+          delivery_notes?: string | null
+          payment_method: string
+          points_earned: number
+          estimated_delivery: string
+          created_at?: string
           status_updated_at?: string
           points_credited?: boolean
-          accepted_at?: string | null
-          preparing_at?: string | null
-          out_for_delivery_at?: string | null
-          completed_at?: string | null
+          has_rating?: boolean
+          rating_submitted_at?: string | null
+          phone_number?: string | null
         }
         Update: {
-          cafe_id?: string
-          created_at?: string
-          delivery_block?: Database["public"]["Enums"]["block_type"]
-          delivery_notes?: string | null
-          estimated_delivery?: string | null
           id?: string
+          user_id?: string
+          cafe_id?: string
           order_number?: string
+          total_amount?: number
+          delivery_block?: string
+          delivery_notes?: string | null
           payment_method?: string
           points_earned?: number
-          status?: Database["public"]["Enums"]["order_status"]
-          total_amount?: number
-          updated_at?: string
-          user_id?: string
+          estimated_delivery?: string
+          created_at?: string
           status_updated_at?: string
           points_credited?: boolean
-          accepted_at?: string | null
-          preparing_at?: string | null
-          out_for_delivery_at?: string | null
-          completed_at?: string | null
+          has_rating?: boolean
+          rating_submitted_at?: string | null
+          phone_number?: string | null
         }
         Relationships: [
           {
@@ -630,6 +621,32 @@ export interface Database {
           }
         ]
       }
+      order_ratings: {
+        Row: {
+          id: string
+          order_id: string
+          rating: number
+          review: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          rating: number
+          review?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          rating?: number
+          review?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -668,16 +685,24 @@ export interface Database {
         Returns: {
           current_tier: string
           current_points: number
-          tier_discount: number
-          next_tier: string | null
-          points_to_next_tier: number
-          maintenance_required: boolean
-          maintenance_amount: number
+          tier_multiplier: number
+          next_tier_points: number
+          maintenance_required: number
           maintenance_spent: number
-          maintenance_progress: number
-          days_until_expiry: number
+          maintenance_days_remaining: number
           is_new_user: boolean
           new_user_orders_count: number
+          new_user_bonus_active: boolean
+        }[]
+      }
+      get_order_rating_summary: {
+        Args: {
+          order_id: string
+        }
+        Returns: {
+          average_rating: number
+          total_ratings: number
+          rating_distribution: unknown
         }[]
       }
     }

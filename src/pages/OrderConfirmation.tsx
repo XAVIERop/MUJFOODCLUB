@@ -3,14 +3,16 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock, MapPin, Trophy, Home, ShoppingCart, Receipt, ChefHat, Truck } from 'lucide-react';
+import { CheckCircle, Clock, MapPin, Trophy, Home, ShoppingCart, Receipt, ChefHat, Truck, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
+import OrderRating from '@/components/OrderRating';
 
 interface Order {
   id: string;
+  cafe_id: string;
   order_number: string;
   status: 'received' | 'confirmed' | 'preparing' | 'on_the_way' | 'completed' | 'cancelled';
   total_amount: number;
@@ -22,6 +24,12 @@ interface Order {
   created_at: string;
   status_updated_at: string;
   points_credited: boolean;
+  has_rating?: boolean;
+  cafe: {
+    id: string;
+    name: string;
+    location: string;
+  };
 }
 
 const OrderConfirmation = () => {
@@ -70,7 +78,24 @@ const OrderConfirmation = () => {
       // Now try to get the specific order for this user
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          id,
+          order_number,
+          status,
+          total_amount,
+          delivery_block,
+          delivery_notes,
+          payment_method,
+          points_earned,
+          estimated_delivery,
+          created_at,
+          status_updated_at,
+          points_credited,
+          has_rating,
+          rating_submitted_at,
+          cafe_id,
+          cafe:cafes(name, location, id)
+        `)
         .eq('order_number', orderNumber)
         .eq('user_id', user?.id)
         .single();
@@ -364,18 +389,65 @@ const OrderConfirmation = () => {
                   </div>
                 )}
 
+                {/* Order Rating Section */}
+                {order.status === 'completed' && !order.has_rating && (
+                  <div className="mt-6">
+                    <OrderRating
+                      orderId={order.id}
+                      orderNumber={order.order_number}
+                      cafeName={order.cafe?.name || 'Cafe'}
+                      onRatingSubmitted={() => {
+                        // Refresh order data to show rating status
+                        fetchOrder();
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Rating Submitted Message */}
+                {order.status === 'completed' && order.has_rating && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+                    <div className="flex items-center">
+                      <Star className="w-5 h-5 text-blue-500 mr-2" />
+                      <div>
+                        <p className="font-semibold text-blue-800">
+                          Rating Submitted!
+                        </p>
+                        <p className="text-sm text-blue-600">
+                          Thank you for rating your order. Your feedback helps us improve!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Action Buttons */}
-                <div className="flex space-x-2 pt-4">
+                <div className="flex flex-col sm:flex-row gap-4 mt-8">
                   <Button 
                     onClick={() => navigate('/')}
+                    variant="outline"
                     className="flex-1"
                   >
                     <Home className="w-4 h-4 mr-2" />
                     Back to Home
                   </Button>
+                  
                   <Button 
-                    variant="outline"
-                    onClick={() => navigate('/menu')}
+                    onClick={() => navigate(`/menu/${order.cafe_id}`, { 
+                      state: { 
+                        cafe: {
+                          id: order.cafe_id,
+                          name: order.cafe?.name || 'Cafe',
+                          description: '',
+                          location: order.cafe?.location || '',
+                          type: '',
+                          phone: '',
+                          hours: '',
+                          rating: 0,
+                          total_reviews: 0
+                        }
+                      }
+                    })}
                     className="flex-1"
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />

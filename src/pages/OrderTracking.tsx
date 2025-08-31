@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Clock, CheckCircle, AlertCircle, Truck, ChefHat, Receipt, ArrowLeft, Eye, ShoppingCart, Trophy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -36,6 +35,7 @@ const OrderTracking = () => {
   
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'all' | 'active'>('all');
 
   const fetchOrders = async () => {
     if (!user) return;
@@ -136,10 +136,6 @@ const OrderTracking = () => {
     });
   };
 
-  const filterOrdersByStatus = (status: string) => {
-    return orders.filter(order => order.status === status);
-  };
-
   const getStatusLabel = (status: string) => {
     return status.replace('_', ' ').toUpperCase();
   };
@@ -207,134 +203,157 @@ const OrderTracking = () => {
               </CardContent>
             </Card>
           ) : (
-            <Tabs defaultValue="all" className="w-full">
-              <TabsList className="grid w-full grid-cols-6">
-                <TabsTrigger value="all">
-                  All ({orders.length})
-                </TabsTrigger>
-                <TabsTrigger value="received">
-                  Received ({filterOrdersByStatus('received').length})
-                </TabsTrigger>
-                <TabsTrigger value="confirmed">
-                  Confirmed ({filterOrdersByStatus('confirmed').length})
-                </TabsTrigger>
-                <TabsTrigger value="preparing">
-                  Preparing ({filterOrdersByStatus('preparing').length})
-                </TabsTrigger>
-                <TabsTrigger value="on_the_way">
-                  Delivery ({filterOrdersByStatus('on_the_way').length})
-                </TabsTrigger>
-                <TabsTrigger value="completed">
-                  Completed ({filterOrdersByStatus('completed').length})
-                </TabsTrigger>
-              </TabsList>
+            <div className="space-y-6">
+              {/* Header with 2 Tabs */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">My Orders</h2>
+                <div className="flex space-x-2">
+                  <Button
+                    variant={activeTab === 'all' ? 'default' : 'outline'}
+                    onClick={() => setActiveTab('all')}
+                    className="px-6"
+                  >
+                    All ({orders.length})
+                  </Button>
+                  <Button
+                    variant={activeTab === 'active' ? 'default' : 'outline'}
+                    onClick={() => setActiveTab('active')}
+                    className="px-6"
+                  >
+                    Active ({orders.filter(order => 
+                      ['received', 'confirmed', 'preparing', 'on_the_way'].includes(order.status)
+                    ).length})
+                  </Button>
+                </div>
+              </div>
 
-              {['all', 'received', 'confirmed', 'preparing', 'on_the_way', 'completed'].map((status) => (
-                <TabsContent key={status} value={status} className="space-y-4">
-                  {(status === 'all' ? orders : filterOrdersByStatus(status)).map((order) => {
-                    const StatusIcon = getStatusIcon(order.status);
-
-                    return (
-                      <Card key={order.id} className="food-card">
-                        <CardHeader>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <CardTitle className="flex items-center">
-                                <span>Order #{order.order_number}</span>
-                                <Badge className={`ml-2 ${getStatusColor(order.status)}`}>
-                                  <StatusIcon className="w-4 h-4 mr-1" />
-                                  {getStatusLabel(order.status)}
-                                </Badge>
-                              </CardTitle>
-                              <p className="text-sm text-muted-foreground">
-                                {formatDate(order.created_at)} • {order.cafe.name}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-semibold">₹{order.total_amount}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {order.payment_method.toUpperCase()}
-                              </p>
-                            </div>
+              {/* Orders Content */}
+              <div className="space-y-4">
+                {(activeTab === 'all' ? orders : orders.filter(order => 
+                  ['received', 'confirmed', 'preparing', 'on_the_way'].includes(order.status)
+                )).map((order) => {
+                  const StatusIcon = getStatusIcon(order.status);
+                  
+                  return (
+                    <Card key={order.id} className="food-card">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <CardTitle className="flex items-center">
+                              <span>Order #{order.order_number}</span>
+                              <Badge className={`ml-2 ${getStatusColor(order.status)}`}>
+                                <StatusIcon className="w-4 h-4 mr-1" />
+                                {getStatusLabel(order.status)}
+                              </Badge>
+                            </CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                              {formatDate(order.created_at)} • {order.cafe.name}
+                            </p>
                           </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          {/* Order Details */}
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <span className="text-muted-foreground">Cafe:</span>
-                              <p className="font-semibold">{order.cafe.name}</p>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Delivery Block:</span>
-                              <p className="font-semibold">{order.delivery_block}</p>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Points to Earn:</span>
-                              <p className="font-semibold">{order.points_earned} pts</p>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Status:</span>
-                              <p className="font-semibold capitalize">{order.status.replace('_', ' ')}</p>
-                            </div>
+                          <div className="text-right">
+                            <p className="font-semibold">₹{order.total_amount}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {order.payment_method.toUpperCase()}
+                            </p>
                           </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {/* Order Details */}
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Cafe:</span>
+                            <p className="font-semibold">{order.cafe.name}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Delivery Block:</span>
+                            <p className="font-semibold">{order.delivery_block}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Points to Earn:</span>
+                            <p className="font-semibold">{order.points_earned} pts</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Status:</span>
+                            <p className="font-semibold capitalize">{order.status.replace('_', ' ')}</p>
+                          </div>
+                        </div>
 
-                          {/* Delivery Notes */}
-                          {order.delivery_notes && (
-                            <div className="bg-muted/50 rounded-lg p-3">
-                              <p className="text-sm">
-                                <span className="font-medium">Delivery Notes:</span> {order.delivery_notes}
-                              </p>
-                            </div>
-                          )}
+                        {/* Delivery Notes */}
+                        {order.delivery_notes && (
+                          <div className="bg-muted/50 rounded-lg p-3">
+                            <p className="text-sm">
+                              <span className="font-medium">Delivery Notes:</span> {order.delivery_notes}
+                            </p>
+                          </div>
+                        )}
 
-                          {/* Points Status */}
-                          {order.status === 'completed' && (
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                              <div className="flex items-center">
-                                <Trophy className="w-5 h-5 text-green-500 mr-2" />
-                                <div>
-                                  <p className="font-semibold text-green-800">
-                                    Order Completed!
-                                  </p>
-                                  <p className="text-sm text-green-600">
-                                    {order.points_credited 
-                                      ? `You earned ${order.points_earned} loyalty points!`
-                                      : 'Points will be credited shortly.'
-                                    }
-                                  </p>
-                                </div>
+                        {/* Points Status for Completed Orders */}
+                        {order.status === 'completed' && (
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <div className="flex items-center">
+                              <Trophy className="w-5 h-5 text-green-500 mr-2" />
+                              <div>
+                                <p className="font-semibold text-green-800">
+                                  Order Completed!
+                                </p>
+                                <p className="text-sm text-green-600">
+                                  {order.points_credited 
+                                    ? `You earned ${order.points_earned} loyalty points!`
+                                    : 'Points will be credited shortly.'
+                                  }
+                                </p>
                               </div>
                             </div>
-                          )}
+                          </div>
+                        )}
 
-                          {/* Action Buttons */}
-                          <div className="flex space-x-2">
+                        {/* Action Buttons */}
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => navigate(`/order-confirmation/${order.order_number}`)}
+                            className="flex-1"
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Details
+                          </Button>
+                          {order.status === 'completed' && (
                             <Button
-                              variant="outline"
-                              onClick={() => navigate(`/order-confirmation/${order.order_number}`)}
+                              onClick={() => navigate('/menu')}
                               className="flex-1"
                             >
-                              <Eye className="w-4 h-4 mr-2" />
-                              View Details
+                              <ShoppingCart className="w-4 h-4 mr-2" />
+                              Order Again
                             </Button>
-                            {order.status === 'completed' && (
-                              <Button
-                                onClick={() => navigate('/menu')}
-                                className="flex-1"
-                              >
-                                <ShoppingCart className="w-4 h-4 mr-2" />
-                                Order Again
-                              </Button>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </TabsContent>
-              ))}
-            </Tabs>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+
+                {/* No Orders Message */}
+                {(activeTab === 'all' ? orders : orders.filter(order => 
+                  ['received', 'confirmed', 'preparing', 'on_the_way'].includes(order.status)
+                )).length === 0 && (
+                  <Card className="food-card">
+                    <CardContent className="text-center py-12">
+                      <Clock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">
+                        {activeTab === 'all' ? 'No Orders Found' : 'No Active Orders'}
+                      </h3>
+                      <p className="text-muted-foreground">
+                        {activeTab === 'all' 
+                          ? 'You don\'t have any orders yet.'
+                          : 'You don\'t have any active orders at the moment.'
+                        }
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>

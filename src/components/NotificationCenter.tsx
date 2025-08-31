@@ -57,6 +57,8 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
       const { data, error } = await query;
 
       if (error) throw error;
+      
+      console.log('Fetched notifications:', data);
       setNotifications(data || []);
       setUnreadCount((data || []).filter(n => !n.is_read).length);
     } catch (error) {
@@ -83,7 +85,7 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
       // Update local state
       setNotifications(prev => 
         prev.map(n => 
-          n.id === notificationId ? { ...n, is_read: true } : n
+          n.id === notificationId ? { ...n, is_read: true } as Notification : n
         )
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
@@ -109,7 +111,7 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
 
       // Update local state
       setNotifications(prev => 
-        prev.map(n => ({ ...n, is_read: true }))
+        prev.map(n => ({ ...n, is_read: true } as Notification))
       );
       setUnreadCount(0);
 
@@ -219,7 +221,7 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 pt-20"
       onClick={(e) => {
         // Close when clicking on the overlay
         if (e.target === e.currentTarget) {
@@ -227,8 +229,8 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
         }
       }}
     >
-      <Card className="w-full max-w-2xl max-h-[80vh] overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+      <Card className="w-full max-w-2xl max-h-[70vh] overflow-hidden shadow-2xl">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-background sticky top-0 z-10">
           <CardTitle className="flex items-center">
             <Bell className="w-5 h-5 mr-2" />
             Notifications
@@ -256,7 +258,7 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="max-h-[60vh] overflow-y-auto">
+          <div className="max-h-[50vh] overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -274,10 +276,10 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
                   return (
                     <div
                       key={notification.id}
-                      className={`p-4 rounded-lg border transition-colors cursor-pointer ${
+                      className={`p-4 rounded-lg border transition-colors cursor-pointer hover:shadow-sm ${
                         notification.is_read 
-                          ? 'bg-background border-border' 
-                          : 'bg-blue-50 border-blue-200'
+                          ? 'bg-background border-border hover:bg-muted/30' 
+                          : 'bg-blue-50 border-blue-200 hover:bg-blue-100'
                       }`}
                       onClick={() => !notification.is_read && markAsRead(notification.id)}
                     >
@@ -286,19 +288,19 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
                           <Icon className="w-5 h-5" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-foreground">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-sm font-medium text-foreground leading-relaxed break-words flex-1">
                               {notification.message}
                             </p>
                             {!notification.is_read && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2"></div>
+                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-xs text-muted-foreground mt-2">
                             {formatTime(notification.created_at)}
                           </p>
                           {notification.order && (
-                            <div className="mt-2 text-xs text-muted-foreground">
+                            <div className="mt-2 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded inline-block">
                               Order #{notification.order.order_number} • ₹{notification.order.total_amount}
                             </div>
                           )}

@@ -1,0 +1,248 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ArrowLeft, User, Mail, MapPin, Trophy, Receipt, Edit, Save, X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import Header from '@/components/Header';
+
+const Profile = () => {
+  const navigate = useNavigate();
+  const { user, profile, refreshProfile } = useAuth();
+  const { toast } = useToast();
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    full_name: '',
+    block: '',
+    phone: ''
+  });
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        full_name: profile.full_name || '',
+        block: profile.block || '',
+        phone: profile.phone || ''
+      });
+    }
+  }, [profile]);
+
+  const handleSave = async () => {
+    if (!user || !profile) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: formData.full_name,
+          block: formData.block,
+          phone: formData.phone,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      await refreshProfile();
+      setIsEditing(false);
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      full_name: profile?.full_name || '',
+      block: profile?.block || '',
+      phone: profile?.phone || ''
+    });
+    setIsEditing(false);
+  };
+
+  if (!user || !profile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-16">
+            <h1 className="text-2xl font-bold mb-4">Please Sign In</h1>
+            <p className="text-muted-foreground mb-6">You need to sign in to view your profile.</p>
+            <Button onClick={() => navigate('/auth')}>
+              Sign In
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center mb-8">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate(-1)}
+              className="mr-4"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            <h1 className="text-3xl font-bold">My Profile</h1>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Profile Card */}
+            <div className="lg:col-span-1">
+              <Card className="food-card">
+                <CardHeader className="text-center">
+                  <div className="mx-auto mb-4">
+                    <Avatar className="w-24 h-24">
+                      <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
+                      <AvatarFallback className="text-2xl">
+                        {profile.full_name?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <CardTitle className="text-xl">{profile.full_name}</CardTitle>
+                  <p className="text-muted-foreground">{profile.email}</p>
+                  <Badge variant="outline" className="mt-2">
+                    {profile.user_type === 'cafe_owner' ? 'Cafe Owner' : 'Student'}
+                  </Badge>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                    <span>Block: {profile.block || 'Not set'}</span>
+                  </div>
+                  {profile.phone && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      <span>Phone: {profile.phone}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-sm">
+                    <Trophy className="w-4 h-4 text-muted-foreground" />
+                    <span>Loyalty Tier: {profile.loyalty_tier || 'Foodie'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Receipt className="w-4 h-4 text-muted-foreground" />
+                    <span>Total Orders: {profile.total_orders || 0}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Edit Profile Form */}
+            <div className="lg:col-span-2">
+              <Card className="food-card">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Profile Information</CardTitle>
+                    {!isEditing ? (
+                      <Button onClick={() => setIsEditing(true)} variant="outline">
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit Profile
+                      </Button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button onClick={handleCancel} variant="outline" size="sm">
+                          <X className="w-4 h-4 mr-2" />
+                          Cancel
+                        </Button>
+                        <Button onClick={handleSave} disabled={loading} size="sm">
+                          <Save className="w-4 h-4 mr-2" />
+                          {loading ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="full_name">Full Name</Label>
+                      <Input
+                        id="full_name"
+                        value={formData.full_name}
+                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                        disabled={!isEditing}
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="block">Block</Label>
+                      <Input
+                        id="block"
+                        value={formData.block}
+                        onChange={(e) => setFormData({ ...formData, block: e.target.value })}
+                        disabled={!isEditing}
+                        placeholder="e.g., B1, B2, B3"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        disabled={!isEditing}
+                        placeholder="Enter your phone number"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        value={profile.email}
+                        disabled
+                        className="bg-muted"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Email cannot be changed
+                      </p>
+                    </div>
+                  </div>
+
+                  {!isEditing && (
+                    <div className="pt-4 border-t">
+                      <p className="text-sm text-muted-foreground">
+                        Click "Edit Profile" to make changes to your information.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Profile;

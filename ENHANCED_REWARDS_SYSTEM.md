@@ -70,8 +70,8 @@ Final Points = Base Points × Tier Multiplier × New User Bonus
   - Orders 2-20: 1.25x
 
 ### **Redeeming Points**
-- **Value**: 1 point = ₹1 discount
-- **Redemption Options**: 10, 25, or 50 points
+- **Value**: 1 point = ₹0.25 discount
+- **Redemption Options**: Custom points input only
 - **Maximum Discount**: 50% of order value
 
 ## 🔄 **Maintenance System**

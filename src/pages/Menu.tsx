@@ -29,7 +29,8 @@ interface Cafe {
   location: string;
   phone: string;
   hours: string;
-  rating: number;
+  average_rating: number | null;
+  total_ratings: number | null;
 }
 
 const Menu = () => {
@@ -48,6 +49,34 @@ const Menu = () => {
     if (cafeId) {
       fetchCafeData();
     }
+  }, [cafeId]);
+
+  // Real-time subscription for cafe rating updates
+  useEffect(() => {
+    if (!cafeId) return;
+
+    const channel = supabase
+      .channel(`cafe-${cafeId}`)
+      .on('postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'cafes',
+          filter: `id=eq.${cafeId}`
+        }, 
+        (payload) => {
+          console.log('Cafe updated:', payload.new);
+          // Update cafe data when ratings change
+          if (payload.new) {
+            setCafe(prev => prev ? { ...prev, ...payload.new as Partial<Cafe> } : prev);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [cafeId]);
 
   const fetchCafeData = async () => {
@@ -81,6 +110,13 @@ const Menu = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Function to manually refresh cafe data (useful for testing)
+  const refreshCafeData = () => {
+    if (cafeId) {
+      fetchCafeData();
     }
   };
 
@@ -219,7 +255,12 @@ const Menu = () => {
               <div className="flex items-center space-x-6 text-white/80">
                 <div className="flex items-center">
                   <Star className="w-4 h-4 mr-1 fill-yellow-400 text-yellow-400" />
-                  <span>{cafe.rating}</span>
+                  <span>{cafe.average_rating ? cafe.average_rating.toFixed(1) : '0.0'}</span>
+                  {cafe.total_ratings && cafe.total_ratings > 0 && (
+                    <span className="ml-1 text-sm opacity-75">
+                      ({cafe.total_ratings})
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center">
                   <Clock className="w-4 h-4 mr-1" />
