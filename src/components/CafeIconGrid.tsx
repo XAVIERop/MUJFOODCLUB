@@ -133,13 +133,20 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
       };
     }
     
+    if (cafeName.includes('crazy') && cafeName.includes('chef')) {
+      return {
+        type: 'image',
+        src: '/crazychef_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
     // Fallback to emojis for other cafes
     let emoji = '🍽️'; // default
     
     if (cafeName.includes('zero') || cafeName.includes('degree')) emoji = '🍦';
     else if (cafeName.includes('waffle') || cafeName.includes('fit')) emoji = '🧇';
     else if (cafeName.includes('kitchen') || cafeName.includes('curry')) emoji = '🍛';
-    else if (cafeName.includes('crazy') || cafeName.includes('chef')) emoji = '👨‍🍳';
     else if (cafeName.includes('zaika')) emoji = '🍽️';
     else if (cafeName.includes('american')) emoji = '🍔';
     else if (cafeName.includes('fast') || cafeName.includes('food')) emoji = '🍟';
