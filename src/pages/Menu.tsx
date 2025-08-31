@@ -36,7 +36,15 @@ interface GroupedMenuItem {
 }
 
 interface CartItem {
-  item: GroupedMenuItem;
+  item: {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    preparation_time: number;
+    is_available: boolean;
+  };
   selectedPortion: string; // portion ID
   quantity: number;
   notes: string;
@@ -184,11 +192,28 @@ const Menu = () => {
   };
 
   const addToCart = (item: GroupedMenuItem, portionId: string) => {
-    const cartKey = item.baseName;
+    const selectedPortion = item.portions.find(p => p.id === portionId);
+    
+    if (!selectedPortion) {
+      console.error('Selected portion not found:', portionId);
+      return;
+    }
+    
+    // Use portion ID as cart key for uniqueness
+    const cartKey = portionId;
+    
     setCart(prev => ({
       ...prev,
       [cartKey]: {
-        item,
+        item: {
+          id: selectedPortion.id, // Use the portion ID
+          name: `${item.baseName} (${selectedPortion.name})`,
+          description: item.description,
+          price: selectedPortion.price,
+          category: item.category,
+          preparation_time: item.preparation_time,
+          is_available: selectedPortion.is_available
+        },
         selectedPortion: portionId,
         quantity: (prev[cartKey]?.quantity || 0) + 1,
         notes: prev[cartKey]?.notes || ''
@@ -219,9 +244,8 @@ const Menu = () => {
   };
 
   const getTotalAmount = () => {
-    return Object.values(cart).reduce((total, {item, quantity, selectedPortion}) => {
-      const portion = item.portions.find(p => p.id === selectedPortion);
-      return total + (portion?.price || 0) * quantity;
+    return Object.values(cart).reduce((total, {item, quantity}) => {
+      return total + item.price * quantity;
     }, 0);
   };
 
@@ -515,14 +539,14 @@ const Menu = () => {
                                   {item.portions.map((portion) => (
                                     <Button
                                       key={portion.id}
-                                      variant={cart[item.baseName]?.selectedPortion === portion.id ? 'default' : 'outline'}
+                                      variant={cart[portion.id]?.selectedPortion === portion.id ? 'default' : 'outline'}
                                       size="sm"
                                       onClick={() => {
-                                        if (cart[item.baseName]) {
+                                        if (cart[portion.id]) {
                                           setCart(prev => ({
                                             ...prev,
-                                            [item.baseName]: {
-                                              ...prev[item.baseName],
+                                            [portion.id]: {
+                                              ...prev[portion.id],
                                               selectedPortion: portion.id
                                             }
                                           }));
@@ -561,45 +585,61 @@ const Menu = () => {
                               >
                                 Out of Stock
                               </Button>
-                            ) : cart[item.baseName] ? (
-                              <div className="flex items-center space-x-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => removeFromCart(item.baseName)}
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </Button>
-                                <span className="w-8 text-center font-semibold">
-                                  {cart[item.baseName].quantity}
-                                </span>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => addToCart(item, cart[item.baseName].selectedPortion)}
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </Button>
-                              </div>
                             ) : (
-                              <Button
-                                variant="order"
-                                size="sm"
-                                onClick={() => addToCart(item, item.portions[0].id)}
-                              >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Add
-                              </Button>
+                              // Show cart controls for each portion
+                              <div className="space-y-2">
+                                {item.portions.map((portion) => (
+                                  <div key={portion.id} className="flex items-center space-x-2">
+                                    {cart[portion.id] ? (
+                                      <>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => removeFromCart(portion.id)}
+                                        >
+                                          <Minus className="w-4 h-4" />
+                                        </Button>
+                                        <span className="w-8 text-center font-semibold">
+                                          {cart[portion.id].quantity}
+                                        </span>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => addToCart(item, portion.id)}
+                                        >
+                                          <Plus className="w-4 h-4" />
+                                        </Button>
+                                      </>
+                                    ) : (
+                                      <Button
+                                        variant="order"
+                                        size="sm"
+                                        onClick={() => addToCart(item, portion.id)}
+                                        disabled={portion.out_of_stock}
+                                      >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        {portion.name} - ₹{portion.price}
+                                      </Button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
                             )}
                           </div>
                         </div>
                         
-                        {cart[item.baseName] && (
+                        {/* Show notes for any portion in cart */}
+                        {item.portions.some(portion => cart[portion.id]) && (
                           <div className="mt-4 pt-4 border-t border-border">
                             <Textarea
                               placeholder="Special instructions (optional)"
-                              value={cart[item.baseName].notes}
-                              onChange={(e) => updateNotes(item.baseName, e.target.value)}
+                              value={cart[item.portions.find(p => cart[p.id])?.id || '']?.notes || ''}
+                              onChange={(e) => {
+                                const portionInCart = item.portions.find(p => cart[p.id]);
+                                if (portionInCart) {
+                                  updateNotes(portionInCart.id, e.target.value);
+                                }
+                              }}
                               className="text-sm"
                               rows={2}
                             />
@@ -629,16 +669,16 @@ const Menu = () => {
                   </p>
                 ) : (
                   <div className="space-y-4">
-                    {Object.values(cart).map(({item, quantity, selectedPortion}) => (
-                      <div key={item.baseName} className="flex justify-between items-center">
+                    {Object.values(cart).map(({item, quantity}) => (
+                      <div key={item.name} className="flex justify-between items-center">
                         <div className="flex-1">
-                          <p className="font-medium text-foreground">{item.baseName}</p>
+                          <p className="font-medium text-foreground">{item.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            ₹{item.portions.find(p => p.id === selectedPortion)?.price || 0} × {quantity}
+                            ₹{item.price} × {quantity}
                           </p>
                         </div>
                         <p className="font-semibold text-primary">
-                          ₹{(item.portions.find(p => p.id === selectedPortion)?.price || 0) * quantity}
+                          ₹{item.price * quantity}
                         </p>
                       </div>
                     ))}
