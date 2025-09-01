@@ -143,17 +143,15 @@ const Header = () => {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 hover:scale-105 transition-transform">
-            <div className="relative">
-              <img 
-                src="/foc.png" 
-                alt="FoodClub Logo" 
-                className="w-48 h-auto object-contain"
-              />
-              {/* BETA Badge */}
-              <Badge className="absolute -top-2 -right-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                BETA
-              </Badge>
-            </div>
+            <img 
+              src="/foc.png" 
+              alt="FoodClub Logo" 
+              className="w-48 h-auto object-contain"
+            />
+            {/* BETA Badge - Golden, positioned to the right */}
+            <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg border-2 border-yellow-300 ml-2">
+              BETA
+            </Badge>
           </Link>
 
           {/* Desktop Navigation */}
@@ -270,17 +268,15 @@ const Header = () => {
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                 <SheetHeader>
                   <SheetTitle className="flex items-center">
-                    <div className="relative">
-                      <img 
-                        src="/foc.png" 
-                        alt="FoodClub Logo" 
-                        className="w-32 h-auto mr-2"
-                      />
-                      {/* BETA Badge */}
-                      <Badge className="absolute -top-2 -right-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                        BETA
-                      </Badge>
-                    </div>
+                    <img 
+                      src="/foc.png" 
+                      alt="FoodClub Logo" 
+                      className="w-32 h-auto mr-2"
+                    />
+                    {/* BETA Badge - Golden, positioned to the right */}
+                    <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg border-2 border-yellow-300">
+                      BETA
+                    </Badge>
                   </SheetTitle>
                   <SheetDescription>
                     Your campus food companion
