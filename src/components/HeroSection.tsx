@@ -180,22 +180,6 @@ const HeroSection = () => {
             </div>
           </div>
 
-          {/* Stats Row - Reverted to Previous Format */}
-          <div className="grid grid-cols-3 gap-4 sm:gap-8 mb-8 animate-slide-up max-w-md mx-auto">
-            <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-white">{cafeCount}</div>
-              <div className="text-white/80 text-sm sm:text-base">Cafes</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-white">{studentCount}+</div>
-              <div className="text-white/80 text-sm sm:text-base">Students</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-white">24/7</div>
-              <div className="text-white/80 text-sm sm:text-base">Delivery</div>
-            </div>
-          </div>
-
           {/* Service Cards - Exact Swiggy Style */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in max-w-4xl mx-auto">
             {/* Food Delivery Card */}
@@ -244,6 +228,22 @@ const HeroSection = () => {
                   <ArrowRight className="w-6 h-6 text-orange-400" />
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Stats Row - Moved Below Service Cards */}
+          <div className="grid grid-cols-3 gap-4 sm:gap-8 mt-8 animate-slide-up max-w-md mx-auto">
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-white">{cafeCount}</div>
+              <div className="text-white/80 text-sm sm:text-base">Cafes</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-white">{studentCount}+</div>
+              <div className="text-white/80 text-sm sm:text-base">Students</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-white">24/7</div>
+              <div className="text-white/80 text-sm sm:text-base">Delivery</div>
             </div>
           </div>
         </div>
