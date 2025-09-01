@@ -130,12 +130,11 @@ const HeroSection = () => {
 
           {/* Search Bar - Swiggy Style */}
           <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto mb-8 animate-fade-in">
-            {/* Location Input - Smaller */}
-            <div className="relative w-48">
+            {/* Location Input - Emoji Size */}
+            <div className="relative w-16">
               <Select value={selectedBlock} onValueChange={setSelectedBlock}>
-                <SelectTrigger className="h-14 bg-white/95 backdrop-blur-sm border-2 border-white/30 text-gray-700 text-lg font-medium rounded-lg hover:bg-white transition-all duration-200">
-                  <MapPin className="w-5 h-5 mr-2 text-gray-500" />
-                  <SelectValue placeholder="Location" />
+                <SelectTrigger className="h-14 bg-black/20 backdrop-blur-sm border-2 border-white/30 text-white text-lg font-medium rounded-lg hover:bg-black/30 transition-all duration-200">
+                  <MapPin className="w-5 h-5" />
                 </SelectTrigger>
                 <SelectContent>
                   {blocks.map((block) => (
@@ -155,7 +154,7 @@ const HeroSection = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="h-14 bg-white/95 backdrop-blur-sm border-2 border-white/30 text-gray-700 text-lg font-medium rounded-lg hover:bg-white transition-all duration-200 pr-12"
+                className="h-14 bg-black/20 backdrop-blur-sm border-2 border-white/30 text-white text-lg font-medium rounded-lg hover:bg-black/30 transition-all duration-200 pr-12 placeholder:text-white/70"
               />
               <button
                 onClick={handleSearch}
@@ -202,27 +201,23 @@ const HeroSection = () => {
             {/* Food Delivery Card */}
             <div 
               onClick={handleExploreCafes}
-              className="bg-white rounded-xl p-6 w-full sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl"
+              className="bg-black/20 backdrop-blur-sm rounded-xl p-6 w-full sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30"
             >
               <div className="text-left">
-                <h3 className="text-xl font-bold text-gray-800 mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
+                <h3 className="text-xl font-bold text-white mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
                   FOOD DELIVERY
                 </h3>
-                <p className="text-gray-600 text-sm mb-2" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
+                <p className="text-white/80 text-sm mb-2" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
                   FROM CAFES
                 </p>
-                <p className="text-orange-500 font-semibold text-lg mb-4" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
+                <p className="text-orange-400 font-semibold text-lg mb-4" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
                   UPTO 10% OFF
                 </p>
                 <div className="flex justify-between items-center">
-                  <div className="w-16 h-16 rounded-lg overflow-hidden">
-                    <img 
-                      src="https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=64&h=64&fit=crop&crop=center" 
-                      alt="Food Delivery"
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="w-16 h-16 rounded-lg bg-white/10 flex items-center justify-center">
+                    <Utensils className="w-8 h-8 text-white" />
                   </div>
-                  <ArrowRight className="w-6 h-6 text-orange-500" />
+                  <ArrowRight className="w-6 h-6 text-orange-400" />
                 </div>
               </div>
             </div>
@@ -230,27 +225,23 @@ const HeroSection = () => {
             {/* View Rewards Card */}
             <div 
               onClick={handleViewRewards}
-              className="bg-white rounded-xl p-6 w-full sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl"
+              className="bg-black/20 backdrop-blur-sm rounded-xl p-6 w-full sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30"
             >
               <div className="text-left">
-                <h3 className="text-xl font-bold text-gray-800 mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
+                <h3 className="text-xl font-bold text-white mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
                   VIEW REWARDS
                 </h3>
-                <p className="text-gray-600 text-sm mb-2" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
+                <p className="text-white/80 text-sm mb-2" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
                   LOYALTY PROGRAM
                 </p>
-                <p className="text-orange-500 font-semibold text-lg mb-4" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
+                <p className="text-orange-400 font-semibold text-lg mb-4" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
                   EARN POINTS
                 </p>
                 <div className="flex justify-between items-center">
-                  <div className="w-16 h-16 rounded-lg overflow-hidden">
-                    <img 
-                      src="https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=64&h=64&fit=crop&crop=center" 
-                      alt="Rewards"
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="w-16 h-16 rounded-lg bg-white/10 flex items-center justify-center">
+                    <Gift className="w-8 h-8 text-white" />
                   </div>
-                  <ArrowRight className="w-6 h-6 text-orange-500" />
+                  <ArrowRight className="w-6 h-6 text-orange-400" />
                 </div>
               </div>
             </div>
