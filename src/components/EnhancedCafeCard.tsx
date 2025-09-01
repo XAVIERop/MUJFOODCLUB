@@ -53,7 +53,6 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
 
     // Try to find exact match first
     if (cafeImages[cafe.name]) {
-      console.log(`Found exact match for ${cafe.name}: ${cafeImages[cafe.name]}`);
       return cafeImages[cafe.name];
     }
 
@@ -61,13 +60,11 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
     const cafeNameLower = cafe.name.toLowerCase();
     for (const [cafeKey, imagePath] of Object.entries(cafeImages)) {
       if (cafeNameLower.includes(cafeKey.toLowerCase()) || cafeKey.toLowerCase().includes(cafeNameLower)) {
-        console.log(`Found partial match for ${cafe.name}: ${imagePath}`);
         return imagePath;
       }
     }
 
     // Fallback to chatkara logo if no match found
-    console.log(`No match found for ${cafe.name}, using fallback: /chatkara_logo.jpg`);
     return '/chatkara_logo.jpg';
   };
 
@@ -112,14 +109,6 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
           src={getCafeImage()}
           alt={`${cafe.name} Food`}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={(e) => {
-            console.error(`Failed to load image for ${cafe.name}:`, e);
-            // Fallback to logo if card image fails
-            const target = e.target as HTMLImageElement;
-            if (target.src.includes('_card.')) {
-              target.src = '/chatkara_logo.jpg';
-            }
-          }}
         />
         
         {/* Dark Overlay */}
