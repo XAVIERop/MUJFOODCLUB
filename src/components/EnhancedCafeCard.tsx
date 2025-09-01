@@ -29,10 +29,41 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
   const { toggleFavorite, isFavorite } = useFavorites();
 
   const getCafeImage = () => {
-    // Use dialog_card.jpg for Dialog cafe, fallback to chatkara_logo.jpg
-    if (cafe.name.toLowerCase().includes('dialog')) {
-      return '/dialog_card.jpg';
+    // Map cafe names to their respective logo images
+    const cafeLogos: { [key: string]: string } = {
+      'Dialog': '/dialog_card.jpg',
+      'Chatkara': '/chatkara_logo.jpg',
+      'Taste of India': '/tasteofind_logo.jpeg',
+      'Food Court': '/foodcourt_logo.png',
+      'The Kitchen Curry': '/thekitchencurry_logo.png',
+      'Havmor': '/havmor_logo.png',
+      'Cook House': '/cookhouse_logo.jpg',
+      'Stardom': '/stardom_logo.jpg',
+      'Waffle Fit & Fresh': '/wafflefit&fresh_logo.png',
+      'The Crazy Chef': '/crazychef_logo.png',
+      'Zero Degree Cafe': '/zerodegreecafe_logo.jpg',
+      'Zaika Restaurant': '/zaika_logo.png',
+      'Italian Oven': '/italianoven_logo.png',
+      'Mini Meals': '/minimeals_logo.png',
+      'Munch Box': '/munchbox_logo.png',
+      'Punjabi Tadka': '/punjabitadka_logo.png',
+      'The Waffle Co': '/thewaffleco.png'
+    };
+
+    // Try to find exact match first
+    if (cafeLogos[cafe.name]) {
+      return cafeLogos[cafe.name];
     }
+
+    // Try partial matches for variations in naming
+    const cafeNameLower = cafe.name.toLowerCase();
+    for (const [cafeKey, logoPath] of Object.entries(cafeLogos)) {
+      if (cafeNameLower.includes(cafeKey.toLowerCase()) || cafeKey.toLowerCase().includes(cafeNameLower)) {
+        return logoPath;
+      }
+    }
+
+    // Fallback to chatkara logo if no match found
     return '/chatkara_logo.jpg';
   };
 
