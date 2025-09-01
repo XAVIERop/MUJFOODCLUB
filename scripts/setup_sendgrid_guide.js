@@ -1,0 +1,15 @@
+console.log('🚀 Quick SendGrid Setup Guide:');
+console.log('');
+console.log('1. Go to sendgrid.com and sign up (free)');
+console.log('2. Get your API key from Settings → API Keys');
+console.log('3. In Supabase SMTP Settings:');
+console.log('   - Host: smtp.sendgrid.net');
+console.log('   - Port: 587');
+console.log('   - Username: apikey');
+console.log('   - Password: [Your SendGrid API Key]');
+console.log('   - Sender Email: your-verified-email@domain.com');
+console.log('');
+console.log('📧 SendGrid gives you 100 free emails/day');
+console.log('🎯 Much easier than Gmail App Password setup');
+console.log('');
+console.log('Would you like to try SendGrid instead?');

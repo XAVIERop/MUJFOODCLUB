@@ -1,283 +1,573 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { UserPlus, LogIn, GraduationCap, AlertCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { 
+  Mail, 
+  Lock, 
+  User, 
+  MapPin, 
+  ArrowLeft, 
+  CheckCircle, 
+  AlertCircle, 
+  Loader2,
+  Shield,
+  Smartphone
+} from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import Header from '@/components/Header';
 
 const Auth = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { signUp, signIn, user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
+  const { signUp, signIn, sendOTP, verifyOTP } = useAuth();
+  const { toast } = useToast();
 
   // Form states
-  const [signInData, setSignInData] = useState({ email: '', password: '' });
-  const [signUpData, setSignUpData] = useState({ 
-    email: '', 
-    password: '', 
-    fullName: '', 
-    block: '',
-    cafeName: ''
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('signin');
+  const [showOTP, setShowOTP] = useState(false);
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpValue, setOtpValue] = useState('');
+
+  // Signin form
+  const [signinForm, setSigninForm] = useState({
+    email: '',
+    password: ''
   });
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (user) {
-      navigate('/');
-    }
-  }, [user, navigate]);
+  // Signup form
+  const [signupForm, setSignupForm] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    fullName: '',
+    block: 'B1'
+  });
 
-  const blocks = [
-    'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11',
-    'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'
-  ];
+  // OTP form
+  const [otpForm, setOtpForm] = useState({
+    email: ''
+  });
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
 
-    const { error } = await signIn(signInData.email, signInData.password);
-    
-    if (error) {
-      setError(error.message);
-      setIsLoading(false);
-    } else {
+    try {
+      const { error } = await signIn(signinForm.email, signinForm.password);
+      
+      if (error) {
+        toast({
+          title: "Sign In Failed",
+          description: error.message || "Please check your credentials and try again.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Welcome Back!",
+          description: "Successfully signed in to your account.",
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Welcome back!",
-        description: "You have been successfully logged in.",
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
 
-    // Validate based on email domain
-    if (signUpData.email.endsWith('@muj.manipal.edu')) {
-      if (!signUpData.block) {
-        setError('Please select your block');
-        setIsLoading(false);
-        return;
-      }
-    } else if (signUpData.email.endsWith('@mujfoodclub.in')) {
-      setError('Cafe owner accounts are pre-created. Please contact admin for login credentials.');
-      setIsLoading(false);
-      return;
-    } else {
-      setError('Please use a valid MUJ email (@muj.manipal.edu)');
-      setIsLoading(false);
-      return;
-    }
-
-    const { error } = await signUp(
-      signUpData.email, 
-      signUpData.password, 
-      signUpData.fullName, 
-      signUpData.block,
-      signUpData.cafeName
-    );
-    
-    if (error) {
-      setError(error.message);
-    } else {
+    // Validate password match
+    if (signupForm.password !== signupForm.confirmPassword) {
       toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account.",
+        title: "Password Mismatch",
+        description: "Passwords do not match. Please try again.",
+        variant: "destructive"
       });
+      setIsLoading(false);
+      return;
     }
-    
-    setIsLoading(false);
+
+    // Validate email domain
+    if (!signupForm.email.endsWith('@muj.manipal.edu')) {
+      toast({
+        title: "Invalid Email",
+        description: "Please use your MUJ email address (@muj.manipal.edu).",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await signUp(
+        signupForm.email,
+        signupForm.password,
+        signupForm.fullName,
+        signupForm.block
+      );
+      
+      if (error) {
+        toast({
+          title: "Sign Up Failed",
+          description: error.message || "Please try again with different credentials.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Account Created!",
+          description: "Please check your email to verify your account.",
+        });
+        setActiveTab('signin');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
-            <GraduationCap className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold gradient-primary bg-clip-text text-transparent">
-            FoodClub
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Your campus food companion at MUJ
-          </p>
-        </div>
+  const handleSendOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-        <Card className="food-card border-0">
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="signin">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <LogIn className="w-5 h-5 mr-2" />
-                  Welcome Back
-                </CardTitle>
-                <CardDescription>
-                  Sign in to your account to access exclusive rewards
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
-                    <Input
-                      id="signin-email"
-                      type="email"
-                      placeholder="your.name@muj.manipal.edu or cafe@mujfoodclub.in"
-                      value={signInData.email}
-                      onChange={(e) => setSignInData({...signInData, email: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      value={signInData.password}
-                      onChange={(e) => setSignInData({...signInData, password: e.target.value})}
-                      required
-                    />
-                  </div>
-                  
-                  {error && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isLoading}
-                    variant="hero"
-                  >
-                    {isLoading ? 'Signing In...' : 'Sign In'}
-                  </Button>
-                </form>
-              </CardContent>
-            </TabsContent>
-            
-            <TabsContent value="signup">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <UserPlus className="w-5 h-5 mr-2" />
-                  Join FoodClub
-                </CardTitle>
-                <CardDescription>
-                  Create your account and start earning rewards
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={signUpData.fullName}
-                      onChange={(e) => setSignUpData({...signUpData, fullName: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="your.name@muj.manipal.edu"
-                      value={signUpData.email}
-                      onChange={(e) => setSignUpData({...signUpData, email: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-block">Your Block</Label>
-                    <Select value={signUpData.block} onValueChange={(value) => setSignUpData({...signUpData, block: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your block" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {blocks.map((block) => (
-                          <SelectItem key={block} value={block}>
-                            {block}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {/* Cafe Name field - only show for cafe owners */}
-                  {signUpData.email.endsWith('@mujfoodclub.in') && (
+    // Validate email domain
+    if (!otpForm.email.endsWith('@muj.manipal.edu')) {
+      toast({
+        title: "Invalid Email",
+        description: "Please use your MUJ email address (@muj.manipal.edu).",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Use magic link for passwordless sign-in
+      const { error } = await supabase.auth.signInWithOtp({
+        email: otpForm.email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth`,
+          shouldCreateUser: true
+        }
+      });
+      
+      if (error) {
+        toast({
+          title: "Magic Link Failed",
+          description: error.message || "Please try again.",
+          variant: "destructive"
+        });
+      } else {
+        setOtpEmail(otpForm.email);
+        setShowOTP(true);
+        toast({
+          title: "Magic Link Sent!",
+          description: "Please check your email and click the sign-in link.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    if (otpValue.length !== 6) {
+      toast({
+        title: "Invalid OTP",
+        description: "Please enter the complete 6-digit code.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await verifyOTP(otpEmail, otpValue);
+      
+      if (error) {
+        toast({
+          title: "Verification Failed",
+          description: error.message || "Please check the code and try again.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Email Verified!",
+          description: "Your account has been successfully verified.",
+        });
+        setShowOTP(false);
+        setOtpValue('');
+        setActiveTab('signin');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const blockOptions = [
+    'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8',
+    'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8'
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+      <Header />
+      
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-md mx-auto">
+          {/* Back to Home */}
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
+            className="mb-6"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Home
+          </Button>
+
+          {/* Auth Card */}
+          <Card className="shadow-xl border-0">
+            <CardHeader className="text-center pb-6">
+              <div className="mx-auto w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mb-4">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-gray-900">
+                Welcome to Food Club
+              </CardTitle>
+              <p className="text-gray-600 mt-2">
+                Sign in to your account or create a new one
+              </p>
+            </CardHeader>
+
+            <CardContent>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="signin">Sign In</TabsTrigger>
+                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                </TabsList>
+
+                {/* Sign In Tab */}
+                <TabsContent value="signin" className="space-y-4">
+                  <form onSubmit={handleSignIn} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-cafe">Cafe Name</Label>
-                      <Input
-                        id="signup-cafe"
-                        type="text"
-                        placeholder="Enter your cafe name (e.g., Chatkara)"
-                        value={signUpData.cafeName}
-                        onChange={(e) => setSignUpData({...signUpData, cafeName: e.target.value})}
-                        required={signUpData.email.endsWith('@mujfoodclub.in')}
-                        disabled={true}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Cafe accounts are pre-created. Please contact admin for access.
-                      </p>
+                      <Label htmlFor="signin-email">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="signin-email"
+                          type="email"
+                          placeholder="your.email@muj.manipal.edu"
+                          value={signinForm.email}
+                          onChange={(e) => setSigninForm({ ...signinForm, email: e.target.value })}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-password">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="signin-password"
+                          type="password"
+                          placeholder="Enter your password"
+                          value={signinForm.password}
+                          onChange={(e) => setSigninForm({ ...signinForm, password: e.target.value })}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Signing In...
+                        </>
+                      ) : (
+                        'Sign In'
+                      )}
+                    </Button>
+                  </form>
+
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-2 text-gray-500">Or</span>
+                    </div>
+                  </div>
+
+                                     <Button
+                     variant="outline"
+                     onClick={() => setActiveTab('otp')}
+                     className="w-full"
+                   >
+                     <Mail className="w-4 h-4 mr-2" />
+                     Quick Email Verification
+                   </Button>
+                </TabsContent>
+
+                {/* Sign Up Tab */}
+                <TabsContent value="signup" className="space-y-4">
+                  <Alert className="mb-4">
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Only MUJ students with @muj.manipal.edu emails can sign up.
+                    </AlertDescription>
+                  </Alert>
+
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">MUJ Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="signup-email"
+                          type="email"
+                          placeholder="your.email@muj.manipal.edu"
+                          value={signupForm.email}
+                          onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                      {signupForm.email && !signupForm.email.endsWith('@muj.manipal.edu') && (
+                        <p className="text-sm text-red-500">Please use your MUJ email address</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-fullname">Full Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="signup-fullname"
+                          type="text"
+                          placeholder="Enter your full name"
+                          value={signupForm.fullName}
+                          onChange={(e) => setSignupForm({ ...signupForm, fullName: e.target.value })}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-block">Hostel Block</Label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <select
+                          id="signup-block"
+                          value={signupForm.block}
+                          onChange={(e) => setSignupForm({ ...signupForm, block: e.target.value })}
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          required
+                        >
+                          {blockOptions.map((block) => (
+                            <option key={block} value={block}>
+                              Block {block}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="signup-password"
+                          type="password"
+                          placeholder="Create a strong password"
+                          value={signupForm.password}
+                          onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="signup-confirm-password"
+                          type="password"
+                          placeholder="Confirm your password"
+                          value={signupForm.confirmPassword}
+                          onChange={(e) => setSignupForm({ ...signupForm, confirmPassword: e.target.value })}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                      {signupForm.confirmPassword && signupForm.password !== signupForm.confirmPassword && (
+                        <p className="text-sm text-red-500">Passwords do not match</p>
+                      )}
+                    </div>
+
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Creating Account...
+                        </>
+                      ) : (
+                        'Create Account'
+                      )}
+                    </Button>
+                  </form>
+                </TabsContent>
+
+                {/* Email Verification Tab */}
+                <TabsContent value="otp" className="space-y-4">
+                  {!showOTP ? (
+                    <form onSubmit={handleSendOTP} className="space-y-4">
+                      <Alert className="mb-4">
+                        <Mail className="h-4 w-4" />
+                        <AlertDescription>
+                          Enter your MUJ email to receive a verification link.
+                        </AlertDescription>
+                      </Alert>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="otp-email">MUJ Email</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            id="otp-email"
+                            type="email"
+                            placeholder="your.email@muj.manipal.edu"
+                            value={otpForm.email}
+                            onChange={(e) => setOtpForm({ email: e.target.value })}
+                            className="pl-10"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Sending Verification...
+                          </>
+                        ) : (
+                          'Send Verification Email'
+                        )}
+                      </Button>
+                    </form>
+                  ) : (
+                    <div className="space-y-4">
+                      <Alert className="mb-4">
+                        <CheckCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          We've sent a verification email to {otpEmail}
+                        </AlertDescription>
+                      </Alert>
+
+                                             <div className="text-center space-y-4">
+                         <div className="p-4 bg-blue-50 rounded-lg">
+                           <h4 className="font-semibold text-blue-900 mb-2">Next Steps:</h4>
+                           <ol className="text-sm text-blue-800 space-y-1 text-left">
+                             <li>1. Check your email inbox</li>
+                             <li>2. Click the magic link in the email</li>
+                             <li>3. You'll be automatically signed in</li>
+                             <li>4. Your account will be created automatically</li>
+                           </ol>
+                         </div>
+
+                        <div className="text-sm text-gray-600">
+                          <p>Didn't receive the email? Check your spam folder or try again.</p>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => {
+                              setShowOTP(false);
+                              setOtpValue('');
+                            }}
+                            className="flex-1"
+                          >
+                            Try Again
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setActiveTab('signin')}
+                          >
+                            Back to Sign In
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   )}
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      value={signUpData.password}
-                      onChange={(e) => setSignUpData({...signUpData, password: e.target.value})}
-                      required
-                    />
-                  </div>
-                  
-                  {error && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isLoading}
-                    variant="hero"
-                  >
-                    {isLoading ? 'Creating Account...' : 'Create Account'}
-                  </Button>
-                </form>
-              </CardContent>
-            </TabsContent>
-          </Tabs>
-        </Card>
-        
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          Only MUJ students (@muj.manipal.edu) can register. Cafe owners use pre-created accounts.
-        </p>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+
+          {/* Features */}
+          <div className="mt-8 text-center">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Why Sign Up?
+            </h3>
+            <div className="grid grid-cols-1 gap-3 text-sm text-gray-600">
+              <div className="flex items-center justify-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span>Order from all campus cafes</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span>Earn loyalty points & rewards</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span>Track orders in real-time</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span>Exclusive student discounts</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

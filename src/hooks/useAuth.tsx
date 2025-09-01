@@ -7,11 +7,13 @@ interface AuthContextType {
   session: Session | null;
   profile: any | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, block: string, cafeName?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, block: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: any) => Promise<{ error: any }>;
   refreshProfile: () => Promise<void>;
+  sendOTP: (email: string) => Promise<{ error: any }>;
+  verifyOTP: (email: string, token: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,49 +47,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const createProfile = async (userId: string, email: string, fullName: string, block: string, cafeName?: string) => {
+  const createProfile = async (userId: string, email: string, fullName: string, block: string) => {
     try {
-      const userType = email.endsWith('@mujfoodclub.in') ? 'cafe_owner' : 'student';
+      // Extract name from email if fullName is not provided
+      const displayName = fullName || email.split('@')[0];
       
-      if (userType === 'cafe_owner' && cafeName) {
-        // For cafe owners, find the cafe and create profile
-        const { data: cafe } = await supabase
-          .from('cafes')
-          .select('id')
-          .eq('name', cafeName)
-          .single();
-        
-        if (cafe) {
-          await supabase.from('profiles').insert({
-            id: userId,
-            email: email,
-            full_name: fullName,
-            user_type: userType,
-            cafe_id: cafe.id,
-            loyalty_points: 0,
-            loyalty_tier: 'foodie',
-            total_orders: 0,
-            total_spent: 0,
-            qr_code: `CAFE_${cafe.id}_${userId}`
-          });
-        }
-      } else {
-        // For students, create regular profile
-        await supabase.from('profiles').insert({
-          id: userId,
-          email: email,
-          full_name: fullName,
-          user_type: userType,
-          block: block,
-          loyalty_points: 0,
-          loyalty_tier: 'foodie',
-          total_orders: 0,
-          total_spent: 0,
-          qr_code: `STUDENT_${block}_${userId}`
-        });
-      }
+      // Generate QR code for student
+      const qrCode = `STUDENT_${block}_${userId}`;
+      
+      await supabase.from('profiles').insert({
+        id: userId,
+        email: email,
+        full_name: displayName,
+        user_type: 'student',
+        block: block,
+        loyalty_points: 0,
+        loyalty_tier: 'foodie',
+        total_orders: 0,
+        total_spent: 0,
+        qr_code: qrCode
+      });
     } catch (error) {
       console.error('Error creating profile:', error);
+      throw error;
     }
   };
 
@@ -135,14 +117,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string, block: string, cafeName?: string) => {
+  const signUp = async (email: string, password: string, fullName: string, block: string) => {
     try {
       // Validate email domain
-      if (!email.endsWith('@muj.manipal.edu') && !email.endsWith('@mujfoodclub.in')) {
-        return { error: { message: 'Please use a valid MUJ email (@muj.manipal.edu) or FoodClub email (@mujfoodclub.in)' } };
+      if (!email.endsWith('@muj.manipal.edu')) {
+        return { error: { message: 'Please use a valid MUJ email address (@muj.manipal.edu)' } };
       }
 
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/auth`;
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -151,15 +133,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
-            block: block,
-            cafe_name: cafeName
+            block: block
           }
         }
       });
       
       if (data.user && !error) {
-        // Create profile based on user type
-        await createProfile(data.user.id, email, fullName, block, cafeName);
+        // Create profile for student
+        await createProfile(data.user.id, email, fullName, block);
       }
       
       return { error };
@@ -180,16 +161,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) throw error;
       
-      // Determine user type and route accordingly
-      const userType = email.endsWith('@mujfoodclub.in') ? 'cafe_owner' : 'student';
-      
-      // Force page reload for clean state
+      // Redirect to homepage for students
       setTimeout(() => {
-        if (userType === 'cafe_owner') {
-          window.location.href = '/cafe-dashboard';
-        } else {
-          window.location.href = '/';
-        }
+        window.location.href = '/';
       }, 100);
       
       return { error: null };
@@ -200,11 +174,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut({ scope: 'global' });
+      await supabase.auth.signOut();
       setUser(null);
       setSession(null);
       setProfile(null);
-      window.location.href = '/auth';
+      window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -221,9 +195,57 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) throw error;
       
-      // Refresh profile
+      // Refresh profile data
       await fetchProfile(user.id);
       
+      return { error: null };
+    } catch (error) {
+      return { error };
+    }
+  };
+
+  // Send OTP for email verification
+  const sendOTP = async (email: string) => {
+    try {
+      // Validate email domain
+      if (!email.endsWith('@muj.manipal.edu')) {
+        return { error: { message: 'Please use a valid MUJ email address (@muj.manipal.edu)' } };
+      }
+
+      // Use signInWithOtp for passwordless authentication
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth`,
+          shouldCreateUser: true // This will create a user if they don't exist
+        }
+      });
+
+      return { error };
+    } catch (error) {
+      return { error };
+    }
+  };
+
+  // Verify OTP
+  const verifyOTP = async (email: string, token: string) => {
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'email'
+      });
+
+      if (error) throw error;
+
+      // If verification successful, create profile
+      if (data.user) {
+        const fullName = data.user.user_metadata?.full_name || email.split('@')[0];
+        const block = data.user.user_metadata?.block || 'B1';
+        
+        await createProfile(data.user.id, email, fullName, block);
+      }
+
       return { error: null };
     } catch (error) {
       return { error };
@@ -239,8 +261,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signIn,
     signOut,
     updateProfile,
-    refreshProfile
+    refreshProfile,
+    sendOTP,
+    verifyOTP
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
