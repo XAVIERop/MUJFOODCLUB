@@ -46,16 +46,24 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
       'Taste of India': '/tasteofind_logo.jpeg',
       'Food Court': '/foodcourt_logo.png',
       'The Kitchen Curry': '/thekitchencurry_logo.png',
+      'The Kitchen & Curry': '/thekitchencurry_logo.png',
       'Havmor': '/havmor_logo.png',
       'Stardom': '/stardom_logo.jpg',
+      'STARDOM Café & Lounge': '/stardom_logo.jpg',
       'Waffle Fit & Fresh': '/wafflefit&fresh_logo.png',
+      'Waffle Fit N Fresh': '/wafflefit&fresh_logo.png',
       'The Crazy Chef': '/crazychef_logo.png',
       'Zero Degree Cafe': '/zerodegreecafe_logo.jpg',
+      'ZERO DEGREE CAFE': '/zerodegreecafe_logo.jpg',
       'Zaika Restaurant': '/zaika_logo.png',
+      'ZAIKA': '/zaika_logo.png',
       'Italian Oven': '/italianoven_logo.png',
       'Munch Box': '/munchbox_logo.png',
       'Punjabi Tadka': '/punjabitadka_logo.png',
-      'The Waffle Co': '/thewaffleco.png'
+      'The Waffle Co': '/thewaffleco.png',
+      'Soya Chaap Corner': '/chatkara_logo.jpg',
+      'Tea Tradition': '/chatkara_logo.jpg',
+      'The Garrison Co.': '/chatkara_logo.jpg'
     };
 
     // Try to find exact match first
