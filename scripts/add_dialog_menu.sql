@@ -45,7 +45,7 @@ BEGIN
     -- ========================================
     -- COFFEES
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Café Americano (Black Coffee)', 'Black Coffee', 90, 'Coffees', true),
     (dialog_cafe_id, 'Happiness (Is Cappuccino)', 'Prepared By Freshly Grounded Coffee Beans Imported From Malta', 130, 'Coffees', true),
     (dialog_cafe_id, 'Café Latte', 'Who Doesn''t Like A More Creamier Coffee With A Vanilla Shot In It!', 140, 'Coffees', true),
@@ -56,21 +56,21 @@ BEGIN
     -- ========================================
     -- COLD BREWS
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Iced Americano (Cold Brew Coffee)', 'Cold Brew Coffee', 100, 'Cold Brews', true),
     (dialog_cafe_id, 'Ginger Ale Syrup', 'Cold Brew Coffee & Ginger Syrup mixed with Schweppe', 150, 'Cold Brews', true);
 
     -- ========================================
     -- HOT BEVERAGES
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Hot Chocolate', 'Hershey''s Cocoa Syrup Mixed With Warm Steamed Milk, Sprinkled With Chocolate Powder', 130, 'Hot Beverages', true),
     (dialog_cafe_id, 'Nutella Hot Chocolate', 'Nutella Lover''s Delight If You''re Looking For Something Warm Without Caffeine', 150, 'Hot Beverages', true);
 
     -- ========================================
     -- COLD COFFEES
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Café Dialog Frappe', 'Classic Cold Coffee & Sprinkled With Choco Chips', 100, 'Cold Coffees', true),
     (dialog_cafe_id, 'Irish Iced Frappe', 'Irish Iced Frappe', 120, 'Cold Coffees', true),
     (dialog_cafe_id, 'Dialog''s Dare Devil Frappe', 'Dark Chocolat''s Deadly Combination With Dark Roasted Coffee', 130, 'Cold Coffees', true),
@@ -81,7 +81,7 @@ BEGIN
     -- ========================================
     -- MILK SHAKES & SMOOTHIES
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Frozen Strawberry Margarita Delight', 'A Customary Yummy Strawberry Milk Shak', 100, 'Milk Shakes & Smoothies', true),
     (dialog_cafe_id, 'Chocolate Heaven Pleasure', 'A True Chocolate Lover''s Ecstasy', 120, 'Milk Shakes & Smoothies', true),
     (dialog_cafe_id, 'Toasted Marsh Mallow', 'Dialog''s Secret Recipe Ingredient Mixed Into Blender & Hand Gun Toasted Mars Mallows', 120, 'Milk Shakes & Smoothies', true),
@@ -96,7 +96,7 @@ BEGIN
     -- ========================================
     -- HAND TOASTED PIZZAS
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Margherita (S 8")', 'An Old Country Original: Classic Cheese - Small 8 inch', 150, 'Hand Toasted Pizzas', true),
     (dialog_cafe_id, 'Margherita (M 11")', 'An Old Country Original: Classic Cheese - Medium 11 inch', 290, 'Hand Toasted Pizzas', true),
     (dialog_cafe_id, 'Margherita (L 16")', 'An Old Country Original: Classic Cheese - Large 16 inch', 480, 'Hand Toasted Pizzas', true),
@@ -146,7 +146,7 @@ BEGIN
     -- ========================================
     -- UPGRADE ANY PIZZA TO
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'C4 Cheesilicious Pizza (S 8")', 'Dialog''s Melted Cheese & Filler Cheese - Small 8 inch', 20, 'Pizza Upgrades', true),
     (dialog_cafe_id, 'C4 Cheesilicious Pizza (M 11")', 'Dialog''s Melted Cheese & Filler Cheese - Medium 11 inch', 40, 'Pizza Upgrades', true),
     (dialog_cafe_id, 'C4 Cheesilicious Pizza (L 16")', 'Dialog''s Melted Cheese & Filler Cheese - Large 16 inch', 50, 'Pizza Upgrades', true),
@@ -157,7 +157,7 @@ BEGIN
     -- ========================================
     -- ADD ONS
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Extra Topping (S 8")', 'Onion / Capsicum / Sweet Corn / Jalapenos / Red Paprika / Mushroom / Baby Corn / Black Olives - Small 8 inch', 30, 'Add Ons', true),
     (dialog_cafe_id, 'Extra Topping (M 11")', 'Onion / Capsicum / Sweet Corn / Jalapenos / Red Paprika / Mushroom / Baby Corn / Black Olives - Medium 11 inch', 50, 'Add Ons', true),
     (dialog_cafe_id, 'Extra Topping (L 16")', 'Onion / Capsicum / Sweet Corn / Jalapenos / Red Paprika / Mushroom / Baby Corn / Black Olives - Large 16 inch', 80, 'Add Ons', true),
@@ -168,14 +168,14 @@ BEGIN
     -- ========================================
     -- CRISPY TOASTIES
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Cheese Garlic Bread', 'Cheese Garlic Bread', 110, 'Crispy Toasties', true),
     (dialog_cafe_id, 'Cheese Garlic Bread Sticks', 'Cheese Garlic Bread Sticks', 140, 'Crispy Toasties', true);
 
     -- ========================================
     -- SUBS
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Aloo ki Adaa (Potato Patty Filoling)', 'Potato Patty Filoling', 120, 'Subs', true),
     (dialog_cafe_id, 'Spicy Veggie Delight (All Veggies, Without Any Patty)', 'All Veggies, Without Any Patty', 130, 'Subs', true),
     (dialog_cafe_id, 'Hanging Green (Includes Veggie Patty)', 'Includes Veggie Patty', 140, 'Subs', true),
@@ -186,7 +186,7 @@ BEGIN
     -- ========================================
     -- BURGERS
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Aloo Tikki Burger', 'Aloo Tikki Burger', 60, 'Burgers', true),
     (dialog_cafe_id, 'Mc Veggie Burger', 'Mc Veggie Burger', 70, 'Burgers', true),
     (dialog_cafe_id, 'Super Freak Burger', 'Super Freak Burger', 80, 'Burgers', true),
@@ -203,7 +203,7 @@ BEGIN
     -- ========================================
     -- DESSERTS
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Choco Lava Cake', 'Choco Lava Cake', 90, 'Desserts', true),
     (dialog_cafe_id, 'Choco Lava Cake With Vanilla Ice-Cream', 'Choco Lava Cake With Vanilla Ice-Cream', 120, 'Desserts', true),
     (dialog_cafe_id, 'Blue Berry Cheese Cake', 'Blue Berry Cheese Cake', 180, 'Desserts', true),
@@ -212,7 +212,7 @@ BEGIN
     -- ========================================
     -- MOJITO - VOHITO
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Virgin Mint Mojito', 'Virgin Mint Mojito', 100, 'Mojito - Vohito', true),
     (dialog_cafe_id, 'Green Apple Mojito', 'Green Apple Mojito', 100, 'Mojito - Vohito', true),
     (dialog_cafe_id, 'Cranberry Mojito', 'Cranberry Mojito', 100, 'Mojito - Vohito', true),
@@ -225,7 +225,7 @@ BEGIN
     -- ========================================
     -- ICED TEAS
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Lemon-Mint Iced Tea (Beloved Refreshing Drink Always)', 'Beloved Refreshing Drink Always', 110, 'Iced Teas', true),
     (dialog_cafe_id, 'Sparkling Peach Iced Tea (Peach Infused Tea Served On The Rocks Along With Crushed Peach Fruit)', 'Peach Infused Tea Served On The Rocks Along With Crushed Peach Fruit', 110, 'Iced Teas', true),
     (dialog_cafe_id, 'Water Melon Iced Tea', 'Water Melon Iced Tea', 130, 'Iced Teas', true);
@@ -233,7 +233,7 @@ BEGIN
     -- ========================================
     -- SIDES
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'French Fries', 'French Fries', 120, 'Sides', true),
     (dialog_cafe_id, 'Chicken Nuggets (6 pcs)', 'Chicken Nuggets - 6 pieces', 130, 'Sides', true),
     (dialog_cafe_id, 'Peri-Peri Fries', 'Peri-Peri Fries', 140, 'Sides', true),
@@ -243,7 +243,7 @@ BEGIN
     -- ========================================
     -- PASTAS
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Penne Alfredo (Penne Tossed with White Sauce & Garden Vegetables)', 'Penne Tossed with White Sauce & Garden Vegetables', 170, 'Pastas', true),
     (dialog_cafe_id, 'Penne Arrabiata (Penne Tossed with Spicy Red Tomato Sauce & Garden Vegetables)', 'Penne Tossed with Spicy Red Tomato Sauce & Garden Vegetables', 170, 'Pastas', true),
     (dialog_cafe_id, 'Basil Pesto', 'Basil Pesto', 180, 'Pastas', true),
@@ -255,7 +255,7 @@ BEGIN
     -- ========================================
     -- PASTA ADD-ONS
     -- ========================================
-    INSERT INTO public.menu_items (dialog_cafe_id, name, description, price, category, is_available) VALUES
+    INSERT INTO public.menu_items (cafe_id, name, description, price, category, is_available) VALUES
     (dialog_cafe_id, 'Add Peri-Peri Masala', 'Add Peri-Peri Masala', 10, 'Pasta Add-ons', true),
     (dialog_cafe_id, 'Add Chicken', 'Add Chicken', 60, 'Pasta Add-ons', true);
 
