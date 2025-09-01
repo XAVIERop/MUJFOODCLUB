@@ -143,11 +143,17 @@ const Header = () => {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 hover:scale-105 transition-transform">
-            <img 
-              src="/foc.png" 
-              alt="FoodClub Logo" 
-              className="w-48 h-auto object-contain"
-            />
+            <div className="relative">
+              <img 
+                src="/foc.png" 
+                alt="FoodClub Logo" 
+                className="w-48 h-auto object-contain"
+              />
+              {/* BETA Badge */}
+              <Badge className="absolute -top-2 -right-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                BETA
+              </Badge>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -264,11 +270,17 @@ const Header = () => {
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                 <SheetHeader>
                   <SheetTitle className="flex items-center">
-                    <img 
-                      src="/foc.png" 
-                      alt="FoodClub Logo" 
-                      className="w-32 h-auto mr-2"
-                    />
+                    <div className="relative">
+                      <img 
+                        src="/foc.png" 
+                        alt="FoodClub Logo" 
+                        className="w-32 h-auto mr-2"
+                      />
+                      {/* BETA Badge */}
+                      <Badge className="absolute -top-2 -right-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                        BETA
+                      </Badge>
+                    </div>
                   </SheetTitle>
                   <SheetDescription>
                     Your campus food companion
