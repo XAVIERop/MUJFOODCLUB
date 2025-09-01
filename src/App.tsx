@@ -18,6 +18,7 @@ import Profile from "./pages/Profile";
 
 import CafeDashboard from "./pages/CafeDashboard";
 import CafeManagement from "./pages/CafeManagement";
+import { EnhancedCafeCardDemo } from "./components/EnhancedCafeCardDemo";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
 
             <Route path="/cafe-dashboard" element={<CafeDashboard />} />
             <Route path="/cafe-management" element={<CafeManagement />} />
+            <Route path="/demo-enhanced-card" element={<EnhancedCafeCardDemo />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
