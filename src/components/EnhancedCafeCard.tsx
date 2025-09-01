@@ -32,9 +32,9 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
     // Map cafe names to their respective card images (preferred) or logo images
     const cafeImages: { [key: string]: string } = {
       'Dialog': '/dialog_card.jpg',
-      'Chatkara': '/chatkara_card.jpg',
-      'Mini Meals': '/minimeals_card.jpg',
-      'Cook House': '/cookhouse_card.jpg',
+      'Chatkara': '/chatkara_card.png',
+      'Mini Meals': '/minimeals_card.png',
+      'Cook House': '/cookhouse_card.png',
       'Dev Sweets & Snacks': '/devsweets_card.png',
       'Taste of India': '/tasteofind_logo.jpeg',
       'Food Court': '/foodcourt_logo.png',
