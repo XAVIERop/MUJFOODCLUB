@@ -59,10 +59,13 @@ const Cafes = () => {
   useEffect(() => {
     fetchCafes();
     
-    // Check URL parameters for favorites
+    // Check URL parameters for favorites and search
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('favorites') === 'true') {
       setShowFavoritesOnly(true);
+    }
+    if (urlParams.get('search')) {
+      setSearchQuery(urlParams.get('search') || '');
     }
   }, []);
 
