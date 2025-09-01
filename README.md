@@ -1,73 +1,154 @@
-# Welcome to your Lovable project
+# 🍽️ Food Club - MUJ Campus Food Delivery
 
-## Project info
+A modern, feature-rich food delivery platform exclusively for MUJ (Manipal University Jaipur) students at GHS Hostel. Built with React, TypeScript, and Supabase.
 
-**URL**: https://lovable.dev/projects/6e344d9c-bed7-49bd-a428-237777ca2a4d
+## ✨ Features
 
-## How can I edit this code?
+### 🏫 **Student-Centric Design**
+- **College Email Authentication** (@muj.manipal.edu)
+- **Magic Link Sign-in** (passwordless authentication)
+- **Student Profiles** with QR codes and loyalty points
+- **Campus-specific** cafe listings
 
-There are several ways of editing your application.
+### 🍕 **Food Ordering System**
+- **Multi-cafe Support** (16+ cafes)
+- **Real-time Menu Management**
+- **Order Tracking** and notifications
+- **QR Code Integration** for easy ordering
 
-**Use Lovable**
+### 🎯 **Enhanced Search & Discovery**
+- **Smart Search** for both cafes and food items
+- **Food Item Search** with cafe names and prices
+- **Location-based** cafe filtering (Block numbers)
+- **Dynamic Suggestions** as you type
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6e344d9c-bed7-49bd-a428-237777ca2a4d) and start prompting.
+### 🎁 **Loyalty & Rewards**
+- **Points System** for every order
+- **Tier-based Rewards** (Bronze, Silver, Gold)
+- **QR Code Scanning** for instant rewards
+- **Transaction History** and analytics
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🏪 **Cafe Management**
+- **Cafe Owner Dashboards**
+- **Real-time Order Management**
+- **Menu Management** system
+- **Rating & Review** system
 
-**Use your preferred IDE**
+## 🚀 Tech Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Frontend**: React 18 + TypeScript + Vite
+- **UI Components**: shadcn/ui + Tailwind CSS
+- **Backend**: Supabase (Database + Auth + Real-time)
+- **Deployment**: Vercel
+- **Styling**: Modern, responsive design with Swiggy-inspired UI
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🛠️ Development Setup
 
-Follow these steps:
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Supabase account
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Installation
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. **Clone the repository**
+```bash
+git clone https://github.com/XAVIERop/MUJFOODCLUB.git
+cd MUJFOODCLUB
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+2. **Install dependencies**
+```bash
+npm install
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. **Set up environment variables**
+```bash
+cp .env.example .env.local
+# Add your Supabase credentials
+```
+
+4. **Start development server**
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+5. **Open browser**
+Navigate to `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📱 Available Scripts
 
-**Use GitHub Codespaces**
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🌐 Live Demo
 
-## What technologies are used for this project?
+**Production URL**: [https://mujfoodclub-lfi23oh1o-xavierops-projects.vercel.app](https://mujfoodclub-lfi23oh1o-xavierops-projects.vercel.app)
 
-This project is built with:
+## 🎨 UI/UX Features
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### **Hero Section**
+- **Swiggy-inspired design** with transparent gradients
+- **Dynamic stats** (real cafe and student counts)
+- **Functional search** with cafe and food item suggestions
+- **Service cards** for Food Delivery and Rewards
 
-## How can I deploy this project?
+### **Responsive Design**
+- **Mobile-first** approach
+- **Modern animations** and transitions
+- **Accessible** components
+- **Cross-browser** compatibility
 
-Simply open [Lovable](https://lovable.dev/projects/6e344d9c-bed7-49bd-a428-237777ca2a4d) and click on Share -> Publish.
+## 🔐 Authentication System
 
-## Can I connect a custom domain to my Lovable project?
+- **Magic Link Authentication** via Supabase
+- **College Email Verification** (@muj.manipal.edu)
+- **Automatic Profile Creation** for students
+- **Secure Session Management**
 
-Yes, you can!
+## 📊 Database Schema
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- **Profiles**: User data, loyalty points, QR codes
+- **Cafes**: Cafe information, ratings, locations
+- **Menu Items**: Food items, prices, categories
+- **Orders**: Order management and tracking
+- **Loyalty Transactions**: Points system and rewards
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 🚀 Deployment
+
+### **Vercel Deployment**
+- **Automatic deployments** on Git push
+- **Production environment** with custom domain support
+- **Performance optimization** and CDN
+
+### **Environment Setup**
+- **Supabase configuration** for production
+- **Email service** (Brevo SMTP) for magic links
+- **Real-time features** enabled
+
+## 🤝 Contributing
+
+This project is specifically designed for MUJ students. For contributions:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## 📄 License
+
+This project is built for educational purposes at Manipal University Jaipur.
+
+## 🎯 Future Roadmap
+
+- **Mobile App** development
+- **Payment Gateway** integration
+- **Advanced Analytics** for cafe owners
+- **AI-powered** food recommendations
+- **Social Features** and food sharing
+
+---
+
+**Built with ❤️ for MUJ Students**
