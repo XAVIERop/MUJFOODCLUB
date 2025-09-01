@@ -134,6 +134,11 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
           src={getCafeImage()}
           alt={`${cafe.name} Food`}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onLoad={() => console.log(`✅ Image loaded successfully for ${cafe.name}:`, getCafeImage())}
+          onError={(e) => {
+            console.error(`❌ Image failed to load for ${cafe.name}:`, getCafeImage());
+            console.error('Error details:', e);
+          }}
         />
         
         {/* Dark Overlay */}
