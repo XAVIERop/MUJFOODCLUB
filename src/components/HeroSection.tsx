@@ -14,10 +14,13 @@ const HeroSection = () => {
   const [studentCount, setStudentCount] = useState(0);
   const [selectedBlock, setSelectedBlock] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [cafes, setCafes] = useState<any[]>([]);
+  const [filteredCafes, setFilteredCafes] = useState<any[]>([]);
+  const [showCafeDropdown, setShowCafeDropdown] = useState(false);
 
-  // Fetch stats from database
+  // Fetch stats and cafes from database
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
         // Fetch cafe count
         const { count: cafes } = await supabase
@@ -30,15 +33,36 @@ const HeroSection = () => {
           .select('*', { count: 'exact', head: true })
           .eq('user_type', 'student');
 
+        // Fetch all cafes for search
+        const { data: cafesData } = await supabase
+          .from('cafes')
+          .select('id, name')
+          .order('name');
+
         setCafeCount(cafes || 0);
         setStudentCount(students || 0);
+        setCafes(cafesData || []);
       } catch (error) {
-        console.error('Error fetching stats:', error);
+        console.error('Error fetching data:', error);
       }
     };
 
-    fetchStats();
+    fetchData();
   }, []);
+
+  // Filter cafes based on search query
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const filtered = cafes.filter(cafe =>
+        cafe.name.toLowerCase().startsWith(searchQuery.toLowerCase())
+      );
+      setFilteredCafes(filtered);
+      setShowCafeDropdown(true);
+    } else {
+      setFilteredCafes([]);
+      setShowCafeDropdown(false);
+    }
+  }, [searchQuery, cafes]);
 
   const handleExploreCafes = () => {
     navigate('/cafes');
@@ -58,6 +82,12 @@ const HeroSection = () => {
     if (e.key === 'Enter') {
       handleSearch();
     }
+  };
+
+  const handleCafeSelect = (cafeId: string) => {
+    navigate(`/menu/${cafeId}`);
+    setShowCafeDropdown(false);
+    setSearchQuery("");
   };
 
   const blocks = [
@@ -90,29 +120,22 @@ const HeroSection = () => {
             MUJ Students Exclusive
           </Badge>
 
-          {/* Main Heading */}
+          {/* Main Heading - Clean and Simple */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 animate-slide-up leading-tight tracking-tight">
             Discover Amazing Food at{" "}
-            <span className="relative inline-block">
-              <span className="bg-gradient-to-r from-orange-400 via-red-500 to-yellow-400 bg-clip-text text-transparent relative z-10 drop-shadow-2xl font-extrabold tracking-wide">
-                GHS Hostel
-              </span>
-              {/* Glowing background effect */}
-              <span className="absolute inset-0 bg-gradient-to-r from-orange-400/30 via-red-500/30 to-yellow-400/30 blur-2xl rounded-full transform scale-125 animate-pulse"></span>
-              <span className="absolute inset-0 bg-gradient-to-r from-orange-300/20 via-red-400/20 to-yellow-300/20 blur-xl rounded-full transform scale-110 animate-pulse" style={{ animationDelay: '0.5s' }}></span>
-              <span className="absolute inset-0 bg-gradient-to-r from-orange-500/15 via-red-600/15 to-yellow-500/15 blur-lg rounded-full transform scale-105"></span>
-              <span className="absolute inset-0 bg-gradient-to-r from-orange-400/10 via-red-500/10 to-yellow-400/10 blur-sm rounded-full transform scale-150"></span>
+            <span className="text-orange-400 font-extrabold">
+              GHS Hostel
             </span>
           </h1>
 
           {/* Search Bar - Swiggy Style */}
           <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto mb-8 animate-fade-in">
-            {/* Location Input */}
-            <div className="flex-1 relative">
+            {/* Location Input - Smaller */}
+            <div className="relative w-48">
               <Select value={selectedBlock} onValueChange={setSelectedBlock}>
                 <SelectTrigger className="h-14 bg-white/95 backdrop-blur-sm border-2 border-white/30 text-gray-700 text-lg font-medium rounded-lg hover:bg-white transition-all duration-200">
                   <MapPin className="w-5 h-5 mr-2 text-gray-500" />
-                  <SelectValue placeholder="Enter your delivery location" />
+                  <SelectValue placeholder="Location" />
                 </SelectTrigger>
                 <SelectContent>
                   {blocks.map((block) => (
@@ -124,7 +147,7 @@ const HeroSection = () => {
               </Select>
             </div>
 
-            {/* Search Input */}
+            {/* Search Input with Cafe Dropdown */}
             <div className="flex-1 relative">
               <Input
                 type="text"
@@ -140,42 +163,64 @@ const HeroSection = () => {
               >
                 <Search className="w-5 h-5 text-white" />
               </button>
+
+              {/* Cafe Dropdown */}
+              {showCafeDropdown && filteredCafes.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-60 overflow-y-auto">
+                  {filteredCafes.map((cafe) => (
+                    <div
+                      key={cafe.id}
+                      onClick={() => handleCafeSelect(cafe.id)}
+                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="font-medium text-gray-800">{cafe.name}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Stats Row - Swiggy Style */}
-          <div className="flex justify-center items-center gap-8 mb-12 animate-slide-up">
-            <div className="flex items-center gap-2 text-white">
-              <Store className="w-6 h-6" />
-              <span className="text-2xl font-bold">{cafeCount}+</span>
-              <span className="text-lg">Cafes</span>
+          {/* Stats Row - Reverted to Previous Format */}
+          <div className="grid grid-cols-3 gap-4 sm:gap-8 mb-8 animate-slide-up max-w-md mx-auto">
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-white">{cafeCount}</div>
+              <div className="text-white/80 text-sm sm:text-base">Cafes</div>
             </div>
-            <div className="flex items-center gap-2 text-white">
-              <Users className="w-6 h-6" />
-              <span className="text-2xl font-bold">{studentCount}+</span>
-              <span className="text-lg">Students</span>
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-white">{studentCount}+</div>
+              <div className="text-white/80 text-sm sm:text-base">Students</div>
             </div>
-            <div className="flex items-center gap-2 text-white">
-              <Clock className="w-6 h-6" />
-              <span className="text-2xl font-bold">24/7</span>
-              <span className="text-lg">Delivery</span>
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-white">24/7</div>
+              <div className="text-white/80 text-sm sm:text-base">Delivery</div>
             </div>
           </div>
 
-          {/* Service Cards - Swiggy Style */}
+          {/* Service Cards - Exact Swiggy Style */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in max-w-4xl mx-auto">
             {/* Food Delivery Card */}
             <div 
               onClick={handleExploreCafes}
-              className="bg-white/95 backdrop-blur-sm rounded-xl p-6 w-full sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30"
+              className="bg-white rounded-xl p-6 w-full sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl"
             >
               <div className="text-left">
-                <h3 className="text-xl font-bold text-gray-800 mb-1">FOOD DELIVERY</h3>
-                <p className="text-gray-600 text-sm mb-2">FROM CAFES</p>
-                <p className="text-orange-500 font-semibold text-lg mb-4">UPTO 10% OFF</p>
+                <h3 className="text-xl font-bold text-gray-800 mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
+                  FOOD DELIVERY
+                </h3>
+                <p className="text-gray-600 text-sm mb-2" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
+                  FROM CAFES
+                </p>
+                <p className="text-orange-500 font-semibold text-lg mb-4" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
+                  UPTO 10% OFF
+                </p>
                 <div className="flex justify-between items-center">
-                  <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <Utensils className="w-8 h-8 text-gray-600" />
+                  <div className="w-16 h-16 rounded-lg overflow-hidden">
+                    <img 
+                      src="https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=64&h=64&fit=crop&crop=center" 
+                      alt="Food Delivery"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <ArrowRight className="w-6 h-6 text-orange-500" />
                 </div>
@@ -185,15 +230,25 @@ const HeroSection = () => {
             {/* View Rewards Card */}
             <div 
               onClick={handleViewRewards}
-              className="bg-white/95 backdrop-blur-sm rounded-xl p-6 w-full sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30"
+              className="bg-white rounded-xl p-6 w-full sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl"
             >
               <div className="text-left">
-                <h3 className="text-xl font-bold text-gray-800 mb-1">VIEW REWARDS</h3>
-                <p className="text-gray-600 text-sm mb-2">LOYALTY PROGRAM</p>
-                <p className="text-orange-500 font-semibold text-lg mb-4">EARN POINTS</p>
+                <h3 className="text-xl font-bold text-gray-800 mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
+                  VIEW REWARDS
+                </h3>
+                <p className="text-gray-600 text-sm mb-2" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
+                  LOYALTY PROGRAM
+                </p>
+                <p className="text-orange-500 font-semibold text-lg mb-4" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
+                  EARN POINTS
+                </p>
                 <div className="flex justify-between items-center">
-                  <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <Gift className="w-8 h-8 text-gray-600" />
+                  <div className="w-16 h-16 rounded-lg overflow-hidden">
+                    <img 
+                      src="https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=64&h=64&fit=crop&crop=center" 
+                      alt="Rewards"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <ArrowRight className="w-6 h-6 text-orange-500" />
                 </div>
