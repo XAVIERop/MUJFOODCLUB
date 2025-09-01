@@ -1,0 +1,71 @@
+import { createClient } from '@supabase/supabase-js';
+
+// Supabase configuration
+const supabaseUrl = 'https://kblazvxfducwviyyiwde.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibGF6dnhmZHVjd3ZpeXlpd2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMzI0NjgsImV4cCI6MjA3MTcwODQ2OH0.bMtHsQy5cdkF-7ClprpF7HgMKUJpBUuZPaAPNz_LRSA';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+async function checkMiniMealsAccount() {
+  try {
+    console.log('Checking Mini Meals cafe owner account...\n');
+
+    // Check profiles table for Mini Meals accounts
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, email, full_name, user_type, cafe_id, created_at')
+      .or('email.ilike.%mini%meals%,email.ilike.%minimeals%,full_name.ilike.%Mini Meals%')
+      .order('created_at', { ascending: false });
+
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
+      return;
+    }
+
+    console.log('=== Mini Meals Cafe Owner Accounts ===');
+    if (profiles && profiles.length > 0) {
+      profiles.forEach(profile => {
+        console.log(`ID: ${profile.id}`);
+        console.log(`Email: ${profile.email}`);
+        console.log(`Full Name: ${profile.full_name}`);
+        console.log(`User Type: ${profile.user_type}`);
+        console.log(`Cafe ID: ${profile.cafe_id}`);
+        console.log(`Created: ${profile.created_at}`);
+        console.log('---');
+      });
+    } else {
+      console.log('No Mini Meals cafe owner accounts found.');
+    }
+
+    // Check cafes table for Mini Meals cafe
+    const { data: cafes, error: cafesError } = await supabase
+      .from('cafes')
+      .select('id, name, type, description, accepting_orders')
+      .or('name.ilike.%Mini Meals%,name.ilike.%mini%meals%')
+      .order('name');
+
+    if (cafesError) {
+      console.error('Error fetching cafes:', cafesError);
+      return;
+    }
+
+    console.log('\n=== Mini Meals Cafe Information ===');
+    if (cafes && cafes.length > 0) {
+      cafes.forEach(cafe => {
+        console.log(`ID: ${cafe.id}`);
+        console.log(`Name: ${cafe.name}`);
+        console.log(`Type: ${cafe.type}`);
+        console.log(`Description: ${cafe.description}`);
+        console.log(`Accepting Orders: ${cafe.accepting_orders}`);
+        console.log('---');
+      });
+    } else {
+      console.log('No Mini Meals cafe found in cafes table.');
+    }
+
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+checkMiniMealsAccount();
