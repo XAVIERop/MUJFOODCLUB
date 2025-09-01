@@ -123,7 +123,7 @@ const HeroSection = () => {
           {/* Main Heading - Clean and Simple */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 animate-slide-up leading-tight tracking-tight">
             Discover Amazing Food at{" "}
-            <span className="text-orange-400 font-extrabold">
+            <span className="text-white font-extrabold">
               GHS Hostel
             </span>
           </h1>
@@ -158,7 +158,7 @@ const HeroSection = () => {
               />
               <button
                 onClick={handleSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 bg-orange-500 hover:bg-orange-600 rounded-md transition-colors duration-200"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 bg-black/20 backdrop-blur-sm border border-white/30 rounded-lg hover:bg-black/30 transition-all duration-200"
               >
                 <Search className="w-5 h-5 text-white" />
               </button>
