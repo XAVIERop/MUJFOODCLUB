@@ -128,7 +128,7 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
     if (cafeName.includes('taste') && cafeName.includes('india')) {
       return {
         type: 'image',
-        src: '/tasteofindia_logo.png',
+        src: '/tasteofind_logo.jpeg',
         alt: `${cafe.name} Logo`
       };
     }
