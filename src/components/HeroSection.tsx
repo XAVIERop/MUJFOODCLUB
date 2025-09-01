@@ -17,6 +17,9 @@ const HeroSection = () => {
   const [cafes, setCafes] = useState<any[]>([]);
   const [filteredCafes, setFilteredCafes] = useState<any[]>([]);
   const [showCafeDropdown, setShowCafeDropdown] = useState(false);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [filteredMenuItems, setFilteredMenuItems] = useState<any[]>([]);
+  const [showMenuDropdown, setShowMenuDropdown] = useState(false);
 
   // Fetch stats and cafes from database
   useEffect(() => {
@@ -39,9 +42,23 @@ const HeroSection = () => {
           .select('id, name')
           .order('name');
 
+        // Fetch all menu items for food search
+        const { data: menuData } = await supabase
+          .from('menu_items')
+          .select(`
+            id,
+            name,
+            price,
+            cafe_id,
+            cafes!inner(name)
+          `)
+          .eq('is_available', true)
+          .order('name');
+
         setCafeCount(cafes || 0);
         setStudentCount(students || 0);
         setCafes(cafesData || []);
+        setMenuItems(menuData || []);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -50,19 +67,36 @@ const HeroSection = () => {
     fetchData();
   }, []);
 
-  // Filter cafes based on search query
+  // Filter cafes and menu items based on search query
   useEffect(() => {
     if (searchQuery.trim()) {
-      const filtered = cafes.filter(cafe =>
-        cafe.name.toLowerCase().startsWith(searchQuery.toLowerCase())
+      // Filter cafes
+      const filteredCafes = cafes.filter(cafe =>
+        cafe.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      setFilteredCafes(filtered);
-      setShowCafeDropdown(true);
+      setFilteredCafes(filteredCafes);
+
+      // Filter menu items
+      const filteredMenu = menuItems.filter(item =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredMenuItems(filteredMenu);
+
+      // Show appropriate dropdown
+      if (filteredCafes.length > 0 || filteredMenu.length > 0) {
+        setShowCafeDropdown(filteredCafes.length > 0);
+        setShowMenuDropdown(filteredMenu.length > 0);
+      } else {
+        setShowCafeDropdown(false);
+        setShowMenuDropdown(false);
+      }
     } else {
       setFilteredCafes([]);
+      setFilteredMenuItems([]);
       setShowCafeDropdown(false);
+      setShowMenuDropdown(false);
     }
-  }, [searchQuery, cafes]);
+  }, [searchQuery, cafes, menuItems]);
 
   const handleExploreCafes = () => {
     navigate('/cafes');
@@ -74,7 +108,16 @@ const HeroSection = () => {
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      navigate(`/cafes?search=${encodeURIComponent(searchQuery)}`);
+      // If there are food items matching the search, navigate to cafes page with search
+      if (filteredMenuItems.length > 0) {
+        navigate(`/cafes?search=${encodeURIComponent(searchQuery)}`);
+      } else if (filteredCafes.length > 0) {
+        // If only cafes match, navigate to cafes page
+        navigate(`/cafes?search=${encodeURIComponent(searchQuery)}`);
+      } else {
+        // If no matches, still navigate to cafes page
+        navigate(`/cafes?search=${encodeURIComponent(searchQuery)}`);
+      }
     }
   };
 
@@ -87,6 +130,14 @@ const HeroSection = () => {
   const handleCafeSelect = (cafeId: string) => {
     navigate(`/menu/${cafeId}`);
     setShowCafeDropdown(false);
+    setShowMenuDropdown(false);
+    setSearchQuery("");
+  };
+
+  const handleMenuItemSelect = (cafeId: string) => {
+    navigate(`/menu/${cafeId}`);
+    setShowCafeDropdown(false);
+    setShowMenuDropdown(false);
     setSearchQuery("");
   };
 
@@ -150,7 +201,7 @@ const HeroSection = () => {
             <div className="flex-1 relative">
               <Input
                 type="text"
-                placeholder="Search for cafes, items or more"
+                placeholder="Search for cafes, food items or more"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -166,6 +217,9 @@ const HeroSection = () => {
               {/* Cafe Dropdown */}
               {showCafeDropdown && filteredCafes.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-60 overflow-y-auto">
+                  <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 font-semibold text-gray-700 text-sm">
+                    Cafes
+                  </div>
                   {filteredCafes.map((cafe) => (
                     <div
                       key={cafe.id}
@@ -173,6 +227,32 @@ const HeroSection = () => {
                       className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                     >
                       <div className="font-medium text-gray-800">{cafe.name}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Food Items Dropdown */}
+              {showMenuDropdown && filteredMenuItems.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-60 overflow-y-auto">
+                  <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 font-semibold text-gray-700 text-sm">
+                    Food Items
+                  </div>
+                  {filteredMenuItems.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => handleMenuItemSelect(item.cafe_id)}
+                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-800">{item.name}</div>
+                          <div className="text-sm text-gray-500">{item.cafes?.name}</div>
+                        </div>
+                        <div className="text-orange-600 font-semibold">
+                          ₹{item.price}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
