@@ -32,6 +32,12 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
     // Debug: Log the cafe name being processed
     console.log('Processing cafe:', cafe.name);
     
+    // SPECIAL CASE: Chatkara cafe - let's force it to use the card image
+    if (cafe.name.toLowerCase().includes('chatkara')) {
+      console.log(`🎯 Chatkara detected! Using: /chatkara_card.png`);
+      return '/chatkara_card.png';
+    }
+    
     // Map cafe names to their respective card images (preferred) or logo images
     const cafeImages: { [key: string]: string } = {
       'Dialog': '/dialog_card.jpg',
