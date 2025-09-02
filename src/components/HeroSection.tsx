@@ -196,8 +196,8 @@ const HeroSection = () => {
 
             {/* Search Input with Toggle and Dropdown */}
             <div className="flex-1 relative">
-              {/* Search Mode Toggle */}
-              <div className="flex items-center justify-center mb-2">
+              <div className="flex items-center space-x-2">
+                {/* Search Mode Toggle */}
                 <div className="bg-black/20 backdrop-blur-sm rounded-lg p-1 border border-white/30">
                   <button
                     onClick={() => {
@@ -230,22 +230,25 @@ const HeroSection = () => {
                     🏪 Cafes
                   </button>
                 </div>
+                
+                {/* Search Input */}
+                <div className="flex-1 relative">
+                  <Input
+                    type="text"
+                    placeholder={searchMode === 'dishes' ? "Search for food items..." : "Search for cafes..."}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="h-10 sm:h-14 bg-black/20 backdrop-blur-sm border-2 border-white/30 text-white text-base sm:text-lg font-medium rounded-lg hover:bg-black/30 transition-all duration-200 pr-12 placeholder:text-white/70"
+                  />
+                  <button
+                    onClick={handleSearch}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 sm:p-2 bg-black/20 backdrop-blur-sm border border-white/30 rounded-lg hover:bg-black/30 transition-all duration-200"
+                  >
+                    <Search className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  </button>
+                </div>
               </div>
-              
-              <Input
-                type="text"
-                placeholder={searchMode === 'dishes' ? "Search for food items..." : "Search for cafes..."}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="h-10 sm:h-14 bg-black/20 backdrop-blur-sm border-2 border-white/30 text-white text-base sm:text-lg font-medium rounded-lg hover:bg-black/30 transition-all duration-200 pr-12 placeholder:text-white/70"
-              />
-              <button
-                onClick={handleSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 sm:p-2 bg-black/20 backdrop-blur-sm border border-white/30 rounded-lg hover:bg-black/30 transition-all duration-200"
-              >
-                <Search className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </button>
 
               {/* Cafe Dropdown */}
               {showCafeDropdown && filteredCafes.length > 0 && (
