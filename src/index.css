@@ -318,4 +318,15 @@ All colors MUST be HSL.
   .story-link:hover::after {
     width: 100%;
   }
+
+  /* Mobile Hero Background */
+  .mobile-hero-bg {
+    background-image: url("/chatkara_menuimg.png");
+  }
+
+  @media (max-width: 768px) {
+    .mobile-hero-bg {
+      background-image: url("/mobile_bgimg.jpg");
+    }
+  }
 }

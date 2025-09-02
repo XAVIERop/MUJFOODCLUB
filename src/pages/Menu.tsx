@@ -354,16 +354,7 @@ const Menu = () => {
       <div className="relative text-white py-12 overflow-hidden">
         {/* Background Image - Mobile Optimized */}
         <div 
-          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: 'url("/chatkara_menuimg.png")'
-          }}
-        />
-        <div 
-          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat lg:hidden"
-          style={{
-            backgroundImage: 'url("/mobile_bgimg.jpg")'
-          }}
+          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat mobile-hero-bg"
         />
         {/* Dark overlay for better text readability */}
         <div className="absolute inset-0 bg-black/40"></div>
