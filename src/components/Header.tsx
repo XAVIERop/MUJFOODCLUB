@@ -149,7 +149,7 @@ const Header = () => {
               className="w-48 h-auto object-contain"
             />
             {/* BETA Badge - Golden, positioned to the right */}
-            <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg border-2 border-yellow-300 ml-2">
+            <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border border-yellow-300 ml-2">
               BETA
             </Badge>
           </Link>
@@ -274,7 +274,7 @@ const Header = () => {
                       className="w-32 h-auto mr-2"
                     />
                     {/* BETA Badge - Golden, positioned to the right */}
-                    <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg border-2 border-yellow-300">
+                    <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border border-yellow-300">
                       BETA
                     </Badge>
                   </SheetTitle>
