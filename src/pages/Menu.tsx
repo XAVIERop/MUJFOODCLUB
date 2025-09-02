@@ -347,7 +347,7 @@ const Menu = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 lg:pb-0">
       <Header />
       
       {/* Cafe Header */}
@@ -767,7 +767,7 @@ const Menu = () => {
         </div>
 
         {/* Floating Menu Button - Mobile Only */}
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 lg:hidden">
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-40 lg:hidden">
           <Button
             onClick={() => setIsMobileMenuOpen(true)}
             className="bg-black text-white hover:bg-gray-800 px-6 py-3 rounded-full shadow-2xl flex items-center gap-2"
@@ -780,7 +780,7 @@ const Menu = () => {
 
         {/* Sticky Cart Button - Appears when cart has items (Adjusted position for mobile) */}
         {Object.keys(cart).length > 0 && (
-          <div className="fixed bottom-6 right-6 z-50">
+          <div className="fixed bottom-20 right-6 z-50">
             <Button 
               className="shadow-2xl px-6 py-3 text-lg font-semibold" 
               variant="hero"

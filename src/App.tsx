@@ -22,6 +22,7 @@ import { EnhancedCafeCardDemo } from "./components/EnhancedCafeCardDemo";
 import POSTest from "./pages/POSTest";
 import CompactOrdersTest from "./pages/CompactOrdersTest";
 import POSDashboard from "./pages/POSDashboard";
+import BottomNavigation from "./components/BottomNavigation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,9 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          
+          {/* Bottom Navigation - Mobile Only */}
+          <BottomNavigation />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
