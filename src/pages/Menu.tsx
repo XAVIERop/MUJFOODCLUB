@@ -519,11 +519,11 @@ const Menu = () => {
             )}
           </div>
 
-          {/* Mobile: Compact Search + Menu Button */}
+          {/* Mobile: Search Only (Menu Button moved to floating position) */}
           <div className="lg:hidden">
-            <div className="flex items-center space-x-3 mb-4">
-              {/* Search Bar */}
-              <div className="flex-1 relative">
+            <div className="mb-4">
+              {/* Search Bar - Full Width */}
+              <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="text"
@@ -541,15 +541,6 @@ const Menu = () => {
                   </button>
                 )}
               </div>
-              
-              {/* Mobile Menu Button */}
-              <Button
-                onClick={() => setIsMobileMenuOpen(true)}
-                className="bg-black text-white hover:bg-gray-800 px-4 py-2 rounded-lg flex items-center gap-2"
-              >
-                <Filter className="w-4 h-4" />
-                Menu
-              </Button>
             </div>
             
             {/* Mobile Search Status */}
@@ -775,7 +766,19 @@ const Menu = () => {
           </div>
         </div>
 
-        {/* Sticky Cart Button - Appears when cart has items */}
+        {/* Floating Menu Button - Mobile Only */}
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 lg:hidden">
+          <Button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="bg-black text-white hover:bg-gray-800 px-6 py-3 rounded-full shadow-2xl flex items-center gap-2"
+            size="lg"
+          >
+            <Filter className="w-5 h-5" />
+            Menu
+          </Button>
+        </div>
+
+        {/* Sticky Cart Button - Appears when cart has items (Adjusted position for mobile) */}
         {Object.keys(cart).length > 0 && (
           <div className="fixed bottom-6 right-6 z-50">
             <Button 
