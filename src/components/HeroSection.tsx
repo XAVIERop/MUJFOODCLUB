@@ -156,8 +156,8 @@ const HeroSection = () => {
       {/* Background Image with Overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-500"
-        style={{ 
-          backgroundImage: `url(${isMobile ? '/chatkara_menuimg.png' : heroImage})`
+                style={{
+          backgroundImage: `url(${isMobile ? '/mobile_bgimg.jpg' : heroImage})`
         }}
       >
         <div className={`absolute inset-0 transition-all duration-500 ${
