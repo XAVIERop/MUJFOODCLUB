@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Minus, ShoppingCart, Clock, Star, ArrowLeft, Filter, Search, Phone, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -349,8 +350,17 @@ const Menu = () => {
       <Header />
       
       {/* Cafe Header */}
-      <div className="gradient-primary text-white py-12">
-        <div className="container mx-auto px-4">
+      <div className="relative text-white py-12 overflow-hidden">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url('/chatkara_menuimg.png')` }}
+        >
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-black/40"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
           <Button 
             variant="ghost" 
             onClick={() => navigate('/')}
@@ -364,7 +374,9 @@ const Menu = () => {
             <div>
               <Badge className="bg-white/20 text-white mb-4">{cafe.type}</Badge>
               <h1 className="text-4xl font-bold mb-4">{cafe.name}</h1>
-              <p className="text-white/90 text-lg mb-4">{cafe.description}</p>
+              <p className="text-white/90 text-lg mb-4">
+                Pure Veg, Packed with Flavors – From Soya Chaap to Momos, Tandoori to Curries, we serve veg with the taste of non-veg!
+              </p>
               
               <div className="flex items-center space-x-6 text-white/80">
                 <div className="flex items-center">
@@ -469,37 +481,24 @@ const Menu = () => {
             </div>
           </div>
           
-          <div className="flex flex-wrap gap-3">
-            {/* All Categories Button */}
-            <Button
-              variant={selectedCategory === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedCategory('all')}
-              className={`transition-all duration-200 ${
-                selectedCategory === 'all' 
-                  ? 'bg-primary text-white shadow-lg scale-105' 
-                  : 'hover:bg-primary/10'
-              }`}
-            >
-              All Categories ({groupedMenuItems.length})
-            </Button>
-            
-            {/* Individual Category Buttons */}
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
-                className={`transition-all duration-200 ${
-                  selectedCategory === category 
-                    ? 'bg-primary text-white shadow-lg scale-105' 
-                    : 'hover:bg-primary/10'
-                }`}
-              >
-                {category} ({groupedItems[category].length})
-              </Button>
-            ))}
+          {/* Category Dropdown */}
+          <div className="flex items-center space-x-4">
+            <span className="text-sm font-medium text-foreground">Category:</span>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  All Categories ({groupedMenuItems.length})
+                </SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category} ({groupedItems[category].length})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           {/* Search Status */}
