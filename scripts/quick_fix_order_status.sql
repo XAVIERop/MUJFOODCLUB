@@ -52,4 +52,8 @@ BEGIN
     END IF;
 END $$;
 
-RAISE NOTICE 'Quick fix applied. Try updating an order status now.';
+-- Show success message
+DO $$
+BEGIN
+    RAISE NOTICE 'Quick fix applied. Try updating an order status now.';
+END $$;
