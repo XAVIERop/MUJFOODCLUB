@@ -438,6 +438,37 @@ const Menu = () => {
             </div>
           </div>
           
+          {/* Veg/Non-Veg Toggle */}
+          <div className="flex items-center space-x-4 mb-4">
+            <span className="text-sm font-medium text-foreground">Dietary Preference:</span>
+            <div className="flex bg-muted rounded-lg p-1">
+              <Button
+                variant={selectedCategory === 'all' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setSelectedCategory('all')}
+                className="text-xs"
+              >
+                🌱 All
+              </Button>
+              <Button
+                variant={selectedCategory === 'veg' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setSelectedCategory('veg')}
+                className="text-xs"
+              >
+                🥬 Veg Only
+              </Button>
+              <Button
+                variant={selectedCategory === 'non-veg' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setSelectedCategory('non-veg')}
+                className="text-xs"
+              >
+                🍗 Non-Veg Only
+              </Button>
+            </div>
+          </div>
+          
           <div className="flex flex-wrap gap-3">
             {/* All Categories Button */}
             <Button
@@ -500,88 +531,124 @@ const Menu = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Menu Items */}
-          <div className="lg:col-span-2 space-y-8">
+        {/* New 2-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Left Column - Categories */}
+          <div className="lg:col-span-1">
+            <Card className="food-card border-0 sticky top-4">
+              <CardHeader>
+                <CardTitle className="text-lg">Categories</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button
+                  variant={selectedCategory === 'all' ? 'default' : 'ghost'}
+                  className="w-full justify-start"
+                  onClick={() => setSelectedCategory('all')}
+                >
+                  All Categories ({groupedMenuItems.length})
+                </Button>
+                {categories.map((category) => (
+                  <Button
+                    key={category}
+                    variant={selectedCategory === category ? 'default' : 'ghost'}
+                    className="w-full justify-start"
+                    onClick={() => setSelectedCategory(category)}
+                  >
+                    {category} ({groupedItems[category].length})
+                  </Button>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Menu Items (3 per row) */}
+          <div className="lg:col-span-3">
             {Object.entries(filteredItems).map(([category, items]) => (
-              <div key={category}>
+              <div key={category} className="mb-8">
                 <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center">
                   <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm mr-3">
                     {items.length} items
                   </span>
                   {category}
                 </h2>
-                <div className="grid gap-4">
+                
+                {/* Eatsure-style 3-column grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {items.map((item) => (
-                    <Card key={item.baseName} className="food-card border-0">
-                      <CardContent className="p-6">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <h3 className="text-lg font-semibold text-foreground">
-                                {item.baseName}
-                              </h3>
-                              {item.portions.every(p => p.out_of_stock) && (
-                                <Badge variant="destructive" className="text-xs">
-                                  Out of Stock
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-muted-foreground mb-3">
-                              {item.description}
-                            </p>
-                            
-                            {/* Portion Selection */}
-                            {item.portions.length > 1 && (
-                              <div className="mb-3">
-                                <div className="flex items-center space-x-2 mb-2">
-                                  <span className="text-sm font-medium text-foreground">Portion:</span>
-                                  {item.portions.map((portion) => (
-                                    <Button
-                                      key={portion.id}
-                                      variant={cart[portion.id]?.selectedPortion === portion.id ? 'default' : 'outline'}
-                                      size="sm"
-                                      onClick={() => {
-                                        if (cart[portion.id]) {
-                                          setCart(prev => ({
-                                            ...prev,
-                                            [portion.id]: {
-                                              ...prev[portion.id],
-                                              selectedPortion: portion.id
-                                            }
-                                          }));
-                                        }
-                                      }}
-                                      disabled={portion.out_of_stock}
-                                      className="text-xs"
-                                    >
-                                      {portion.name} - ₹{portion.price}
-                                    </Button>
-                                  ))}
-                                </div>
-                              </div>
+                    <Card key={item.baseName} className="food-card border-0 hover:shadow-lg transition-all duration-200">
+                      <CardContent className="p-4">
+                        {/* Food Item Image Placeholder */}
+                        <div className="w-full h-32 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg mb-3 flex items-center justify-center">
+                          <span className="text-orange-600 text-sm font-medium">🍽️ Food Image</span>
+                        </div>
+                        
+                        {/* Item Details */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-foreground line-clamp-1">
+                              {item.baseName}
+                            </h3>
+                            {item.portions.every(p => p.out_of_stock) && (
+                              <Badge variant="destructive" className="text-xs">
+                                Out of Stock
+                              </Badge>
                             )}
-                            
-                            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                              <div className="flex items-center">
-                                <Clock className="w-4 h-4 mr-1" />
-                                {item.preparation_time} min
-                              </div>
-                              {item.portions.length === 1 && (
-                                <div className="text-xl font-bold text-primary">
-                                  ₹{item.portions[0].price}
-                                </div>
-                              )}
-                            </div>
                           </div>
                           
-                          <div className="ml-4">
+                          <p className="text-muted-foreground text-sm line-clamp-2">
+                            {item.description}
+                          </p>
+                          
+                          {/* Portion Selection */}
+                          {item.portions.length > 1 && (
+                            <div className="space-y-2">
+                              <span className="text-xs font-medium text-foreground">Portion:</span>
+                              {item.portions.map((portion) => (
+                                <Button
+                                  key={portion.id}
+                                  variant={cart[portion.id]?.selectedPortion === portion.id ? 'default' : 'outline'}
+                                  size="sm"
+                                  onClick={() => {
+                                    if (cart[portion.id]) {
+                                      setCart(prev => ({
+                                        ...prev,
+                                        [portion.id]: {
+                                          ...prev[portion.id],
+                                          selectedPortion: portion.id
+                                        }
+                                      }));
+                                    }
+                                  }}
+                                  disabled={portion.out_of_stock}
+                                  className="w-full text-xs h-8"
+                                >
+                                  {portion.name} - ₹{portion.price}
+                                </Button>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Price and Time */}
+                          <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center text-muted-foreground">
+                              <Clock className="w-4 h-4 mr-1" />
+                              {item.preparation_time} min
+                            </div>
+                            {item.portions.length === 1 && (
+                              <div className="text-lg font-bold text-primary">
+                                ₹{item.portions[0].price}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Add to Cart Button */}
+                          <div className="pt-2">
                             {item.portions.every(p => p.out_of_stock) ? (
                               <Button
                                 variant="outline"
                                 size="sm"
                                 disabled
-                                className="opacity-50 cursor-not-allowed"
+                                className="w-full opacity-50 cursor-not-allowed"
                               >
                                 Out of Stock
                               </Button>
@@ -596,6 +663,7 @@ const Menu = () => {
                                           variant="outline"
                                           size="sm"
                                           onClick={() => removeFromCart(portion.id)}
+                                          className="flex-1"
                                         >
                                           <Minus className="w-4 h-4" />
                                         </Button>
@@ -606,6 +674,7 @@ const Menu = () => {
                                           variant="outline"
                                           size="sm"
                                           onClick={() => addToCart(item, portion.id)}
+                                          className="flex-1"
                                         >
                                           <Plus className="w-4 h-4" />
                                         </Button>
@@ -616,9 +685,10 @@ const Menu = () => {
                                         size="sm"
                                         onClick={() => addToCart(item, portion.id)}
                                         disabled={portion.out_of_stock}
+                                        className="w-full"
                                       >
                                         <Plus className="w-4 h-4 mr-2" />
-                                        {portion.name} - ₹{portion.price}
+                                        Add to Cart
                                       </Button>
                                     )}
                                   </div>
@@ -630,7 +700,7 @@ const Menu = () => {
                         
                         {/* Show notes for any portion in cart */}
                         {item.portions.some(portion => cart[portion.id]) && (
-                          <div className="mt-4 pt-4 border-t border-border">
+                          <div className="mt-3 pt-3 border-t border-border">
                             <Textarea
                               placeholder="Special instructions (optional)"
                               value={cart[item.portions.find(p => cart[p.id])?.id || '']?.notes || ''}
@@ -652,57 +722,22 @@ const Menu = () => {
               </div>
             ))}
           </div>
-
-          {/* Cart Summary */}
-          <div className="lg:col-span-1">
-            <Card className="food-card border-0 sticky top-4">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  Your Order ({getCartItemCount()})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {Object.keys(cart).length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    Your cart is empty
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {Object.values(cart).map(({item, quantity}) => (
-                      <div key={item.name} className="flex justify-between items-center">
-                        <div className="flex-1">
-                          <p className="font-medium text-foreground">{item.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            ₹{item.price} × {quantity}
-                          </p>
-                        </div>
-                        <p className="font-semibold text-primary">
-                          ₹{item.price * quantity}
-                        </p>
-                      </div>
-                    ))}
-                    
-                    <div className="border-t border-border pt-4">
-                      <div className="flex justify-between items-center text-lg font-bold">
-                        <span>Total</span>
-                        <span className="text-primary">₹{getTotalAmount()}</span>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      className="w-full" 
-                      variant="hero"
-                      onClick={handleCheckout}
-                    >
-                      Proceed to Checkout
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
         </div>
+
+        {/* Sticky Cart Button - Appears when cart has items */}
+        {Object.keys(cart).length > 0 && (
+          <div className="fixed bottom-6 right-6 z-50">
+            <Button 
+              className="shadow-2xl px-6 py-3 text-lg font-semibold" 
+              variant="hero"
+              onClick={handleCheckout}
+              size="lg"
+            >
+              <ShoppingCart className="w-5 h-5 mr-2" />
+              View Cart ({getCartItemCount()}) - ₹{getTotalAmount()}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
