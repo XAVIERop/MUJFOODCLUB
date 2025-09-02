@@ -171,19 +171,19 @@ const HeroSection = () => {
       <div className="relative z-10 container mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-center min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-4rem)]">
         <div className="text-center max-w-6xl mx-auto w-full">
           {/* Brand Badge */}
-          <Badge className="mb-2 sm:mb-4 animate-fade-in bg-white/20 text-white border-white/30 backdrop-blur-sm text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center">
+          <Badge className="mb-4 sm:mb-6 animate-fade-in bg-white/20 text-white border-white/30 backdrop-blur-sm text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center">
             <Utensils className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             FoodClub
           </Badge>
 
           {/* MUJ Badge */}
-          <Badge className="mb-3 sm:mb-6 animate-fade-in bg-white/10 text-white border-white/20 backdrop-blur-sm text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center">
+          <Badge className="mb-6 sm:mb-8 animate-fade-in bg-white/10 text-white border-white/20 backdrop-blur-sm text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center">
             <Star className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             MUJ Students Exclusive
           </Badge>
 
           {/* Main Heading */}
-          <h1 className={`text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-3 sm:mb-6 animate-slide-up leading-tight tracking-tight ${
+          <h1 className={`text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-6 sm:mb-8 animate-slide-up leading-tight tracking-tight ${
             isMobile ? 'text-shadow-lg' : ''
           }`}>
             Discover Amazing Food at{" "}
@@ -193,7 +193,7 @@ const HeroSection = () => {
           </h1>
 
           {/* Location + Search in One Row */}
-          <div className="flex items-center gap-3 sm:gap-4 max-w-full sm:max-w-2xl mx-auto mb-6 sm:mb-8 animate-fade-in px-2 sm:px-0">
+          <div className="flex items-center gap-4 sm:gap-4 max-w-full sm:max-w-2xl mx-auto mb-8 sm:mb-10 animate-fade-in px-2 sm:px-0">
             {/* Location Dropdown - Just Pin Size */}
             <div className="relative">
               <Select value={selectedBlock} onValueChange={setSelectedBlock}>
@@ -310,20 +310,20 @@ const HeroSection = () => {
           </div>
 
           {/* Service Cards - In One Row on Mobile */}
-          <div className="flex flex-row gap-2 sm:gap-6 justify-center items-center animate-fade-in max-w-full sm:max-w-4xl mx-auto px-2 sm:px-0">
+          <div className="flex flex-row gap-4 sm:gap-6 justify-center items-center animate-fade-in max-w-full sm:max-w-4xl mx-auto px-2 sm:px-0 mb-8 sm:mb-10">
             {/* Food Delivery Card */}
             <div 
               onClick={handleExploreCafes}
-              className="bg-black/20 backdrop-blur-sm rounded-xl p-3 sm:p-6 flex-1 sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30 min-w-0"
+              className="bg-black/20 backdrop-blur-sm rounded-xl p-4 sm:p-6 flex-1 sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30 min-w-0"
             >
               <div className="text-left">
-                <h3 className="text-sm sm:text-xl font-bold text-white mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
+                <h3 className="text-sm sm:text-xl font-bold text-white mb-2 sm:mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
                   FOOD DELIVERY
                 </h3>
-                <p className="text-white/80 text-xs sm:text-sm mb-2" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
+                <p className="text-white/80 text-xs sm:text-sm mb-3 sm:mb-2" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
                   FROM CAFES
                 </p>
-                <p className="text-orange-400 font-semibold text-xs sm:text-lg mb-2 sm:mb-4" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
+                <p className="text-orange-400 font-semibold text-xs sm:text-lg mb-3 sm:mb-4" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
                   UPTO 10% OFF
                 </p>
                 <div className="flex justify-between items-center">
@@ -338,16 +338,16 @@ const HeroSection = () => {
             {/* View Rewards Card */}
             <div 
               onClick={handleViewRewards}
-              className="bg-black/20 backdrop-blur-sm rounded-xl p-3 sm:p-6 flex-1 sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30 min-w-0"
+              className="bg-black/20 backdrop-blur-sm rounded-xl p-4 sm:p-6 flex-1 sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30 min-w-0"
             >
               <div className="text-left">
-                <h3 className="text-sm sm:text-xl font-bold text-white mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
+                <h3 className="text-sm sm:text-xl font-bold text-white mb-2 sm:mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
                   VIEW REWARDS
                 </h3>
-                <p className="text-white/80 text-xs sm:text-sm mb-2" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
+                <p className="text-white/80 text-xs sm:text-sm mb-3 sm:mb-2" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
                   LOYALTY PROGRAM
                 </p>
-                <p className="text-orange-400 font-semibold text-xs sm:text-lg mb-2 sm:mb-4" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
+                <p className="text-orange-400 font-semibold text-xs sm:text-lg mb-3 sm:mb-4" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
                   EARN POINTS
                 </p>
                 <div className="flex justify-between items-center">
@@ -361,7 +361,7 @@ const HeroSection = () => {
           </div>
 
           {/* Stats Row */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-8 mt-4 sm:mt-8 animate-slide-up max-w-md mx-auto">
+          <div className="grid grid-cols-3 gap-4 sm:gap-4 lg:gap-8 mt-8 sm:mt-8 animate-slide-up max-w-md mx-auto">
             <div className="text-center">
               <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">{cafeCount}</div>
               <div className="text-white/80 text-xs sm:text-sm lg:text-base">Cafes</div>
