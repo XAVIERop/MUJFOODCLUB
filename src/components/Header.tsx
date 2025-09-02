@@ -148,8 +148,8 @@ const Header = () => {
               alt="FoodClub Logo" 
               className="w-48 h-auto object-contain"
             />
-            {/* BETA Badge - Golden, positioned to the right */}
-            <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border border-yellow-300 ml-2">
+            {/* BETA Badge - Golden, positioned to the right, very small */}
+            <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-yellow-300 ml-1">
               BETA
             </Badge>
           </Link>
@@ -273,10 +273,10 @@ const Header = () => {
                       alt="FoodClub Logo" 
                       className="w-32 h-auto mr-2"
                     />
-                    {/* BETA Badge - Golden, positioned to the right */}
-                    <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md border border-yellow-300">
-                      BETA
-                    </Badge>
+                                         {/* BETA Badge - Golden, positioned to the right, very small */}
+                     <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-yellow-300">
+                       BETA
+                     </Badge>
                   </SheetTitle>
                   <SheetDescription>
                     Your campus food companion
