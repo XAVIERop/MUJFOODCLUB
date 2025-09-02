@@ -14,6 +14,7 @@ const HeroSection = () => {
   const [studentCount, setStudentCount] = useState(0);
   const [selectedBlock, setSelectedBlock] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchMode, setSearchMode] = useState<'dishes' | 'cafes'>('dishes'); // New state for search mode
   const [cafes, setCafes] = useState<any[]>([]);
   const [filteredCafes, setFilteredCafes] = useState<any[]>([]);
   const [showCafeDropdown, setShowCafeDropdown] = useState(false);
@@ -67,28 +68,27 @@ const HeroSection = () => {
     fetchData();
   }, []);
 
-  // Filter cafes and menu items based on search query
+  // Filter cafes and menu items based on search query and mode
   useEffect(() => {
     if (searchQuery.trim()) {
-      // Filter cafes
-      const filteredCafes = cafes.filter(cafe =>
-        cafe.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredCafes(filteredCafes);
-
-      // Filter menu items
-      const filteredMenu = menuItems.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredMenuItems(filteredMenu);
-
-      // Show appropriate dropdown
-      if (filteredCafes.length > 0 || filteredMenu.length > 0) {
+      if (searchMode === 'cafes') {
+        // Search only cafes
+        const filteredCafes = cafes.filter(cafe =>
+          cafe.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setFilteredCafes(filteredCafes);
+        setFilteredMenuItems([]);
         setShowCafeDropdown(filteredCafes.length > 0);
-        setShowMenuDropdown(filteredMenu.length > 0);
-      } else {
-        setShowCafeDropdown(false);
         setShowMenuDropdown(false);
+      } else {
+        // Search only dishes
+        const filteredMenu = menuItems.filter(item =>
+          item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setFilteredMenuItems(filteredMenu);
+        setFilteredCafes([]);
+        setShowMenuDropdown(filteredMenu.length > 0);
+        setShowCafeDropdown(false);
       }
     } else {
       setFilteredCafes([]);
@@ -96,7 +96,7 @@ const HeroSection = () => {
       setShowCafeDropdown(false);
       setShowMenuDropdown(false);
     }
-  }, [searchQuery, cafes, menuItems]);
+  }, [searchQuery, searchMode, cafes, menuItems]);
 
   const handleExploreCafes = () => {
     navigate('/cafes');
@@ -108,14 +108,11 @@ const HeroSection = () => {
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      // If there are food items matching the search, navigate to cafes page with search
-      if (filteredMenuItems.length > 0) {
-        navigate(`/cafes?search=${encodeURIComponent(searchQuery)}`);
-      } else if (filteredCafes.length > 0) {
-        // If only cafes match, navigate to cafes page
+      if (searchMode === 'cafes') {
+        // Search for cafes - navigate to cafes page with search
         navigate(`/cafes?search=${encodeURIComponent(searchQuery)}`);
       } else {
-        // If no matches, still navigate to cafes page
+        // Search for dishes - navigate to cafes page with search (to find which cafe has the dish)
         navigate(`/cafes?search=${encodeURIComponent(searchQuery)}`);
       }
     }
@@ -197,11 +194,47 @@ const HeroSection = () => {
               </Select>
             </div>
 
-            {/* Search Input with Cafe Dropdown */}
+            {/* Search Input with Toggle and Dropdown */}
             <div className="flex-1 relative">
+              {/* Search Mode Toggle */}
+              <div className="flex items-center justify-center mb-2">
+                <div className="bg-black/20 backdrop-blur-sm rounded-lg p-1 border border-white/30">
+                  <button
+                    onClick={() => {
+                      setSearchMode('dishes');
+                      setSearchQuery('');
+                      setShowCafeDropdown(false);
+                      setShowMenuDropdown(false);
+                    }}
+                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                      searchMode === 'dishes'
+                        ? 'bg-white text-black'
+                        : 'text-white hover:bg-white/20'
+                    }`}
+                  >
+                    🍽️ Dishes
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSearchMode('cafes');
+                      setSearchQuery('');
+                      setShowCafeDropdown(false);
+                      setShowMenuDropdown(false);
+                    }}
+                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                      searchMode === 'cafes'
+                        ? 'bg-white text-black'
+                        : 'text-white hover:bg-white/20'
+                    }`}
+                  >
+                    🏪 Cafes
+                  </button>
+                </div>
+              </div>
+              
               <Input
                 type="text"
-                placeholder="Search for cafes, food items or more"
+                placeholder={searchMode === 'dishes' ? "Search for food items..." : "Search for cafes..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
