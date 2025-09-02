@@ -367,7 +367,7 @@ const Menu = () => {
         <div className="container mx-auto px-4 relative z-10">
           <Button 
             variant="ghost" 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/cafes')}
             className="text-white hover:bg-white/20 mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
