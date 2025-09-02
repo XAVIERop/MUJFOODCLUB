@@ -15,12 +15,28 @@ const HeroSection = () => {
   const [selectedBlock, setSelectedBlock] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchMode, setSearchMode] = useState<'dishes' | 'cafes'>('dishes'); // New state for search mode
+  const [isMobile, setIsMobile] = useState(false); // New state for mobile detection
   const [cafes, setCafes] = useState<any[]>([]);
   const [filteredCafes, setFilteredCafes] = useState<any[]>([]);
   const [showCafeDropdown, setShowCafeDropdown] = useState(false);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [filteredMenuItems, setFilteredMenuItems] = useState<any[]>([]);
   const [showMenuDropdown, setShowMenuDropdown] = useState(false);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    // Check on mount
+    checkMobile();
+    
+    // Check on resize
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Fetch stats and cafes from database
   useEffect(() => {
@@ -145,12 +161,18 @@ const HeroSection = () => {
 
   return (
     <section className="relative min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden">
-      {/* Background Image with Overlay */}
+      {/* Background Image with Overlay - Different for Mobile/Desktop */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${heroImage})` }}
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-500"
+        style={{ 
+          backgroundImage: `url(${isMobile ? '/chatkara_menuimg.png' : heroImage})`
+        }}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-transparent" />
+        <div className={`absolute inset-0 transition-all duration-500 ${
+          isMobile 
+            ? 'bg-gradient-to-b from-black/70 via-black/50 to-black/30' 
+            : 'bg-gradient-to-br from-black/60 via-black/40 to-transparent'
+        }`} />
       </div>
 
       {/* Content - Swiggy Style Layout */}
@@ -169,7 +191,9 @@ const HeroSection = () => {
           </Badge>
 
           {/* Main Heading - Clean and Simple */}
-          <h1 className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-3 sm:mb-6 animate-slide-up leading-tight tracking-tight">
+          <h1 className={`text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-3 sm:mb-6 animate-slide-up leading-tight tracking-tight ${
+            isMobile ? 'text-shadow-lg' : ''
+          }`}>
             Discover Amazing Food at{" "}
             <span className="text-white font-extrabold">
                 GHS Hostel
