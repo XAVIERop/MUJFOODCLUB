@@ -196,59 +196,56 @@ const HeroSection = () => {
 
             {/* Search Input with Toggle and Dropdown */}
             <div className="flex-1 relative">
-              <div className="flex items-center space-x-2">
-                {/* Search Mode Toggle */}
-                <div className="bg-black/20 backdrop-blur-sm rounded-lg p-1 border border-white/30">
-                  <button
-                    onClick={() => {
-                      setSearchMode('dishes');
-                      setSearchQuery('');
-                      setShowCafeDropdown(false);
-                      setShowMenuDropdown(false);
-                    }}
-                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-                      searchMode === 'dishes'
-                        ? 'bg-white text-black'
-                        : 'text-white hover:bg-white/20'
-                    }`}
-                  >
-                    🍽️ Dishes
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSearchMode('cafes');
-                      setSearchQuery('');
-                      setShowCafeDropdown(false);
-                      setShowMenuDropdown(false);
-                    }}
-                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-                      searchMode === 'cafes'
-                        ? 'bg-white text-black'
-                        : 'text-white hover:bg-white/20'
-                    }`}
-                  >
-                    🏪 Cafes
-                  </button>
-                </div>
-                
-                {/* Search Input */}
-                <div className="flex-1 relative">
-                  <Input
-                    type="text"
-                    placeholder={searchMode === 'dishes' ? "Search for food items..." : "Search for cafes..."}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    className="h-10 sm:h-14 bg-black/20 backdrop-blur-sm border-2 border-white/30 text-white text-base sm:text-lg font-medium rounded-lg hover:bg-black/30 transition-all duration-200 pr-12 placeholder:text-white/70"
-                  />
-                  <button
-                    onClick={handleSearch}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 sm:p-2 bg-black/20 backdrop-blur-sm border border-white/30 rounded-lg hover:bg-black/30 transition-all duration-200"
-                  >
-                    <Search className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                  </button>
-                </div>
+              <Input
+                type="text"
+                placeholder={searchMode === 'dishes' ? "Search for food items..." : "Search for cafes..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="h-10 sm:h-14 bg-black/20 backdrop-blur-sm border-2 border-white/30 text-white text-base sm:text-lg font-medium rounded-lg hover:bg-black/30 transition-all duration-200 pr-32 placeholder:text-white/70"
+              />
+              
+              {/* Search Mode Toggle - positioned inside search input */}
+              <div className="absolute right-16 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+                <button
+                  onClick={() => {
+                    setSearchMode('dishes');
+                    setSearchQuery('');
+                    setShowCafeDropdown(false);
+                    setShowMenuDropdown(false);
+                  }}
+                  className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all duration-200 ${
+                    searchMode === 'dishes'
+                      ? 'bg-white text-black'
+                      : 'text-white hover:bg-white/20'
+                  }`}
+                >
+                  🍽️
+                </button>
+                <button
+                  onClick={() => {
+                    setSearchMode('cafes');
+                    setSearchQuery('');
+                    setShowCafeDropdown(false);
+                    setShowMenuDropdown(false);
+                  }}
+                  className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all duration-200 ${
+                    searchMode === 'cafes'
+                      ? 'bg-white text-black'
+                      : 'text-white hover:bg-white/20'
+                  }`}
+                >
+                  🏪
+                </button>
               </div>
+              
+              {/* Search Button */}
+              <button
+                onClick={handleSearch}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 sm:p-2 bg-black/20 backdrop-blur-sm border border-white/30 rounded-lg hover:bg-black/30 transition-all duration-200"
+              >
+                <Search className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              </button>
 
               {/* Cafe Dropdown */}
               {showCafeDropdown && filteredCafes.length > 0 && (
