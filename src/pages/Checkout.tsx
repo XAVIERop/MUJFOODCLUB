@@ -58,6 +58,7 @@ const Checkout = () => {
 
   // Form states
   const [deliveryDetails, setDeliveryDetails] = useState({
+    orderType: 'delivery', // 'delivery' or 'takeaway'
     block: profile?.block || 'B1',
     deliveryNotes: '',
     paymentMethod: 'cod',
@@ -250,13 +251,13 @@ const Checkout = () => {
           cafe_id: cafe.id,
           order_number: orderNumber,
           total_amount: finalAmount,
-          delivery_block: deliveryDetails.block,
+          delivery_block: deliveryDetails.orderType === 'delivery' ? deliveryDetails.block : 'TAKEAWAY',
           delivery_notes: deliveryDetails.deliveryNotes,
           payment_method: deliveryDetails.paymentMethod,
           points_earned: pointsToEarn,
-          estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes from now
+          estimated_delivery: new Date(Date.now() + (deliveryDetails.orderType === 'delivery' ? 30 : 15) * 60 * 1000).toISOString(), // 30 min delivery, 15 min takeaway
           phone_number: deliveryDetails.phoneNumber
-        })
+        } as any)
         .select()
         .single();
 
@@ -305,7 +306,7 @@ const Checkout = () => {
               .update({ 
                 new_user_orders_count: newCount,
                 is_new_user: newCount < 20
-              })
+              } as any)
               .eq('id', user.id);
           }
         }
@@ -324,9 +325,9 @@ const Checkout = () => {
         special_instructions: notes
       }));
 
-      const { error: itemsError } = await (supabase
+      const { error: itemsError } = await supabase
         .from('order_items')
-        .insert(orderItems) as any);
+        .insert(orderItems as any);
 
       if (itemsError) {
         console.error('Order items creation error:', itemsError);
@@ -336,7 +337,7 @@ const Checkout = () => {
       // Handle points redemption transaction if points were redeemed
       if (pointsToRedeem > 0) {
         
-        const { error: redemptionError } = await (supabase
+        const { error: redemptionError } = await supabase
           .from('loyalty_transactions')
           .insert({
             user_id: user.id,
@@ -344,7 +345,7 @@ const Checkout = () => {
             points_change: -pointsToRedeem,
             transaction_type: 'redeemed',
             description: `Redeemed ${pointsToRedeem} points for order ${orderNumber}`
-          }) as any);
+          } as any);
 
         if (redemptionError) {
           console.error('Points redemption error:', redemptionError);
@@ -585,38 +586,107 @@ const Checkout = () => {
             <div className="space-y-6">
               <Card className="food-card">
                 <CardHeader>
-                  <CardTitle>Delivery Details</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    {deliveryDetails.orderType === 'delivery' ? (
+                      <>
+                        <MapPin className="w-5 h-5 text-blue-600" />
+                        Delivery Details
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="w-5 h-5 text-green-600" />
+                        Takeaway Details
+                      </>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="block">Delivery Block</Label>
+                    <Label htmlFor="orderType">Order Type</Label>
                     <Select 
-                      value={deliveryDetails.block} 
-                      onValueChange={(value) => setDeliveryDetails(prev => ({...prev, block: value}))}
+                      value={deliveryDetails.orderType} 
+                      onValueChange={(value) => setDeliveryDetails(prev => ({...prev, orderType: value}))}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select your block" />
+                        <SelectValue placeholder="Select order type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {blocks.map((block) => (
-                          <SelectItem key={block} value={block}>
-                            Block {block}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="delivery">🚚 Delivery</SelectItem>
+                        <SelectItem value="takeaway">📦 Takeaway</SelectItem>
                       </SelectContent>
                     </Select>
+                    
+                    {/* Order Type Badge */}
+                    <div className="flex justify-center mt-2">
+                      <Badge 
+                        variant={deliveryDetails.orderType === 'delivery' ? 'default' : 'secondary'}
+                        className={`px-4 py-2 text-sm font-medium ${
+                          deliveryDetails.orderType === 'delivery' 
+                            ? 'bg-blue-100 text-blue-800 border-blue-200' 
+                            : 'bg-green-100 text-green-800 border-green-200'
+                        }`}
+                      >
+                        {deliveryDetails.orderType === 'delivery' ? (
+                          <>
+                            <MapPin className="w-4 h-4 mr-2" />
+                            Delivery to Block {deliveryDetails.block}
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-4 h-4 mr-2" />
+                            Takeaway from Cafe
+                          </>
+                        )}
+                      </Badge>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="deliveryNotes">Delivery Notes (Optional)</Label>
-                    <Textarea
-                      id="deliveryNotes"
-                      placeholder="Any special delivery instructions..."
-                      value={deliveryDetails.deliveryNotes}
-                      onChange={(e) => setDeliveryDetails(prev => ({...prev, deliveryNotes: e.target.value}))}
-                      rows={3}
-                    />
-                  </div>
+                  {deliveryDetails.orderType === 'delivery' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="block">Delivery Block</Label>
+                        <Select 
+                          value={deliveryDetails.block} 
+                          onValueChange={(value) => setDeliveryDetails(prev => ({...prev, block: value}))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your block" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {blocks.map((block) => (
+                              <SelectItem key={block} value={block}>
+                                Block {block}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="deliveryNotes">Delivery Notes (Optional)</Label>
+                        <Textarea
+                          id="deliveryNotes"
+                          placeholder="Any special delivery instructions..."
+                          value={deliveryDetails.deliveryNotes}
+                          onChange={(e) => setDeliveryDetails(prev => ({...prev, deliveryNotes: e.target.value}))}
+                          rows={3}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {deliveryDetails.orderType === 'takeaway' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="takeawayNotes">Takeaway Notes (Optional)</Label>
+                      <Textarea
+                        id="takeawayNotes"
+                        placeholder="Any special takeaway instructions..."
+                        value={deliveryDetails.deliveryNotes}
+                        onChange={(e) => setDeliveryDetails(prev => ({...prev, deliveryNotes: e.target.value}))}
+                        rows={3}
+                      />
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="phoneNumber" className="flex items-center">
@@ -686,7 +756,10 @@ const Checkout = () => {
 
               <div className="text-center text-sm text-muted-foreground">
                 <Clock className="w-4 h-4 inline mr-1" />
-                Estimated delivery time: 30-45 minutes
+                {deliveryDetails.orderType === 'delivery' 
+                  ? 'Estimated delivery time: 30-45 minutes'
+                  : 'Estimated pickup time: 15-20 minutes'
+                }
               </div>
             </div>
           </div>
