@@ -68,6 +68,8 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
       // Fetch order items for each order
       const itemsData: {[key: string]: OrderItem[]} = {};
       for (const order of data || []) {
+        console.log(`Fetching items for order ${order.id} (${order.order_number})`);
+        
         const { data: items, error: itemsError } = await supabase
           .from('order_items')
           .select(`
@@ -76,10 +78,17 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
           `)
           .eq('order_id', order.id);
 
-        if (!itemsError && items) {
+        if (itemsError) {
+          console.error(`Error fetching items for order ${order.id}:`, itemsError);
+        } else if (items && items.length > 0) {
+          console.log(`Found ${items.length} items for order ${order.id}`);
           itemsData[order.id] = items;
+        } else {
+          console.log(`No items found for order ${order.id} - this might indicate a data issue`);
         }
       }
+      
+      console.log('Final order items data:', itemsData);
       setOrderItems(itemsData);
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -340,20 +349,27 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
                     <CardContent className="space-y-4">
                       {/* Order Items */}
                       <div className="space-y-2">
-                        <h4 className="font-semibold">Items:</h4>
-                        {items.map((item) => (
-                          <div key={item.id} className="flex justify-between items-center text-sm">
-                            <div>
-                              <span className="font-medium">{item.quantity}x {item.menu_item.name}</span>
-                              {item.special_instructions && (
-                                <p className="text-muted-foreground text-xs">
-                                  Note: {item.special_instructions}
-                                </p>
-                              )}
+                        <h4 className="font-semibold">Order Items ({items.length} items):</h4>
+                        {items.length > 0 ? (
+                          items.map((item) => (
+                            <div key={item.id} className="flex justify-between items-center text-sm">
+                              <div>
+                                <span className="font-medium">{item.quantity}x {item.menu_item.name}</span>
+                                {item.special_instructions && (
+                                  <p className="text-muted-foreground text-xs">
+                                    Note: {item.special_instructions}
+                                  </p>
+                                )}
+                              </div>
+                              <span>₹{item.total_price}</span>
                             </div>
-                            <span>₹{item.total_price}</span>
+                          ))
+                        ) : (
+                          <div className="text-center py-4 text-muted-foreground">
+                            <p>No items found for this order</p>
+                            <p className="text-xs mt-1">Order total: ₹{order.total_amount}</p>
                           </div>
-                        ))}
+                        )}
                       </div>
 
                       {/* Delivery Notes */}

@@ -74,11 +74,29 @@ const Checkout = () => {
 
   // Redirect if no cart data
   useEffect(() => {
+    console.log('🛒 Checkout cart data:', cart);
+    console.log('🏪 Cafe data:', cafe);
+    console.log('💰 Total amount:', totalAmount);
+    
     if (!cart || Object.keys(cart).length === 0) {
+      console.error('❌ No cart data found - redirecting to home');
+      toast({
+        title: "Cart Empty",
+        description: "Your cart is empty. Please add items before checkout.",
+        variant: "destructive"
+      });
       navigate('/');
       return;
     }
-  }, [cart, navigate]);
+    
+    if (!cafe) {
+      console.error('❌ No cafe data found - redirecting to home');
+      navigate('/');
+      return;
+    }
+    
+    console.log('✅ Cart validation passed - proceeding with checkout');
+  }, [cart, cafe, totalAmount, navigate, toast]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -316,6 +334,14 @@ const Checkout = () => {
       }
 
       // Create order items
+      console.log('🛒 Cart data for order items:', cart);
+      console.log('📦 Order items to create:', Object.values(cart));
+      
+      if (Object.keys(cart).length === 0) {
+        console.error('❌ Cart is empty - no items to save');
+        throw new Error('Cart is empty - cannot create order without items');
+      }
+      
       const orderItems = Object.values(cart).map(({item, quantity, notes}) => ({
         order_id: order!.id,
         menu_item_id: item.id,
@@ -324,15 +350,26 @@ const Checkout = () => {
         total_price: item.price * quantity,
         special_instructions: notes
       }));
+      
+      console.log('📝 Final order items array:', orderItems);
 
-      const { error: itemsError } = await supabase
+      const { data: insertedItems, error: itemsError } = await supabase
         .from('order_items')
-        .insert(orderItems as any);
+        .insert(orderItems as any)
+        .select();
 
       if (itemsError) {
-        console.error('Order items creation error:', itemsError);
+        console.error('❌ Order items creation error:', itemsError);
+        console.error('Error details:', {
+          code: itemsError.code,
+          message: itemsError.message,
+          details: itemsError.details,
+          hint: itemsError.hint
+        });
         throw itemsError;
       }
+      
+      console.log('✅ Order items created successfully:', insertedItems);
 
       // Handle points redemption transaction if points were redeemed
       if (pointsToRedeem > 0) {

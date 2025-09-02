@@ -26,7 +26,7 @@ import Header from '@/components/Header';
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { signUp, signIn, sendOTP, verifyOTP } = useAuth();
+  const { signUp, signIn, sendOTP, verifyOTP, resendConfirmationEmail } = useAuth();
   const { toast } = useToast();
 
   // Form states
@@ -129,7 +129,7 @@ const Auth = () => {
     } else {
         toast({
           title: "Account Created!",
-          description: "Please check your email to verify your account.",
+          description: "Please check your email to verify your account before signing in.",
         });
         setActiveTab('signin');
       }
@@ -323,6 +323,41 @@ const Auth = () => {
                       )}
                     </Button>
                   </form>
+
+                  {/* Resend Confirmation Email */}
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 mb-2">
+                      Didn't receive confirmation email?
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        if (signinForm.email) {
+                          setIsLoading(true);
+                          const { error } = await resendConfirmationEmail(signinForm.email);
+                          if (error) {
+                            toast({
+                              title: "Error",
+                              description: error.message || "Failed to resend email",
+                              variant: "destructive"
+                            });
+                          } else {
+                            toast({
+                              title: "Email Sent",
+                              description: "Confirmation email has been resent. Check your inbox.",
+                            });
+                          }
+                          setIsLoading(false);
+                        }
+                      }}
+                      disabled={!signinForm.email || isLoading}
+                      className="text-xs"
+                    >
+                      Resend Confirmation Email
+                    </Button>
+                  </div>
 
                   <div className="relative my-6">
                     <div className="absolute inset-0 flex items-center">

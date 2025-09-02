@@ -126,6 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const redirectUrl = `${window.location.origin}/auth`;
       
+      // PROPER EMAIL CONFIRMATION: User must verify email before login
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -141,6 +142,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (data.user && !error) {
         // Create profile for student
         await createProfile(data.user.id, email, fullName, block);
+        
+        // User will receive confirmation email
+        // They must click the link to verify before they can log in
       }
       
       return { error };
@@ -154,12 +158,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Clean up any existing auth state
       await supabase.auth.signOut({ scope: 'global' });
       
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) throw error;
+      
+      // Check if email is confirmed
+      if (data.user && !data.user.email_confirmed_at) {
+        return { 
+          error: { 
+            message: 'Please verify your email address before signing in. Check your inbox for a confirmation link.' 
+          } 
+        };
+      }
       
       // Redirect to homepage for students
       setTimeout(() => {
@@ -252,6 +265,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Resend confirmation email
+  const resendConfirmationEmail = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth`
+        }
+      });
+      
+      return { error };
+    } catch (error) {
+      return { error };
+    }
+  };
+
   const value = {
     user,
     session,
@@ -263,7 +293,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     updateProfile,
     refreshProfile,
     sendOTP,
-    verifyOTP
+    verifyOTP,
+    resendConfirmationEmail
   };
 
   return (

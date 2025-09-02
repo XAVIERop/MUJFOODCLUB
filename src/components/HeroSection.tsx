@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,10 +11,10 @@ const HeroSection = () => {
   const navigate = useNavigate();
   const [cafeCount, setCafeCount] = useState(0);
   const [studentCount, setStudentCount] = useState(0);
-  const [selectedBlock, setSelectedBlock] = useState("");
+  const [selectedBlock, setSelectedBlock] = useState("B1");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchMode, setSearchMode] = useState<'dishes' | 'cafes'>('dishes'); // New state for search mode
-  const [isMobile, setIsMobile] = useState(false); // New state for mobile detection
+  const [searchMode, setSearchMode] = useState<'dishes' | 'cafes'>('dishes');
+  const [isMobile, setIsMobile] = useState(false);
   const [cafes, setCafes] = useState<any[]>([]);
   const [filteredCafes, setFilteredCafes] = useState<any[]>([]);
   const [showCafeDropdown, setShowCafeDropdown] = useState(false);
@@ -29,10 +28,7 @@ const HeroSection = () => {
       setIsMobile(window.innerWidth <= 768);
     };
     
-    // Check on mount
     checkMobile();
-    
-    // Check on resize
     window.addEventListener('resize', checkMobile);
     
     return () => window.removeEventListener('resize', checkMobile);
@@ -88,7 +84,6 @@ const HeroSection = () => {
   useEffect(() => {
     if (searchQuery.trim()) {
       if (searchMode === 'cafes') {
-        // Search only cafes
         const filteredCafes = cafes.filter(cafe =>
           cafe.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
@@ -97,7 +92,6 @@ const HeroSection = () => {
         setShowCafeDropdown(filteredCafes.length > 0);
         setShowMenuDropdown(false);
       } else {
-        // Search only dishes
         const filteredMenu = menuItems.filter(item =>
           item.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
@@ -125,10 +119,8 @@ const HeroSection = () => {
   const handleSearch = () => {
     if (searchQuery.trim()) {
       if (searchMode === 'cafes') {
-        // Search for cafes - navigate to cafes page with search
         navigate(`/cafes?search=${encodeURIComponent(searchQuery)}`);
       } else {
-        // Search for dishes - navigate to cafes page with search (to find which cafe has the dish)
         navigate(`/cafes?search=${encodeURIComponent(searchQuery)}`);
       }
     }
@@ -161,7 +153,7 @@ const HeroSection = () => {
 
   return (
     <section className="relative min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden">
-      {/* Background Image with Overlay - Different for Mobile/Desktop */}
+      {/* Background Image with Overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-500"
         style={{ 
@@ -176,7 +168,7 @@ const HeroSection = () => {
       </div>
 
       {/* Content - Swiggy Style Layout */}
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-4rem)]">
+      <div className="relative z-10 container mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-center min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-4rem)]">
         <div className="text-center max-w-6xl mx-auto w-full">
           {/* Brand Badge */}
           <Badge className="mb-2 sm:mb-4 animate-fade-in bg-white/20 text-white border-white/30 backdrop-blur-sm text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center">
@@ -190,7 +182,7 @@ const HeroSection = () => {
             MUJ Students Exclusive
           </Badge>
 
-          {/* Main Heading - Clean and Simple */}
+          {/* Main Heading */}
           <h1 className={`text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-3 sm:mb-6 animate-slide-up leading-tight tracking-tight ${
             isMobile ? 'text-shadow-lg' : ''
           }`}>
@@ -200,12 +192,12 @@ const HeroSection = () => {
             </span>
           </h1>
 
-          {/* Search Bar - Swiggy Style */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-2xl mx-auto mb-4 sm:mb-8 animate-fade-in">
-            {/* Location Input - Emoji Size */}
-            <div className="relative w-12 sm:w-16">
+          {/* Location + Search in One Row */}
+          <div className="flex items-center gap-3 sm:gap-4 max-w-full sm:max-w-2xl mx-auto mb-6 sm:mb-8 animate-fade-in px-2 sm:px-0">
+            {/* Location Dropdown - Just Pin Size */}
+            <div className="relative">
               <Select value={selectedBlock} onValueChange={setSelectedBlock}>
-                <SelectTrigger className="h-10 sm:h-14 bg-black/20 backdrop-blur-sm border-2 border-white/30 text-white text-base sm:text-lg font-medium rounded-lg hover:bg-black/30 transition-all duration-200">
+                <SelectTrigger className="h-10 sm:h-12 w-10 sm:w-12 bg-black/20 backdrop-blur-sm border-2 border-white/30 text-white rounded-lg hover:bg-black/30 transition-all duration-200 p-0 flex items-center justify-center">
                   <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
                 </SelectTrigger>
                 <SelectContent>
@@ -218,19 +210,19 @@ const HeroSection = () => {
               </Select>
             </div>
 
-            {/* Search Input with Toggle and Dropdown */}
-            <div className="flex-1 relative">
+            {/* Search Bar - Takes Remaining Space */}
+            <div className="relative flex-1">
               <Input
                 type="text"
                 placeholder={searchMode === 'dishes' ? "Search for food items..." : "Search for cafes..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="h-10 sm:h-14 bg-black/20 backdrop-blur-sm border-2 border-white/30 text-white text-base sm:text-lg font-medium rounded-lg hover:bg-black/30 transition-all duration-200 pr-32 placeholder:text-white/70"
+                className="h-11 sm:h-14 bg-black/20 backdrop-blur-sm border-2 border-white/30 text-white text-sm sm:text-lg font-medium rounded-lg hover:bg-black/30 transition-all duration-200 pr-28 sm:pr-32 placeholder:text-white/70"
               />
               
               {/* Search Mode Toggle - positioned inside search input */}
-              <div className="absolute right-16 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+              <div className="absolute right-14 sm:right-16 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
                 <button
                   onClick={() => {
                     setSearchMode('dishes');
@@ -306,39 +298,39 @@ const HeroSection = () => {
                           <div className="font-medium text-gray-800 text-sm sm:text-base">{item.name}</div>
                           <div className="text-xs sm:text-sm text-gray-500">{item.cafes?.name}</div>
                         </div>
-                        <div className="text-orange-600 font-semibold text-sm sm:text-base">
+                        <div className="text-orange-400 font-semibold text-sm sm:text-base">
                           ₹{item.price}
                         </div>
                       </div>
                     </div>
                   ))}
-            </div>
+                </div>
               )}
             </div>
           </div>
 
-          {/* Service Cards - Exact Swiggy Style */}
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center animate-fade-in max-w-4xl mx-auto">
+          {/* Service Cards - In One Row on Mobile */}
+          <div className="flex flex-row gap-2 sm:gap-6 justify-center items-center animate-fade-in max-w-full sm:max-w-4xl mx-auto px-2 sm:px-0">
             {/* Food Delivery Card */}
             <div 
               onClick={handleExploreCafes}
-              className="bg-black/20 backdrop-blur-sm rounded-xl p-4 sm:p-6 w-full sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30"
+              className="bg-black/20 backdrop-blur-sm rounded-xl p-3 sm:p-6 flex-1 sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30 min-w-0"
             >
               <div className="text-left">
-                <h3 className="text-lg sm:text-xl font-bold text-white mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
+                <h3 className="text-sm sm:text-xl font-bold text-white mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
                   FOOD DELIVERY
                 </h3>
                 <p className="text-white/80 text-xs sm:text-sm mb-2" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
                   FROM CAFES
                 </p>
-                <p className="text-orange-400 font-semibold text-base sm:text-lg mb-3 sm:mb-4" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
+                <p className="text-orange-400 font-semibold text-xs sm:text-lg mb-2 sm:mb-4" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
                   UPTO 10% OFF
                 </p>
                 <div className="flex justify-between items-center">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg bg-white/10 flex items-center justify-center">
-                    <Utensils className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                  <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-lg bg-white/10 flex items-center justify-center">
+                    <Utensils className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
                   </div>
-                  <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-orange-400" />
+                  <ArrowRight className="w-4 h-4 sm:w-6 sm:h-6 text-orange-400" />
                 </div>
               </div>
             </div>
@@ -346,29 +338,29 @@ const HeroSection = () => {
             {/* View Rewards Card */}
             <div 
               onClick={handleViewRewards}
-              className="bg-black/20 backdrop-blur-sm rounded-xl p-4 sm:p-6 w-full sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30"
+              className="bg-black/20 backdrop-blur-sm rounded-xl p-3 sm:p-6 flex-1 sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30 min-w-0"
             >
               <div className="text-left">
-                <h3 className="text-lg sm:text-xl font-bold text-white mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
+                <h3 className="text-sm sm:text-xl font-bold text-white mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
                   VIEW REWARDS
                 </h3>
                 <p className="text-white/80 text-xs sm:text-sm mb-2" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
                   LOYALTY PROGRAM
                 </p>
-                <p className="text-orange-400 font-semibold text-base sm:text-lg mb-3 sm:mb-4" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
+                <p className="text-orange-400 font-semibold text-xs sm:text-lg mb-2 sm:mb-4" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
                   EARN POINTS
                 </p>
                 <div className="flex justify-between items-center">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg bg-white/10 flex items-center justify-center">
-                    <Gift className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                  <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-lg bg-white/10 flex items-center justify-center">
+                    <Gift className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
                   </div>
-                  <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-orange-400" />
+                  <ArrowRight className="w-4 h-4 sm:w-6 sm:h-6 text-orange-400" />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Stats Row - Moved Below Service Cards */}
+          {/* Stats Row */}
           <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-8 mt-4 sm:mt-8 animate-slide-up max-w-md mx-auto">
             <div className="text-center">
               <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">{cafeCount}</div>

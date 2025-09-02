@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Store, ToggleLeft, Package, AlertTriangle, CheckCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Store, ToggleLeft, Package, AlertTriangle, CheckCircle, Search } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -31,9 +32,22 @@ const CafeManagement = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, profile } = useAuth();
+
+  // Filter menu items based on search query
+  const filteredMenuItems = menuItems.filter(item => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return (
+      item.name.toLowerCase().includes(query) ||
+      item.category.toLowerCase().includes(query) ||
+      item.price.toString().includes(query)
+    );
+  });
 
   useEffect(() => {
     if (!user) {
@@ -312,15 +326,25 @@ const CafeManagement = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-4 bg-green-50 rounded-lg">
                   <div className="text-2xl font-bold text-green-600">
-                    {menuItems.filter(item => !item.out_of_stock && item.is_available).length}
+                    {searchQuery 
+                      ? filteredMenuItems.filter(item => !item.out_of_stock && item.is_available).length
+                      : menuItems.filter(item => !item.out_of_stock && item.is_available).length
+                    }
                   </div>
-                  <div className="text-sm text-green-600">Available Items</div>
+                  <div className="text-sm text-green-600">
+                    {searchQuery ? 'Filtered Available' : 'Available Items'}
+                  </div>
                 </div>
                 <div className="text-center p-4 bg-red-50 rounded-lg">
                   <div className="text-2xl font-bold text-red-600">
-                    {menuItems.filter(item => item.out_of_stock).length}
+                    {searchQuery 
+                      ? filteredMenuItems.filter(item => item.out_of_stock).length
+                      : menuItems.filter(item => item.out_of_stock).length
+                    }
                   </div>
-                  <div className="text-sm text-red-600">Out of Stock</div>
+                  <div className="text-sm text-red-600">
+                    {searchQuery ? 'Filtered Out of Stock' : 'Out of Stock'}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -336,14 +360,43 @@ const CafeManagement = () => {
             </p>
           </CardHeader>
           <CardContent>
+            {/* Search Bar */}
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search menu items by name, category, or price..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2"
+                />
+              </div>
+              {searchQuery && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Showing {filteredMenuItems.length} of {menuItems.length} items
+                </p>
+              )}
+            </div>
+
             <div className="space-y-4">
-              {menuItems.length === 0 ? (
+              {filteredMenuItems.length === 0 ? (
                 <div className="text-center py-8">
                   <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No menu items found</p>
+                  <p className="text-muted-foreground">
+                    {searchQuery ? 'No menu items match your search' : 'No menu items found'}
+                  </p>
+                  {searchQuery && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setSearchQuery('')}
+                      className="mt-2"
+                    >
+                      Clear Search
+                    </Button>
+                  )}
                 </div>
-              ) : (
-                menuItems.map((item) => (
+                              ) : (
+                filteredMenuItems.map((item) => (
                   <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
