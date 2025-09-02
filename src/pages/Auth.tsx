@@ -44,10 +44,10 @@ const Auth = () => {
 
   // Signup form
   const [signupForm, setSignupForm] = useState({
-    email: '',
-    password: '',
+    email: '', 
+    password: '', 
     confirmPassword: '',
-    fullName: '',
+    fullName: '', 
     block: 'B1'
   });
 
@@ -62,14 +62,14 @@ const Auth = () => {
 
     try {
       const { error } = await signIn(signinForm.email, signinForm.password);
-      
-      if (error) {
+    
+    if (error) {
         toast({
           title: "Sign In Failed",
           description: error.message || "Please check your credentials and try again.",
           variant: "destructive"
         });
-      } else {
+    } else {
         toast({
           title: "Welcome Back!",
           description: "Successfully signed in to your account.",
@@ -97,9 +97,9 @@ const Auth = () => {
         description: "Passwords do not match. Please try again.",
         variant: "destructive"
       });
-      setIsLoading(false);
-      return;
-    }
+        setIsLoading(false);
+        return;
+      }
 
     // Validate email domain
     if (!signupForm.email.endsWith('@muj.manipal.edu')) {
@@ -126,7 +126,7 @@ const Auth = () => {
           description: error.message || "Please try again with different credentials.",
           variant: "destructive"
         });
-      } else {
+    } else {
         toast({
           title: "Account Created!",
           description: "Please check your email to verify your account.",
@@ -168,14 +168,14 @@ const Auth = () => {
           shouldCreateUser: true
         }
       });
-      
-      if (error) {
+    
+    if (error) {
         toast({
           title: "Magic Link Failed",
           description: error.message || "Please try again.",
           variant: "destructive"
         });
-      } else {
+    } else {
         setOtpEmail(otpForm.email);
         setShowOTP(true);
         toast({
@@ -231,7 +231,7 @@ const Auth = () => {
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+    setIsLoading(false);
     }
   };
 
@@ -261,7 +261,7 @@ const Auth = () => {
             <CardHeader className="text-center pb-6">
               <div className="mx-auto w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mb-4">
                 <Shield className="w-6 h-6 text-white" />
-              </div>
+          </div>
               <CardTitle className="text-2xl font-bold text-gray-900">
                 Welcome to Food Club
               </CardTitle>
@@ -273,42 +273,42 @@ const Auth = () => {
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="signin">Sign In</TabsTrigger>
-                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                </TabsList>
-
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+            
                 {/* Sign In Tab */}
                 <TabsContent value="signin" className="space-y-4">
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-email">Email</Label>
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-email">Email</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="signin-email"
-                          type="email"
+                    <Input
+                      id="signin-email"
+                      type="email"
                           placeholder="your.email@muj.manipal.edu"
                           value={signinForm.email}
                           onChange={(e) => setSigninForm({ ...signinForm, email: e.target.value })}
                           className="pl-10"
-                          required
-                        />
-                      </div>
+                      required
+                    />
+                  </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-password">Password</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-password">Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="signin-password"
-                          type="password"
+                    <Input
+                      id="signin-password"
+                      type="password"
                           placeholder="Enter your password"
                           value={signinForm.password}
                           onChange={(e) => setSigninForm({ ...signinForm, password: e.target.value })}
                           className="pl-10"
-                          required
-                        />
+                      required
+                    />
                       </div>
                     </div>
 
@@ -332,17 +332,17 @@ const Auth = () => {
                       <span className="bg-white px-2 text-gray-500">Or</span>
                     </div>
                   </div>
-
-                                     <Button
+                  
+                  <Button 
                      variant="outline"
                      onClick={() => setActiveTab('otp')}
-                     className="w-full"
-                   >
+                    className="w-full" 
+                  >
                      <Mail className="w-4 h-4 mr-2" />
                      Quick Email Verification
-                   </Button>
-                </TabsContent>
-
+                  </Button>
+            </TabsContent>
+            
                 {/* Sign Up Tab */}
                 <TabsContent value="signup" className="space-y-4">
                   <Alert className="mb-4">
@@ -352,42 +352,42 @@ const Auth = () => {
                     </AlertDescription>
                   </Alert>
 
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="space-y-2">
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-2">
                       <Label htmlFor="signup-email">MUJ Email</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
+                    <Input
                           id="signup-email"
                           type="email"
                           placeholder="your.email@muj.manipal.edu"
                           value={signupForm.email}
                           onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
                           className="pl-10"
-                          required
-                        />
-                      </div>
+                      required
+                    />
+                  </div>
                       {signupForm.email && !signupForm.email.endsWith('@muj.manipal.edu') && (
                         <p className="text-sm text-red-500">Please use your MUJ email address</p>
                       )}
                     </div>
 
-                    <div className="space-y-2">
+                  <div className="space-y-2">
                       <Label htmlFor="signup-fullname">Full Name</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
+                    <Input
                           id="signup-fullname"
                           type="text"
                           placeholder="Enter your full name"
                           value={signupForm.fullName}
                           onChange={(e) => setSignupForm({ ...signupForm, fullName: e.target.value })}
                           className="pl-10"
-                          required
-                        />
-                      </div>
-                    </div>
-
+                      required
+                    />
+                  </div>
+                  </div>
+                  
                     <div className="space-y-2">
                       <Label htmlFor="signup-block">Hostel Block</Label>
                       <div className="relative">
@@ -408,13 +408,13 @@ const Auth = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Password</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="signup-password"
-                          type="password"
+                    <Input
+                      id="signup-password"
+                      type="password"
                           placeholder="Create a strong password"
                           value={signupForm.password}
                           onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
@@ -435,9 +435,9 @@ const Auth = () => {
                           value={signupForm.confirmPassword}
                           onChange={(e) => setSignupForm({ ...signupForm, confirmPassword: e.target.value })}
                           className="pl-10"
-                          required
-                        />
-                      </div>
+                      required
+                    />
+                  </div>
                       {signupForm.confirmPassword && signupForm.password !== signupForm.confirmPassword && (
                         <p className="text-sm text-red-500">Passwords do not match</p>
                       )}
@@ -465,7 +465,7 @@ const Auth = () => {
                         <AlertDescription>
                           Enter your MUJ email to receive a verification link.
                         </AlertDescription>
-                      </Alert>
+                    </Alert>
 
                       <div className="space-y-2">
                         <Label htmlFor="otp-email">MUJ Email</Label>
@@ -528,21 +528,21 @@ const Auth = () => {
                           >
                             Try Again
                           </Button>
-                          <Button
+                  <Button 
                             variant="outline"
                             onClick={() => setActiveTab('signin')}
                           >
                             Back to Sign In
-                          </Button>
+                  </Button>
                         </div>
                       </div>
                     </div>
                   )}
-                </TabsContent>
-              </Tabs>
+            </TabsContent>
+          </Tabs>
             </CardContent>
-          </Card>
-
+        </Card>
+        
           {/* Features */}
           <div className="mt-8 text-center">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">

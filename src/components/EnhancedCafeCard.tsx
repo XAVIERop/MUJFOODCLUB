@@ -29,15 +29,6 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
   const { toggleFavorite, isFavorite } = useFavorites();
 
   const getCafeImage = () => {
-    // Debug: Log the cafe name being processed
-    console.log('🔍 Processing cafe:', cafe.name, '| Type:', typeof cafe.name, '| Length:', cafe.name?.length);
-    console.log('🔍 Full cafe object:', JSON.stringify(cafe, null, 2));
-    
-    // SPECIAL CASE: Chatkara cafe - let's force it to use the card image
-    if (cafe.name && cafe.name.toLowerCase().includes('chatkara')) {
-      console.log(`🎯 Chatkara detected! Using: /chatkara_card.png`);
-      return '/chatkara_card.png';
-    }
     
     // Map cafe names to their respective card images (preferred) or logo images
     const cafeImages: { [key: string]: string } = {
@@ -50,32 +41,33 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
       'COOK HOUSE': '/cookhouse_card.png',
       'Dev Sweets & Snacks': '/devsweets_card.png',
       'DEV SWEETS & SNACKS': '/devsweets_card.png',
-      'Taste of India': '/tasteofind_logo.jpeg',
-      'Food Court': '/foodcourt_logo.png',
+      'Taste of India': '/tasteofindia_card.jpg',
+      'Food Court': '/foodcourt_card.jpg',
       'The Kitchen Curry': '/thekitchencurry_logo.png',
       'The Kitchen & Curry': '/thekitchencurry_logo.png',
-      'Havmor': '/havmor_logo.png',
-      'Stardom': '/stardom_logo.jpg',
-      'STARDOM Café & Lounge': '/stardom_logo.jpg',
-      'Waffle Fit & Fresh': '/wafflefit&fresh_logo.png',
-      'Waffle Fit N Fresh': '/wafflefit&fresh_logo.png',
+      'Havmor': '/havmor_card.jpg',
+      'Stardom': '/stardom_card.webp',
+      'STARDOM Café & Lounge': '/stardom_card.webp',
+      'Waffle Fit & Fresh': '/wafflefitnfresh_card.jpeg',
+      'Waffle Fit N Fresh': '/wafflefitnfresh_card.jpeg',
       'The Crazy Chef': '/crazychef_logo.png',
       'Zero Degree Cafe': '/zerodegreecafe_logo.jpg',
       'ZERO DEGREE CAFE': '/zerodegreecafe_logo.jpg',
       'Zaika Restaurant': '/zaika_logo.png',
       'ZAIKA': '/zaika_logo.png',
-      'Italian Oven': '/italianoven_logo.png',
+      'Italian Oven': '/italainoven_card.jpg', // Note: filename has typo
       'Munch Box': '/munchbox_logo.png',
-      'Punjabi Tadka': '/punjabitadka_logo.png',
+      'Punjabi Tadka': '/punjabitadka_card.jpg',
       'The Waffle Co': '/thewaffleco.png',
-      'Soya Chaap Corner': '/chatkara_logo.jpg',
-      'Tea Tradition': '/chatkara_logo.jpg',
-      'The Garrison Co.': '/chatkara_logo.jpg'
+      'Soya Chaap Corner': '/chatkara_logo.jpg', // Fallback for now
+      'Tea Tradition': '/teatradition_card.jpeg',
+      'The Garrison Co.': '/thegarrisonco_card.jpeg',
+      'Let\'s Go Live': '/letsgolive_card.jpg',
+      'LETS GO LIVE': '/letsgolive_card.jpg'
     };
 
     // Try to find exact match first
     if (cafeImages[cafe.name]) {
-      console.log(`✅ Exact match found for "${cafe.name}": ${cafeImages[cafe.name]}`);
       return cafeImages[cafe.name];
     }
 
@@ -83,13 +75,11 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
     const cafeNameLower = cafe.name.toLowerCase();
     for (const [cafeKey, imagePath] of Object.entries(cafeImages)) {
       if (cafeNameLower.includes(cafeKey.toLowerCase()) || cafeKey.toLowerCase().includes(cafeNameLower)) {
-        console.log(`🔄 Partial match found for "${cafe.name}" with "${cafeKey}": ${imagePath}`);
         return imagePath;
       }
     }
 
     // Fallback to chatkara logo if no match found
-    console.log(`❌ No match found for "${cafe.name}", using fallback: /chatkara_logo.jpg`);
     return '/chatkara_logo.jpg';
   };
 

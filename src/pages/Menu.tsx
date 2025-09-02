@@ -352,12 +352,14 @@ const Menu = () => {
       {/* Cafe Header */}
       <div className="relative text-white py-12 overflow-hidden">
         {/* Background Image */}
-        <img 
-          src="/chatkara_menuimg.png"
-          alt="Chatkara Menu Background"
-          className="absolute inset-0 w-full h-full object-cover"
-          onLoad={() => console.log('Background image loaded successfully')}
-          onError={(e) => console.error('Background image failed to load:', e)}
+        <div 
+          className="absolute inset-0 w-full h-full"
+          style={{
+            backgroundImage: 'url("/chatkara_menuimg.png")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
         />
         {/* Dark overlay for better text readability */}
         <div className="absolute inset-0 bg-black/40"></div>

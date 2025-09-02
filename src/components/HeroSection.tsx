@@ -175,7 +175,7 @@ const HeroSection = () => {
           <h1 className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-3 sm:mb-6 animate-slide-up leading-tight tracking-tight">
             Discover Amazing Food at{" "}
             <span className="text-white font-extrabold">
-              GHS Hostel
+                GHS Hostel
             </span>
           </h1>
 
@@ -255,7 +255,7 @@ const HeroSection = () => {
                       </div>
                     </div>
                   ))}
-                </div>
+            </div>
               )}
             </div>
           </div>
