@@ -76,6 +76,7 @@ const Menu = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (cafeId) {
@@ -423,24 +424,113 @@ const Menu = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Category Filter System */}
+        {/* Mobile-Optimized Category System */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <Filter className="w-5 h-5 mr-2 text-primary" />
-              <h3 className="text-lg font-semibold text-foreground">Filter by Category</h3>
+          {/* Desktop: Full Filter System */}
+          <div className="hidden lg:block">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <Filter className="w-5 h-5 mr-2 text-primary" />
+                <h3 className="text-lg font-semibold text-foreground">Filter by Category</h3>
+              </div>
+              
+              {/* Search Bar */}
+              <div className="flex items-center space-x-3">
+                <Search className="w-5 h-5 text-primary" />
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search menu items..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-64 px-4 py-2 pr-10 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 placeholder:text-muted-foreground text-sm"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
             
-            {/* Search Bar */}
-            <div className="flex items-center space-x-3">
-              <Search className="w-5 h-5 text-primary" />
-              <div className="relative">
+            {/* Veg/Non-Veg Toggle */}
+            <div className="flex items-center space-x-4 mb-4">
+              <span className="text-sm font-medium text-foreground">Dietary Preference:</span>
+              <div className="flex bg-muted rounded-lg p-1">
+                <Button
+                  variant={selectedCategory === 'all' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setSelectedCategory('all')}
+                  className="text-xs"
+                >
+                  🌱 All
+                </Button>
+                <Button
+                  variant={selectedCategory === 'veg' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setSelectedCategory('veg')}
+                  className="text-xs"
+                >
+                  🥬 Veg Only
+                </Button>
+                <Button
+                  variant={selectedCategory === 'non-veg' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setSelectedCategory('non-veg')}
+                  className="text-xs"
+                >
+                  🍗 Non-Veg Only
+                </Button>
+              </div>
+            </div>
+            
+            {/* Category Dropdown */}
+            <div className="flex items-center space-x-4">
+              <span className="text-sm font-medium text-foreground">Category:</span>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    All Categories ({groupedMenuItems.length})
+                  </SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category} ({groupedItems[category].length})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Search Status */}
+            {searchQuery && (
+              <div className="mt-3 text-sm text-muted-foreground">
+                Searching for: <span className="font-medium text-primary">"{searchQuery}"</span>
+                {Object.keys(filteredItems).length > 0 && (
+                  <span className="ml-2">• Found {Object.values(filteredItems).flat().length} items</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Mobile: Compact Search + Menu Button */}
+          <div className="lg:hidden">
+            <div className="flex items-center space-x-3 mb-4">
+              {/* Search Bar */}
+              <div className="flex-1 relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Search menu items..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-64 px-4 py-2 pr-10 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 placeholder:text-muted-foreground text-sm"
+                  className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 placeholder:text-muted-foreground text-sm"
                 />
                 {searchQuery && (
                   <button
@@ -451,69 +541,27 @@ const Menu = () => {
                   </button>
                 )}
               </div>
-            </div>
-          </div>
-          
-          {/* Veg/Non-Veg Toggle */}
-          <div className="flex items-center space-x-4 mb-4">
-            <span className="text-sm font-medium text-foreground">Dietary Preference:</span>
-            <div className="flex bg-muted rounded-lg p-1">
+              
+              {/* Mobile Menu Button */}
               <Button
-                variant={selectedCategory === 'all' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setSelectedCategory('all')}
-                className="text-xs"
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="bg-black text-white hover:bg-gray-800 px-4 py-2 rounded-lg flex items-center gap-2"
               >
-                🌱 All
-              </Button>
-              <Button
-                variant={selectedCategory === 'veg' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setSelectedCategory('veg')}
-                className="text-xs"
-              >
-                🥬 Veg Only
-              </Button>
-              <Button
-                variant={selectedCategory === 'non-veg' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setSelectedCategory('non-veg')}
-                className="text-xs"
-              >
-                🍗 Non-Veg Only
+                <Filter className="w-4 h-4" />
+                Menu
               </Button>
             </div>
+            
+            {/* Mobile Search Status */}
+            {searchQuery && (
+              <div className="text-sm text-muted-foreground">
+                Searching for: <span className="font-medium text-primary">"{searchQuery}"</span>
+                {Object.keys(filteredItems).length > 0 && (
+                  <span className="ml-2">• Found {Object.values(filteredItems).flat().length} items</span>
+                )}
+              </div>
+            )}
           </div>
-          
-          {/* Category Dropdown */}
-          <div className="flex items-center space-x-4">
-            <span className="text-sm font-medium text-foreground">Category:</span>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  All Categories ({groupedMenuItems.length})
-                </SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category} ({groupedItems[category].length})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {/* Search Status */}
-          {searchQuery && (
-            <div className="mt-3 text-sm text-muted-foreground">
-              Searching for: <span className="font-medium text-primary">"{searchQuery}"</span>
-              {Object.keys(filteredItems).length > 0 && (
-                <span className="ml-2">• Found {Object.values(filteredItems).flat().length} items</span>
-              )}
-            </div>
-          )}
         </div>
 
         {/* No Results Message */}
@@ -536,8 +584,8 @@ const Menu = () => {
 
         {/* New 2-Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Left Column - Categories */}
-          <div className="lg:col-span-1">
+          {/* Left Column - Categories (Hidden on Mobile) */}
+          <div className="hidden lg:block lg:col-span-1">
             <Card className="food-card border-0 sticky top-4">
               <CardHeader>
                 <CardTitle className="text-lg">Categories</CardTitle>
@@ -564,8 +612,8 @@ const Menu = () => {
             </Card>
           </div>
 
-          {/* Right Column - Menu Items (3 per row) */}
-          <div className="lg:col-span-3">
+          {/* Right Column - Menu Items (Full width on mobile, 3 per row on desktop) */}
+          <div className="lg:col-span-3 col-span-1">
             {Object.entries(filteredItems).map(([category, items]) => (
               <div key={category} className="mb-8">
                 <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center">
@@ -739,6 +787,105 @@ const Menu = () => {
               <ShoppingCart className="w-5 h-5 mr-2" />
               View Cart ({getCartItemCount()}) - ₹{getTotalAmount()}
             </Button>
+          </div>
+        )}
+
+        {/* Mobile Menu Modal */}
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 bg-black/50 z-50 lg:hidden">
+            <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-foreground">Menu Categories</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ✕
+                </Button>
+              </div>
+
+              {/* Dietary Preference Toggle */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-foreground mb-3">Dietary Preference:</h4>
+                <div className="flex bg-muted rounded-lg p-1">
+                  <Button
+                    variant={selectedCategory === 'all' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => {
+                      setSelectedCategory('all');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="text-xs flex-1"
+                  >
+                    🌱 All
+                  </Button>
+                  <Button
+                    variant={selectedCategory === 'veg' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => {
+                      setSelectedCategory('veg');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="text-xs flex-1"
+                  >
+                    🥬 Veg Only
+                  </Button>
+                  <Button
+                    variant={selectedCategory === 'non-veg' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => {
+                      setSelectedCategory('non-veg');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="text-xs flex-1"
+                  >
+                    🍗 Non-Veg Only
+                  </Button>
+                </div>
+              </div>
+
+              {/* Categories List */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium text-foreground mb-3">Categories:</h4>
+                <Button
+                  variant={selectedCategory === 'all' ? 'default' : 'ghost'}
+                  className="w-full justify-start text-left"
+                  onClick={() => {
+                    setSelectedCategory('all');
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span>All Categories</span>
+                    <Badge variant="secondary" className="ml-2">
+                      {groupedMenuItems.length}
+                    </Badge>
+                  </div>
+                </Button>
+                
+                {categories.map((category) => (
+                  <Button
+                    key={category}
+                    variant={selectedCategory === category ? 'default' : 'ghost'}
+                    className="w-full justify-start text-left"
+                    onClick={() => {
+                      setSelectedCategory(category);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span>{category}</span>
+                      <Badge variant="secondary" className="ml-2">
+                        {groupedItems[category]?.length || 0}
+                      </Badge>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>

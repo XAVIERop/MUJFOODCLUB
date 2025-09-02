@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, CheckCircle, AlertCircle, Truck, ChefHat, Receipt, Bell } from "lucide-react";
+import { Clock, CheckCircle, AlertCircle, Truck, ChefHat, Receipt, Bell, Grid, List } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import NotificationCenter from './NotificationCenter';
+import CompactOrderGrid from './CompactOrderGrid';
 
 interface Order {
   id: string;
@@ -53,6 +54,8 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [useCompactLayout, setUseCompactLayout] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const fetchOrders = async () => {
     try {
@@ -133,6 +136,14 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
     } finally {
       setUpdatingOrder(null);
     }
+  };
+
+  const handleOrderSelect = (order: Order) => {
+    setSelectedOrder(order);
+  };
+
+  const handleCompactStatusUpdate = async (orderId: string, newStatus: Order['status']) => {
+    await updateOrderStatus(orderId, newStatus);
   };
 
   useEffect(() => {
@@ -280,7 +291,49 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
         </div>
       </div>
 
-      <Tabs defaultValue="received" className="w-full">
+      {/* TEST ELEMENT - SHOULD ALWAYS SHOW */}
+      <div className="bg-red-500 text-white p-4 rounded-lg text-center font-bold text-lg">
+        🚨 TEST: NEW COMPONENT IS WORKING! 🚨
+      </div>
+
+      {/* Layout Toggle */}
+      <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-200">
+        <div className="flex items-center space-x-2">
+          <Button
+            variant={useCompactLayout ? "default" : "outline"}
+            size="sm"
+            onClick={() => setUseCompactLayout(true)}
+          >
+            <Grid className="w-4 h-4 mr-2" />
+            Compact Grid
+          </Button>
+          <Button
+            variant={!useCompactLayout ? "default" : "outline"}
+            size="sm"
+            onClick={() => setUseCompactLayout(false)}
+          >
+            <List className="w-4 h-4 mr-2" />
+            Detailed List
+          </Button>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {useCompactLayout ? 'Grid view for high-volume orders' : 'Detailed view for individual orders'}
+        </div>
+      </div>
+
+      {/* Compact Grid View */}
+      {useCompactLayout && (
+        <CompactOrderGrid
+          orders={orders}
+          onOrderSelect={handleOrderSelect}
+          onStatusUpdate={handleCompactStatusUpdate}
+          loading={loading}
+        />
+      )}
+
+      {/* Detailed List View */}
+      {!useCompactLayout && (
+        <Tabs defaultValue="received" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="received">
             <Receipt className="w-4 h-4 mr-2" />
@@ -437,7 +490,8 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
             )}
           </TabsContent>
         ))}
-      </Tabs>
+        </Tabs>
+      )}
 
       {/* Notification Center */}
       <NotificationCenter

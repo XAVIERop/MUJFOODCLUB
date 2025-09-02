@@ -20,6 +20,8 @@ import CafeDashboard from "./pages/CafeDashboard";
 import CafeManagement from "./pages/CafeManagement";
 import { EnhancedCafeCardDemo } from "./components/EnhancedCafeCardDemo";
 import POSTest from "./pages/POSTest";
+import CompactOrdersTest from "./pages/CompactOrdersTest";
+import POSDashboard from "./pages/POSDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +49,8 @@ const App = () => (
             <Route path="/cafe-management" element={<CafeManagement />} />
             <Route path="/demo-enhanced-card" element={<EnhancedCafeCardDemo />} />
             <Route path="/pos-test" element={<POSTest />} />
+            <Route path="/compact-orders-test" element={<CompactOrdersTest />} />
+            <Route path="/pos-dashboard" element={<POSDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
