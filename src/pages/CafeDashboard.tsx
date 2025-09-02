@@ -341,12 +341,23 @@ const CafeDashboard = () => {
           break;
       }
 
+      console.log('Updating order with data:', { orderId, updateData });
+      
       const { error } = await supabase
         .from('orders')
         .update(updateData)
         .eq('id', orderId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase update error:', error);
+        console.error('Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
+      }
 
       toast({
         title: "Status Updated",
