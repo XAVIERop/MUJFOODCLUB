@@ -68,4 +68,8 @@ SELECT
     current_setting('role'),
     has_table_privilege('public.orders', 'UPDATE') as can_update_orders;
 
-RAISE NOTICE 'Order status update permissions have been configured. Cafe owners should now be able to update order statuses.';
+-- 6. Show success message
+DO $$
+BEGIN
+    RAISE NOTICE 'Order status update permissions have been configured. Cafe owners should now be able to update order statuses.';
+END $$;
