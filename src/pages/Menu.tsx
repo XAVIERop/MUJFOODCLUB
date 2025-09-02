@@ -352,14 +352,17 @@ const Menu = () => {
       
       {/* Cafe Header */}
       <div className="relative text-white py-12 overflow-hidden">
-        {/* Background Image */}
+        {/* Background Image - Mobile Optimized */}
         <div 
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: 'url("/chatkara_menuimg.png")',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
+            backgroundImage: 'url("/chatkara_menuimg.png")'
+          }}
+        />
+        <div 
+          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat lg:hidden"
+          style={{
+            backgroundImage: 'url("/mobile_bgimg.jpg")'
           }}
         />
         {/* Dark overlay for better text readability */}
