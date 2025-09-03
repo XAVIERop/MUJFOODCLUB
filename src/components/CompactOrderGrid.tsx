@@ -14,7 +14,8 @@ import {
   Edit,
   CheckCircle,
   AlertCircle,
-  X
+  X,
+  Download
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -167,6 +168,77 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
     }
   };
 
+  const handleDownloadCancelledOrdersCSV = () => {
+    try {
+      const cancelledOrders = ordersByStatus.cancelled || [];
+      
+      if (cancelledOrders.length === 0) {
+        toast({
+          title: "No Cancelled Orders",
+          description: "There are no cancelled orders to download",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Prepare CSV data
+      const csvData = cancelledOrders.map(order => {
+        const items = orderItems[order.id] || [];
+        const itemNames = items.map(item => `${item.quantity}x ${item.menu_item.name}`).join('; ');
+        
+        return {
+          'Order Number': order.order_number,
+          'Amount': formatCurrency(order.total_amount),
+          'Items': itemNames,
+          'Customer Name': order.user?.full_name || order.customer_name || 'N/A',
+          'Phone Number': order.user?.phone || order.phone_number || 'N/A',
+          'Block': order.delivery_block,
+          'Order Time': new Date(order.created_at).toLocaleString('en-IN'),
+          'Cancelled Time': getTimeElapsed(order.created_at)
+        };
+      });
+
+      // Convert to CSV string
+      const headers = Object.keys(csvData[0]);
+      const csvString = [
+        headers.join(','),
+        ...csvData.map(row => 
+          headers.map(header => {
+            const value = row[header];
+            // Escape commas and quotes in CSV
+            if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+              return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+          }).join(',')
+        )
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `cancelled_orders_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "CSV Downloaded",
+        description: `Successfully downloaded ${cancelledOrders.length} cancelled orders`,
+      });
+    } catch (error) {
+      console.error('Error downloading CSV:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download cancelled orders CSV",
+        variant: "destructive"
+      });
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -314,6 +386,85 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
           );
         })}
       </div>
+
+      {/* Cancelled Orders Section with CSV Download */}
+      {ordersByStatus.cancelled && ordersByStatus.cancelled.length > 0 && (
+        <div className="mt-8 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <X className="w-5 h-5 text-red-600" />
+              <h3 className="text-lg font-semibold text-red-800">
+                Cancelled Orders ({ordersByStatus.cancelled.length})
+              </h3>
+            </div>
+            <Button
+              onClick={handleDownloadCancelledOrdersCSV}
+              variant="outline"
+              size="sm"
+              className="border-red-300 text-red-700 hover:bg-red-100"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download CSV
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {ordersByStatus.cancelled.map((order) => (
+              <Card key={order.id} className="border-red-200 bg-white">
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-red-700">
+                      {order.order_number}
+                    </span>
+                    <Badge variant="destructive" className="text-xs">
+                      Cancelled
+                    </Badge>
+                  </div>
+                  
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Amount:</span>
+                      <span className="font-medium">{formatCurrency(order.total_amount)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Customer:</span>
+                      <span className="font-medium">
+                        {order.user?.full_name || order.customer_name || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Phone:</span>
+                      <span className="font-medium">
+                        {order.user?.phone || order.phone_number || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Cancelled:</span>
+                      <span className="font-medium">{getTimeElapsed(order.created_at)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Items:</span>
+                      <span className="font-medium">
+                        {orderItems[order.id]?.length || 0} items
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-2 text-red-600 hover:bg-red-100"
+                    onClick={() => handleOrderClick(order)}
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    View Details
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Empty State */}
       {filteredOrders.length === 0 && (
