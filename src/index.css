@@ -1,13 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Berkshire+Swash&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=GENTY&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Berkshire Swash font utility */
+/* GENTY font utility */
 @layer utilities {
-  .font-berkshire {
-    font-family: 'Berkshire Swash', cursive;
+  .font-genty {
+    font-family: 'GENTY', cursive;
   }
   
   /* Line clamp utilities for text truncation */
