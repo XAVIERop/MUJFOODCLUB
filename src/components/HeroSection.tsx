@@ -157,7 +157,7 @@ const HeroSection = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-500"
                 style={{
-          backgroundImage: `url(${isMobile ? '/gradientbg.png' : heroImage})`
+          backgroundImage: `url(${isMobile ? '/s.png' : heroImage})`
         }}
       >
         <div className={`absolute inset-0 transition-all duration-500 ${
