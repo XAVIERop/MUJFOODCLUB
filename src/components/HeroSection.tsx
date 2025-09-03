@@ -310,11 +310,11 @@ const HeroSection = () => {
           </div>
 
           {/* Service Cards - Optimized for Mobile */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 justify-center items-stretch animate-fade-in max-w-full sm:max-w-4xl mx-auto px-4 sm:px-0 mb-6 sm:mb-10">
+          <div className="flex flex-row gap-3 sm:gap-6 justify-center items-stretch animate-fade-in max-w-full sm:max-w-4xl mx-auto px-4 sm:px-0 mb-6 sm:mb-10">
             {/* Food Delivery Card */}
             <div 
               onClick={handleExploreCafes}
-              className="bg-black/20 backdrop-blur-sm rounded-xl p-4 sm:p-6 w-full sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30"
+              className="bg-black/20 backdrop-blur-sm rounded-xl p-3 sm:p-6 w-40 sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30"
             >
               <div className="text-center sm:text-left">
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
@@ -338,7 +338,7 @@ const HeroSection = () => {
             {/* View Rewards Card */}
             <div 
               onClick={handleViewRewards}
-              className="bg-black/20 backdrop-blur-sm rounded-xl p-4 sm:p-6 w-full sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30"
+              className="bg-black/20 backdrop-blur-sm rounded-xl p-3 sm:p-6 w-40 sm:w-80 cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border border-white/30"
             >
               <div className="text-center sm:text-left">
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-1" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>

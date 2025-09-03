@@ -150,14 +150,14 @@ const Header = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 hover:scale-105 transition-transform">
+          <Link to="/" className="flex items-center space-x-2 hover:scale-105 transition-transform">
             <img 
               src="/foc.png" 
               alt="FoodClub Logo" 
-              className="w-48 h-auto object-contain"
+              className="w-40 sm:w-48 h-auto object-contain"
             />
             {/* BETA Badge - Golden, positioned to the right, very small */}
-            <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-yellow-300 ml-1">
+            <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-yellow-300">
               BETA
             </Badge>
           </Link>
