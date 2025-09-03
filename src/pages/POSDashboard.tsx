@@ -204,6 +204,243 @@ const POSDashboard = () => {
     }
   };
 
+  const autoPrintReceipt = async (order: Order) => {
+    try {
+      // Fetch order items for the new order
+      const { data: items, error } = await supabase
+        .from('order_items')
+        .select(`
+          *,
+          menu_item:menu_items(name, description)
+        `)
+        .eq('order_id', order.id);
+
+      if (error) {
+        console.error('Error fetching order items:', error);
+        return;
+      }
+
+      // Generate thermal receipt HTML for PIXEL DP80
+      const generateThermalHTML = (orderData: Order, orderItems: any[]) => {
+        return `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Receipt #${orderData.order_number}</title>
+              <style>
+                @media print {
+                  body { 
+                    width: 80mm; 
+                    margin: 0; 
+                    padding: 3mm;
+                    font-size: 11px; 
+                    font-family: 'Courier New', monospace;
+                    line-height: 1.1;
+                  }
+                  .no-print { display: none; }
+                }
+                
+                body {
+                  font-family: 'Courier New', monospace;
+                  line-height: 1.1;
+                  color: #000;
+                  margin: 0;
+                  padding: 0;
+                }
+                
+                .receipt-container {
+                  width: 80mm;
+                  margin: 0 auto;
+                  background: white;
+                }
+                
+                .header {
+                  text-align: center;
+                  border-bottom: 1px dashed #000;
+                  padding-bottom: 8px;
+                  margin-bottom: 12px;
+                }
+                
+                .logo {
+                  font-size: 16px;
+                  font-weight: bold;
+                  margin-bottom: 4px;
+                }
+                
+                .subtitle {
+                  font-size: 10px;
+                  color: #666;
+                  margin-bottom: 2px;
+                }
+                
+                .order-info {
+                  margin-bottom: 12px;
+                }
+                
+                .info-row {
+                  display: flex;
+                  justify-content: space-between;
+                  margin-bottom: 2px;
+                  font-size: 10px;
+                }
+                
+                .items-section {
+                  border-bottom: 1px dashed #000;
+                  padding-bottom: 8px;
+                  margin-bottom: 12px;
+                }
+                
+                .item-row {
+                  display: flex;
+                  justify-content: space-between;
+                  margin-bottom: 4px;
+                  font-size: 10px;
+                }
+                
+                .item-name {
+                  flex: 1;
+                  margin-right: 8px;
+                }
+                
+                .item-details {
+                  text-align: right;
+                  min-width: 70px;
+                }
+                
+                .total-section {
+                  text-align: right;
+                  font-weight: bold;
+                  font-size: 12px;
+                }
+                
+                .footer {
+                  text-align: center;
+                  margin-top: 15px;
+                  font-size: 9px;
+                  color: #666;
+                  border-top: 1px dashed #000;
+                  padding-top: 8px;
+                }
+                
+                .divider {
+                  border-top: 1px dashed #000;
+                  margin: 8px 0;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="receipt-container">
+                <div class="header">
+                  <div class="logo">CHATKARA</div>
+                  <div class="subtitle">MUJ FOOD CLUB</div>
+                  <div class="subtitle">Delicious Food, Great Service</div>
+                  <div class="subtitle">www.mujfoodclub.in</div>
+                </div>
+                
+                <div class="order-info">
+                  <div class="info-row">
+                    <span>Receipt #:</span>
+                    <span>${orderData.order_number}</span>
+                  </div>
+                  <div class="info-row">
+                    <span>Date:</span>
+                    <span>${new Date(orderData.created_at).toLocaleDateString('en-IN')}</span>
+                  </div>
+                  <div class="info-row">
+                    <span>Time:</span>
+                    <span>${new Date(orderData.created_at).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit'})}</span>
+                  </div>
+                  <div class="info-row">
+                    <span>Customer:</span>
+                    <span>${orderData.user?.full_name || 'Walk-in Customer'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span>Phone:</span>
+                    <span>${orderData.user?.phone || 'N/A'}</span>
+                  </div>
+                  <div class="info-row">
+                    <span>Block:</span>
+                    <span>${orderData.user?.block || orderData.delivery_block || 'N/A'}</span>
+                  </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="items-section">
+                  <div class="info-row" style="font-weight: bold; margin-bottom: 6px;">
+                    <span>Item</span>
+                    <span>Qty × Price</span>
+                    <span>Total</span>
+                  </div>
+                  ${orderItems.map(item => `
+                    <div class="item-row">
+                      <div class="item-name">${item.menu_item.name}</div>
+                      <div class="item-details">${item.quantity} × ₹${item.unit_price}</div>
+                      <div class="item-details">₹${item.total_price}</div>
+                    </div>
+                  `).join('')}
+                </div>
+                
+                <div class="total-section">
+                  <div class="info-row">
+                    <span>Subtotal:</span>
+                    <span>₹${orderData.total_amount}</span>
+                  </div>
+                  <div class="info-row">
+                    <span>Tax (5%):</span>
+                    <span>₹${(orderData.total_amount * 0.05).toFixed(2)}</span>
+                  </div>
+                  <div class="info-row" style="font-size: 14px; margin-top: 6px;">
+                    <span>TOTAL:</span>
+                    <span>₹${(orderData.total_amount * 1.05).toFixed(2)}</span>
+                  </div>
+                </div>
+                
+                <div class="footer">
+                  <div>Thank you for your order!</div>
+                  <div>Please collect your receipt</div>
+                  <div>For support: support@mujfoodclub.in</div>
+                  <div style="margin-top: 8px;">
+                    <div>Order Status: ${orderData.status.toUpperCase()}</div>
+                    <div>Payment: ${orderData.payment_method || 'COD'}</div>
+                  </div>
+                </div>
+              </div>
+            </body>
+          </html>
+        `;
+      };
+
+      // Open print window and auto-print
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        const thermalHTML = generateThermalHTML(order, items || []);
+        printWindow.document.write(thermalHTML);
+        printWindow.document.close();
+        
+        // Auto-print after a short delay
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 1000);
+      }
+
+      toast({
+        title: "Receipt Generated",
+        description: `Receipt for order #${order.order_number} is being printed`,
+      });
+
+    } catch (error) {
+      console.error('Error auto-printing receipt:', error);
+      toast({
+        title: "Print Error",
+        description: "Failed to generate receipt automatically",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleOrderSelect = (order: Order) => {
     setSelectedOrder(order);
   };
@@ -288,6 +525,13 @@ const POSDashboard = () => {
             title: "New Order!",
             description: `Order #${payload.new.order_number} received`,
           });
+
+          // Auto-generate and print receipt for new orders
+          if (profile?.cafe_id === 'chatkara') {
+            setTimeout(() => {
+              autoPrintReceipt(payload.new);
+            }, 2000); // Wait 2 seconds for order data to be fetched
+          }
         }
       )
       .on('postgres_changes', 
@@ -444,6 +688,24 @@ const POSDashboard = () => {
 
           {/* Orders Tab */}
           <TabsContent value="orders" className="space-y-6">
+            {/* Chatkara Auto-Print Notice */}
+            {profile?.cafe_id === 'chatkara' && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <Receipt className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-green-800">PIXEL DP80 Auto-Print Enabled</h3>
+                    <p className="text-sm text-green-700">
+                      Receipts will automatically print when new orders are received. 
+                      Make sure your PIXEL DP80 thermal printer is connected and set as default.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Layout Toggle */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-200 gap-3 sm:gap-0">
               <div className="flex items-center space-x-2">

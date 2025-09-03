@@ -584,7 +584,7 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                               e.stopPropagation();
                               handlePrintReceipt(order);
                             }}
-                            title="Print Receipt"
+                            title="Print Receipt (PIXEL DP80)"
                           >
                             <Receipt className="w-3 h-3 text-blue-600" />
                           </Button>
