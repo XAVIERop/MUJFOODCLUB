@@ -157,7 +157,7 @@ const HeroSection = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-500"
                 style={{
-          backgroundImage: `url(${isMobile ? '/herobg.png' : heroImage})`
+          backgroundImage: `url(${isMobile ? '/s.png' : heroImage})`
         }}
       >
         <div className={`absolute inset-0 transition-all duration-500 ${
@@ -183,7 +183,7 @@ const HeroSection = () => {
           </Badge>
 
           {/* Main Heading - Mobile Optimized */}
-          <h1 className={`text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 sm:mb-8 animate-slide-up leading-tight tracking-tight px-4 sm:px-0 ${
+          <h1 className={`text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 sm:mb-8 animate-slide-up leading-tight tracking-tight px-4 sm:px-0 font-berkshire ${
             isMobile ? 'text-shadow-lg' : ''
           }`}>
             Discover Amazing Food at{" "}
