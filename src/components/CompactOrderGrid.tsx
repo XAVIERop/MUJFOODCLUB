@@ -316,11 +316,9 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
         })}
       </div>
 
-      {/* Orders Grid */}
+      {/* Orders Grid - Always Show All Sections */}
       <div className="space-y-4">
         {Object.entries(ordersByStatus).map(([status, statusOrders]) => {
-          if (statusOrders.length === 0) return null;
-          
           const statusInfo = getStatusInfo(status as Order['status']);
           
           return (
@@ -330,58 +328,73 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                 <h3 className="font-semibold">{statusInfo.label} Orders ({statusOrders.length})</h3>
               </div>
               
-              <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-11 lg:grid-cols-12 gap-2">
-                {statusOrders.map((order) => (
-                  <Card
-                    key={order.id}
-                    className={`order-card cursor-pointer transition-all duration-200 hover:scale-105 ${
-                      selectedOrder?.id === order.id ? 'ring-2 ring-primary' : ''
-                    }`}
-                    onClick={() => handleOrderClick(order)}
-                  >
-                    <CardContent className="p-2 text-center space-y-1">
-                      {/* Time Elapsed */}
-                      <div className="text-xs font-medium text-muted-foreground">
-                        {getTimeElapsed(order.created_at)}
-                      </div>
-                      
-                      {/* Order Number */}
-                      <div className="text-sm font-bold">
-                        {order.order_number.replace('CHA', '')}
-                      </div>
-                      
-                      {/* Amount */}
-                      <div className="text-xs font-medium text-primary">
-                        {formatCurrency(order.total_amount)}
-                      </div>
-                      
-                      {/* Status Icon */}
-                      <div className="flex justify-center">
-                        <div className={`w-2 h-2 rounded-full ${statusInfo.color}`}></div>
-                      </div>
-                      
-                      {/* Quick Actions - Only Green Status Update Button */}
-                      <div className="flex justify-center gap-1 mt-1">
-                        {getAvailableStatuses(order.status).filter(s => s !== 'cancelled').length > 0 && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0 hover:bg-green-100"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const nextStatus = getAvailableStatuses(order.status).filter(s => s !== 'cancelled')[0];
-                              handleStatusUpdate(order.id, nextStatus);
-                            }}
-                            title={`Mark as ${getAvailableStatuses(order.status).filter(s => s !== 'cancelled')[0]?.replace('_', ' ')}`}
-                          >
-                            <CheckCircle className="w-3 h-3 text-green-600" />
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              {statusOrders.length > 0 ? (
+                <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-11 lg:grid-cols-12 gap-2">
+                  {statusOrders.map((order) => (
+                    <Card
+                      key={order.id}
+                      className={`order-card cursor-pointer transition-all duration-200 hover:scale-105 ${
+                        selectedOrder?.id === order.id ? 'ring-2 ring-primary' : ''
+                      }`}
+                      onClick={() => handleOrderClick(order)}
+                    >
+                      <CardContent className="p-2 text-center space-y-1">
+                        {/* Time Elapsed */}
+                        <div className="text-xs font-medium text-muted-foreground">
+                          {getTimeElapsed(order.created_at)}
+                        </div>
+                        
+                        {/* Order Number */}
+                        <div className="text-sm font-bold">
+                          {order.order_number.replace('CHA', '')}
+                        </div>
+                        
+                        {/* Amount */}
+                        <div className="text-xs font-medium text-primary">
+                          {formatCurrency(order.total_amount)}
+                        </div>
+                        
+                        {/* Status Icon */}
+                        <div className="flex justify-center">
+                          <div className={`w-2 h-2 rounded-full ${statusInfo.color}`}></div>
+                        </div>
+                        
+                        {/* Quick Actions - Only Green Status Update Button */}
+                        <div className="flex justify-center gap-1 mt-1">
+                          {getAvailableStatuses(order.status).filter(s => s !== 'cancelled').length > 0 && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 hover:bg-green-100"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const nextStatus = getAvailableStatuses(order.status).filter(s => s !== 'cancelled')[0];
+                                handleStatusUpdate(order.id, nextStatus);
+                              }}
+                              title={`Mark as ${getAvailableStatuses(order.status).filter(s => s !== 'cancelled')[0]?.replace('_', ' ')}`}
+                            >
+                              <CheckCircle className="w-3 h-3 text-green-600" />
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                /* Empty State for Each Section */
+                <div className="text-center py-8 bg-muted/20 rounded-lg border-2 border-dashed border-muted-foreground/20">
+                  <div className={`w-12 h-12 rounded-full ${statusInfo.color} mx-auto mb-3 flex items-center justify-center`}>
+                    <statusInfo.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <p className="text-muted-foreground text-sm font-medium">
+                    No {statusInfo.label.toLowerCase()} orders
+                  </p>
+                  <p className="text-muted-foreground text-xs mt-1">
+                    Orders will appear here when they reach this status
+                  </p>
+                </div>
+              )}
             </div>
           );
         })}
