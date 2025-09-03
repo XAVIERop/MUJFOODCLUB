@@ -26,6 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import CompactOrderGrid from '@/components/CompactOrderGrid';
 import POSAnalytics from '@/components/POSAnalytics';
+import ThermalPrinter from '@/components/ThermalPrinter';
 import NotificationCenter from '@/components/NotificationCenter';
 
 interface Order {
@@ -408,7 +409,7 @@ const POSDashboard = () => {
           }} 
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-5 gap-1 sm:gap-2">
+          <TabsList className="grid w-full grid-cols-6 gap-1 sm:gap-2">
             <TabsTrigger value="orders" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <Receipt className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Orders</span>
@@ -428,6 +429,11 @@ const POSDashboard = () => {
               <Users className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Customers</span>
               <span className="sm:hidden">C</span>
+            </TabsTrigger>
+            <TabsTrigger value="print" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Receipt className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Print</span>
+              <span className="sm:hidden">P</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -616,6 +622,14 @@ const POSDashboard = () => {
                 <p className="text-muted-foreground">Customer features coming soon...</p>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Print Tab */}
+          <TabsContent value="print" className="space-y-6">
+            <ThermalPrinter 
+              order={selectedOrder}
+              onClose={() => setSelectedOrder(null)}
+            />
           </TabsContent>
 
           {/* Settings Tab */}
