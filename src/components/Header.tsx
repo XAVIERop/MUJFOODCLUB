@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,6 +17,10 @@ const Header = () => {
   const [isCafeOwner, setIsCafeOwner] = useState(false);
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if we're on the home page (hero section)
+  const isHomePage = location.pathname === '/';
 
   // Check if user is a cafe owner
   useEffect(() => {
@@ -138,7 +142,11 @@ const Header = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 m-0">
+    <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+      isHomePage 
+        ? 'border-b border-white/20 bg-black/10 backdrop-blur-md text-white' 
+        : 'border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 text-foreground'
+    } m-0`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -162,7 +170,11 @@ const Header = () => {
                 <a
                   key={item.label}
                   href={item.href}
-                  className="flex items-center space-x-2 text-muted-foreground hover:text-primary transition-smooth story-link"
+                  className={`flex items-center space-x-2 transition-smooth story-link ${
+                    isHomePage
+                      ? 'text-white/80 hover:text-white'
+                      : 'text-muted-foreground hover:text-primary'
+                  }`}
                 >
                   <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
@@ -176,7 +188,11 @@ const Header = () => {
             {user && profile ? (
               <>
                 {/* Loyalty Points */}
-                <Badge className="hidden sm:flex items-center gradient-warm text-white">
+                <Badge className={`hidden sm:flex items-center ${
+                  isHomePage 
+                    ? 'bg-white/20 text-white border-white/30 backdrop-blur-sm' 
+                    : 'gradient-warm text-white'
+                }`}>
                   <Trophy className="w-3 h-3 mr-1" />
                   {profile.loyalty_points} pts
                 </Badge>
@@ -185,7 +201,11 @@ const Header = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="relative"
+                  className={`relative ${
+                    isHomePage 
+                      ? 'text-white/80 hover:text-white hover:bg-white/10' 
+                      : ''
+                  }`}
                   onClick={() => setIsNotificationOpen(true)}
                 >
                   <Bell className="w-5 h-5" />
@@ -199,7 +219,11 @@ const Header = () => {
                 {/* Profile Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Button variant="ghost" className={`relative h-8 w-8 rounded-full ${
+                      isHomePage 
+                        ? 'text-white/80 hover:text-white hover:bg-white/10' 
+                        : ''
+                    }`}>
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
                         <AvatarFallback>{profile?.full_name?.charAt(0) || 'U'}</AvatarFallback>
@@ -257,7 +281,11 @@ const Header = () => {
                 </DropdownMenu>
               </>
             ) : (
-              <Button variant="hero" onClick={handleAuthAction}>
+              <Button 
+                variant={isHomePage ? "outline" : "hero"} 
+                onClick={handleAuthAction}
+                className={isHomePage ? "border-white/30 text-white hover:bg-white/10 hover:border-white/50" : ""}
+              >
                 <User className="w-4 h-4 mr-2" />
                 Sign In
               </Button>
@@ -266,7 +294,11 @@ const Header = () => {
             {/* Mobile Menu */}
             <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" className="md:hidden">
+                <Button variant="ghost" size="sm" className={`md:hidden ${
+                  isHomePage 
+                    ? 'text-white/80 hover:text-white hover:bg-white/10' 
+                    : ''
+                }`}>
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle Menu</span>
                 </Button>
