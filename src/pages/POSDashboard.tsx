@@ -27,6 +27,7 @@ import { useScrollToTop } from '@/hooks/useScrollToTop';
 import CompactOrderGrid from '@/components/CompactOrderGrid';
 import POSAnalytics from '@/components/POSAnalytics';
 import ThermalPrinter from '@/components/ThermalPrinter';
+import { thermalPrinterService, formatOrderForPrinting } from '@/api/thermalPrinter';
 import NotificationCenter from '@/components/NotificationCenter';
 
 interface Order {
@@ -220,7 +221,23 @@ const POSDashboard = () => {
         return;
       }
 
-      // Generate thermal receipt HTML for PIXEL DP80
+      // Try direct thermal printer first
+      try {
+        const printJob = formatOrderForPrinting(order, items || []);
+        const result = await thermalPrinterService.printReceipt(printJob);
+        
+        if (result.success) {
+          toast({
+            title: "Receipt Printed",
+            description: `Receipt for order #${order.order_number} printed on PIXEL DP80`,
+          });
+          return;
+        }
+      } catch (thermalError) {
+        console.log('Direct thermal printing failed, falling back to browser printing:', thermalError);
+      }
+
+      // Fallback to browser-based printing
       const generateThermalHTML = (orderData: Order, orderItems: any[]) => {
         return `
           <!DOCTYPE html>
@@ -346,6 +363,7 @@ const POSDashboard = () => {
                   <div class="info-row">
                     <span>Date:</span>
                     <span>${new Date(orderData.created_at).toLocaleDateString('en-IN')}</span>
+                    </span>
                   </div>
                   <div class="info-row">
                     <span>Time:</span>
@@ -428,7 +446,7 @@ const POSDashboard = () => {
 
       toast({
         title: "Receipt Generated",
-        description: `Receipt for order #${order.order_number} is being printed`,
+        description: `Receipt for order #${order.order_number} printed via browser (PIXEL DP80 not available)`,
       });
 
     } catch (error) {
