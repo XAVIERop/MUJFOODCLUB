@@ -172,7 +172,7 @@ const HeroSection = () => {
         <div className="text-center max-w-6xl mx-auto w-full">
           {/* Brand Badge */}
           <Badge className="mb-4 sm:mb-6 animate-fade-in bg-white/20 text-white border-white/30 backdrop-blur-sm text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-2 inline-flex items-center justify-center">
-            <img src="/fav.png" alt="FoodClub Logo" className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            <Utensils className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             FoodClub
           </Badge>
 
