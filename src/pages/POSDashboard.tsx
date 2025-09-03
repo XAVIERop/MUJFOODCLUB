@@ -23,6 +23,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import CompactOrderGrid from '@/components/CompactOrderGrid';
 import POSAnalytics from '@/components/POSAnalytics';
 import NotificationCenter from '@/components/NotificationCenter';
@@ -77,6 +78,9 @@ const POSDashboard = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState('orders');
   const [cafeId, setCafeId] = useState<string | null>(null);
+
+  // Scroll to top hook
+  const { scrollToTopOnTabChange } = useScrollToTop();
 
   const fetchOrders = async () => {
     try {
@@ -396,7 +400,14 @@ const POSDashboard = () => {
         </div>
 
         {/* Main Navigation Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs 
+          value={activeTab} 
+          onValueChange={(value) => {
+            setActiveTab(value);
+            scrollToTopOnTabChange(value);
+          }} 
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="orders" className="flex items-center gap-2">
               <Receipt className="w-4 h-4" />

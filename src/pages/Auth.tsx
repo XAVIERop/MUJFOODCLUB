@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 
 const Auth = () => {
@@ -55,6 +56,9 @@ const Auth = () => {
   const [otpForm, setOtpForm] = useState({
     email: ''
   });
+
+  // Scroll to top hook
+  const { scrollToTopOnTabChange } = useScrollToTop();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -280,7 +284,14 @@ const Auth = () => {
             </CardHeader>
 
             <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <Tabs 
+            value={activeTab} 
+            onValueChange={(value) => {
+              setActiveTab(value);
+              scrollToTopOnTabChange(value);
+            }} 
+            className="w-full"
+          >
                 <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
