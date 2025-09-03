@@ -281,17 +281,42 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                       
                       {/* Quick Actions */}
                       <div className="flex justify-center gap-1 mt-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 w-6 p-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusUpdate(order.id, getNextStatus(order.status));
-                          }}
-                        >
-                          <Eye className="w-3 h-3" />
-                        </Button>
+                        {getAvailableStatuses(order.status).length > 0 && (
+                          <>
+                            {/* Next Status Button */}
+                            {getAvailableStatuses(order.status).filter(s => s !== 'cancelled').map((status) => (
+                              <Button
+                                key={status}
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0 hover:bg-green-100"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStatusUpdate(order.id, status);
+                                }}
+                                title={`Mark as ${status.replace('_', ' ')}`}
+                              >
+                                <CheckCircle className="w-3 h-3 text-green-600" />
+                              </Button>
+                            ))}
+                            
+                            {/* Cancel Button */}
+                            {getAvailableStatuses(order.status).includes('cancelled') && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0 hover:bg-red-100"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStatusUpdate(order.id, 'cancelled');
+                                }}
+                                title="Cancel Order"
+                              >
+                                <X className="w-3 h-3 text-red-600" />
+                              </Button>
+                            )}
+                          </>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -412,16 +437,59 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
               )}
             </div>
             
-            <div className="flex gap-2 mt-4">
-              <Button
-                onClick={() => handleStatusUpdate(selectedOrder.id, getNextStatus(selectedOrder.status))}
-                disabled={selectedOrder.status === 'completed' || selectedOrder.status === 'cancelled'}
-              >
-                Update Status
-              </Button>
-              <Button variant="outline">
-                View Full Details
-              </Button>
+            {/* Status Update and Actions */}
+            <div className="mt-4 border-t pt-4">
+              <h4 className="font-semibold mb-3 text-sm">Order Actions:</h4>
+              
+              {/* Status Update Section */}
+              {getAvailableStatuses(selectedOrder.status).length > 0 && (
+                <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">
+                      Update Status:
+                    </label>
+                    <div className="flex gap-2 flex-wrap">
+                      {getAvailableStatuses(selectedOrder.status).map((status) => (
+                        <Button
+                          key={status}
+                          onClick={() => handleStatusUpdate(selectedOrder.id, status)}
+                          variant={status === 'cancelled' ? 'destructive' : 'default'}
+                          size="sm"
+                          className="text-xs"
+                        >
+                          {status === 'cancelled' ? 'Cancel Order' : `Mark as ${status.replace('_', ' ')}`}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Current Status Info */}
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">Current Status:</span>
+                <Badge className={getStatusInfo(selectedOrder.status).color + ' text-white'}>
+                  {getStatusInfo(selectedOrder.status).label}
+                </Badge>
+                {selectedOrder.status === 'completed' && (
+                  <span className="text-green-600 text-xs">✓ Order completed successfully</span>
+                )}
+                {selectedOrder.status === 'cancelled' && (
+                  <span className="text-red-600 text-xs">✗ Order has been cancelled</span>
+                )}
+              </div>
+
+              {/* Additional Actions */}
+              <div className="flex gap-2 mt-4">
+                <Button variant="outline" size="sm">
+                  <Eye className="w-4 h-4 mr-2" />
+                  View Full Details
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Receipt className="w-4 h-4 mr-2" />
+                  Print Receipt
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -437,7 +505,29 @@ const getNextStatus = (currentStatus: Order['status']): Order['status'] => {
     case 'confirmed': return 'preparing';
     case 'preparing': return 'on_the_way';
     case 'on_the_way': return 'completed';
+    case 'completed': return 'completed'; // Already completed
+    case 'cancelled': return 'cancelled'; // Already cancelled
     default: return currentStatus;
+  }
+};
+
+// Helper function to get available status options
+const getAvailableStatuses = (currentStatus: Order['status']): Order['status'][] => {
+  switch (currentStatus) {
+    case 'received':
+      return ['confirmed', 'cancelled'];
+    case 'confirmed':
+      return ['preparing', 'cancelled'];
+    case 'preparing':
+      return ['on_the_way', 'cancelled'];
+    case 'on_the_way':
+      return ['completed', 'cancelled'];
+    case 'completed':
+      return []; // No further status changes
+    case 'cancelled':
+      return []; // No further status changes
+    default:
+      return [];
   }
 };
 
