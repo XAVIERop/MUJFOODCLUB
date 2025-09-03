@@ -131,6 +131,15 @@ const Auth = () => {
           title: "Account Created!",
           description: "Please check your email to verify your account before signing in.",
         });
+        
+        // Show additional notice about junk folder
+        setTimeout(() => {
+          toast({
+            title: "📧 Check Your Junk/Spam Folder!",
+            description: "If you don't see the verification email, please check your junk/spam folder. We're working on improving email deliverability.",
+            variant: "default"
+          });
+        }, 1000);
         setActiveTab('signin');
       }
     } catch (error) {
@@ -387,6 +396,15 @@ const Auth = () => {
                     </AlertDescription>
                   </Alert>
 
+                  {/* Junk Folder Notice */}
+                  <Alert className="mb-4 border-orange-200 bg-orange-50">
+                    <AlertCircle className="h-4 w-4 text-orange-600" />
+                    <AlertDescription className="text-orange-800">
+                      <strong>📧 Important:</strong> After signing up, please check your <strong>junk/spam folder</strong> for the verification email. 
+                      We're working on improving email deliverability.
+                    </AlertDescription>
+                  </Alert>
+
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
                       <Label htmlFor="signup-email">MUJ Email</Label>
@@ -500,7 +518,16 @@ const Auth = () => {
                         <AlertDescription>
                           Enter your MUJ email to receive a verification link.
                         </AlertDescription>
-                    </Alert>
+                      </Alert>
+
+                      {/* Junk Folder Notice */}
+                      <Alert className="mb-4 border-orange-200 bg-orange-50">
+                        <AlertCircle className="h-4 w-4 text-orange-600" />
+                        <AlertDescription className="text-orange-800">
+                          <strong>📧 Important:</strong> Please check your <strong>junk/spam folder</strong> if you don't receive the email. 
+                          We're working on improving email deliverability.
+                        </AlertDescription>
+                      </Alert>
 
                       <div className="space-y-2">
                         <Label htmlFor="otp-email">MUJ Email</Label>
@@ -550,7 +577,7 @@ const Auth = () => {
                          </div>
 
                         <div className="text-sm text-gray-600">
-                          <p>Didn't receive the email? Check your spam folder or try again.</p>
+                          <p><strong>📧 Didn't receive the email?</strong> Please check your <strong>junk/spam folder</strong> first, then try again.</p>
                         </div>
 
                         <div className="flex gap-2">
