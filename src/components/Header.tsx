@@ -237,10 +237,16 @@ const Header = () => {
                       <span>My Favorites</span>
                     </DropdownMenuItem>
                     {isCafeOwner && (
-                      <DropdownMenuItem onClick={() => navigate('/cafe-dashboard')}>
-                        <Store className="mr-2 h-4 w-4" />
-                        <span>Cafe Dashboard</span>
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/cafe-dashboard')}>
+                          <Store className="mr-2 h-4 w-4" />
+                          <span>Cafe Dashboard</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate('/pos-dashboard')}>
+                          <Receipt className="mr-2 h-4 w-4" />
+                          <span>POS Dashboard</span>
+                        </DropdownMenuItem>
+                      </>
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut}>
@@ -302,17 +308,30 @@ const Header = () => {
                     <>
                       {/* Cafe Dashboard for cafe owners */}
                       {isCafeOwner && (
-                        <Button 
-                          variant="outline" 
-                          onClick={() => {
-                            navigate('/cafe-dashboard');
-                            setIsMenuOpen(false);
-                          }}
-                          className="mt-4"
-                        >
-                          <Store className="w-4 h-4 mr-2" />
-                          Cafe Dashboard
-                        </Button>
+                        <>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => {
+                              navigate('/cafe-dashboard');
+                              setIsMenuOpen(false);
+                            }}
+                            className="mt-4"
+                          >
+                            <Store className="w-4 h-4 mr-2" />
+                            Cafe Dashboard
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => {
+                              navigate('/pos-dashboard');
+                              setIsMenuOpen(false);
+                            }}
+                            className="mt-4"
+                          >
+                            <Receipt className="w-4 h-4 mr-2" />
+                            POS Dashboard
+                          </Button>
+                        </>
                       )}
                       
                       <Button 
