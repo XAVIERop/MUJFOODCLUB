@@ -144,7 +144,7 @@ const Header = () => {
   return (
     <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${
       isHomePage 
-        ? 'border-b border-white/20 bg-black/10 backdrop-blur-md text-white' 
+        ? 'border-b border-white/20 bg-black/40 backdrop-blur-lg text-white shadow-lg' 
         : 'border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 text-foreground'
     } m-0`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -190,7 +190,7 @@ const Header = () => {
                 {/* Loyalty Points */}
                 <Badge className={`hidden sm:flex items-center ${
                   isHomePage 
-                    ? 'bg-white/20 text-white border-white/30 backdrop-blur-sm' 
+                    ? 'bg-black/60 text-white border-white/30 backdrop-blur-sm shadow-md' 
                     : 'gradient-warm text-white'
                 }`}>
                   <Trophy className="w-3 h-3 mr-1" />
@@ -203,7 +203,7 @@ const Header = () => {
                   size="sm"
                   className={`relative ${
                     isHomePage 
-                      ? 'text-white/80 hover:text-white hover:bg-white/10' 
+                      ? 'text-white/90 hover:text-white hover:bg-black/30' 
                       : ''
                   }`}
                   onClick={() => setIsNotificationOpen(true)}
@@ -221,7 +221,7 @@ const Header = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className={`relative h-8 w-8 rounded-full ${
                       isHomePage 
-                        ? 'text-white/80 hover:text-white hover:bg-white/10' 
+                        ? 'text-white/90 hover:text-white hover:bg-black/30' 
                         : ''
                     }`}>
                       <Avatar className="h-8 w-8">
@@ -284,7 +284,7 @@ const Header = () => {
               <Button 
                 variant={isHomePage ? "outline" : "hero"} 
                 onClick={handleAuthAction}
-                className={isHomePage ? "border-white/30 text-white hover:bg-white/10 hover:border-white/50" : ""}
+                className={isHomePage ? "border-white/40 text-white hover:bg-black/30 hover:border-white/60 bg-black/20" : ""}
               >
                 <User className="w-4 h-4 mr-2" />
                 Sign In
@@ -296,7 +296,7 @@ const Header = () => {
               <SheetTrigger asChild>
                 <Button variant="ghost" size="sm" className={`md:hidden ${
                   isHomePage 
-                    ? 'text-white/80 hover:text-white hover:bg-white/10' 
+                    ? 'text-white/90 hover:text-white hover:bg-black/30' 
                     : ''
                 }`}>
                   <Menu className="h-5 w-5" />
