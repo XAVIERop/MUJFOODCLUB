@@ -145,10 +145,19 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
   const handleStatusUpdate = async (orderId: string, newStatus: Order['status']) => {
     try {
       await onStatusUpdate(orderId, newStatus);
-      toast({
-        title: "Status Updated",
-        description: `Order status changed to ${newStatus}`,
-      });
+      
+      if (newStatus === 'cancelled') {
+        toast({
+          title: "Order Cancelled",
+          description: "Order has been successfully cancelled and moved to cancelled section",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Status Updated",
+          description: `Order status changed to ${newStatus.replace('_', ' ')}`,
+        });
+      }
     } catch (error) {
       toast({
         title: "Update Failed",
@@ -279,43 +288,22 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                         <div className={`w-2 h-2 rounded-full ${statusInfo.color}`}></div>
                       </div>
                       
-                      {/* Quick Actions */}
+                      {/* Quick Actions - Only Green Status Update Button */}
                       <div className="flex justify-center gap-1 mt-1">
-                        {getAvailableStatuses(order.status).length > 0 && (
-                          <>
-                            {/* Next Status Button */}
-                            {getAvailableStatuses(order.status).filter(s => s !== 'cancelled').map((status) => (
-                              <Button
-                                key={status}
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0 hover:bg-green-100"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleStatusUpdate(order.id, status);
-                                }}
-                                title={`Mark as ${status.replace('_', ' ')}`}
-                              >
-                                <CheckCircle className="w-3 h-3 text-green-600" />
-                              </Button>
-                            ))}
-                            
-                            {/* Cancel Button */}
-                            {getAvailableStatuses(order.status).includes('cancelled') && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0 hover:bg-red-100"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleStatusUpdate(order.id, 'cancelled');
-                                }}
-                                title="Cancel Order"
-                              >
-                                <X className="w-3 h-3 text-red-600" />
-                              </Button>
-                            )}
-                          </>
+                        {getAvailableStatuses(order.status).filter(s => s !== 'cancelled').length > 0 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 hover:bg-green-100"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const nextStatus = getAvailableStatuses(order.status).filter(s => s !== 'cancelled')[0];
+                              handleStatusUpdate(order.id, nextStatus);
+                            }}
+                            title={`Mark as ${getAvailableStatuses(order.status).filter(s => s !== 'cancelled')[0]?.replace('_', ' ')}`}
+                          >
+                            <CheckCircle className="w-3 h-3 text-green-600" />
+                          </Button>
                         )}
                       </div>
                     </CardContent>
@@ -437,30 +425,25 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
               )}
             </div>
             
-            {/* Status Update and Actions */}
+            {/* Order Actions - Only Cancel Button */}
             <div className="mt-4 border-t pt-4">
               <h4 className="font-semibold mb-3 text-sm">Order Actions:</h4>
               
-              {/* Status Update Section */}
-              {getAvailableStatuses(selectedOrder.status).length > 0 && (
+              {/* Cancel Order Section */}
+              {getAvailableStatuses(selectedOrder.status).includes('cancelled') && (
                 <div className="flex flex-col sm:flex-row gap-3 mb-4">
                   <div className="flex-1">
                     <label className="block text-sm font-medium text-muted-foreground mb-2">
-                      Update Status:
+                      Cancel Order:
                     </label>
-                    <div className="flex gap-2 flex-wrap">
-                      {getAvailableStatuses(selectedOrder.status).map((status) => (
-                        <Button
-                          key={status}
-                          onClick={() => handleStatusUpdate(selectedOrder.id, status)}
-                          variant={status === 'cancelled' ? 'destructive' : 'default'}
-                          size="sm"
-                          className="text-xs"
-                        >
-                          {status === 'cancelled' ? 'Cancel Order' : `Mark as ${status.replace('_', ' ')}`}
-                        </Button>
-                      ))}
-                    </div>
+                    <Button
+                      onClick={() => handleStatusUpdate(selectedOrder.id, 'cancelled')}
+                      variant="destructive"
+                      size="sm"
+                      className="text-xs"
+                    >
+                      Cancel Order
+                    </Button>
                   </div>
                 </div>
               )}
