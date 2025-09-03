@@ -24,6 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import CompactOrderGrid from '@/components/CompactOrderGrid';
+import POSAnalytics from '@/components/POSAnalytics';
 import NotificationCenter from '@/components/NotificationCenter';
 
 interface Order {
@@ -570,14 +571,11 @@ const POSDashboard = () => {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Analytics Dashboard</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Analytics features coming soon...</p>
-              </CardContent>
-            </Card>
+            <POSAnalytics 
+              orders={orders}
+              orderItems={orderItems}
+              loading={loading}
+            />
           </TabsContent>
 
           {/* Inventory Tab */}
