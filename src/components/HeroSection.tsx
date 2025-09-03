@@ -183,7 +183,7 @@ const HeroSection = () => {
           </Badge>
 
           {/* Main Heading - Mobile Optimized */}
-          <h1 className={`text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 sm:mb-8 animate-slide-up leading-tight tracking-tight px-4 sm:px-0 font-genty ${
+          <h1 className={`text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 sm:mb-8 animate-slide-up leading-tight tracking-tight px-4 sm:px-0 ${
             isMobile ? 'text-shadow-lg' : ''
           }`}>
             Discover Amazing Food at{" "}
