@@ -420,9 +420,9 @@ const Menu = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Mobile-Optimized Category System */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           {/* Desktop: Full Filter System */}
           <div className="hidden lg:block">
             <div className="flex items-center justify-between mb-4">
@@ -764,28 +764,29 @@ const Menu = () => {
         </div>
 
         {/* Floating Menu Button - Mobile Only */}
-        <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 z-40 lg:hidden">
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-40 lg:hidden">
           <Button
             onClick={() => setIsMobileMenuOpen(true)}
-            className="bg-black text-white hover:bg-gray-800 px-6 py-3 rounded-full shadow-2xl flex items-center gap-2"
-            size="lg"
+            className="bg-black text-white hover:bg-gray-800 px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2 text-sm font-medium"
+            size="default"
           >
-            <Filter className="w-5 h-5" />
+            <Filter className="w-4 h-4" />
             Menu
           </Button>
         </div>
 
-        {/* Sticky Cart Button - Appears when cart has items (Adjusted position for mobile) */}
+        {/* Sticky Cart Button - Appears when cart has items (Mobile Optimized) */}
         {Object.keys(cart).length > 0 && (
-          <div className="fixed bottom-16 right-6 z-50">
+          <div className="fixed bottom-20 right-4 sm:right-6 z-50">
             <Button 
-              className="shadow-2xl px-6 py-3 text-lg font-semibold" 
+              className="shadow-2xl px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-lg font-semibold" 
               variant="hero"
               onClick={handleCheckout}
-              size="lg"
+              size="default"
             >
-              <ShoppingCart className="w-5 h-5 mr-2" />
-              View Cart ({getCartItemCount()}) - ₹{getTotalAmount()}
+              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+              <span className="hidden sm:inline">View Cart ({getCartItemCount()}) - ₹{getTotalAmount()}</span>
+              <span className="sm:hidden">Cart ({getCartItemCount()})</span>
             </Button>
           </div>
         )}
@@ -793,24 +794,24 @@ const Menu = () => {
         {/* Mobile Menu Modal */}
         {isMobileMenuOpen && (
           <div className="fixed inset-0 bg-black/50 z-50 lg:hidden">
-            <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
+            <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl p-4 sm:p-6 max-h-[85vh] overflow-y-auto">
               {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-foreground">Menu Categories</h3>
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-foreground">Menu Categories</h3>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground p-2"
                 >
                   ✕
                 </Button>
               </div>
 
               {/* Dietary Preference Toggle */}
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <h4 className="text-sm font-medium text-foreground mb-3">Dietary Preference:</h4>
-                <div className="flex bg-muted rounded-lg p-1">
+                <div className="grid grid-cols-3 gap-2 bg-muted rounded-lg p-1">
                   <Button
                     variant={selectedCategory === 'all' ? 'default' : 'ghost'}
                     size="sm"
@@ -818,7 +819,7 @@ const Menu = () => {
                       setSelectedCategory('all');
                       setIsMobileMenuOpen(false);
                     }}
-                    className="text-xs flex-1"
+                    className="text-xs py-2"
                   >
                     🌱 All
                   </Button>
@@ -829,9 +830,9 @@ const Menu = () => {
                       setSelectedCategory('veg');
                       setIsMobileMenuOpen(false);
                     }}
-                    className="text-xs flex-1"
+                    className="text-xs py-2"
                   >
-                    🥬 Veg Only
+                    🥬 Veg
                   </Button>
                   <Button
                     variant={selectedCategory === 'non-veg' ? 'default' : 'ghost'}
@@ -840,15 +841,15 @@ const Menu = () => {
                       setSelectedCategory('non-veg');
                       setIsMobileMenuOpen(false);
                     }}
-                    className="text-xs flex-1"
+                    className="text-xs py-2"
                   >
-                    🍗 Non-Veg Only
+                    🍗 Non-Veg
                   </Button>
                 </div>
               </div>
 
               {/* Categories List */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <h4 className="text-sm font-medium text-foreground mb-3">Categories:</h4>
                 <Button
                   variant={selectedCategory === 'all' ? 'default' : 'ghost'}

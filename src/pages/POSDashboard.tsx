@@ -358,7 +358,7 @@ const POSDashboard = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Total Orders</CardTitle>
@@ -408,33 +408,38 @@ const POSDashboard = () => {
           }} 
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="orders" className="flex items-center gap-2">
-              <Receipt className="w-4 h-4" />
-              Orders
+          <TabsList className="grid w-full grid-cols-5 gap-1 sm:gap-2">
+            <TabsTrigger value="orders" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Receipt className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Orders</span>
+              <span className="sm:hidden">O</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Analytics
+            <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Analytics</span>
+              <span className="sm:hidden">A</span>
             </TabsTrigger>
-            <TabsTrigger value="inventory" className="flex items-center gap-2">
-              <Package className="w-4 h-4" />
-              Inventory
+            <TabsTrigger value="inventory" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Package className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Inventory</span>
+              <span className="sm:hidden">I</span>
             </TabsTrigger>
-            <TabsTrigger value="customers" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Customers
+            <TabsTrigger value="customers" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Customers</span>
+              <span className="sm:hidden">C</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Settings
+            <TabsTrigger value="settings" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Settings</span>
+              <span className="sm:hidden">S</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Orders Tab */}
           <TabsContent value="orders" className="space-y-6">
             {/* Layout Toggle */}
-            <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-200 gap-3 sm:gap-0">
               <div className="flex items-center space-x-2">
                 <Button
                   variant={useCompactLayout ? "default" : "outline"}

@@ -257,13 +257,13 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
       <Header />
       
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-16">
         <div className="max-w-md mx-auto">
           {/* Back to Home */}
           <Button
             variant="ghost"
             onClick={() => navigate('/')}
-            className="mb-6"
+            className="mb-4 sm:mb-6"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
@@ -271,14 +271,14 @@ const Auth = () => {
 
           {/* Auth Card */}
           <Card className="shadow-xl border-0">
-            <CardHeader className="text-center pb-6">
-              <div className="mx-auto w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mb-4">
+            <CardHeader className="text-center pb-4 sm:pb-6">
+              <div className="mx-auto w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mb-3 sm:mb-4">
                 <Shield className="w-6 h-6 text-white" />
-          </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">
+              </div>
+              <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900">
                 Welcome to Food Club
               </CardTitle>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 mt-2 text-sm sm:text-base">
                 Sign in to your account or create a new one
               </p>
             </CardHeader>
@@ -292,7 +292,7 @@ const Auth = () => {
             }} 
             className="w-full"
           >
-                <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
