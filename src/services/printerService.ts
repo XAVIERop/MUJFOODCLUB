@@ -40,19 +40,11 @@ class PrinterService {
   // USB/Serial connection
   private async initializeUSB(): Promise<boolean> {
     try {
-      // Check if Web Serial API is available
-      if ('serial' in navigator) {
-        // Request port access
-        const port = await (navigator as any).serial.requestPort();
-        await port.open({ baudRate: this.config.baudRate || 9600 });
-        this.isConnected = true;
-        return true;
-      } else {
-        // Fallback to browser printing for USB
-        console.log('Web Serial API not available, using browser printing');
-        this.isConnected = true;
-        return true;
-      }
+      // For USB connections, we'll use browser printing as the primary method
+      // since Web Serial API requires user permission and may not be available
+      console.log('Initializing USB connection - using browser printing method');
+      this.isConnected = true;
+      return true;
     } catch (error) {
       console.error('USB connection failed:', error);
       return false;

@@ -8,6 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 const SimplePrinterConfig: React.FC = () => {
   const { isConnected, connectionType, switchConnectionType, testConnection } = usePrinter();
   const { toast } = useToast();
+  
+  console.log('SimplePrinterConfig rendering, isConnected:', isConnected, 'connectionType:', connectionType);
 
   const handleConnectionTypeChange = (type: 'usb' | 'network') => {
     switchConnectionType(type);

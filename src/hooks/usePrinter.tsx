@@ -12,7 +12,9 @@ export const usePrinter = () => {
   useEffect(() => {
     const initializePrinter = async () => {
       try {
+        console.log('Initializing printer with connection type:', connectionType);
         const connected = await printerService.initialize();
+        console.log('Printer initialization result:', connected);
         setIsConnected(connected);
         
         if (connected) {
