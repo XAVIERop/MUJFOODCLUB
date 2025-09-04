@@ -239,11 +239,17 @@ const POSDashboard = () => {
 
       // Fallback to browser-based printing
       const generateThermalHTML = (orderData: Order, orderItems: any[]) => {
-        const isFoodCourt = orderData.cafe?.name?.toLowerCase().includes('food court');
+        console.log('POSDashboard - Cafe name:', orderData.cafe?.name);
+        const isFoodCourt = orderData.cafe?.name?.toLowerCase().includes('food court') || 
+                           orderData.cafe?.name === 'FOOD COURT' ||
+                           orderData.cafe?.name?.toLowerCase() === 'food court';
+        console.log('POSDashboard - Is Food Court:', isFoodCourt);
         
         if (isFoodCourt) {
+          console.log('POSDashboard - Using Food Court receipt format');
           return generateFoodCourtReceipt(orderData, orderItems);
         } else {
+          console.log('POSDashboard - Using MUJ Food Club receipt format');
           return generateMUJFoodClubReceipt(orderData, orderItems);
         }
       };

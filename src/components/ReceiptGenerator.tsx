@@ -136,8 +136,13 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
   };
 
   const generateReceiptHTML = () => {
-    const isFoodCourt = orderData.cafe_name?.toLowerCase().includes('food court');
+    console.log('ReceiptGenerator - Cafe name:', orderData.cafe_name);
+    const isFoodCourt = orderData.cafe_name?.toLowerCase().includes('food court') || 
+                       orderData.cafe_name === 'FOOD COURT' ||
+                       orderData.cafe_name?.toLowerCase() === 'food court';
+    console.log('ReceiptGenerator - Is Food Court:', isFoodCourt);
     const receiptFormat = isFoodCourt ? 'foodcourt' : 'mujfoodclub';
+    console.log('ReceiptGenerator - Receipt format:', receiptFormat);
     
     if (receiptFormat === 'foodcourt') {
       return generateFoodCourtReceipt();
