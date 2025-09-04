@@ -31,7 +31,6 @@ RETURNS INTEGER AS $$
 DECLARE
   points_rate INTEGER;
   base_points INTEGER;
-  new_user_multiplier DECIMAL := 1.0;
 BEGIN
   -- Set points rate based on tier
   CASE user_tier
@@ -40,19 +39,10 @@ BEGIN
     ELSE points_rate := 5;                    -- 5% points for foodie
   END CASE;
   
-  -- Calculate base points
+  -- Calculate base points (no multipliers)
   base_points := FLOOR((order_amount * points_rate) / 100);
   
-  -- Apply new user bonus
-  IF is_new_user AND new_user_orders_count <= 20 THEN
-    IF new_user_orders_count = 1 THEN
-      new_user_multiplier := 1.5; -- 50% bonus for first order
-    ELSE
-      new_user_multiplier := 1.25; -- 25% bonus for orders 2-20
-    END IF;
-  END IF;
-  
-  RETURN FLOOR(base_points * new_user_multiplier);
+  RETURN base_points;
 END;
 $$ LANGUAGE plpgsql;
 

@@ -155,21 +155,10 @@ const Checkout = () => {
     if (!profile) return Math.floor(amount * 0.05); // Default 5% points
     
     const tierInfo = getTierInfo(profile.loyalty_tier);
-    let basePoints = Math.floor((amount * tierInfo.pointsRate) / 100);
+    const basePoints = Math.floor((amount * tierInfo.pointsRate) / 100);
     
-    // Apply new user bonus
-    let newUserMultiplier = 1.0;
-    if (profile.is_new_user && profile.new_user_orders_count && profile.new_user_orders_count <= 20) {
-      if (profile.new_user_orders_count === 1) {
-        newUserMultiplier = 1.5; // 50% bonus for first order
-      } else {
-        newUserMultiplier = 1.25; // 25% bonus for orders 2-20
-      }
-    }
-    
-    const finalPoints = Math.floor(basePoints * newUserMultiplier);
-    
-    return finalPoints;
+    // No multipliers - just base points
+    return basePoints;
   };
 
   const calculatePointsDiscount = (points: number) => {

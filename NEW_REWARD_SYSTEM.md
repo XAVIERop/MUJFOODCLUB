@@ -40,9 +40,7 @@ The new reward system implements automatic tier-based discounts with a 1:1 point
 - **Protection**: Users can only redeem points that provide actual discount value
 
 ### **New User Bonuses**
-- **First Order**: 50% extra points
-- **Orders 2-20**: 25% extra points
-- **Welcome Bonus**: 50 points
+- **Welcome Bonus**: 50 points (one-time only)
 
 ## 🔄 **Tier Maintenance System**
 

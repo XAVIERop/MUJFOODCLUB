@@ -61,9 +61,6 @@ export const TIER_CONFIG = {
 
 export const POINTS_CONFIG = {
   POINT_VALUE: 1, // 1 point = ₹1
-  NEW_USER_FIRST_ORDER_MULTIPLIER: 1.5, // 50% extra points
-  NEW_USER_ORDERS_2_20_MULTIPLIER: 1.25, // 25% extra points
-  NEW_USER_MAX_ORDERS: 20,
   WELCOME_BONUS_POINTS: 50,
   MAINTENANCE_COMPLETION_BONUS: 200
 } as const;
@@ -100,16 +97,8 @@ export const calculatePoints = (
   const tierInfo = getTierInfo(userTier);
   const basePoints = Math.floor((orderAmount * tierInfo.pointsRate) / 100);
   
-  let newUserMultiplier = 1.0;
-  if (isNewUser && newUserOrdersCount <= POINTS_CONFIG.NEW_USER_MAX_ORDERS) {
-    if (newUserOrdersCount === 1) {
-      newUserMultiplier = POINTS_CONFIG.NEW_USER_FIRST_ORDER_MULTIPLIER;
-    } else {
-      newUserMultiplier = POINTS_CONFIG.NEW_USER_ORDERS_2_20_MULTIPLIER;
-    }
-  }
-  
-  return Math.floor(basePoints * newUserMultiplier);
+  // No multipliers - just base points
+  return basePoints;
 };
 
 export const calculateLoyaltyDiscount = (orderAmount: number, userTier: string) => {
