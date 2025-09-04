@@ -829,9 +829,17 @@ const POSDashboard = () => {
             If you don't see the configuration panel below, please refresh the page.
           </p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <PrinterConfig />
-            <div className="flex items-center">
-              <PrinterStatus />
+            <div className="bg-white p-4 rounded border">
+              <h4 className="font-bold mb-2">Printer Configuration</h4>
+              <p className="text-sm text-gray-600">Loading printer config...</p>
+              <PrinterConfig />
+            </div>
+            <div className="bg-white p-4 rounded border flex items-center">
+              <div>
+                <h4 className="font-bold mb-2">Printer Status</h4>
+                <p className="text-sm text-gray-600">Loading status...</p>
+                <PrinterStatus />
+              </div>
             </div>
           </div>
         </div>
