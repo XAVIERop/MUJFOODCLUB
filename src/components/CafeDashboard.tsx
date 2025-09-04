@@ -73,7 +73,10 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
 
       if (cafeError) {
         console.error('Error fetching cafe data:', cafeError);
+        alert(`ERROR fetching cafe data: ${cafeError.message}`);
       }
+      
+      console.log('Raw cafe data from database:', cafeData);
 
       // Then get orders
       const { data, error } = await supabase
@@ -87,7 +90,7 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
       // Add cafe information to each order
       const ordersWithCafe = (data || []).map(order => ({
         ...order,
-        cafes: cafeData
+        cafes: cafeData || { id: cafeId, name: 'Unknown Cafe', type: 'Unknown' }
       }));
       
       console.log('CafeDashboard - Cafe data:', cafeData);
@@ -96,6 +99,15 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
       // Debug: Show cafe data in alert
       if (cafeData) {
         alert(`CafeDashboard DEBUG: Cafe name: "${cafeData.name}", Cafe ID: "${cafeData.id}"`);
+      } else {
+        // If cafe data is null, let's check what cafes exist
+        const { data: allCafes } = await supabase
+          .from('cafes')
+          .select('id, name, type')
+          .limit(10);
+        
+        console.log('All cafes in database:', allCafes);
+        alert(`Cafe data is null! Looking for cafe ID: ${cafeId}. Available cafes: ${JSON.stringify(allCafes?.map(c => ({id: c.id, name: c.name})))}`);
       }
       
       setOrders(ordersWithCafe);
