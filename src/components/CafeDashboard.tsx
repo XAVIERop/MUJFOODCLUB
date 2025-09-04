@@ -26,7 +26,7 @@ interface Order {
   cafe_id: string;
   points_credited: boolean;
   phone_number?: string;
-  cafe?: {
+  cafes?: {
     id: string;
     name: string;
     type: string;
@@ -68,12 +68,16 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
         .from('orders')
         .select(`
           *,
-          cafe:cafes(id, name, type)
+          cafes!inner(id, name, type)
         `)
         .eq('cafe_id', cafeId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log('CafeDashboard - Raw orders data:', data);
+      console.log('CafeDashboard - First order cafe data:', data?.[0]?.cafes);
+      
       setOrders(data || []);
 
       // Fetch order items for each order

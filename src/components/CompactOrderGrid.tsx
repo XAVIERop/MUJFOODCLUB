@@ -42,7 +42,7 @@ interface Order {
   customer_name?: string;
   phone_number?: string;
   cafe_id: string;
-  cafe?: {
+  cafes?: {
     id: string;
     name: string;
     type: string;
@@ -179,16 +179,16 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
     // Generate thermal receipt HTML
     const generateThermalHTML = (orderData: Order) => {
       const items = orderItems[orderData.id] || [];
-      const isFoodCourt = orderData.cafe?.name?.toLowerCase().includes('food court') || 
-                         orderData.cafe?.name === 'FOOD COURT' ||
-                         orderData.cafe?.name?.toLowerCase() === 'food court';
+      const isFoodCourt = orderData.cafes?.name?.toLowerCase().includes('food court') || 
+                         orderData.cafes?.name === 'FOOD COURT' ||
+                         orderData.cafes?.name?.toLowerCase() === 'food court';
       
       console.log('CompactOrderGrid - Full order data:', orderData);
-      console.log('CompactOrderGrid - Cafe name:', orderData.cafe?.name);
+      console.log('CompactOrderGrid - Cafe name:', orderData.cafes?.name);
       console.log('CompactOrderGrid - Is Food Court:', isFoodCourt);
       
       // Temporary alert to verify the data
-      alert(`DEBUG: Cafe name: ${orderData.cafe?.name}, Is Food Court: ${isFoodCourt}`);
+      alert(`DEBUG: Cafe name: ${orderData.cafes?.name}, Is Food Court: ${isFoodCourt}`);
       
       if (isFoodCourt) {
         return generateFoodCourtReceipt(orderData, items);
