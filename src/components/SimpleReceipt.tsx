@@ -38,31 +38,31 @@ interface SimpleReceiptProps {
 const SimpleReceipt: React.FC<SimpleReceiptProps> = ({ order, orderItems, onClose }) => {
   
   const printBothReceipts = () => {
-    // Print KOT Receipt
+    // Print KOT Receipt first
     const kotHTML = generateKOTReceipt();
-    const kotWindow = window.open('', '_blank', 'width=300,height=400');
+    const kotWindow = window.open('', '_blank', 'width=80mm,height=auto');
     if (kotWindow) {
       kotWindow.document.write(kotHTML);
       kotWindow.document.close();
       setTimeout(() => {
         kotWindow.print();
         kotWindow.close();
+        
+        // Print Customer Receipt after KOT is done
+        setTimeout(() => {
+          const customerHTML = generateCustomerReceipt();
+          const customerWindow = window.open('', '_blank', 'width=80mm,height=auto');
+          if (customerWindow) {
+            customerWindow.document.write(customerHTML);
+            customerWindow.document.close();
+            setTimeout(() => {
+              customerWindow.print();
+              customerWindow.close();
+            }, 500);
+          }
+        }, 1500); // Wait longer for KOT to finish
       }, 500);
     }
-
-    // Print Customer Receipt after a short delay
-    setTimeout(() => {
-      const customerHTML = generateCustomerReceipt();
-      const customerWindow = window.open('', '_blank', 'width=300,height=400');
-      if (customerWindow) {
-        customerWindow.document.write(customerHTML);
-        customerWindow.document.close();
-        setTimeout(() => {
-          customerWindow.print();
-          customerWindow.close();
-        }, 500);
-      }
-    }, 1000);
   };
 
   const generateKOTReceipt = () => {
@@ -87,13 +87,14 @@ const SimpleReceipt: React.FC<SimpleReceiptProps> = ({ order, orderItems, onClos
         <style>
           @media print {
             body { margin: 0; padding: 0; }
-            .receipt { width: 80mm; font-family: monospace; font-size: 12px; }
+            .receipt { width: 80mm; font-family: monospace; font-size: 11px; font-weight: bold; }
+            @page { margin: 0; size: 80mm auto; }
           }
-          .receipt { width: 80mm; font-family: monospace; font-size: 12px; padding: 5px; }
+          .receipt { width: 80mm; font-family: monospace; font-size: 11px; font-weight: bold; padding: 2px; }
           .center { text-align: center; }
           .right { text-align: right; }
-          .separator { border-top: 1px dashed #000; margin: 5px 0; }
-          .item-row { display: flex; justify-content: space-between; margin: 2px 0; }
+          .separator { border-top: 1px dashed #000; margin: 2px 0; }
+          .item-row { display: flex; justify-content: space-between; margin: 1px 0; }
           .item-name { flex: 1; }
           .item-qty { width: 20px; text-align: right; }
         </style>
@@ -149,19 +150,20 @@ const SimpleReceipt: React.FC<SimpleReceiptProps> = ({ order, orderItems, onClos
         <style>
           @media print {
             body { margin: 0; padding: 0; }
-            .receipt { width: 80mm; font-family: monospace; font-size: 12px; }
+            .receipt { width: 80mm; font-family: monospace; font-size: 10px; font-weight: bold; }
+            @page { margin: 0; size: 80mm auto; }
           }
-          .receipt { width: 80mm; font-family: monospace; font-size: 12px; padding: 5px; }
+          .receipt { width: 80mm; font-family: monospace; font-size: 10px; font-weight: bold; padding: 2px; }
           .center { text-align: center; }
           .right { text-align: right; }
-          .separator { border-top: 1px solid #000; margin: 5px 0; }
-          .item-row { display: flex; justify-content: space-between; margin: 2px 0; }
+          .separator { border-top: 1px solid #000; margin: 2px 0; }
+          .item-row { display: flex; justify-content: space-between; margin: 1px 0; }
           .item-name { flex: 1; }
           .item-qty { width: 20px; text-align: center; }
-          .item-price { width: 40px; text-align: right; }
-          .item-amount { width: 50px; text-align: right; }
-          .total-row { display: flex; justify-content: space-between; margin: 2px 0; }
-          .grand-total { font-weight: bold; font-size: 14px; }
+          .item-price { width: 35px; text-align: right; }
+          .item-amount { width: 45px; text-align: right; }
+          .total-row { display: flex; justify-content: space-between; margin: 1px 0; }
+          .grand-total { font-weight: bold; font-size: 12px; }
         </style>
       </head>
       <body>
