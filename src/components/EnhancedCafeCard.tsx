@@ -115,7 +115,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
     <div 
       className={`relative bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer ${
         isExclusive 
-          ? 'border-2 border-yellow-400 shadow-yellow-200/50 hover:shadow-yellow-300/70' 
+          ? 'shadow-yellow-200/50 hover:shadow-yellow-300/70' 
           : 'border border-gray-100'
       } ${
         !cafe.accepting_orders ? 'opacity-75 grayscale' : ''
@@ -123,7 +123,8 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
       onClick={() => handleViewMenu(cafe.id)}
       style={isExclusive ? {
         background: 'linear-gradient(135deg, #fef3c7 0%, #ffffff 20%, #ffffff 80%, #fef3c7 100%)',
-        borderImage: 'linear-gradient(135deg, #f59e0b, #d97706, #b45309) 1'
+        border: '2px solid #f59e0b',
+        borderRadius: '12px'
       } : {}}
     >
       {/* Exclusive Badge */}
