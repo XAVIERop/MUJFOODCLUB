@@ -176,17 +176,13 @@ const LoyaltyProgram = () => {
                   </div>
 
                 <div className="space-y-3">
-                  <Button variant="secondary" className="w-full">
+                  <Button 
+                    variant="secondary" 
+                    className="w-full"
+                    onClick={() => navigate('/cafes')}
+                  >
                     <Gift className="w-4 h-4 mr-2" />
                     Redeem Points ({profile?.loyalty_points || 0} Available)
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full text-white border-white/30 hover:bg-white/10"
-                    onClick={() => navigate('/rewards')}
-                  >
-                    <Trophy className="w-4 h-4 mr-2" />
-                    View Full Rewards Dashboard
                   </Button>
                 </div>
               </CardContent>
