@@ -64,21 +64,36 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
 
   const fetchOrders = async () => {
     try {
+      // First get the cafe information
+      const { data: cafeData, error: cafeError } = await supabase
+        .from('cafes')
+        .select('id, name, type')
+        .eq('id', cafeId)
+        .single();
+
+      if (cafeError) {
+        console.error('Error fetching cafe data:', cafeError);
+      }
+
+      // Then get orders
       const { data, error } = await supabase
         .from('orders')
-        .select(`
-          *,
-          cafes!inner(id, name, type)
-        `)
+        .select('*')
         .eq('cafe_id', cafeId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      console.log('CafeDashboard - Raw orders data:', data);
-      console.log('CafeDashboard - First order cafe data:', data?.[0]?.cafes);
+      // Add cafe information to each order
+      const ordersWithCafe = (data || []).map(order => ({
+        ...order,
+        cafes: cafeData
+      }));
       
-      setOrders(data || []);
+      console.log('CafeDashboard - Cafe data:', cafeData);
+      console.log('CafeDashboard - Orders with cafe data:', ordersWithCafe);
+      
+      setOrders(ordersWithCafe);
 
       // Fetch order items for each order
       const itemsData: {[key: string]: OrderItem[]} = {};
