@@ -3,8 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PrinterConfig } from '@/components/PrinterConfig';
-import { PrinterStatus } from '@/components/PrinterStatus';
 import { 
   Clock, 
   CheckCircle, 
@@ -31,8 +29,8 @@ import POSAnalytics from '@/components/POSAnalytics';
 import ThermalPrinter from '@/components/ThermalPrinter';
 import { thermalPrinterService, formatOrderForPrinting } from '@/api/thermalPrinter';
 import NotificationCenter from '@/components/NotificationCenter';
-import { PrinterConfig } from '@/components/PrinterConfig';
-import { PrinterStatus } from '@/components/PrinterStatus';
+import PrinterConfig from '@/components/PrinterConfig';
+import PrinterStatus from '@/components/PrinterStatus';
 
 interface Order {
   id: string;
