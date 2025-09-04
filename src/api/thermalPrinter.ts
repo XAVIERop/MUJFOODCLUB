@@ -41,7 +41,7 @@ class ThermalPrinterService {
     this.baseUrl = process.env.NODE_ENV === 'production' 
       ? 'https://mujfoodclub.in/api' 
       : 'http://localhost:3001/api';
-    this.printerId = 'pixel-dp80-chatkara';
+    this.printerId = 'epson-tm-t82-foodcourt';
   }
 
   // Check printer connection status
