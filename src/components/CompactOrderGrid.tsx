@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import FoodCourtReceipt from './FoodCourtReceipt';
 import SimpleReceipt from './SimpleReceipt';
 import { usePrinter } from '@/hooks/usePrinter';
+import { directPrinterService } from '@/services/directPrinterService';
 
 interface OrderItem {
   id: string;
@@ -611,6 +612,69 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
     });
   };
 
+  // New direct print function that bypasses browser printing
+  const handleDirectPrint = async (order: Order) => {
+    try {
+      // Get order items for this order
+      const items = orderItems[order.id] || [];
+      
+      if (items.length === 0) {
+        toast({
+          title: "No Items Found",
+          description: "Could not find items for this order",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Print KOT first
+      const kotSuccess = await directPrinterService.printReceipt({
+        type: 'kot',
+        orderData: order,
+        orderItems: items
+      });
+
+      if (kotSuccess) {
+        toast({
+          title: "KOT Printed",
+          description: "Kitchen Order Ticket printed successfully",
+          variant: "default",
+        });
+      }
+
+      // Wait a moment then print customer receipt
+      setTimeout(async () => {
+        const customerSuccess = await directPrinterService.printReceipt({
+          type: 'customer',
+          orderData: order,
+          orderItems: items
+        });
+
+        if (customerSuccess) {
+          toast({
+            title: "Customer Receipt Printed",
+            description: "Customer receipt printed successfully",
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: "Print Failed",
+            description: "Could not print customer receipt",
+            variant: "destructive",
+          });
+        }
+      }, 1000);
+
+    } catch (error) {
+      console.error('Direct print error:', error);
+      toast({
+        title: "Print Error",
+        description: "Error printing receipts",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDownloadCancelledOrdersCSV = () => {
     try {
       const cancelledOrders = ordersByStatus.cancelled || [];
@@ -845,19 +909,8 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                               });
                               
                               if (isFoodCourt) {
-                                if (isConnected) {
-                                  // Use ePOS service for direct thermal printing
-                                  const success = await printBothReceipts(order, orderItems[order.id] || []);
-                                  if (!success) {
-                                    // Fallback to browser printing if ePOS fails
-                                    setSimpleReceiptOrder(order);
-                                    setShowSimpleReceipt(true);
-                                  }
-                                } else {
-                                  // Fallback to browser printing if printer not connected
-                                  setSimpleReceiptOrder(order);
-                                  setShowSimpleReceipt(true);
-                                }
+                                // Use direct print service for compact printing
+                                handleDirectPrint(order);
                               } else {
                                 toast({
                                   title: "Receipt Printing",
@@ -865,7 +918,7 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                                 });
                               }
                             }}
-                            title={isConnected ? "Print Receipt (Epson TM-T82)" : "Print Receipt (Browser Fallback)"}
+                            title="Print Receipt (Direct - Compact)"
                           >
                             <Receipt className="w-3 h-3 text-blue-600" />
                           </Button>
