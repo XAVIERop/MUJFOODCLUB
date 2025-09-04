@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PrinterConfig } from '@/components/PrinterConfig';
+import { PrinterStatus } from '@/components/PrinterStatus';
 import { 
   Clock, 
   CheckCircle, 
