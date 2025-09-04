@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, User, Mail, MapPin, Trophy, Receipt, Edit, Save, X } from 'lucide-react';
+import { ArrowLeft, User, Mail, MapPin, Trophy, Receipt, Edit, Save, X, RotateCcw, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +19,7 @@ const Profile = () => {
   
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     block: '',
@@ -77,6 +78,85 @@ const Profile = () => {
       phone: profile?.phone || ''
     });
     setIsEditing(false);
+  };
+
+  const handleResetTestAccount = async () => {
+    if (!user || !profile) return;
+
+    // Safety check: Only allow reset for test account
+    if (profile.email !== 'test@muj.manipal.edu') {
+      toast({
+        title: "Access Denied",
+        description: "This feature is only available for test accounts.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Confirmation dialog
+    const confirmed = window.confirm(
+      '⚠️ WARNING: This will reset ALL data for your test account!\n\n' +
+      'This will delete:\n' +
+      '• All orders and order history\n' +
+      '• All loyalty points and transactions\n' +
+      '• Reset profile to initial state\n\n' +
+      'Are you sure you want to continue?'
+    );
+
+    if (!confirmed) return;
+
+    setResetting(true);
+    try {
+      // Delete all orders for the test user
+      const { error: ordersError } = await supabase
+        .from('orders')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (ordersError) throw ordersError;
+
+      // Delete all loyalty transactions
+      const { error: transactionsError } = await supabase
+        .from('loyalty_transactions')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (transactionsError) throw transactionsError;
+
+      // Reset profile to initial state
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          loyalty_points: 0,
+          total_orders: 0,
+          total_spent: 0,
+          loyalty_tier: 'foodie',
+          is_new_user: true,
+          new_user_orders_count: 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (profileError) throw profileError;
+
+      // Refresh profile data
+      await refreshProfile();
+
+      toast({
+        title: "Test Account Reset Complete!",
+        description: "All data has been cleared. You can now test from scratch.",
+      });
+
+    } catch (error) {
+      console.error('Error resetting test account:', error);
+      toast({
+        title: "Reset Failed",
+        description: "There was an error resetting your test account. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setResetting(false);
+    }
   };
 
   if (!user || !profile) {
@@ -153,6 +233,34 @@ const Profile = () => {
                     <Receipt className="w-4 h-4 text-muted-foreground" />
                     <span>Total Orders: {profile.total_orders || 0}</span>
                   </div>
+                  
+                  {/* Reset Test Account Button - Only for test account */}
+                  {profile.email === 'test@muj.manipal.edu' && (
+                    <div className="pt-4 border-t">
+                      <Button
+                        onClick={handleResetTestAccount}
+                        disabled={resetting}
+                        variant="destructive"
+                        size="sm"
+                        className="w-full"
+                      >
+                        {resetting ? (
+                          <>
+                            <RotateCcw className="w-4 h-4 mr-2 animate-spin" />
+                            Resetting...
+                          </>
+                        ) : (
+                          <>
+                            <AlertTriangle className="w-4 h-4 mr-2" />
+                            Reset Test Account
+                          </>
+                        )}
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2 text-center">
+                        This will delete all orders, points, and reset your account to initial state
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
