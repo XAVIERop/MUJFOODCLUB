@@ -150,14 +150,14 @@ const Checkout = () => {
     }
   };
 
-  // Enhanced points calculation with new system
+  // Simple points calculation - no multipliers
   const calculateEnhancedPoints = (amount: number) => {
     if (!profile) return Math.floor(amount * 0.05); // Default 5% points
     
     const tierInfo = getTierInfo(profile.loyalty_tier);
     const basePoints = Math.floor((amount * tierInfo.pointsRate) / 100);
     
-    // No multipliers - just base points
+    // Very simple: just base points (no multipliers, no bonuses)
     return basePoints;
   };
 

@@ -97,7 +97,7 @@ export const calculatePoints = (
   const tierInfo = getTierInfo(userTier);
   const basePoints = Math.floor((orderAmount * tierInfo.pointsRate) / 100);
   
-  // No multipliers - just base points
+  // Very simple: just base points (no multipliers, no bonuses)
   return basePoints;
 };
 

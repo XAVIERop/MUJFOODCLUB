@@ -1,6 +1,6 @@
-# 🎯 First Transaction Points Breakdown
+# 🎯 Ultra Simple Points System
 
-## 📊 **Simplified Points System**
+## 📊 **Ultra Simple Points System**
 
 ### **Base Points System**
 - **Foodie Tier**: 5% of order value
@@ -9,7 +9,7 @@
 
 ### **New User Benefits**
 - **Welcome Bonus**: 50 points (one-time only)
-- **No Multipliers**: Simple base points calculation
+- **No Multipliers**: Zero multipliers, zero complexity
 
 ## 🧮 **Calculation Formula**
 
@@ -52,8 +52,8 @@ Where:
 
 ## 📈 **Points Progression**
 
-### **All Orders (Simplified)**
-1. **Every Order**: Base points only
+### **All Orders (Ultra Simple)**
+1. **Every Order**: Base points only (no multipliers ever)
 2. **Welcome Bonus**: 50 points (one-time on account creation)
 3. **Tier Benefits**: Always active based on spending
 
@@ -62,11 +62,11 @@ Where:
 ### **Frontend (React)**
 - ✅ Points calculation in `src/lib/constants.ts`
 - ✅ Welcome bonus in constants
-- ✅ Simplified calculation (no multipliers)
+- ✅ Ultra simple calculation (zero multipliers)
 
 ### **Backend (Database)**
 - ✅ `calculate_new_points()` function
-- ✅ Simplified logic (no multipliers)
+- ✅ Ultra simple logic (zero multipliers)
 - ⚠️ Welcome bonus may need separate implementation
 
 ## 🎯 **Summary**
@@ -75,5 +75,6 @@ Where:
 - **Base Points**: 5% of order value (Foodie/Gourmet) or 10% (Connoisseur)
 - **Welcome Bonus**: 50 points (one-time)
 - **Total**: Base points + 50 points
+- **No Multipliers**: Zero complexity, zero confusion
 
-**Example**: ₹1000 first order = 50 points + 50 welcome bonus = **100 points total**
+**Example**: ₹500 first order = 25 points + 50 welcome bonus = **75 points total**

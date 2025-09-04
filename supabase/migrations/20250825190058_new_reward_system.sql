@@ -20,7 +20,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create function to calculate new points based on tier
+-- Create function to calculate simple points based on tier only
 CREATE OR REPLACE FUNCTION calculate_new_points(
   order_amount DECIMAL,
   user_tier TEXT,
@@ -32,14 +32,14 @@ DECLARE
   points_rate INTEGER;
   base_points INTEGER;
 BEGIN
-  -- Set points rate based on tier
+  -- Set points rate based on tier only
   CASE user_tier
     WHEN 'connoisseur' THEN points_rate := 10; -- 10% points
     WHEN 'gourmet' THEN points_rate := 5;     -- 5% points
     ELSE points_rate := 5;                    -- 5% points for foodie
   END CASE;
   
-  -- Calculate base points (no multipliers)
+  -- Very simple: just base points (no multipliers, no bonuses)
   base_points := FLOOR((order_amount * points_rate) / 100);
   
   RETURN base_points;
