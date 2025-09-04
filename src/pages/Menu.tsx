@@ -173,13 +173,21 @@ const Menu = () => {
         };
       }
       
-      grouped[baseName].portions.push({
-        id: item.id,
-        name: portionName,
-        price: item.price,
-        is_available: item.is_available,
-        out_of_stock: item.out_of_stock
-      });
+      // Check if this portion already exists (same name and price)
+      const existingPortion = grouped[baseName].portions.find(p => 
+        p.name === portionName && p.price === item.price
+      );
+      
+      // Only add if it's a unique portion (different price or name)
+      if (!existingPortion) {
+        grouped[baseName].portions.push({
+          id: item.id,
+          name: portionName,
+          price: item.price,
+          is_available: item.is_available,
+          out_of_stock: item.out_of_stock
+        });
+      }
     });
     
     console.log('Grouped menu items:', grouped);
@@ -691,8 +699,46 @@ const Menu = () => {
                               >
                                 Out of Stock
                               </Button>
+                            ) : item.portions.length === 1 ? (
+                              // Single portion - show simple add to cart
+                              <div className="flex items-center space-x-2">
+                                {cart[item.portions[0].id] ? (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => removeFromCart(item.portions[0].id)}
+                                      className="flex-1"
+                                    >
+                                      <Minus className="w-4 h-4" />
+                                    </Button>
+                                    <span className="w-8 text-center font-semibold">
+                                      {cart[item.portions[0].id].quantity}
+                                    </span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => addToCart(item, item.portions[0].id)}
+                                      className="flex-1"
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <Button
+                                    variant="order"
+                                    size="sm"
+                                    onClick={() => addToCart(item, item.portions[0].id)}
+                                    disabled={item.portions[0].out_of_stock}
+                                    className="w-full"
+                                  >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Add to Cart
+                                  </Button>
+                                )}
+                              </div>
                             ) : (
-                              // Show cart controls for each portion
+                              // Multiple portions - show portion selection first
                               <div className="space-y-2">
                                 {item.portions.map((portion) => (
                                   <div key={portion.id} className="flex items-center space-x-2">
