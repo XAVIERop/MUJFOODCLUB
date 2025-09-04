@@ -36,7 +36,8 @@ The new reward system implements automatic tier-based discounts with a 1:1 point
 
 ### **Point Value**
 - **1 point = ₹1 discount** (1:1 ratio)
-- **Maximum redemption**: 50% of order total
+- **Maximum redemption**: 10% of order total
+- **Protection**: Users can only redeem points that provide actual discount value
 
 ### **New User Bonuses**
 - **First Order**: 50% extra points
@@ -59,7 +60,7 @@ The new reward system implements automatic tier-based discounts with a 1:1 point
 
 ### **Automatic Discounts**
 1. **Loyalty Discount**: Applied automatically based on tier
-2. **Points Discount**: Optional redemption of earned points
+2. **Points Discount**: Optional redemption of earned points (max 10% of order)
 3. **Final Amount**: Subtotal - Loyalty Discount - Points Discount
 
 ### **Example Calculations**
@@ -75,6 +76,13 @@ The new reward system implements automatic tier-based discounts with a 1:1 point
 - **Loyalty Discount**: ₹400 (20%)
 - **Points Earned**: 200 points (10%)
 - **Final Amount**: ₹1600
+
+#### **₹250 Order - User with 4922 Points**
+- **Subtotal**: ₹250
+- **Max Points Redeemable**: 25 points (10% of ₹250)
+- **Points Discount**: ₹25 (not ₹4922!)
+- **Final Amount**: ₹225
+- **Protection**: User only loses 25 points, not all 4922
 
 ## 🎓 **Student Benefits**
 

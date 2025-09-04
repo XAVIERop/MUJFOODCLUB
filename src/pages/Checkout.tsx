@@ -175,21 +175,39 @@ const Checkout = () => {
   const calculatePointsDiscount = (points: number) => {
     // 1 point = ₹1 discount (1:1 ratio)
     const discount = points * 1;
-    return Math.min(discount, Math.floor(totalAmount * 0.5)); // Max 50% discount
+    // Limit to 10% of order value for points redemption
+    const maxPointsDiscount = Math.floor(totalAmount * 0.1);
+    return Math.min(discount, maxPointsDiscount);
+  };
+
+  const calculateMaxRedeemablePoints = () => {
+    // Maximum points that can be redeemed (10% of order value)
+    return Math.floor(totalAmount * 0.1);
   };
 
   const handlePointsRedeem = (points: number) => {
-    const discount = calculatePointsDiscount(points);
-    setPointsToRedeem(points);
+    const maxRedeemable = calculateMaxRedeemablePoints();
+    const actualPointsToRedeem = Math.min(points, maxRedeemable);
+    const discount = calculatePointsDiscount(actualPointsToRedeem);
+    setPointsToRedeem(actualPointsToRedeem);
     setPointsDiscount(discount);
     setFinalAmount(Math.max(0, totalAmount - loyaltyDiscount - discount));
   };
 
   const handleCustomPointsRedeem = () => {
     const customPoints = parseInt(customPointsInput);
-    if (customPoints && customPoints > 0 && customPoints <= profile.loyalty_points) {
+    const maxRedeemable = calculateMaxRedeemablePoints();
+    const maxAllowed = Math.min(profile.loyalty_points, maxRedeemable);
+    
+    if (customPoints && customPoints > 0 && customPoints <= maxAllowed) {
       handlePointsRedeem(customPoints);
       setCustomPointsInput('');
+    } else if (customPoints > maxRedeemable) {
+      toast({
+        title: "Points Limit Exceeded",
+        description: `You can only redeem up to ${maxRedeemable} points (10% of order value)`,
+        variant: "destructive"
+      });
     }
   };
 
@@ -519,9 +537,25 @@ const Checkout = () => {
                         </h4>
                         <p className="text-sm text-muted-foreground mb-3">
                           You have {profile.loyalty_points} points available
+                          <br />
+                          <span className="text-blue-600 font-medium">
+                            Max redeemable: {calculateMaxRedeemablePoints()} points (10% of order)
+                          </span>
                         </p>
                         
                         <div className="space-y-2">
+                          {/* Quick Redeem Button */}
+                          {calculateMaxRedeemablePoints() > 0 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePointsRedeem(calculateMaxRedeemablePoints())}
+                              className="w-full"
+                            >
+                              Redeem Max ({calculateMaxRedeemablePoints()} points)
+                            </Button>
+                          )}
+                          
                           {/* Custom Points Input */}
                           <div className="flex space-x-2">
                             <Input
@@ -530,21 +564,21 @@ const Checkout = () => {
                               value={customPointsInput}
                               onChange={(e) => setCustomPointsInput(e.target.value)}
                               min="1"
-                              max={profile.loyalty_points}
+                              max={Math.min(profile.loyalty_points, calculateMaxRedeemablePoints())}
                               className="flex-1"
                             />
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={handleCustomPointsRedeem}
-                              disabled={!customPointsInput || parseInt(customPointsInput) <= 0 || parseInt(customPointsInput) > profile.loyalty_points}
+                              disabled={!customPointsInput || parseInt(customPointsInput) <= 0 || parseInt(customPointsInput) > Math.min(profile.loyalty_points, calculateMaxRedeemablePoints())}
                             >
                               Redeem
                             </Button>
                           </div>
                           
                           <p className="text-xs text-muted-foreground text-center">
-                            1 point = ₹1 discount • Max 50% of order total
+                            1 point = ₹1 discount • Max 10% of order total
                           </p>
                         </div>
                         

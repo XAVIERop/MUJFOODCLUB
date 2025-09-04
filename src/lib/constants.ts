@@ -75,7 +75,7 @@ export const MAINTENANCE_CONFIG = {
 } as const;
 
 export const POINT_REDEMPTION_OPTIONS = [10, 25, 50] as const;
-export const MAX_DISCOUNT_PERCENTAGE = 50; // Maximum 50% discount from points
+export const MAX_POINTS_DISCOUNT_PERCENTAGE = 10; // Maximum 10% discount from points
 
 export const getTierBySpend = (totalSpent: number) => {
   if (totalSpent >= TIER_CONFIG[LOYALTY_TIERS.CONNOISSEUR].minSpend) {

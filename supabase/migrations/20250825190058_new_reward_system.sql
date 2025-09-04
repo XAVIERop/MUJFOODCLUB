@@ -76,6 +76,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Create function to calculate maximum redeemable points (10% of order value)
+CREATE OR REPLACE FUNCTION calculate_max_redeemable_points(order_amount DECIMAL)
+RETURNS INTEGER AS $$
+BEGIN
+  RETURN FLOOR(order_amount * 0.1); -- 10% of order value
+END;
+$$ LANGUAGE plpgsql;
+
 -- Create function to update user tier based on total spending
 CREATE OR REPLACE FUNCTION update_user_tier(user_id UUID)
 RETURNS TEXT AS $$
@@ -225,6 +233,7 @@ $$ LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION get_tier_by_spend(DECIMAL) TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION calculate_new_points(DECIMAL, TEXT, BOOLEAN, INTEGER) TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION calculate_loyalty_discount(DECIMAL, TEXT) TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION calculate_max_redeemable_points(DECIMAL) TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION update_user_tier(UUID) TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION check_tier_maintenance(UUID) TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION track_monthly_spending(UUID, DECIMAL) TO authenticated, anon;
