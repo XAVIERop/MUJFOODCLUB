@@ -24,18 +24,24 @@ class EpsonEposService {
   // Initialize connection to printer
   async initialize(): Promise<boolean> {
     try {
-      // For now, we'll use a mock connection
-      // In production, you would use the actual ePOS SDK
-      console.log(`Connecting to Epson TM-T82 at ${this.config.printerIP}:${this.config.printerPort}`);
+      console.log(`Attempting to connect to Epson TM-T82 at ${this.config.printerIP}:${this.config.printerPort}`);
       
-      // Simulate connection
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      this.isConnected = true;
+      // Try to connect to the printer via HTTP (ePOS-Print uses HTTP)
+      const response = await fetch(`http://${this.config.printerIP}:${this.config.printerPort}/api/status`, {
+        method: 'GET',
+        timeout: 5000
+      });
       
-      console.log('Epson TM-T82 connected successfully');
-      return true;
+      if (response.ok) {
+        this.isConnected = true;
+        console.log('Epson TM-T82 connected successfully');
+        return true;
+      } else {
+        throw new Error(`Printer responded with status: ${response.status}`);
+      }
     } catch (error) {
       console.error('Failed to connect to Epson TM-T82:', error);
+      console.log('Falling back to browser printing mode');
       this.isConnected = false;
       return false;
     }
@@ -218,19 +224,48 @@ class EpsonEposService {
 
   // Send content to printer
   private async sendToPrinter(content: string): Promise<void> {
-    // In production, this would use the actual ePOS SDK
-    // For now, we'll simulate the print job
-    console.log('Sending to Epson TM-T82:');
-    console.log(content);
-    
-    // Simulate print time
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // In production, you would use something like:
-    // const printer = new epson.ePOSPrint();
-    // printer.connect(this.config.printerIP, this.config.printerPort);
-    // printer.sendText(content);
-    // printer.disconnect();
+    try {
+      console.log('Sending to Epson TM-T82:');
+      console.log(content);
+      
+      // Send print job to ePOS-Print via HTTP
+      const printData = {
+        method: 'addText',
+        params: [content]
+      };
+      
+      const response = await fetch(`http://${this.config.printerIP}:${this.config.printerPort}/api/print`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(printData)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Print job failed: ${response.status}`);
+      }
+      
+      console.log('Print job sent successfully');
+      
+      // Send cut command
+      const cutData = {
+        method: 'addCut',
+        params: []
+      };
+      
+      await fetch(`http://${this.config.printerIP}:${this.config.printerPort}/api/print`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cutData)
+      });
+      
+    } catch (error) {
+      console.error('Failed to send print job:', error);
+      throw error;
+    }
   }
 
   // Disconnect from printer
@@ -247,8 +282,8 @@ class EpsonEposService {
 
 // Export singleton instance
 export const epsonEposService = new EpsonEposService({
-  printerIP: '192.168.1.100', // Replace with your printer's IP
-  printerPort: 8008,
+  printerIP: '192.168.1.100', // Replace with your printer's IP (check printer settings)
+  printerPort: 8008, // Default ePOS-Print port
   timeout: 10000
 });
 

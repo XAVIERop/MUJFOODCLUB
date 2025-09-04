@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import NotificationCenter from './NotificationCenter';
 import CompactOrderGrid from './CompactOrderGrid';
 import PrinterStatus from './PrinterStatus';
+import PrinterConfig from './PrinterConfig';
 
 interface Order {
   id: string;
@@ -333,8 +334,13 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
         </div>
       </div>
 
-      {/* Printer Status */}
-      <PrinterStatus />
+      {/* Printer Configuration and Status */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <PrinterConfig />
+        <div className="flex items-center">
+          <PrinterStatus />
+        </div>
+      </div>
 
       {/* Layout Toggle */}
       <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-200">
