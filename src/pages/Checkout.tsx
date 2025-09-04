@@ -12,6 +12,7 @@ import { ArrowLeft, MapPin, Clock, Banknote, AlertCircle, CheckCircle, Trophy } 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { getTierInfo } from '@/lib/constants';
 import Header from '@/components/Header';
 
 interface MenuItem {
@@ -68,6 +69,7 @@ const Checkout = () => {
   // Points redemption state
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
   const [pointsDiscount, setPointsDiscount] = useState(0);
+  const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
   const [finalAmount, setFinalAmount] = useState(totalAmount);
   const [pointsToEarn, setPointsToEarn] = useState(0);
   const [customPointsInput, setCustomPointsInput] = useState('');
@@ -148,19 +150,12 @@ const Checkout = () => {
     }
   };
 
-  // Enhanced points calculation with fallback
+  // Enhanced points calculation with new system
   const calculateEnhancedPoints = (amount: number) => {
-    if (!profile) return Math.floor(amount / 10);
+    if (!profile) return Math.floor(amount * 0.05); // Default 5% points
     
-    let basePoints = Math.floor(amount / 10); // 10 points per ₹100
-    
-    // Apply tier multiplier
-    let tierMultiplier = 1.0;
-    if (profile.loyalty_tier === 'connoisseur') {
-      tierMultiplier = 1.5;
-    } else if (profile.loyalty_tier === 'gourmet') {
-      tierMultiplier = 1.2;
-    }
+    const tierInfo = getTierInfo(profile.loyalty_tier);
+    let basePoints = Math.floor((amount * tierInfo.pointsRate) / 100);
     
     // Apply new user bonus
     let newUserMultiplier = 1.0;
@@ -172,14 +167,14 @@ const Checkout = () => {
       }
     }
     
-    const finalPoints = Math.floor(basePoints * tierMultiplier * newUserMultiplier);
+    const finalPoints = Math.floor(basePoints * newUserMultiplier);
     
     return finalPoints;
   };
 
   const calculatePointsDiscount = (points: number) => {
-    // 1 point = ₹0.25 discount (4:1 ratio)
-    const discount = points * 0.25;
+    // 1 point = ₹1 discount (1:1 ratio)
+    const discount = points * 1;
     return Math.min(discount, Math.floor(totalAmount * 0.5)); // Max 50% discount
   };
 
@@ -187,7 +182,7 @@ const Checkout = () => {
     const discount = calculatePointsDiscount(points);
     setPointsToRedeem(points);
     setPointsDiscount(discount);
-    setFinalAmount(Math.max(0, totalAmount - discount));
+    setFinalAmount(Math.max(0, totalAmount - loyaltyDiscount - discount));
   };
 
   const handleCustomPointsRedeem = () => {
@@ -198,10 +193,15 @@ const Checkout = () => {
     }
   };
 
-  // Update final amount when total amount changes
+  // Calculate loyalty discount and update final amount
   useEffect(() => {
-    setFinalAmount(Math.max(0, totalAmount - pointsDiscount));
-  }, [totalAmount, pointsDiscount]);
+    if (profile && profile.loyalty_tier) {
+      const tierInfo = getTierInfo(profile.loyalty_tier);
+      const discount = Math.floor((totalAmount * tierInfo.discount) / 100);
+      setLoyaltyDiscount(discount);
+      setFinalAmount(Math.max(0, totalAmount - discount - pointsDiscount));
+    }
+  }, [totalAmount, pointsDiscount, profile]);
 
   // Calculate points to earn when component loads or total amount changes
   useEffect(() => {
@@ -544,7 +544,7 @@ const Checkout = () => {
                           </div>
                           
                           <p className="text-xs text-muted-foreground text-center">
-                            1 point = ₹0.25 discount • Max 50% of order total
+                            1 point = ₹1 discount • Max 50% of order total
                           </p>
                         </div>
                         
@@ -586,9 +586,15 @@ const Checkout = () => {
                         <span>Subtotal</span>
                         <span>₹{totalAmount}</span>
                       </div>
+                      {loyaltyDiscount > 0 && (
+                        <div className="flex justify-between items-center text-blue-600">
+                          <span>Loyalty Discount ({profile?.loyalty_tier})</span>
+                          <span>-₹{loyaltyDiscount}</span>
+                        </div>
+                      )}
                       {pointsDiscount > 0 && (
                         <div className="flex justify-between items-center text-green-600">
-                          <span>Loyalty Points Discount</span>
+                          <span>Points Discount</span>
                           <span>-₹{pointsDiscount}</span>
                         </div>
                       )}

@@ -8,55 +8,59 @@ export const LOYALTY_TIERS = {
 export const TIER_CONFIG = {
   [LOYALTY_TIERS.FOODIE]: {
     name: 'Foodie',
-    minPoints: 0,
-    maxPoints: 150,
+    minSpend: 0,
+    maxSpend: 1999,
     discount: 5,
+    pointsRate: 5, // 5% points
     tierMultiplier: 1.0,
     maintenanceRequired: false,
     maintenanceAmount: 0,
     benefits: [
-      '5% discount on all orders',
+      '5% automatic discount on all orders',
+      '5% points on all orders',
       'Basic delivery',
       'Standard support'
     ]
   },
   [LOYALTY_TIERS.GOURMET]: {
     name: 'Gourmet',
-    minPoints: 151,
-    maxPoints: 500,
+    minSpend: 2000,
+    maxSpend: 4999,
     discount: 10,
+    pointsRate: 5, // 5% points
     tierMultiplier: 1.2,
     maintenanceRequired: true,
     maintenanceAmount: 2000,
     benefits: [
-      '10% discount on all orders',
+      '10% automatic discount on all orders',
+      '5% points on all orders',
       'Free delivery',
       'Priority support',
-      'Birthday month: 15% discount',
-      'Monthly bonus: 25 extra points'
+      'Monthly maintenance required: ₹2000'
     ]
   },
   [LOYALTY_TIERS.CONNOISSEUR]: {
     name: 'Connoisseur',
-    minPoints: 501,
-    maxPoints: Infinity,
+    minSpend: 5000,
+    maxSpend: Infinity,
     discount: 20,
+    pointsRate: 10, // 10% points
     tierMultiplier: 1.5,
     maintenanceRequired: true,
     maintenanceAmount: 5000,
     benefits: [
-      '20% discount on all orders',
+      '20% automatic discount on all orders',
+      '10% points on all orders',
       'Free premium delivery',
       'VIP support',
       'Exclusive menu access',
-      'Monthly bonus: 50 extra points',
-      'Quarterly rewards: ₹500 voucher'
+      'Monthly maintenance required: ₹5000'
     ]
   }
 } as const;
 
 export const POINTS_CONFIG = {
-  BASE_RATE: 10, // 10 points per ₹100 spent
+  POINT_VALUE: 1, // 1 point = ₹1
   NEW_USER_FIRST_ORDER_MULTIPLIER: 1.5, // 50% extra points
   NEW_USER_ORDERS_2_20_MULTIPLIER: 1.25, // 25% extra points
   NEW_USER_MAX_ORDERS: 20,
@@ -73,10 +77,10 @@ export const MAINTENANCE_CONFIG = {
 export const POINT_REDEMPTION_OPTIONS = [10, 25, 50] as const;
 export const MAX_DISCOUNT_PERCENTAGE = 50; // Maximum 50% discount from points
 
-export const getTierByPoints = (points: number) => {
-  if (points >= TIER_CONFIG[LOYALTY_TIERS.CONNOISSEUR].minPoints) {
+export const getTierBySpend = (totalSpent: number) => {
+  if (totalSpent >= TIER_CONFIG[LOYALTY_TIERS.CONNOISSEUR].minSpend) {
     return LOYALTY_TIERS.CONNOISSEUR;
-  } else if (points >= TIER_CONFIG[LOYALTY_TIERS.GOURMET].minPoints) {
+  } else if (totalSpent >= TIER_CONFIG[LOYALTY_TIERS.GOURMET].minSpend) {
     return LOYALTY_TIERS.GOURMET;
   } else {
     return LOYALTY_TIERS.FOODIE;
@@ -93,8 +97,8 @@ export const calculatePoints = (
   isNewUser: boolean,
   newUserOrdersCount: number
 ) => {
-  const basePoints = Math.floor((orderAmount / 100) * POINTS_CONFIG.BASE_RATE);
-  const tierMultiplier = getTierInfo(userTier).tierMultiplier;
+  const tierInfo = getTierInfo(userTier);
+  const basePoints = Math.floor((orderAmount * tierInfo.pointsRate) / 100);
   
   let newUserMultiplier = 1.0;
   if (isNewUser && newUserOrdersCount <= POINTS_CONFIG.NEW_USER_MAX_ORDERS) {
@@ -105,5 +109,10 @@ export const calculatePoints = (
     }
   }
   
-  return Math.floor(basePoints * tierMultiplier * newUserMultiplier);
+  return Math.floor(basePoints * newUserMultiplier);
+};
+
+export const calculateLoyaltyDiscount = (orderAmount: number, userTier: string) => {
+  const tierInfo = getTierInfo(userTier);
+  return Math.floor((orderAmount * tierInfo.discount) / 100);
 };
