@@ -108,51 +108,51 @@ class DirectPrinterService {
               padding: 2mm;
               font-weight: bold !important;
             }
-            .header { 
-              text-align: center; 
-              margin-bottom: 3mm; 
-              border-bottom: 1px solid #000;
-              padding-bottom: 2mm;
-            }
-            .logo { 
-              font-size: 12px; 
-              font-weight: bold; 
-            }
-            .subtitle { 
-              font-size: 8px; 
-            }
-            .order-info { 
-              margin-bottom: 3mm; 
-            }
-            .info-row { 
-              display: flex; 
-              justify-content: space-between; 
-              margin-bottom: 1mm; 
-              font-size: 9px;
-            }
-            .items-section { 
-              margin-bottom: 3mm; 
-            }
-            .item-row { 
-              display: flex; 
-              justify-content: space-between; 
-              margin-bottom: 1mm; 
-              font-size: 9px;
-            }
-            .item-name { 
-              flex: 2; 
-            }
-            .item-details { 
-              flex: 1; 
-              text-align: right; 
-            }
-            .footer { 
-              text-align: center; 
-              margin-top: 3mm; 
-              font-size: 8px; 
-              border-top: 1px solid #000;
-              padding-top: 2mm;
-            }
+                          .header { 
+                text-align: center; 
+                margin-bottom: 2mm; 
+                border-bottom: 1px solid #000;
+                padding-bottom: 1mm;
+              }
+              .logo { 
+                font-size: 11px; 
+                font-weight: bold; 
+              }
+              .subtitle { 
+                font-size: 7px; 
+              }
+              .order-info { 
+                margin-bottom: 2mm; 
+              }
+              .info-row { 
+                display: flex; 
+                justify-content: space-between; 
+                margin-bottom: 0.5mm; 
+                font-size: 8px;
+              }
+              .items-section { 
+                margin-bottom: 2mm; 
+              }
+              .item-row { 
+                display: flex; 
+                justify-content: space-between; 
+                margin-bottom: 0.5mm; 
+                font-size: 8px;
+              }
+              .item-name { 
+                flex: 2; 
+              }
+              .item-details { 
+                flex: 1; 
+                text-align: right; 
+              }
+              .footer { 
+                text-align: center; 
+                margin-top: 2mm; 
+                font-size: 7px; 
+                border-top: 1px solid #000;
+                padding-top: 1mm;
+              }
           </style>
         </head>
         <body>
@@ -181,7 +181,7 @@ class DirectPrinterService {
           </div>
           
           <div class="items-section">
-            <div class="info-row" style="font-weight: bold; margin-bottom: 2mm; border-bottom: 1px solid #000; padding-bottom: 1mm;">
+            <div class="info-row" style="font-weight: bold; margin-bottom: 1mm; border-bottom: 1px solid #000; padding-bottom: 0.5mm;">
               <span>Item</span>
               <span>Qty</span>
             </div>
@@ -219,6 +219,7 @@ class DirectPrinterService {
                 margin: 0; 
                 size: 80mm auto; 
                 padding: 0;
+                max-height: 150mm;
               }
               * { 
                 margin: 0; 
@@ -227,11 +228,13 @@ class DirectPrinterService {
               }
               body { 
                 font-family: 'Courier New', monospace; 
-                font-size: 10px; 
-                line-height: 1.2;
+                font-size: 9px; 
+                line-height: 1.1;
                 width: 80mm;
-                padding: 2mm;
+                padding: 1mm;
                 font-weight: bold !important;
+                max-height: 150mm;
+                overflow: hidden;
               }
               .header { 
                 text-align: center; 
@@ -273,8 +276,8 @@ class DirectPrinterService {
               }
               .total-section { 
                 border-top: 1px solid #000; 
-                padding-top: 2mm; 
-                margin-bottom: 3mm;
+                padding-top: 1mm; 
+                margin-bottom: 2mm;
               }
               .footer { 
                 text-align: center; 
@@ -320,7 +323,7 @@ class DirectPrinterService {
             </div>
             
             <div class="items-section">
-              <div class="info-row" style="font-weight: bold; margin-bottom: 2mm; border-bottom: 1px solid #000; padding-bottom: 1mm;">
+              <div class="info-row" style="font-weight: bold; margin-bottom: 1mm; border-bottom: 1px solid #000; padding-bottom: 0.5mm;">
                 <span>Item</span>
                 <span>Qty</span>
                 <span>Price</span>
@@ -353,7 +356,7 @@ class DirectPrinterService {
                 <span>SGST@2.5%:</span>
                 <span>₹${(orderData.tax_amount / 2).toFixed(2)}</span>
               </div>
-              <div class="info-row" style="font-size: 11px; margin-top: 2mm; border-top: 1px solid #000; padding-top: 1mm;">
+              <div class="info-row" style="font-size: 10px; margin-top: 1mm; border-top: 1px solid #000; padding-top: 0.5mm;">
                 <span>Grand Total:</span>
                 <span>₹${orderData.total_amount}</span>
               </div>
@@ -377,6 +380,7 @@ class DirectPrinterService {
                 margin: 0; 
                 size: 80mm auto; 
                 padding: 0;
+                max-height: 150mm;
               }
               * { 
                 margin: 0; 
@@ -385,11 +389,13 @@ class DirectPrinterService {
               }
               body { 
                 font-family: 'Courier New', monospace; 
-                font-size: 10px; 
-                line-height: 1.2;
+                font-size: 9px; 
+                line-height: 1.1;
                 width: 80mm;
-                padding: 2mm;
+                padding: 1mm;
                 font-weight: bold !important;
+                max-height: 150mm;
+                overflow: hidden;
               }
               .header { 
                 text-align: center; 
@@ -431,8 +437,8 @@ class DirectPrinterService {
               }
               .total-section { 
                 border-top: 1px solid #000; 
-                padding-top: 2mm; 
-                margin-bottom: 3mm;
+                padding-top: 1mm; 
+                margin-bottom: 2mm;
               }
               .footer { 
                 text-align: center; 
@@ -478,7 +484,7 @@ class DirectPrinterService {
             </div>
             
             <div class="items-section">
-              <div class="info-row" style="font-weight: bold; margin-bottom: 2mm; border-bottom: 1px solid #000; padding-bottom: 1mm;">
+              <div class="info-row" style="font-weight: bold; margin-bottom: 1mm; border-bottom: 1px solid #000; padding-bottom: 0.5mm;">
                 <span>Item</span>
                 <span>Qty × Price</span>
                 <span>Total</span>
@@ -501,7 +507,7 @@ class DirectPrinterService {
                 <span>Tax (5%):</span>
                 <span>₹${orderData.tax_amount}</span>
               </div>
-              <div class="info-row" style="font-size: 11px; margin-top: 2mm; border-top: 1px solid #000; padding-top: 1mm;">
+              <div class="info-row" style="font-size: 10px; margin-top: 1mm; border-top: 1px solid #000; padding-top: 0.5mm;">
                 <span>TOTAL:</span>
                 <span>₹${orderData.total_amount}</span>
               </div>

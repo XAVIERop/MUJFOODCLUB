@@ -30,6 +30,7 @@ import ThermalPrinter from '@/components/ThermalPrinter';
 import { thermalPrinterService, formatOrderForPrinting } from '@/api/thermalPrinter';
 import NotificationCenter from '@/components/NotificationCenter';
 import SimplePrinterConfig from '@/components/SimplePrinterConfig';
+import PrintNodeConfig from '@/components/PrintNodeConfig';
 
 interface Order {
   id: string;
@@ -820,15 +821,23 @@ const POSDashboard = () => {
           </div>
         </div>
 
-        {/* Printer Configuration - SIMPLE */}
+        {/* Printer Configuration - MULTIPLE OPTIONS */}
         <div className="bg-yellow-50 border-2 border-yellow-200 p-4 rounded-lg">
-          <h3 className="text-lg font-bold text-yellow-800 mb-4">🖨️ Printer Setup</h3>
+          <h3 className="text-lg font-bold text-yellow-800 mb-4">🖨️ Printer Setup Options</h3>
           <p className="text-sm text-yellow-700 mb-4">
-            Your Epson TM-T82 printer is connected via USB cable. 
-            No IP address needed - just select "USB (Wired)" and test the connection.
+            Choose your preferred printing method. PrintNode is recommended for professional thermal printing.
           </p>
-          <div className="max-w-md">
-            <SimplePrinterConfig />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-bold mb-2">Option 1: PrintNode Service (Recommended)</h4>
+              <p className="text-xs text-gray-600 mb-2">Professional thermal printing service</p>
+              <PrintNodeConfig />
+            </div>
+            <div>
+              <h4 className="font-bold mb-2">Option 2: Direct USB Printing</h4>
+              <p className="text-xs text-gray-600 mb-2">Direct browser printing (may have page size issues)</p>
+              <SimplePrinterConfig />
+            </div>
           </div>
         </div>
 

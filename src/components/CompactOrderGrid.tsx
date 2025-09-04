@@ -22,6 +22,7 @@ import FoodCourtReceipt from './FoodCourtReceipt';
 import SimpleReceipt from './SimpleReceipt';
 import { usePrinter } from '@/hooks/usePrinter';
 import { directPrinterService } from '@/services/directPrinterService';
+import { usePrintNode } from '@/hooks/usePrintNode';
 
 interface OrderItem {
   id: string;
@@ -77,6 +78,7 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
   console.log('CompactOrderGrid received orderItems:', orderItems);
   const { toast } = useToast();
   const { isConnected, isPrinting, printBothReceipts } = usePrinter();
+  const { isConnected: printNodeConnected, isPrinting: printNodePrinting, printBothReceipts: printNodePrintBothReceipts } = usePrintNode();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -909,8 +911,12 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                               });
                               
                               if (isFoodCourt) {
-                                // Use direct print service for compact printing
-                                handleDirectPrint(order);
+                                // Use PrintNode if available, otherwise direct print
+                                if (printNodeConnected) {
+                                  printNodePrintBothReceipts(order, orderItems[order.id] || []);
+                                } else {
+                                  handleDirectPrint(order);
+                                }
                               } else {
                                 toast({
                                   title: "Receipt Printing",
@@ -918,7 +924,7 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                                 });
                               }
                             }}
-                            title="Print Receipt (Direct - Compact)"
+                            title={printNodeConnected ? "Print Receipt (PrintNode)" : "Print Receipt (Direct)"}
                           >
                             <Receipt className="w-3 h-3 text-blue-600" />
                           </Button>
