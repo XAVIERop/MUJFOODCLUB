@@ -23,6 +23,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
+import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 
 const Auth = () => {
