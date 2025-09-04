@@ -20,6 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import FoodCourtReceipt from './FoodCourtReceipt';
 import SimpleReceipt from './SimpleReceipt';
+import { useEpsonEpos } from '@/hooks/useEpsonEpos';
 
 interface OrderItem {
   id: string;
@@ -74,6 +75,7 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
 }) => {
   console.log('CompactOrderGrid received orderItems:', orderItems);
   const { toast } = useToast();
+  const { isConnected, isPrinting, printBothReceipts } = useEpsonEpos();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -823,7 +825,7 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                             size="sm"
                             variant="ghost"
                             className="h-6 w-6 p-0 hover:bg-blue-100"
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
                               
                               // For now, hardcode Food Court detection based on cafe ID
@@ -837,12 +839,25 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                                 orderId: order.id,
                                 cafeName: order.cafes?.name,
                                 cafeId: order.cafe_id,
-                                isFoodCourt: isFoodCourt
+                                isFoodCourt: isFoodCourt,
+                                isConnected: isConnected,
+                                isPrinting: isPrinting
                               });
                               
                               if (isFoodCourt) {
-                                setSimpleReceiptOrder(order);
-                                setShowSimpleReceipt(true);
+                                if (isConnected) {
+                                  // Use ePOS service for direct thermal printing
+                                  const success = await printBothReceipts(order, orderItems[order.id] || []);
+                                  if (!success) {
+                                    // Fallback to browser printing if ePOS fails
+                                    setSimpleReceiptOrder(order);
+                                    setShowSimpleReceipt(true);
+                                  }
+                                } else {
+                                  // Fallback to browser printing if printer not connected
+                                  setSimpleReceiptOrder(order);
+                                  setShowSimpleReceipt(true);
+                                }
                               } else {
                                 toast({
                                   title: "Receipt Printing",
@@ -850,7 +865,7 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                                 });
                               }
                             }}
-                            title="Print Receipt (PIXEL DP80)"
+                            title={isConnected ? "Print Receipt (Epson TM-T82)" : "Print Receipt (Browser Fallback)"}
                           >
                             <Receipt className="w-3 h-3 text-blue-600" />
                           </Button>

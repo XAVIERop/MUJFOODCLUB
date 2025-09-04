@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import NotificationCenter from './NotificationCenter';
 import CompactOrderGrid from './CompactOrderGrid';
+import PrinterStatus from './PrinterStatus';
 
 interface Order {
   id: string;
@@ -332,10 +333,8 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
         </div>
       </div>
 
-      {/* TEST ELEMENT - SHOULD ALWAYS SHOW */}
-      <div className="bg-red-500 text-white p-4 rounded-lg text-center font-bold text-lg">
-        🚨 TEST: NEW COMPONENT IS WORKING! 🚨
-      </div>
+      {/* Printer Status */}
+      <PrinterStatus />
 
       {/* Layout Toggle */}
       <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-200">
