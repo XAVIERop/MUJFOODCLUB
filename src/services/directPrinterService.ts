@@ -38,6 +38,8 @@ class DirectPrinterService {
       iframe.style.top = '-9999px';
       iframe.style.width = '80mm';
       iframe.style.height = 'auto';
+      iframe.style.border = 'none';
+      iframe.style.overflow = 'hidden';
       
       document.body.appendChild(iframe);
       
@@ -216,10 +218,30 @@ class DirectPrinterService {
             <title>Receipt</title>
             <style>
               @page { 
-                margin: 0; 
-                size: 80mm auto; 
-                padding: 0;
-                max-height: 150mm;
+                margin: 0 !important; 
+                size: 80mm auto !important; 
+                padding: 0 !important;
+                max-height: 150mm !important;
+                width: 80mm !important;
+              }
+              @media print {
+                body { 
+                  width: 80mm !important; 
+                  max-width: 80mm !important;
+                  margin: 0 !important; 
+                  padding: 1mm !important;
+                  font-size: 9px !important; 
+                  line-height: 1.1 !important;
+                  font-family: 'Courier New', monospace !important;
+                  font-weight: bold !important;
+                  max-height: 150mm !important;
+                  overflow: hidden !important;
+                }
+                * { 
+                  margin: 0 !important; 
+                  padding: 0 !important; 
+                  box-sizing: border-box !important; 
+                }
               }
               * { 
                 margin: 0; 
@@ -377,10 +399,30 @@ class DirectPrinterService {
             <title>Receipt</title>
             <style>
               @page { 
-                margin: 0; 
-                size: 80mm auto; 
-                padding: 0;
-                max-height: 150mm;
+                margin: 0 !important; 
+                size: 80mm auto !important; 
+                padding: 0 !important;
+                max-height: 150mm !important;
+                width: 80mm !important;
+              }
+              @media print {
+                body { 
+                  width: 80mm !important; 
+                  max-width: 80mm !important;
+                  margin: 0 !important; 
+                  padding: 1mm !important;
+                  font-size: 9px !important; 
+                  line-height: 1.1 !important;
+                  font-family: 'Courier New', monospace !important;
+                  font-weight: bold !important;
+                  max-height: 150mm !important;
+                  overflow: hidden !important;
+                }
+                * { 
+                  margin: 0 !important; 
+                  padding: 0 !important; 
+                  box-sizing: border-box !important; 
+                }
               }
               * { 
                 margin: 0; 
