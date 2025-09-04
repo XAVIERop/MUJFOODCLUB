@@ -183,8 +183,12 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                          orderData.cafe?.name === 'FOOD COURT' ||
                          orderData.cafe?.name?.toLowerCase() === 'food court';
       
+      console.log('CompactOrderGrid - Full order data:', orderData);
       console.log('CompactOrderGrid - Cafe name:', orderData.cafe?.name);
       console.log('CompactOrderGrid - Is Food Court:', isFoodCourt);
+      
+      // Temporary alert to verify the data
+      alert(`DEBUG: Cafe name: ${orderData.cafe?.name}, Is Food Court: ${isFoodCourt}`);
       
       if (isFoodCourt) {
         return generateFoodCourtReceipt(orderData, items);
