@@ -17,84 +17,87 @@ interface Cafe {
   average_rating: number | null;
   total_ratings: number | null;
   cuisine_categories: string[] | null;
+  priority: number | null;
 }
 
 interface CafeGridProps {
   showAll?: boolean;
   maxCafes?: number;
+  cafes?: Cafe[]; // Accept cafes as prop
 }
 
-export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 3 }) => {
+export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 3, cafes: propCafes }) => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
 
+  // Debug logging
+  console.log('CafeGrid props received:', { showAll, maxCafes, propCafes: propCafes?.length || 0 });
+  if (propCafes && propCafes.length > 0) {
+    console.log('First 3 cafes from props:', propCafes.slice(0, 3).map(c => c.name));
+  }
+
   useEffect(() => {
-    fetchCafes();
-  }, []);
+    if (propCafes && propCafes.length > 0) {
+      // Use cafes passed from parent
+      console.log('Using cafes from props:', propCafes.map(c => c.name));
+      setCafes(propCafes);
+      setLoading(false);
+    } else {
+      // No cafes provided, show empty state
+      console.log('No cafes provided via props');
+      setCafes([]);
+      setLoading(false);
+    }
+  }, [propCafes]);
 
   const fetchCafes = async () => {
     try {
       console.log('Fetching cafes...');
       
-      // First, try to get all cafes without filtering to see what's available
+      // Use the priority-based ordering function
       let { data, error } = await supabase
-        .from('cafes')
-        .select('*')
-        .order('name');
+        .rpc('get_cafes_ordered');
 
       if (error) {
         console.error('Error fetching cafes:', error);
         throw error;
       }
 
-      console.log('Raw cafes data:', data);
-      console.log('Total cafes found:', data?.length || 0);
+      // Ensure data is an array
+      const cafesData = Array.isArray(data) ? data : [];
+      
+      console.log('Raw cafes data:', cafesData);
+      console.log('Total cafes found:', cafesData.length);
       
       // Log each cafe name to see what's available
-      if (data) {
-        data.forEach((cafe: any, index) => {
-          console.log(`Cafe ${index + 1}:`, {
-            name: cafe.name,
-            accepting_orders: cafe.accepting_orders,
-            average_rating: cafe.average_rating,
-            total_ratings: cafe.total_ratings,
-            cuisine_categories: cafe.cuisine_categories
-          });
+      cafesData.forEach((cafe: any, index) => {
+        console.log(`Cafe ${index + 1}:`, {
+          name: cafe.name,
+          priority: cafe.priority,
+          accepting_orders: cafe.accepting_orders,
+          average_rating: cafe.average_rating,
+          total_ratings: cafe.total_ratings,
+          cuisine_categories: cafe.cuisine_categories
         });
-      }
+      });
 
       // Filter cafes that are accepting orders (if the column exists)
-      let filteredCafes = data || [];
+      let filteredCafes = cafesData;
       
       // Check if accepting_orders column exists and filter accordingly
-      if (data && data.length > 0 && 'accepting_orders' in data[0]) {
+      if (cafesData.length > 0 && 'accepting_orders' in cafesData[0]) {
         console.log('accepting_orders column exists, showing all cafes...');
-        filteredCafes = data; // Show all cafes, don't filter out closed ones
+        filteredCafes = cafesData; // Show all cafes, don't filter out closed ones
         console.log('Showing all cafes:', filteredCafes.length, 'cafes');
       } else {
         console.log('accepting_orders column does not exist, skipping filter');
-        filteredCafes = data;
+        filteredCafes = cafesData;
       }
 
-      // Sort by rating if available, otherwise by name
-      if (filteredCafes.length > 0 && 'average_rating' in filteredCafes[0]) {
-        console.log('average_rating column exists, sorting by rating...');
-        filteredCafes.sort((a: any, b: any) => {
-          const ratingA = a.average_rating || 0;
-          const ratingB = b.average_rating || 0;
-          if (ratingA !== ratingB) {
-            return ratingB - ratingA; // Descending order
-          }
-          return a.name.localeCompare(b.name); // Alphabetical fallback
-        });
-      } else {
-        console.log('average_rating column does not exist, sorting by name...');
-        filteredCafes.sort((a: any, b: any) => a.name.localeCompare(b.name));
-      }
-
-      console.log('Filtered and sorted cafes:', filteredCafes);
+      // Cafes are already ordered by priority, rating, and name from the database function
+      console.log('Filtered cafes (already ordered by priority):', filteredCafes);
       console.log('Final cafe names:', filteredCafes.map(c => c.name));
 
       // Limit cafes if not showing all

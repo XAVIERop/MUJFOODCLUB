@@ -32,6 +32,7 @@ export interface Database {
           average_rating: number | null
           total_ratings: number | null
           cuisine_categories: string[] | null
+          priority: number | null
         }
         Insert: {
           created_at?: string
@@ -50,6 +51,7 @@ export interface Database {
           average_rating?: number | null
           total_ratings?: number | null
           cuisine_categories?: string[] | null
+          priority?: number | null
         }
         Update: {
           created_at?: string
@@ -68,6 +70,7 @@ export interface Database {
           average_rating?: number | null
           total_ratings?: number | null
           cuisine_categories?: string[] | null
+          priority?: number | null
         }
         Relationships: []
       }

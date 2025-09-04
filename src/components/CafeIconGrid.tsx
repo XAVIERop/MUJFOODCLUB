@@ -14,6 +14,7 @@ interface Cafe {
   average_rating: number | null;
   total_ratings: number | null;
   cuisine_categories: string[] | null;
+  priority: number | null;
 }
 
 interface CafeIconGridProps {

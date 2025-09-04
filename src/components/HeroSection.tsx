@@ -49,11 +49,9 @@ const HeroSection = () => {
           .select('*', { count: 'exact', head: true })
           .eq('user_type', 'student');
 
-        // Fetch all cafes for search
+        // Fetch all cafes for search using priority ordering
         const { data: cafesData } = await supabase
-          .from('cafes')
-          .select('id, name')
-          .order('name');
+          .rpc('get_cafes_ordered');
 
         // Fetch all menu items for food search
         const { data: menuData } = await supabase

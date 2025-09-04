@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import LoyaltyProgram from "@/components/LoyaltyProgram";
-import { CafeGrid } from '../components/CafeGrid';
+import { FeaturedCafeGrid } from '../components/FeaturedCafeGrid';
 import CafeIconGrid from '../components/CafeIconGrid';
 import { Badge } from "@/components/ui/badge";
 import { supabase } from '../integrations/supabase/client';
@@ -19,6 +19,7 @@ interface Cafe {
   average_rating: number | null;
   total_ratings: number | null;
   cuisine_categories: string[] | null;
+  priority: number | null;
 }
 
 const Index = () => {
@@ -31,19 +32,27 @@ const Index = () => {
 
   const fetchCafes = async () => {
     try {
+      console.log('🚀 Index.tsx: Fetching cafes using get_cafes_ordered...', new Date().toISOString());
+      
+      // Use the priority-based ordering function
       const { data, error } = await supabase
-        .from('cafes')
-        .select('*')
-        .order('name');
+        .rpc('get_cafes_ordered');
 
       if (error) {
-        console.error('Error fetching cafes:', error);
+        console.error('❌ Index.tsx: Error fetching cafes:', error);
+        console.error('❌ Error details:', error.message, error.details, error.hint);
         return;
       }
 
-      setCafes(data || []);
+      const cafesData = Array.isArray(data) ? data : [];
+      console.log('✅ Index.tsx: Cafes fetched successfully:', cafesData.length, 'cafes');
+      if (cafesData.length > 0) {
+        console.log('✅ Index.tsx: First 5 cafes with priorities:', cafesData.slice(0, 5).map(c => `${c.name} (Priority: ${c.priority}, Rating: ${c.average_rating})`));
+      }
+
+      setCafes(cafesData);
     } catch (error) {
-      console.error('Error fetching cafes:', error);
+      console.error('❌ Index.tsx: Exception fetching cafes:', error);
     } finally {
       setLoading(false);
     }
@@ -79,7 +88,7 @@ const Index = () => {
             )}
 
             {/* Limited Cafe Grid - Show only 3 cafes */}
-            <CafeGrid showAll={false} maxCafes={3} />
+            <FeaturedCafeGrid showAll={false} maxCafes={3} cafes={cafes} />
           </div>
         </section>
         
