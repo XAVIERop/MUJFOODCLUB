@@ -41,6 +41,12 @@ interface Order {
   delivery_block: string;
   customer_name?: string;
   phone_number?: string;
+  cafe_id: string;
+  cafe?: {
+    id: string;
+    name: string;
+    type: string;
+  };
   user?: {
     full_name: string;
     phone: string | null;
@@ -64,6 +70,7 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
   onStatusUpdate,
   loading = false
 }) => {
+  console.log('CompactOrderGrid received orderItems:', orderItems);
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
@@ -178,9 +185,6 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
       
       console.log('CompactOrderGrid - Cafe name:', orderData.cafe?.name);
       console.log('CompactOrderGrid - Is Food Court:', isFoodCourt);
-      
-      // Temporary alert to verify this function is being called
-      alert(`DEBUG: Cafe name: ${orderData.cafe?.name}, Is Food Court: ${isFoodCourt}`);
       
       if (isFoodCourt) {
         return generateFoodCourtReceipt(orderData, items);
@@ -564,17 +568,28 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
       `;
     };
 
-    // Open print window
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      const thermalHTML = generateThermalHTML(order);
-      printWindow.document.write(thermalHTML);
-      printWindow.document.close();
+    // Print directly to local printer
+    const thermalHTML = generateThermalHTML(order);
+    
+    // Create a hidden iframe for printing
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.top = '-1000px';
+    iframe.style.left = '-1000px';
+    iframe.style.width = '80mm';
+    iframe.style.height = 'auto';
+    document.body.appendChild(iframe);
+    
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (iframeDoc) {
+      iframeDoc.open();
+      iframeDoc.write(thermalHTML);
+      iframeDoc.close();
       
       // Auto-print after a short delay
       setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
+        iframe.contentWindow?.print();
+        document.body.removeChild(iframe);
       }, 500);
     }
     

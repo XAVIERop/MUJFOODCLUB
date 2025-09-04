@@ -26,6 +26,11 @@ interface Order {
   cafe_id: string;
   points_credited: boolean;
   phone_number?: string;
+  cafe?: {
+    id: string;
+    name: string;
+    type: string;
+  };
 }
 
 interface OrderItem {
@@ -61,7 +66,10 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          cafe:cafes(id, name, type)
+        `)
         .eq('cafe_id', cafeId)
         .order('created_at', { ascending: false });
 
@@ -325,6 +333,7 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
       {useCompactLayout && (
         <CompactOrderGrid
           orders={orders}
+          orderItems={orderItems}
           onOrderSelect={handleOrderSelect}
           onStatusUpdate={handleCompactStatusUpdate}
           loading={loading}
