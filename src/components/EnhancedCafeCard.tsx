@@ -179,7 +179,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
               ? 'group-hover:text-yellow-300 drop-shadow-lg' 
               : 'group-hover:text-orange-300'
           }`}>
-            {isExclusive && '👑 '}{cafe.name}
+            {cafe.name}
           </h3>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1">
