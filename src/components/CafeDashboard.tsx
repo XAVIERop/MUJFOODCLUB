@@ -334,11 +334,18 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
         </div>
       </div>
 
-      {/* Printer Configuration and Status */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <PrinterConfig />
-        <div className="flex items-center">
-          <PrinterStatus />
+      {/* Printer Configuration and Status - PROMINENT */}
+      <div className="bg-yellow-50 border-2 border-yellow-200 p-4 rounded-lg">
+        <h3 className="text-lg font-bold text-yellow-800 mb-4">🖨️ Printer Setup Required</h3>
+        <p className="text-sm text-yellow-700 mb-4">
+          Configure your Epson TM-T82 thermal printer to enable direct printing. 
+          If you don't see the configuration panel below, please refresh the page.
+        </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <PrinterConfig />
+          <div className="flex items-center">
+            <PrinterStatus />
+          </div>
         </div>
       </div>
 
