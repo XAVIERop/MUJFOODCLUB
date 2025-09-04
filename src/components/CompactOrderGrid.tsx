@@ -18,6 +18,8 @@ import {
   Download
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import FoodCourtReceipt from './FoodCourtReceipt';
+import SimpleReceipt from './SimpleReceipt';
 
 interface OrderItem {
   id: string;
@@ -75,6 +77,10 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
+  const [showSimpleReceipt, setShowSimpleReceipt] = useState(false);
+  const [simpleReceiptOrder, setSimpleReceiptOrder] = useState<Order | null>(null);
 
   // Calculate time elapsed since order creation
   const getTimeElapsed = (createdAt: string): string => {
@@ -819,7 +825,19 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                             className="h-6 w-6 p-0 hover:bg-blue-100"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handlePrintReceipt(order);
+                              const isFoodCourt = order.cafes?.name?.toLowerCase().includes('food court') || 
+                                                 order.cafes?.name === 'FOOD COURT' ||
+                                                 order.cafes?.name?.toLowerCase() === 'food court';
+                              
+                              if (isFoodCourt) {
+                                setSimpleReceiptOrder(order);
+                                setShowSimpleReceipt(true);
+                              } else {
+                                toast({
+                                  title: "Receipt Printing",
+                                  description: "Receipt printing for other cafes will be available soon!",
+                                });
+                              }
                             }}
                             title="Print Receipt (PIXEL DP80)"
                           >
@@ -1089,6 +1107,18 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
             </div>
           </CardContent>
         </Card>
+      )}
+      
+      {/* Simple Receipt Component */}
+      {showSimpleReceipt && simpleReceiptOrder && (
+        <SimpleReceipt 
+          order={simpleReceiptOrder} 
+          orderItems={orderItems[simpleReceiptOrder.id] || []}
+          onClose={() => {
+            setShowSimpleReceipt(false);
+            setSimpleReceiptOrder(null);
+          }}
+        />
       )}
     </div>
   );
