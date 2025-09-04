@@ -169,16 +169,36 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
         <head>
           <title>Receipt - ${orderData.order_number}</title>
           <style>
+            @page {
+              size: 80mm auto;
+              margin: 0;
+            }
+            
             @media print {
-              body { 
-                width: 80mm; 
-                margin: 0; 
-                padding: 5mm;
-                font-size: 12px; 
-                font-family: 'Courier New', monospace;
-                line-height: 1.2;
+              * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
               }
-              .no-print { display: none; }
+              
+              body { 
+                width: 80mm !important;
+                max-width: 80mm !important;
+                margin: 0 !important; 
+                padding: 5mm !important;
+                font-size: 12px !important; 
+                font-family: 'Courier New', monospace !important;
+                line-height: 1.2 !important;
+                box-sizing: border-box !important;
+              }
+              
+              .receipt-container {
+                width: 80mm !important;
+                max-width: 80mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+              }
+              
+              .no-print { display: none !important; }
             }
             
             body {
@@ -348,16 +368,36 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
         <head>
           <title>Receipt - ${orderData.order_number}</title>
           <style>
+            @page {
+              size: 80mm auto;
+              margin: 0;
+            }
+            
             @media print {
-              body { 
-                width: 80mm; 
-                margin: 0; 
-                padding: 5mm;
-                font-size: 12px; 
-                font-family: 'Courier New', monospace;
-                line-height: 1.2;
+              * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
               }
-              .no-print { display: none; }
+              
+              body { 
+                width: 80mm !important;
+                max-width: 80mm !important;
+                margin: 0 !important; 
+                padding: 5mm !important;
+                font-size: 12px !important; 
+                font-family: 'Courier New', monospace !important;
+                line-height: 1.2 !important;
+                box-sizing: border-box !important;
+              }
+              
+              .receipt-container {
+                width: 80mm !important;
+                max-width: 80mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+              }
+              
+              .no-print { display: none !important; }
             }
             
             body {
