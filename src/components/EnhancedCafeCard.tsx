@@ -29,6 +29,10 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
 
+  // Check if this cafe is exclusive (Chatkara or Food Court)
+  const isExclusive = cafe.name.toLowerCase().includes('chatkara') || 
+                     cafe.name.toLowerCase().includes('food court');
+
   const getCafeImage = () => {
     
     // Map cafe names to their respective card images (preferred) or logo images
@@ -109,11 +113,28 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
 
   return (
     <div 
-      className={`relative bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group cursor-pointer ${
+      className={`relative bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer ${
+        isExclusive 
+          ? 'border-2 border-yellow-400 shadow-yellow-200/50 hover:shadow-yellow-300/70' 
+          : 'border border-gray-100'
+      } ${
         !cafe.accepting_orders ? 'opacity-75 grayscale' : ''
       }`}
       onClick={() => handleViewMenu(cafe.id)}
+      style={isExclusive ? {
+        background: 'linear-gradient(135deg, #fef3c7 0%, #ffffff 20%, #ffffff 80%, #fef3c7 100%)',
+        borderImage: 'linear-gradient(135deg, #f59e0b, #d97706, #b45309) 1'
+      } : {}}
     >
+      {/* Exclusive Badge */}
+      {isExclusive && (
+        <div className="absolute top-3 left-3 z-20">
+          <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-900 font-bold text-xs px-3 py-1 shadow-lg border border-yellow-300">
+            ⭐ EXCLUSIVE
+          </Badge>
+        </div>
+      )}
+
       {/* Closed Cafe Overlay */}
       {!cafe.accepting_orders && (
         <div className="absolute inset-0 bg-black/10 z-10 pointer-events-none" />
@@ -153,8 +174,12 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
         
         {/* Cafe Name and Rating - Bottom Left */}
         <div className="absolute bottom-3 left-3 right-3">
-          <h3 className="text-xl font-bold text-white mb-1 group-hover:text-orange-300 transition-colors">
-            {cafe.name}
+          <h3 className={`text-xl font-bold text-white mb-1 transition-colors ${
+            isExclusive 
+              ? 'group-hover:text-yellow-300 drop-shadow-lg' 
+              : 'group-hover:text-orange-300'
+          }`}>
+            {isExclusive && '👑 '}{cafe.name}
           </h3>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1">
