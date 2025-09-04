@@ -139,19 +139,14 @@ DECLARE
   monthly_spent DECIMAL;
   last_reset TIMESTAMP WITH TIME ZONE;
   current_month_start TIMESTAMP WITH TIME ZONE;
+  total_spent DECIMAL;
+  new_tier TEXT;
 BEGIN
   -- Get user tier and maintenance requirements
   SELECT loyalty_tier, monthly_spending, last_maintenance_reset
   INTO user_tier, monthly_spent, last_reset
   FROM public.profiles
   WHERE id = user_id;
-  
-  -- Set maintenance requirements based on tier
-  CASE user_tier
-    WHEN 'connoisseur' THEN maintenance_required := 5000;
-    WHEN 'gourmet' THEN maintenance_required := 2000;
-    ELSE RETURN TRUE; -- Foodie tier has no maintenance requirement
-  END CASE;
   
   -- Check if we need to reset monthly spending (new month)
   current_month_start := DATE_TRUNC('month', NOW());
@@ -163,6 +158,13 @@ BEGIN
     
     monthly_spent := 0;
   END IF;
+  
+  -- Set maintenance requirements based on tier
+  CASE user_tier
+    WHEN 'connoisseur' THEN maintenance_required := 5000;
+    WHEN 'gourmet' THEN maintenance_required := 2000;
+    ELSE RETURN TRUE; -- Foodie tier has no maintenance requirement
+  END CASE;
   
   -- Check if maintenance requirement is met
   IF monthly_spent < maintenance_required THEN
@@ -229,6 +231,74 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Create function to check tier maintenance only (separate from points redemption)
+CREATE OR REPLACE FUNCTION check_tier_maintenance_only(user_id UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+  user_tier TEXT;
+  maintenance_required DECIMAL;
+  monthly_spent DECIMAL;
+  last_reset TIMESTAMP WITH TIME ZONE;
+  current_month_start TIMESTAMP WITH TIME ZONE;
+BEGIN
+  -- Get user tier and maintenance requirements
+  SELECT loyalty_tier, monthly_spending, last_maintenance_reset
+  INTO user_tier, monthly_spent, last_reset
+  FROM public.profiles
+  WHERE id = user_id;
+  
+  -- Check if we need to reset monthly spending (new month)
+  current_month_start := DATE_TRUNC('month', NOW());
+  IF last_reset < current_month_start THEN
+    -- Reset monthly spending for new month
+    UPDATE public.profiles
+    SET monthly_spending = 0, last_maintenance_reset = NOW()
+    WHERE id = user_id;
+    
+    monthly_spent := 0;
+  END IF;
+  
+  -- Set maintenance requirements based on tier
+  CASE user_tier
+    WHEN 'connoisseur' THEN maintenance_required := 5000;
+    WHEN 'gourmet' THEN maintenance_required := 2000;
+    ELSE RETURN TRUE; -- Foodie tier has no maintenance requirement
+  END CASE;
+  
+  -- Check if maintenance requirement is met
+  IF monthly_spent < maintenance_required THEN
+    -- Downgrade user tier
+    CASE user_tier
+      WHEN 'connoisseur' THEN
+        UPDATE public.profiles
+        SET loyalty_tier = 'gourmet'
+        WHERE id = user_id;
+      WHEN 'gourmet' THEN
+        UPDATE public.profiles
+        SET loyalty_tier = 'foodie'
+        WHERE id = user_id;
+    END CASE;
+    
+    -- Log tier downgrade
+    INSERT INTO public.loyalty_transactions (
+      user_id,
+      points_change,
+      transaction_type,
+      description
+    ) VALUES (
+      user_id,
+      0,
+      'tier_downgrade',
+      'Tier downgraded due to maintenance requirement not met'
+    );
+    
+    RETURN FALSE;
+  END IF;
+  
+  RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION get_tier_by_spend(DECIMAL) TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION calculate_new_points(DECIMAL, TEXT, BOOLEAN, INTEGER) TO authenticated, anon;
@@ -236,6 +306,7 @@ GRANT EXECUTE ON FUNCTION calculate_loyalty_discount(DECIMAL, TEXT) TO authentic
 GRANT EXECUTE ON FUNCTION calculate_max_redeemable_points(DECIMAL) TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION update_user_tier(UUID) TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION check_tier_maintenance(UUID) TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION check_tier_maintenance_only(UUID) TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION track_monthly_spending(UUID, DECIMAL) TO authenticated, anon;
 
 -- Update existing users to have correct tiers based on their spending

@@ -322,9 +322,14 @@ const Checkout = () => {
           // Enhanced rewards system is available
           
           // Track maintenance spending for tier maintenance
-          await (supabase.rpc as any)('track_maintenance_spending', {
+          await (supabase.rpc as any)('track_monthly_spending', {
             user_id: user.id,
             order_amount: totalAmount
+          });
+
+          // Check tier maintenance (only based on spending, not points redemption)
+          await (supabase.rpc as any)('check_tier_maintenance_only', {
+            user_id: user.id
           });
 
           // Handle new user first order bonus

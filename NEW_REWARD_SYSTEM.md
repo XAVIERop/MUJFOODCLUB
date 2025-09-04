@@ -52,9 +52,10 @@ The new reward system implements automatic tier-based discounts with a 1:1 point
 - **Foodie**: No maintenance required
 
 ### **Downgrade Process**
-- **Automatic Check**: Every order placement
+- **Automatic Check**: Every order placement (based on spending only)
 - **Grace Period**: None (immediate downgrade)
 - **Downgrade Path**: Connoisseur → Gourmet → Foodie
+- **Important**: Points redemption does NOT affect tier maintenance
 
 ## 🛒 **Checkout Experience**
 
@@ -83,6 +84,7 @@ The new reward system implements automatic tier-based discounts with a 1:1 point
 - **Points Discount**: ₹25 (not ₹4922!)
 - **Final Amount**: ₹225
 - **Protection**: User only loses 25 points, not all 4922
+- **Tier Maintenance**: Based on ₹250 spending, not points redemption
 
 ## 🎓 **Student Benefits**
 
@@ -115,8 +117,9 @@ The new reward system implements automatic tier-based discounts with a 1:1 point
 - `calculate_new_points()`: Calculate points based on tier and order amount
 - `calculate_loyalty_discount()`: Calculate automatic discount
 - `update_user_tier()`: Update user tier based on spending
-- `check_tier_maintenance()`: Check and enforce maintenance requirements
+- `check_tier_maintenance_only()`: Check tier maintenance based on spending only
 - `track_monthly_spending()`: Track monthly spending for maintenance
+- `calculate_max_redeemable_points()`: Calculate maximum points that can be redeemed
 
 ### **Frontend Changes**
 - **Automatic Discount Display**: Shows loyalty discount in checkout
@@ -137,6 +140,19 @@ The new reward system implements automatic tier-based discounts with a 1:1 point
 3. Update points calculation logic
 4. Modify checkout UI to show loyalty discounts
 
+## 🔒 **Tier Maintenance vs Points Redemption**
+
+### **Separate Systems**
+- **Tier Maintenance**: Based on monthly spending only
+- **Points Redemption**: Independent of tier maintenance
+- **No Interference**: Redeeming points does NOT affect your tier
+
+### **Example Scenario**
+- **User**: Connoisseur tier (₹5000+ spending)
+- **Monthly Spending**: ₹6000 (maintains tier)
+- **Points Redeemed**: 1000 points
+- **Result**: Tier remains Connoisseur (based on spending, not points)
+
 ## 🎯 **Key Advantages**
 
 1. **Student-Friendly**: Simple 1:1 point system
@@ -145,6 +161,7 @@ The new reward system implements automatic tier-based discounts with a 1:1 point
 4. **Fair**: Higher spending = better rewards
 5. **Maintenance**: Ensures active engagement
 6. **Transparent**: Clear tier requirements and benefits
+7. **Protected**: Points redemption doesn't affect tier status
 
 ## 🚀 **Next Steps**
 
