@@ -93,6 +93,11 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
       console.log('CafeDashboard - Cafe data:', cafeData);
       console.log('CafeDashboard - Orders with cafe data:', ordersWithCafe);
       
+      // Debug: Show cafe data in alert
+      if (cafeData) {
+        alert(`CafeDashboard DEBUG: Cafe name: "${cafeData.name}", Cafe ID: "${cafeData.id}"`);
+      }
+      
       setOrders(ordersWithCafe);
 
       // Fetch order items for each order

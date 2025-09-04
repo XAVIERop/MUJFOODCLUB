@@ -825,9 +825,20 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                             className="h-6 w-6 p-0 hover:bg-blue-100"
                             onClick={(e) => {
                               e.stopPropagation();
+                              
+                              // Debug: Show what cafe data we have
+                              alert(`DEBUG: Cafe name: "${order.cafes?.name}", Cafe ID: "${order.cafe_id}"`);
+                              
                               const isFoodCourt = order.cafes?.name?.toLowerCase().includes('food court') || 
                                                  order.cafes?.name === 'FOOD COURT' ||
                                                  order.cafes?.name?.toLowerCase() === 'food court';
+                              
+                              console.log('Receipt button clicked:', {
+                                orderId: order.id,
+                                cafeName: order.cafes?.name,
+                                cafeId: order.cafe_id,
+                                isFoodCourt: isFoodCourt
+                              });
                               
                               if (isFoodCourt) {
                                 setSimpleReceiptOrder(order);
