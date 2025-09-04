@@ -23,6 +23,7 @@ import SimpleReceipt from './SimpleReceipt';
 import { usePrinter } from '@/hooks/usePrinter';
 import { directPrinterService } from '@/services/directPrinterService';
 import { usePrintNode } from '@/hooks/usePrintNode';
+import { directThermalPrinterService } from '@/services/directThermalPrinter';
 
 interface OrderItem {
   id: string;
@@ -677,6 +678,69 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
     }
   };
 
+  // New direct thermal print function that completely bypasses browser
+  const handleDirectThermalPrint = async (order: Order) => {
+    try {
+      // Get order items for this order
+      const items = orderItems[order.id] || [];
+      
+      if (items.length === 0) {
+        toast({
+          title: "No Items Found",
+          description: "Could not find items for this order",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Print KOT first
+      const kotSuccess = await directThermalPrinterService.printReceipt({
+        type: 'kot',
+        orderData: order,
+        orderItems: items
+      });
+
+      if (kotSuccess) {
+        toast({
+          title: "KOT Sent to Printer",
+          description: "Kitchen Order Ticket sent directly to thermal printer",
+          variant: "default",
+        });
+      }
+
+      // Wait a moment then print customer receipt
+      setTimeout(async () => {
+        const customerSuccess = await directThermalPrinterService.printReceipt({
+          type: 'customer',
+          orderData: order,
+          orderItems: items
+        });
+
+        if (customerSuccess) {
+          toast({
+            title: "Customer Receipt Sent to Printer",
+            description: "Customer receipt sent directly to thermal printer",
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: "Print Failed",
+            description: "Could not send customer receipt to printer",
+            variant: "destructive",
+          });
+        }
+      }, 1000);
+
+    } catch (error) {
+      console.error('Direct thermal print error:', error);
+      toast({
+        title: "Print Error",
+        description: "Error sending receipts to thermal printer",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDownloadCancelledOrdersCSV = () => {
     try {
       const cancelledOrders = ordersByStatus.cancelled || [];
@@ -911,12 +975,8 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                               });
                               
                               if (isFoodCourt) {
-                                // Use PrintNode if available, otherwise direct print
-                                if (printNodeConnected) {
-                                  printNodePrintBothReceipts(order, orderItems[order.id] || []);
-                                } else {
-                                  handleDirectPrint(order);
-                                }
+                                // Use direct thermal printer service (bypasses browser completely)
+                                handleDirectThermalPrint(order);
                               } else {
                                 toast({
                                   title: "Receipt Printing",
@@ -924,7 +984,7 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                                 });
                               }
                             }}
-                            title={printNodeConnected ? "Print Receipt (PrintNode)" : "Print Receipt (Direct)"}
+                            title="Print Receipt (Direct Thermal - No Browser Dialog)"
                           >
                             <Receipt className="w-3 h-3 text-blue-600" />
                           </Button>
