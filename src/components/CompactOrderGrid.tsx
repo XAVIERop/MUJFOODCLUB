@@ -826,9 +826,6 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                             onClick={(e) => {
                               e.stopPropagation();
                               
-                              // Debug: Show what cafe data we have
-                              alert(`DEBUG: Cafe name: "${order.cafes?.name}", Cafe ID: "${order.cafe_id}"`);
-                              
                               // For now, hardcode Food Court detection based on cafe ID
                               // TODO: Fix cafe data fetching issue
                               const isFoodCourt = order.cafe_id === '3e5955ba-9b90-48ce-9d07-cc686678a10e' ||

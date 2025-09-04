@@ -100,30 +100,11 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
       console.log('CafeDashboard - Cafe data:', cafeData);
       console.log('CafeDashboard - Orders with cafe data:', ordersWithCafe);
       
-      // Debug: Show cafe data in alert
+      // Debug logging (removed alerts for cleaner UX)
       if (cafeData && cafeData.name) {
-        alert(`CafeDashboard DEBUG: Cafe name: "${cafeData.name}", Cafe ID: "${cafeData.id}"`);
+        console.log(`CafeDashboard: Cafe name: "${cafeData.name}", Cafe ID: "${cafeData.id}"`);
       } else {
-        // If cafe data is null or name is undefined, let's check what cafes exist
-        const { data: allCafes } = await supabase
-          .from('cafes')
-          .select('id, name, type')
-          .limit(10);
-        
-        console.log('All cafes in database:', allCafes);
-        
-        // Also try to find Food Court by name
-        const { data: foodCourtCafe } = await supabase
-          .from('cafes')
-          .select('id, name, type')
-          .ilike('name', '%food court%')
-          .single();
-        
-        console.log('Food Court cafe found by name:', foodCourtCafe);
-        
-        alert(`Cafe data issue! Looking for cafe ID: ${cafeId}. 
-        Available cafes: ${JSON.stringify(allCafes?.map(c => ({id: c.id, name: c.name})))}
-        Food Court by name: ${JSON.stringify(foodCourtCafe)}`);
+        console.log('Cafe data issue - cafe name is undefined, using fallback');
       }
       
       setOrders(ordersWithCafe);
