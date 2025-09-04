@@ -179,6 +179,9 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
       console.log('CompactOrderGrid - Cafe name:', orderData.cafe?.name);
       console.log('CompactOrderGrid - Is Food Court:', isFoodCourt);
       
+      // Temporary alert to verify this function is being called
+      alert(`DEBUG: Cafe name: ${orderData.cafe?.name}, Is Food Court: ${isFoodCourt}`);
+      
       if (isFoodCourt) {
         return generateFoodCourtReceipt(orderData, items);
       } else {
