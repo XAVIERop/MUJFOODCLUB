@@ -40,28 +40,34 @@ const SimpleReceipt: React.FC<SimpleReceiptProps> = ({ order, orderItems, onClos
   const printBothReceipts = () => {
     // Print KOT Receipt first
     const kotHTML = generateKOTReceipt();
-    const kotWindow = window.open('', '_blank', 'width=80mm,height=auto');
+    const kotWindow = window.open('', '_blank', 'width=300,height=400');
     if (kotWindow) {
       kotWindow.document.write(kotHTML);
       kotWindow.document.close();
-      setTimeout(() => {
-        kotWindow.print();
-        kotWindow.close();
-        
-        // Print Customer Receipt after KOT is done
+      
+      // Wait for content to load, then print
+      kotWindow.onload = () => {
         setTimeout(() => {
-          const customerHTML = generateCustomerReceipt();
-          const customerWindow = window.open('', '_blank', 'width=80mm,height=auto');
-          if (customerWindow) {
-            customerWindow.document.write(customerHTML);
-            customerWindow.document.close();
-            setTimeout(() => {
-              customerWindow.print();
-              customerWindow.close();
-            }, 500);
-          }
-        }, 1500); // Wait longer for KOT to finish
-      }, 500);
+          kotWindow.print();
+          
+          // Print Customer Receipt after KOT is done
+          setTimeout(() => {
+            kotWindow.close();
+            const customerHTML = generateCustomerReceipt();
+            const customerWindow = window.open('', '_blank', 'width=300,height=400');
+            if (customerWindow) {
+              customerWindow.document.write(customerHTML);
+              customerWindow.document.close();
+              customerWindow.onload = () => {
+                setTimeout(() => {
+                  customerWindow.print();
+                  setTimeout(() => customerWindow.close(), 1000);
+                }, 500);
+              };
+            }
+          }, 2000);
+        }, 1000);
+      };
     }
   };
 
@@ -85,18 +91,20 @@ const SimpleReceipt: React.FC<SimpleReceiptProps> = ({ order, orderItems, onClos
         <meta charset="UTF-8">
         <title>KOT Receipt</title>
         <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { margin: 0; padding: 0; font-family: 'Courier New', monospace; }
           @media print {
             body { margin: 0; padding: 0; }
-            .receipt { width: 80mm; font-family: monospace; font-size: 11px; font-weight: bold; }
+            .receipt { width: 80mm !important; font-family: 'Courier New', monospace !important; font-size: 11px !important; font-weight: bold !important; }
             @page { margin: 0; size: 80mm auto; }
           }
-          .receipt { width: 80mm; font-family: monospace; font-size: 11px; font-weight: bold; padding: 2px; }
-          .center { text-align: center; }
-          .right { text-align: right; }
+          .receipt { width: 80mm; font-family: 'Courier New', monospace; font-size: 11px; font-weight: bold; padding: 2px; }
+          .center { text-align: center; font-weight: bold; }
+          .right { text-align: right; font-weight: bold; }
           .separator { border-top: 1px dashed #000; margin: 2px 0; }
-          .item-row { display: flex; justify-content: space-between; margin: 1px 0; }
-          .item-name { flex: 1; }
-          .item-qty { width: 20px; text-align: right; }
+          .item-row { display: flex; justify-content: space-between; margin: 1px 0; font-weight: bold; }
+          .item-name { flex: 1; font-weight: bold; }
+          .item-qty { width: 20px; text-align: right; font-weight: bold; }
         </style>
       </head>
       <body>
@@ -148,21 +156,23 @@ const SimpleReceipt: React.FC<SimpleReceiptProps> = ({ order, orderItems, onClos
         <meta charset="UTF-8">
         <title>Customer Receipt</title>
         <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { margin: 0; padding: 0; font-family: 'Courier New', monospace; }
           @media print {
             body { margin: 0; padding: 0; }
-            .receipt { width: 80mm; font-family: monospace; font-size: 10px; font-weight: bold; }
+            .receipt { width: 80mm !important; font-family: 'Courier New', monospace !important; font-size: 10px !important; font-weight: bold !important; }
             @page { margin: 0; size: 80mm auto; }
           }
-          .receipt { width: 80mm; font-family: monospace; font-size: 10px; font-weight: bold; padding: 2px; }
-          .center { text-align: center; }
-          .right { text-align: right; }
+          .receipt { width: 80mm; font-family: 'Courier New', monospace; font-size: 10px; font-weight: bold; padding: 2px; }
+          .center { text-align: center; font-weight: bold; }
+          .right { text-align: right; font-weight: bold; }
           .separator { border-top: 1px solid #000; margin: 2px 0; }
-          .item-row { display: flex; justify-content: space-between; margin: 1px 0; }
-          .item-name { flex: 1; }
-          .item-qty { width: 20px; text-align: center; }
-          .item-price { width: 35px; text-align: right; }
-          .item-amount { width: 45px; text-align: right; }
-          .total-row { display: flex; justify-content: space-between; margin: 1px 0; }
+          .item-row { display: flex; justify-content: space-between; margin: 1px 0; font-weight: bold; }
+          .item-name { flex: 1; font-weight: bold; }
+          .item-qty { width: 20px; text-align: center; font-weight: bold; }
+          .item-price { width: 35px; text-align: right; font-weight: bold; }
+          .item-amount { width: 45px; text-align: right; font-weight: bold; }
+          .total-row { display: flex; justify-content: space-between; margin: 1px 0; font-weight: bold; }
           .grand-total { font-weight: bold; font-size: 12px; }
         </style>
       </head>
