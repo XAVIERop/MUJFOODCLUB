@@ -67,7 +67,7 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
       // First get the cafe information
       const { data: cafeData, error: cafeError } = await supabase
         .from('cafes')
-        .select('id, name, type')
+        .select('*')
         .eq('id', cafeId)
         .single();
 
@@ -77,6 +77,10 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
       }
       
       console.log('Raw cafe data from database:', cafeData);
+      console.log('Cafe data type:', typeof cafeData);
+      console.log('Cafe data keys:', cafeData ? Object.keys(cafeData) : 'null');
+      console.log('Cafe name value:', cafeData?.name);
+      console.log('Cafe name type:', typeof cafeData?.name);
 
       // Then get orders
       const { data, error } = await supabase
@@ -97,17 +101,29 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
       console.log('CafeDashboard - Orders with cafe data:', ordersWithCafe);
       
       // Debug: Show cafe data in alert
-      if (cafeData) {
+      if (cafeData && cafeData.name) {
         alert(`CafeDashboard DEBUG: Cafe name: "${cafeData.name}", Cafe ID: "${cafeData.id}"`);
       } else {
-        // If cafe data is null, let's check what cafes exist
+        // If cafe data is null or name is undefined, let's check what cafes exist
         const { data: allCafes } = await supabase
           .from('cafes')
           .select('id, name, type')
           .limit(10);
         
         console.log('All cafes in database:', allCafes);
-        alert(`Cafe data is null! Looking for cafe ID: ${cafeId}. Available cafes: ${JSON.stringify(allCafes?.map(c => ({id: c.id, name: c.name})))}`);
+        
+        // Also try to find Food Court by name
+        const { data: foodCourtCafe } = await supabase
+          .from('cafes')
+          .select('id, name, type')
+          .ilike('name', '%food court%')
+          .single();
+        
+        console.log('Food Court cafe found by name:', foodCourtCafe);
+        
+        alert(`Cafe data issue! Looking for cafe ID: ${cafeId}. 
+        Available cafes: ${JSON.stringify(allCafes?.map(c => ({id: c.id, name: c.name})))}
+        Food Court by name: ${JSON.stringify(foodCourtCafe)}`);
       }
       
       setOrders(ordersWithCafe);
