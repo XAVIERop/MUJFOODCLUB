@@ -20,7 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import FoodCourtReceipt from './FoodCourtReceipt';
 import SimpleReceipt from './SimpleReceipt';
-import { useEpsonEpos } from '@/hooks/useEpsonEpos';
+import { usePrinter } from '@/hooks/usePrinter';
 
 interface OrderItem {
   id: string;
@@ -75,7 +75,7 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
 }) => {
   console.log('CompactOrderGrid received orderItems:', orderItems);
   const { toast } = useToast();
-  const { isConnected, isPrinting, printBothReceipts } = useEpsonEpos();
+  const { isConnected, isPrinting, printBothReceipts } = usePrinter();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
