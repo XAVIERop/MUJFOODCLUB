@@ -325,14 +325,7 @@ export class PrintNodeService {
    */
   async testPrint(printerId?: number): Promise<PrintJobResult> {
     try {
-      // ESC/POS commands
-      const ESC = '\x1B';
-      const BOLD_ON = ESC + '\x45\x01';  // Turn on bold
-      const BOLD_OFF = ESC + '\x45\x00'; // Turn off bold
-      const CUT_PAPER = '\x1D\x56\x00';  // Full cut
-      const FEED_PAPER = '\x0A';         // Line feed
-      
-      const testReceipt = `${BOLD_ON}MUJ FOOD CLUB${BOLD_OFF}
+      const testReceipt = `**MUJ FOOD CLUB**
 Test Print
 ========================
 This is a test print from
@@ -346,7 +339,8 @@ PrintNode is working!
 ========================
 Thank you for using
 MUJFOODCLUB!
-${FEED_PAPER}${FEED_PAPER}${CUT_PAPER}`;
+
+`;
 
       // Get printer ID
       let targetPrinterId = printerId;
@@ -398,7 +392,7 @@ ${FEED_PAPER}${FEED_PAPER}${CUT_PAPER}`;
   }
 
   /**
-   * Format customer receipt for thermal printing with ESC/POS commands
+   * Format customer receipt for thermal printing with simple formatting
    */
   private formatReceiptForThermal(data: ReceiptData): string {
     const { order_number, cafe_name, customer_name, customer_phone, items, final_amount, payment_method } = data;
@@ -416,14 +410,8 @@ ${FEED_PAPER}${FEED_PAPER}${CUT_PAPER}`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // ESC/POS commands
-    const ESC = '\x1B';
-    const BOLD_ON = ESC + '\x45\x01';  // Turn on bold
-    const BOLD_OFF = ESC + '\x45\x00'; // Turn off bold
-    const CUT_PAPER = '\x1D\x56\x00';  // Full cut
-    const FEED_PAPER = '\x0A';         // Line feed
-    
-    let receipt = `${BOLD_ON}        THE FOOD COURT CO${BOLD_OFF}
+    // Simple formatting - use ** for emphasis instead of ESC/POS commands
+    let receipt = `        **THE FOOD COURT CO**
 (MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
         GSTIN : 08ADNPG4024A1Z2
 --------------------------------
@@ -431,18 +419,18 @@ NAME: ${customer_name || 'WALK-IN CUSTOMER'} (M: ${customer_phone || 'N/A'})
 DATE: ${dateStr}            ${payment_method?.toUpperCase() === 'COD' ? 'PICK UP' : 'DELIVERY'}
         ${timeStr}
 CASHIER: BILLER
-${BOLD_ON}BILL NO.: ${order_number}    TOKEN NO.: ${order_number.slice(-2)}${BOLD_OFF}
+**BILL NO.: ${order_number}    TOKEN NO.: ${order_number.slice(-2)}**
 --------------------------------
 ITEM                QTY    PRICE    AMOUNT
 --------------------------------`;
 
-    // Add items with bold formatting for item names
+    // Add items with emphasis formatting for item names
     items.forEach(item => {
       const itemName = item.name.toUpperCase().padEnd(20);
       const qty = item.quantity.toString().padStart(3);
       const price = item.unit_price.toFixed(2).padStart(6);
       const amount = item.total_price.toFixed(2).padStart(6);
-      receipt += `\n${BOLD_ON}${itemName}${BOLD_OFF} ${qty}    ${price}    ${amount}`;
+      receipt += `\n**${itemName}** ${qty}    ${price}    ${amount}`;
       
       if (item.special_instructions) {
         receipt += `\n  NOTE: ${item.special_instructions.toUpperCase()}`;
@@ -456,18 +444,19 @@ CGST@2.5 2.5%                ${cgst.toFixed(2)}
 SGST@2.5 2.5%                ${sgst.toFixed(2)}
 MUJFOODCLUB DISCOUNT        ${discount >= 0 ? '+' : ''}${discount.toFixed(2)}
 --------------------------------
-${BOLD_ON}        GRAND TOTAL    RS ${final_amount.toFixed(2)}${BOLD_OFF}
+**        GRAND TOTAL    RS ${final_amount.toFixed(2)}**
 PAID VIA ${payment_method?.toUpperCase() || 'COD'} [UPI]
 --------------------------------
         THANKS FOR VISIT!!
         MUJFOODCLUB
-${FEED_PAPER}${FEED_PAPER}${CUT_PAPER}`;
+
+`;
 
     return receipt;
   }
 
   /**
-   * Format KOT (Kitchen Order Ticket) for thermal printing with ESC/POS commands
+   * Format KOT (Kitchen Order Ticket) for thermal printing with simple formatting
    */
   private formatKOTForThermal(data: ReceiptData): string {
     const { order_number, cafe_name, items } = data;
@@ -477,32 +466,27 @@ ${FEED_PAPER}${FEED_PAPER}${CUT_PAPER}`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // ESC/POS commands
-    const ESC = '\x1B';
-    const BOLD_ON = ESC + '\x45\x01';  // Turn on bold
-    const BOLD_OFF = ESC + '\x45\x00'; // Turn off bold
-    const CUT_PAPER = '\x1D\x56\x00';  // Full cut
-    const FEED_PAPER = '\x0A';         // Line feed
-    
-    let kot = `${BOLD_ON}        THE FOOD COURT CO${BOLD_OFF}
+    // Simple formatting - use ** for emphasis instead of ESC/POS commands
+    let kot = `        **THE FOOD COURT CO**
 --------------------------------
         ${dateStr} ${timeStr}
-${BOLD_ON}        KOT - ${order_number.slice(-2)}${BOLD_OFF}
+**        KOT - ${order_number.slice(-2)}**
         PICK UP
 --------------------------------
 ITEM                SPECIAL NOTE QTY
 --------------------------------`;
 
-    // Add items with bold formatting for item names
+    // Add items with emphasis formatting for item names
     items.forEach(item => {
       const itemName = item.name.toUpperCase().padEnd(20);
       const specialNote = item.special_instructions ? item.special_instructions.substring(0, 10).toUpperCase() : '--';
       const qty = item.quantity.toString().padStart(3);
-      kot += `\n${BOLD_ON}${itemName}${BOLD_OFF} ${specialNote.padEnd(15)} ${qty}`;
+      kot += `\n**${itemName}** ${specialNote.padEnd(15)} ${qty}`;
     });
 
     kot += `\n--------------------------------
-${FEED_PAPER}${FEED_PAPER}${CUT_PAPER}`;
+
+`;
 
     return kot;
   }
