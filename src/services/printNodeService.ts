@@ -204,7 +204,7 @@ MUJFOODCLUB!`;
       // Create test print job
       const printJob = {
         printer: targetPrinterId,
-        content: testReceipt,
+        content: this.unicodeToBase64(testReceipt),
         contentType: 'raw_base64',
         source: 'MUJFOODCLUB',
         title: 'Test Print'
@@ -267,8 +267,25 @@ MUJFOODCLUB
 ========================
 ${new Date().toLocaleString()}`;
 
-    // Convert to base64 for PrintNode
-    return btoa(receipt);
+    // Convert to base64 for PrintNode (Unicode-safe)
+    return this.unicodeToBase64(receipt);
+  }
+
+  /**
+   * Unicode-safe base64 encoding
+   */
+  private unicodeToBase64(str: string): string {
+    try {
+      // First encode to UTF-8 bytes, then to base64
+      const utf8Bytes = new TextEncoder().encode(str);
+      const base64 = btoa(String.fromCharCode(...utf8Bytes));
+      return base64;
+    } catch (error) {
+      console.error('Base64 encoding error:', error);
+      // Fallback: remove non-ASCII characters and encode
+      const asciiStr = str.replace(/[^\x00-\x7F]/g, '?');
+      return btoa(asciiStr);
+    }
   }
 
   /**
