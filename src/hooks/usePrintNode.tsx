@@ -27,14 +27,15 @@ export const usePrintNode = (): UsePrintNodeReturn => {
 
   useEffect(() => {
     // Initialize PrintNode service with API key from environment
-    const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY;
+    const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || 'TYqkDtkjFvRAfg5_zcR1nUE00Ou2zenJHG-9LpGqkkg';
     
     console.log('PrintNode API Key:', apiKey ? 'Found' : 'Not found');
+    console.log('Environment API Key:', import.meta.env.VITE_PRINTNODE_API_KEY);
     
     if (apiKey) {
       const service = new PrintNodeService({ apiKey });
       setPrintNodeService(service);
-      console.log('PrintNode service initialized');
+      console.log('PrintNode service initialized with API key:', apiKey.substring(0, 10) + '...');
     } else {
       console.warn('PrintNode API key not found. Set VITE_PRINTNODE_API_KEY in your environment variables.');
       setError('PrintNode API key not configured');
