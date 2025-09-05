@@ -154,8 +154,8 @@ export class PrintNodeService {
         targetPrinterId = defaultPrinter.id;
       }
 
-      // Print KOT only
-      const kotContent = this.formatKOTForThermal(receiptData);
+      // Print KOT only with paper cut commands
+      const kotContent = this.formatKOTForThermal(receiptData) + '\n\n\x1D\x56\x00';
       const kotJob = {
         printer: targetPrinterId,
         content: this.unicodeToBase64(kotContent),
@@ -208,8 +208,8 @@ export class PrintNodeService {
         targetPrinterId = defaultPrinter.id;
       }
 
-      // Print Order Receipt only
-      const receiptContent = this.formatReceiptForThermal(receiptData);
+      // Print Order Receipt only with paper cut commands
+      const receiptContent = this.formatReceiptForThermal(receiptData) + '\n\n\x1D\x56\x00';
       const receiptJob = {
         printer: targetPrinterId,
         content: this.unicodeToBase64(receiptContent),
@@ -262,8 +262,8 @@ export class PrintNodeService {
         targetPrinterId = defaultPrinter.id;
       }
 
-      // Print KOT first
-      const kotContent = this.formatKOTForThermal(receiptData);
+      // Print KOT first with paper cut commands
+      const kotContent = this.formatKOTForThermal(receiptData) + '\n\n\x1D\x56\x00';
       const kotJob = {
         printer: targetPrinterId,
         content: this.unicodeToBase64(kotContent),
@@ -284,8 +284,8 @@ export class PrintNodeService {
       // Add a small delay to ensure separate printing
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Print Order Receipt
-      const receiptContent = this.formatReceiptForThermal(receiptData);
+      // Print Order Receipt with paper cut commands
+      const receiptContent = this.formatReceiptForThermal(receiptData) + '\n\n\x1D\x56\x00';
       const receiptJob = {
         printer: targetPrinterId,
         content: this.unicodeToBase64(receiptContent),
@@ -338,15 +338,7 @@ If you can see this,
 PrintNode is working!
 ========================
 Thank you for using
-MUJFOODCLUB!
-========================
-Test Print Completed
-Printer is working correctly
-========================
-End of Test Print
-========================
-
-`;
+MUJFOODCLUB!`;
 
       // Get printer ID
       let targetPrinterId = printerId;
@@ -362,10 +354,10 @@ End of Test Print
         targetPrinterId = defaultPrinter.id;
       }
 
-      // Create test print job
+      // Create test print job with paper cut commands
       const printJob = {
         printer: targetPrinterId,
-        content: this.unicodeToBase64(testReceipt),
+        content: this.unicodeToBase64(testReceipt + '\n\n\x1D\x56\x00'),
         contentType: 'raw_base64',
         source: 'MUJFOODCLUB',
         title: 'Test Print'
@@ -455,7 +447,6 @@ PAID VIA ${payment_method?.toUpperCase() || 'COD'} [UPI]
 --------------------------------
         THANKS FOR VISIT!!
         MUJFOODCLUB
-
 `;
 
     return receipt;
@@ -490,9 +481,7 @@ ITEM                SPECIAL NOTE QTY
       kot += `\n${itemName} ${specialNote.padEnd(15)} ${qty}`;
     });
 
-    kot += `\n--------------------------------
-
-`;
+    kot += `\n--------------------------------`;
 
     return kot;
   }
