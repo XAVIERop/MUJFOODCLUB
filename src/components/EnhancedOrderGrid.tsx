@@ -13,6 +13,7 @@ import {
   Eye,
   Edit,
   CheckCircle,
+  Printer,
   AlertCircle,
   X,
   Download,
@@ -461,6 +462,19 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                     Update
                   </Button>
                   
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleProfessionalPrint(order);
+                    }}
+                    className="flex-1 text-xs px-2 py-1 h-7"
+                  >
+                    <Printer className="h-2.5 w-2.5 mr-1" />
+                    Print
+                  </Button>
+                  
                   {isFoodCourt && (
                     <Button
                       size="sm"
@@ -579,6 +593,20 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
               >
                 <Edit className="h-3 w-3 mr-1" />
                 Update Status
+              </Button>
+              
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleProfessionalPrint(hoveredOrder);
+                  closePopup();
+                }}
+                className="flex-1"
+              >
+                <Printer className="h-3 w-3 mr-1" />
+                Print Receipt
               </Button>
               
               {hoveredOrder.cafes?.type === 'food_court' && (
