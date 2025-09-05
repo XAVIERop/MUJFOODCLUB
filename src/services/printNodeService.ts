@@ -408,40 +408,25 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Ultra-compact formatting for limited thermal printer
-    let receipt = `THE FOOD COURT CO
-GSTIN: 08ADNPG4024A1Z2
+    // Absolute minimal formatting for very limited thermal printer
+    let receipt = `BILL: ${order_number}
+${customer_name || 'WALK-IN'} ${dateStr} ${timeStr}
 --------------------------------
-${customer_name || 'WALK-IN'} (${customer_phone || 'N/A'})
-${dateStr} ${timeStr} ${payment_method?.toUpperCase() === 'COD' ? 'PICK UP' : 'DELIVERY'}
-BILL: ${order_number} TOKEN: ${order_number.slice(-2)}
---------------------------------
-ITEM            QTY PRICE AMOUNT
+ITEM        QTY PRICE AMOUNT
 --------------------------------`;
 
-    // Add items with ultra-compact formatting
+    // Add items with absolute minimal formatting
     items.forEach(item => {
-      const itemName = item.name.toUpperCase().substring(0, 14).padEnd(14);
-      const qty = item.quantity.toString().padStart(2);
-      const price = item.unit_price.toFixed(0).padStart(4);
-      const amount = item.total_price.toFixed(0).padStart(5);
+      const itemName = item.name.toUpperCase().substring(0, 10).padEnd(10);
+      const qty = item.quantity.toString();
+      const price = item.unit_price.toFixed(0);
+      const amount = item.total_price.toFixed(0);
       receipt += `\n${itemName} ${qty} ${price} ${amount}`;
-      
-      if (item.special_instructions) {
-        receipt += `\n  ${item.special_instructions.toUpperCase()}`;
-      }
     });
 
     receipt += `\n--------------------------------
-TOTAL: ${totalQty} SUB: ${subtotal.toFixed(0)}
-CGST: ${cgst.toFixed(0)} SGST: ${sgst.toFixed(0)}
-DISCOUNT: ${discount.toFixed(0)}
---------------------------------
-TOTAL: RS ${final_amount.toFixed(0)}
+TOTAL: ${final_amount.toFixed(0)}
 PAID: ${payment_method?.toUpperCase() || 'COD'}
---------------------------------
-THANKS FOR VISIT!!
-MUJFOODCLUB
 `;
 
     return receipt;
@@ -458,28 +443,17 @@ MUJFOODCLUB
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Ultra-compact formatting for limited thermal printer
-    let kot = `THE FOOD COURT CO
---------------------------------
+    // Absolute minimal formatting for very limited thermal printer
+    let kot = `KOT ${order_number.slice(-2)}
 ${dateStr} ${timeStr}
-KOT - ${order_number.slice(-2)}
-PICK UP
---------------------------------
-ITEM            QTY
 --------------------------------`;
 
-    // Add items with ultra-compact formatting
+    // Add items with absolute minimal formatting
     items.forEach(item => {
-      const itemName = item.name.toUpperCase().substring(0, 14).padEnd(14);
-      const qty = item.quantity.toString().padStart(2);
+      const itemName = item.name.toUpperCase().substring(0, 12).padEnd(12);
+      const qty = item.quantity.toString();
       kot += `\n${itemName} ${qty}`;
-      
-      if (item.special_instructions) {
-        kot += `\n  ${item.special_instructions.toUpperCase()}`;
-      }
     });
-
-    kot += `\n--------------------------------`;
 
     return kot;
   }
