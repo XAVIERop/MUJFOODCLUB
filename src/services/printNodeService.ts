@@ -136,6 +136,114 @@ export class PrintNodeService {
   }
 
   /**
+   * Print KOT only using PrintNode
+   */
+  async printKOT(receiptData: ReceiptData, printerId?: number): Promise<PrintJobResult> {
+    try {
+      // Get printer ID
+      let targetPrinterId = printerId;
+      
+      if (!targetPrinterId) {
+        const defaultPrinter = await this.getDefaultPrinter();
+        if (!defaultPrinter) {
+          return {
+            success: false,
+            error: 'No printer available'
+          };
+        }
+        targetPrinterId = defaultPrinter.id;
+      }
+
+      // Print KOT only
+      const kotContent = this.formatKOTForThermal(receiptData);
+      const kotJob = {
+        printer: targetPrinterId,
+        content: this.unicodeToBase64(kotContent),
+        contentType: 'raw_base64',
+        source: 'MUJFOODCLUB',
+        title: `KOT ${receiptData.order_number}`
+      };
+
+      const kotResponse = await this.makeRequest('/printjobs', {
+        method: 'POST',
+        body: JSON.stringify(kotJob)
+      });
+
+      if (!kotResponse.ok) {
+        throw new Error(`KOT print failed: HTTP ${kotResponse.status}: ${kotResponse.statusText}`);
+      }
+
+      const kotResult = await kotResponse.json();
+
+      return {
+        success: true,
+        jobId: kotResult.id
+      };
+
+    } catch (error) {
+      console.error('PrintNode KOT print error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  /**
+   * Print Order Receipt only using PrintNode
+   */
+  async printOrderReceipt(receiptData: ReceiptData, printerId?: number): Promise<PrintJobResult> {
+    try {
+      // Get printer ID
+      let targetPrinterId = printerId;
+      
+      if (!targetPrinterId) {
+        const defaultPrinter = await this.getDefaultPrinter();
+        if (!defaultPrinter) {
+          return {
+            success: false,
+            error: 'No printer available'
+          };
+        }
+        targetPrinterId = defaultPrinter.id;
+      }
+
+      // Print Order Receipt only
+      const receiptContent = this.formatReceiptForThermal(receiptData);
+      const receiptJob = {
+        printer: targetPrinterId,
+        content: this.unicodeToBase64(receiptContent),
+        contentType: 'raw_base64',
+        source: 'MUJFOODCLUB',
+        title: `Receipt ${receiptData.order_number}`
+      };
+
+      const receiptResponse = await this.makeRequest('/printjobs', {
+        method: 'POST',
+        body: JSON.stringify(receiptJob)
+      });
+
+      if (!receiptResponse.ok) {
+        throw new Error(`Receipt print failed: HTTP ${receiptResponse.status}: ${receiptResponse.statusText}`);
+      }
+
+      const receiptResult = await receiptResponse.json();
+
+      return {
+        success: true,
+        jobId: receiptResult.id
+      };
+
+    } catch (error) {
+      console.error('PrintNode Order Receipt print error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  /**
    * Print both KOT and Order Receipt using PrintNode
    */
   async printReceipt(receiptData: ReceiptData, printerId?: number): Promise<PrintJobResult> {

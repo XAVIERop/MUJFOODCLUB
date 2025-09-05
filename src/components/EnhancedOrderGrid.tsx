@@ -85,7 +85,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
   const { toast } = useToast();
   const { isConnected, isPrinting, printBothReceipts } = usePrinter();
   const { isAvailable: localPrintAvailable, printReceipt: localPrintReceipt, isPrinting: localPrintPrinting } = useLocalPrint();
-  const { isAvailable: printNodeAvailable, printReceipt: printNodePrintReceipt, isPrinting: printNodePrinting, printers: printNodePrinters } = usePrintNode();
+  const { isAvailable: printNodeAvailable, printReceipt: printNodePrintReceipt, printKOT: printNodePrintKOT, printOrderReceipt: printNodePrintOrderReceipt, isPrinting: printNodePrinting, printers: printNodePrinters } = usePrintNode();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
@@ -208,47 +208,129 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
     setHoveredOrder(null);
   };
 
-  // Professional print function using PrintNode (primary) or local service (fallback)
-  const handleProfessionalPrint = async (order: Order) => {
+  // Helper function to create receipt data
+  const createReceiptData = (order: Order) => {
+    const items = orderItems[order.id] || [];
+    
+    if (items.length === 0) {
+      toast({
+        title: "No Items Found",
+        description: "Could not find items for this order",
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    return {
+      order_id: order.id,
+      order_number: order.order_number,
+      cafe_name: order.cafes?.name || 'Unknown Cafe',
+      customer_name: order.user?.full_name || order.customer_name || 'Walk-in Customer',
+      customer_phone: order.user?.phone || order.phone_number || 'N/A',
+      delivery_block: order.delivery_block || order.user?.block || 'N/A',
+      items: items.map(item => ({
+        id: item.id,
+        name: item.menu_item?.name || 'Unknown Item',
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total_price: item.total_price,
+        special_instructions: item.special_instructions
+      })),
+      subtotal: order.total_amount || 0,
+      tax_amount: 0,
+      discount_amount: 0,
+      final_amount: order.total_amount || 0,
+      payment_method: 'cod',
+      order_date: order.created_at,
+      estimated_delivery: new Date().toISOString(),
+      points_earned: 0,
+      points_redeemed: 0
+    };
+  };
+
+  // Print KOT only
+  const handlePrintKOT = async (order: Order) => {
     try {
-      // Get order items for this order
-      const items = orderItems[order.id] || [];
-      
-      if (items.length === 0) {
+      const receiptData = createReceiptData(order);
+      if (!receiptData) return;
+
+      if (printNodeAvailable) {
+        const result = await printNodePrintKOT(receiptData);
+        
+        if (result.success) {
+          toast({
+            title: "KOT Printed",
+            description: "Kitchen Order Ticket sent via PrintNode",
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: "KOT Print Error",
+            description: result.error || "Failed to print KOT",
+            variant: "destructive",
+          });
+        }
+      } else {
         toast({
-          title: "No Items Found",
-          description: "Could not find items for this order",
+          title: "PrintNode Not Available",
+          description: "PrintNode service is not configured or available",
           variant: "destructive",
         });
-        return;
       }
+    } catch (error) {
+      console.error('KOT print error:', error);
+      toast({
+        title: "KOT Print Error",
+        description: "Error printing KOT",
+        variant: "destructive",
+      });
+    }
+  };
 
-      // Convert order data to receipt format
-      const receiptData = {
-        order_id: order.id,
-        order_number: order.order_number,
-        cafe_name: order.cafes?.name || 'Unknown Cafe',
-        customer_name: order.user?.full_name || order.customer_name || 'Walk-in Customer',
-        customer_phone: order.user?.phone || order.phone_number || 'N/A',
-        delivery_block: order.delivery_block || order.user?.block || 'N/A',
-        items: items.map(item => ({
-          id: item.id,
-          name: item.menu_item?.name || 'Unknown Item',
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          total_price: item.total_price,
-          special_instructions: item.special_instructions
-        })),
-        subtotal: order.total_amount || 0,
-        tax_amount: 0,
-        discount_amount: 0,
-        final_amount: order.total_amount || 0,
-        payment_method: 'cod',
-        order_date: order.created_at,
-        estimated_delivery: new Date().toISOString(),
-        points_earned: 0,
-        points_redeemed: 0
-      };
+  // Print Order Receipt only
+  const handlePrintOrderReceipt = async (order: Order) => {
+    try {
+      const receiptData = createReceiptData(order);
+      if (!receiptData) return;
+
+      if (printNodeAvailable) {
+        const result = await printNodePrintOrderReceipt(receiptData);
+        
+        if (result.success) {
+          toast({
+            title: "Order Receipt Printed",
+            description: "Customer receipt sent via PrintNode",
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: "Receipt Print Error",
+            description: result.error || "Failed to print order receipt",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "PrintNode Not Available",
+          description: "PrintNode service is not configured or available",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Order receipt print error:', error);
+      toast({
+        title: "Receipt Print Error",
+        description: "Error printing order receipt",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Professional print function using PrintNode (both KOT and Order Receipt)
+  const handleProfessionalPrint = async (order: Order) => {
+    try {
+      const receiptData = createReceiptData(order);
+      if (!receiptData) return;
 
       // Force PrintNode usage (cloud-based, professional)
       console.log('PrintNode Status:', { 
@@ -262,8 +344,8 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
         
         if (result.success) {
           toast({
-            title: "Receipt Printed",
-            description: "Professional thermal receipt sent via PrintNode",
+            title: "Receipts Printed",
+            description: "Both KOT and Order Receipt sent via PrintNode",
             variant: "default",
           });
           return;
@@ -470,28 +552,28 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                     variant="outline"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleProfessionalPrint(order);
+                      handlePrintKOT(order);
                     }}
-                    className="flex-1 text-xs px-2 py-1 h-7"
+                    disabled={isPrinting || localPrintPrinting || printNodePrinting}
+                    className="flex-1 text-xs px-1 py-1 h-7"
                   >
                     <Printer className="h-2.5 w-2.5 mr-1" />
-                    Print
+                    KOT
                   </Button>
                   
-                  {isFoodCourt && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleProfessionalPrint(order);
-                      }}
-                      disabled={isPrinting || localPrintPrinting || printNodePrinting}
-                      className="px-2 py-1 h-7"
-                    >
-                      <Receipt className="h-2.5 w-2.5" />
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePrintOrderReceipt(order);
+                    }}
+                    disabled={isPrinting || localPrintPrinting || printNodePrinting}
+                    className="flex-1 text-xs px-1 py-1 h-7"
+                  >
+                    <Receipt className="h-2.5 w-2.5 mr-1" />
+                    Receipt
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -603,29 +685,30 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                 variant="outline"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleProfessionalPrint(hoveredOrder);
+                  handlePrintKOT(hoveredOrder);
                   closePopup();
                 }}
+                disabled={isPrinting || localPrintPrinting || printNodePrinting}
                 className="flex-1"
               >
                 <Printer className="h-3 w-3 mr-1" />
-                Print Receipt
+                Print KOT
               </Button>
               
-              {hoveredOrder.cafes?.type === 'food_court' && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleProfessionalPrint(hoveredOrder);
-                    closePopup();
-                  }}
-                  disabled={isPrinting || localPrintPrinting || printNodePrinting}
-                >
-                  <Receipt className="h-3 w-3" />
-                </Button>
-              )}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrintOrderReceipt(hoveredOrder);
+                  closePopup();
+                }}
+                disabled={isPrinting || localPrintPrinting || printNodePrinting}
+                className="flex-1"
+              >
+                <Receipt className="h-3 w-3 mr-1" />
+                Print Receipt
+              </Button>
             </div>
           </div>
         </div>

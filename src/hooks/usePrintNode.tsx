@@ -8,6 +8,8 @@ interface UsePrintNodeReturn {
   printers: PrintNodePrinter[];
   isPrinting: boolean;
   printReceipt: (receiptData: ReceiptData, printerId?: number) => Promise<PrintJobResult>;
+  printKOT: (receiptData: ReceiptData, printerId?: number) => Promise<PrintJobResult>;
+  printOrderReceipt: (receiptData: ReceiptData, printerId?: number) => Promise<PrintJobResult>;
   testPrint: (printerId?: number) => Promise<PrintJobResult>;
   refreshPrinters: () => Promise<void>;
   accountInfo: any;
@@ -85,7 +87,7 @@ export const usePrintNode = (): UsePrintNodeReturn => {
     }
   }, [printNodeService, isAvailable]);
 
-  // Print receipt
+  // Print receipt (both KOT and Order Receipt)
   const printReceipt = useCallback(async (receiptData: ReceiptData, printerId?: number): Promise<PrintJobResult> => {
     if (!printNodeService || !isAvailable) {
       return {
@@ -102,6 +104,60 @@ export const usePrintNode = (): UsePrintNodeReturn => {
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Print failed';
+      setError(errorMessage);
+      return {
+        success: false,
+        error: errorMessage
+      };
+    } finally {
+      setIsPrinting(false);
+    }
+  }, [printNodeService, isAvailable]);
+
+  // Print KOT only
+  const printKOT = useCallback(async (receiptData: ReceiptData, printerId?: number): Promise<PrintJobResult> => {
+    if (!printNodeService || !isAvailable) {
+      return {
+        success: false,
+        error: 'PrintNode service not available'
+      };
+    }
+
+    setIsPrinting(true);
+    setError(null);
+
+    try {
+      const result = await printNodeService.printKOT(receiptData, printerId);
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'KOT print failed';
+      setError(errorMessage);
+      return {
+        success: false,
+        error: errorMessage
+      };
+    } finally {
+      setIsPrinting(false);
+    }
+  }, [printNodeService, isAvailable]);
+
+  // Print Order Receipt only
+  const printOrderReceipt = useCallback(async (receiptData: ReceiptData, printerId?: number): Promise<PrintJobResult> => {
+    if (!printNodeService || !isAvailable) {
+      return {
+        success: false,
+        error: 'PrintNode service not available'
+      };
+    }
+
+    setIsPrinting(true);
+    setError(null);
+
+    try {
+      const result = await printNodeService.printOrderReceipt(receiptData, printerId);
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Order receipt print failed';
       setError(errorMessage);
       return {
         success: false,
@@ -159,6 +215,8 @@ export const usePrintNode = (): UsePrintNodeReturn => {
     printers,
     isPrinting,
     printReceipt,
+    printKOT,
+    printOrderReceipt,
     testPrint,
     refreshPrinters,
     accountInfo,
