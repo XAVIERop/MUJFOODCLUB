@@ -20,6 +20,7 @@ interface MenuItem {
   preparation_time: number;
   is_available: boolean;
   out_of_stock: boolean;
+  is_vegetarian: boolean;
 }
 
 interface GroupedMenuItem {
@@ -27,6 +28,7 @@ interface GroupedMenuItem {
   category: string;
   description: string;
   preparation_time: number;
+  is_vegetarian: boolean;
   portions: {
     id: string;
     name: string;
@@ -169,6 +171,7 @@ const Menu = () => {
           category: item.category,
           description: item.description,
           preparation_time: item.preparation_time,
+          is_vegetarian: item.is_vegetarian,
           portions: []
         };
       }
@@ -300,11 +303,17 @@ const Menu = () => {
   // Get unique categories for the filter
   const categories = Object.keys(groupedItems);
   
-  // Filter items based on selected category and search query
+  // Filter items based on selected category (veg/non-veg) and search query
   const getFilteredItems = () => {
-    let filtered = selectedCategory === 'all' 
-      ? groupedMenuItems 
-      : groupedMenuItems.filter(item => item.category === selectedCategory);
+    let filtered = groupedMenuItems;
+    
+    // Apply veg/non-veg filter
+    if (selectedCategory === 'veg') {
+      filtered = filtered.filter(item => item.is_vegetarian === true);
+    } else if (selectedCategory === 'non-veg') {
+      filtered = filtered.filter(item => item.is_vegetarian === false);
+    }
+    // If selectedCategory === 'all', show all items (no filtering)
     
     // Apply search filter if search query exists
     if (searchQuery.trim()) {

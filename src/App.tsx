@@ -25,6 +25,7 @@ import POSDashboard from "./pages/POSDashboard";
 import BottomNavigation from "./components/BottomNavigation";
 import ScrollToTop from "./components/ScrollToTop";
 import NotFound from "./pages/NotFound";
+import { PerformanceMonitor } from "./components/PerformanceMonitor";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,9 @@ const App = () => (
           
           {/* Bottom Navigation - Mobile Only */}
           <BottomNavigation />
+          
+          {/* Performance Monitor - Development Only */}
+          <PerformanceMonitor />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

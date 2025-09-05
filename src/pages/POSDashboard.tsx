@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Clock, 
   CheckCircle, 
@@ -25,7 +27,8 @@ import {
   Download,
   TrendingUp,
   Volume2,
-  ChevronDown
+  ChevronDown,
+  Search
 } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -42,6 +45,7 @@ import SimplePrinterConfig from '@/components/SimplePrinterConfig';
 import PrintNodeStatus from '@/components/PrintNodeStatus';
 import ManualOrderEntry from '@/components/ManualOrderEntry';
 import OrderNotificationSound from '@/components/OrderNotificationSound';
+import SoundDebugger from '@/components/SoundDebugger';
 import Header from '@/components/Header';
 import PasswordProtectedSection from '@/components/PasswordProtectedSection';
 
@@ -94,6 +98,7 @@ const POSDashboard = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [orderItems, setOrderItems] = useState<{[key: string]: OrderItem[]}>({});
   const [loading, setLoading] = useState(true);
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
@@ -103,6 +108,12 @@ const POSDashboard = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState('orders');
   const [cafeId, setCafeId] = useState<string | null>(null);
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isPrinterSetupOpen, setIsPrinterSetupOpen] = useState(false);
   const [isSettingsPrinterOpen, setIsSettingsPrinterOpen] = useState(false);
 
@@ -183,6 +194,7 @@ const POSDashboard = () => {
       } else {
         console.log('Full query successful, found orders:', data?.length || 0);
         setOrders(data || []);
+        setFilteredOrders(data || []);
         
         // Extract order items from the joined data
         const itemsData: {[key: string]: OrderItem[]} = {};
@@ -204,6 +216,52 @@ const POSDashboard = () => {
       setLoading(false);
     }
   };
+
+  // Filter and sort orders
+  useEffect(() => {
+    let filtered = orders;
+
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(order =>
+        order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.user?.full_name && order.user.full_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (order.user?.email && order.user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (order.user?.block && order.user.block.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (order.customer_name && order.customer_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        order.delivery_block.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(order => order.status === statusFilter);
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      let aValue: any = a[sortBy as keyof Order];
+      let bValue: any = b[sortBy as keyof Order];
+
+      if (sortBy === 'user') {
+        aValue = a.user?.full_name || a.customer_name || '';
+        bValue = b.user?.full_name || b.customer_name || '';
+      }
+
+      if (sortBy === 'created_at') {
+        aValue = new Date(a.created_at).getTime();
+        bValue = new Date(b.created_at).getTime();
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    setFilteredOrders(filtered);
+  }, [orders, searchTerm, statusFilter, sortBy, sortOrder]);
 
   const updateOrderStatus = async (orderId: string, newStatus: Order['status']) => {
     setUpdatingOrder(orderId);
@@ -740,7 +798,7 @@ const POSDashboard = () => {
   };
 
   const filterOrdersByStatus = (status: string) => {
-    return orders.filter(order => order.status === status);
+    return filteredOrders.filter(order => order.status === status);
   };
 
   const formatTime = (timestamp: string) => {
@@ -777,6 +835,12 @@ const POSDashboard = () => {
           fetchOrders();
           setUnreadNotifications(prev => prev + 1);
           
+          // Play sound notification for new orders
+          if (soundEnabled) {
+            soundNotificationService.updateSettings(soundEnabled, soundVolume);
+            await soundNotificationService.playOrderReceivedSound();
+          }
+          
           toast({
             title: "New Order!",
             description: `Order #${payload.new.order_number} received`,
@@ -810,7 +874,7 @@ const POSDashboard = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [cafeId, toast]);
+  }, [cafeId, toast, soundEnabled, soundVolume]);
 
   useEffect(() => {
     if (cafeId) {
@@ -901,7 +965,7 @@ const POSDashboard = () => {
               <CardTitle className="text-sm font-medium text-gray-600">Total Orders</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{orders.length}</div>
+              <div className="text-2xl font-bold text-gray-900">{filteredOrders.length}</div>
             </CardContent>
           </Card>
           <Card>
@@ -920,7 +984,7 @@ const POSDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">
-                {orders.filter(order => !['completed', 'cancelled'].includes(order.status)).length}
+                {filteredOrders.filter(order => !['completed', 'cancelled'].includes(order.status)).length}
               </div>
             </CardContent>
           </Card>
@@ -930,7 +994,7 @@ const POSDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {orders.filter(order => order.status === 'completed').length}
+                {filteredOrders.filter(order => order.status === 'completed').length}
               </div>
             </CardContent>
           </Card>
@@ -1033,10 +1097,61 @@ const POSDashboard = () => {
               </div>
             </div>
 
+            {/* Search and Filter Controls */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search orders..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="received">Received</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="preparing">Preparing</SelectItem>
+                  <SelectItem value="on_the_way">Out for Delivery</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="created_at">Date</SelectItem>
+                  <SelectItem value="order_number">Order Number</SelectItem>
+                  <SelectItem value="total_amount">Amount</SelectItem>
+                  <SelectItem value="user">Customer</SelectItem>
+                  <SelectItem value="status">Status</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sort order" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="desc">Newest First</SelectItem>
+                  <SelectItem value="asc">Oldest First</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Enhanced Grid View */}
             {useCompactLayout && (
               <EnhancedOrderGrid
-                orders={orders}
+                orders={filteredOrders}
                 orderItems={orderItems}
                 onOrderSelect={handleOrderSelect}
                 onStatusUpdate={handleCompactStatusUpdate}
@@ -1239,18 +1354,18 @@ const POSDashboard = () => {
                       <CardContent className="space-y-3">
                         <div className="flex justify-between">
                           <span>Total Orders:</span>
-                          <Badge variant="secondary">{orders.length}</Badge>
+                          <Badge variant="secondary">{filteredOrders.length}</Badge>
                         </div>
                         <div className="flex justify-between">
                           <span>Completed Orders:</span>
                           <Badge variant="secondary">
-                            {orders.filter(o => o.status === 'completed').length}
+                            {filteredOrders.filter(o => o.status === 'completed').length}
                           </Badge>
                         </div>
                         <div className="flex justify-between">
                           <span>Pending Orders:</span>
                           <Badge variant="secondary">
-                            {orders.filter(o => ['received', 'confirmed', 'preparing', 'on_the_way'].includes(o.status)).length}
+                            {filteredOrders.filter(o => ['received', 'confirmed', 'preparing', 'on_the_way'].includes(o.status)).length}
                           </Badge>
                         </div>
                       </CardContent>
@@ -1324,6 +1439,12 @@ const POSDashboard = () => {
                     volume={soundVolume}
                     onVolumeChange={setVolume}
                   />
+                </div>
+
+                {/* Sound Debugger */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Sound Debugger</h3>
+                  <SoundDebugger />
                 </div>
 
                 {/* Print Settings */}

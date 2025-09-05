@@ -533,7 +533,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex space-x-1">
+                <div className="flex space-x-1.5">
                   <Button
                     size="sm"
                     variant="outline"
@@ -541,10 +541,10 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                       e.stopPropagation();
                       handleStatusUpdate(order.id, order.status);
                     }}
-                    className="flex-1 text-xs px-2 py-1 h-7"
+                    className="text-lg px-2 py-1 h-7 w-7"
+                    title="Update Status"
                   >
-                    <Edit className="h-2.5 w-2.5 mr-1" />
-                    Update
+                    ✏️
                   </Button>
                   
                   <Button
@@ -555,10 +555,10 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                       handlePrintKOT(order);
                     }}
                     disabled={isPrinting || localPrintPrinting || printNodePrinting}
-                    className="flex-1 text-xs px-1 py-1 h-7"
+                    className="text-lg px-2 py-1 h-7 w-7"
+                    title="Print KOT"
                   >
-                    <Printer className="h-2.5 w-2.5 mr-1" />
-                    KOT
+                    🖨️
                   </Button>
                   
                   <Button
@@ -569,10 +569,10 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                       handlePrintOrderReceipt(order);
                     }}
                     disabled={isPrinting || localPrintPrinting || printNodePrinting}
-                    className="flex-1 text-xs px-1 py-1 h-7"
+                    className="text-lg px-2 py-1 h-7 w-7"
+                    title="Print Receipt"
                   >
-                    <Receipt className="h-2.5 w-2.5 mr-1" />
-                    Receipt
+                    🧾
                   </Button>
                 </div>
               </CardContent>
@@ -674,10 +674,10 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                   handleStatusUpdate(hoveredOrder.id, hoveredOrder.status);
                   closePopup();
                 }}
-                className="flex-1"
+                className="text-lg px-3 py-2"
+                title="Update Status"
               >
-                <Edit className="h-3 w-3 mr-1" />
-                Update Status
+                ✏️ Update
               </Button>
               
               <Button
@@ -689,10 +689,10 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                   closePopup();
                 }}
                 disabled={isPrinting || localPrintPrinting || printNodePrinting}
-                className="flex-1"
+                className="text-lg px-3 py-2"
+                title="Print KOT"
               >
-                <Printer className="h-3 w-3 mr-1" />
-                Print KOT
+                🖨️ KOT
               </Button>
               
               <Button
@@ -704,10 +704,10 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                   closePopup();
                 }}
                 disabled={isPrinting || localPrintPrinting || printNodePrinting}
-                className="flex-1"
+                className="text-lg px-3 py-2"
+                title="Print Receipt"
               >
-                <Receipt className="h-3 w-3 mr-1" />
-                Print Receipt
+                🧾 Receipt
               </Button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, Phone, MessageCircle, MapPin, Clock, Heart, Printer } from 'lucide-react';
+import { Star, Phone, MessageCircle, MapPin, Clock, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -109,11 +109,6 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
   const handleFavoriteToggle = (e: React.MouseEvent, cafeId: string) => {
     e.stopPropagation();
     toggleFavorite(cafeId);
-  };
-
-  const handlePrintReceipt = (cafeId: string) => {
-    // Navigate to POS dashboard for this cafe
-    navigate(`/pos-dashboard?cafe=${cafeId}`);
   };
 
   return (
@@ -264,7 +259,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
           </div>
 
           {/* Contact Actions */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <Button
               variant="ghost"
               size="sm"
@@ -282,15 +277,6 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
             >
               <MessageCircle className="w-3 h-3 mr-1" />
               WhatsApp
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handlePrintReceipt(cafe.id)}
-              className="text-xs text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-            >
-              <Printer className="w-3 h-3 mr-1" />
-              Print
             </Button>
           </div>
         </div>
