@@ -410,7 +410,7 @@ MUJFOODCLUB!`;
     
     // Proper center-aligned receipt format
     let receipt = `        THE FOOD COURT CO
-    (MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
+  (MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
     GSTIN : 08ADNPG4024A1Z2
     ----------------------------------------
     Name: ${customer_name || 'WALK-IN'} (M: ${customer_phone || '9999999999'})
