@@ -170,6 +170,9 @@ export class PrintNodeService {
       const kotResult = await kotResponse.json();
       const receiptResult = await receiptResponse.json();
 
+      // Add a small delay to ensure separate printing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       return {
         success: true,
         jobId: receiptResult.id // Return the receipt job ID as primary
@@ -261,11 +264,10 @@ MUJFOODCLUB!`;
     
     // Calculate totals
     const subtotal = items.reduce((sum, item) => sum + item.total_price, 0);
-    const taxRate = 0.05; // 5% tax (2.5% CGST + 2.5% SGST)
     const cgst = subtotal * 0.025;
     const sgst = subtotal * 0.025;
     const totalTax = cgst + sgst;
-    const roundOff = final_amount - (subtotal + totalTax);
+    const discount = final_amount - (subtotal + totalTax);
     const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
     
     // Format date and time
@@ -279,14 +281,14 @@ GSTIN : 08ADNPG4024A1Z2
 --------------------------------
 Name: ${customer_name || 'Walk-in Customer'} (M: ${customer_phone || 'N/A'})
 Date: ${dateStr}                    ${payment_method?.toUpperCase() === 'COD' ? 'Pick Up' : 'Delivery'}
-17:${timeStr.split(':')[1]}
+${timeStr}
 Cashier: biller                    Bill No.: ${order_number}
 Token No.: ${order_number.slice(-2)}
 --------------------------------
 Item                    Qty.    Price    Amount
 --------------------------------`;
 
-    // Add items
+    // Add items with bold formatting
     items.forEach(item => {
       const itemName = item.name.padEnd(20);
       const qty = item.quantity.toString().padStart(3);
@@ -304,9 +306,9 @@ Total Qty: ${totalQty}
 Sub Total                    ${subtotal.toFixed(2)}
 CGST@2.5 2.5%                ${cgst.toFixed(2)}
 SGST@2.5 2.5%                ${sgst.toFixed(2)}
-Round off                    ${roundOff >= 0 ? '+' : ''}${roundOff.toFixed(2)}
+MUJFOODCLUB Discount         ${discount >= 0 ? '+' : ''}${discount.toFixed(2)}
 --------------------------------
-Grand Total                  ₹${final_amount.toFixed(2)}
+Grand Total                  ${final_amount.toFixed(2)}
 Paid via ${payment_method?.toUpperCase() || 'COD'} [UPI]
 --------------------------------
         Thanks For Visit!!
@@ -327,12 +329,15 @@ Paid via ${payment_method?.toUpperCase() || 'COD'} [UPI]
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    let kot = `${dateStr} ${timeStr}
+    let kot = `        MUJFOODCLUB KOT
+        The Food Court Co
+--------------------------------
+${dateStr} ${timeStr}
 KOT - ${order_number.slice(-2)}
 Pick Up
-................................
+--------------------------------
 Item                    Special Note Qty.
-................................`;
+--------------------------------`;
 
     // Add items
     items.forEach(item => {
@@ -342,7 +347,8 @@ Item                    Special Note Qty.
       kot += `\n${itemName} ${specialNote} ${qty}`;
     });
 
-    kot += `\n................................
+    kot += `\n--------------------------------
+        Thanks For Visit!!
         MUJFOODCLUB KOT`;
 
     // Convert to base64 for PrintNode (Unicode-safe)
