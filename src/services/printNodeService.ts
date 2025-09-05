@@ -1,4 +1,29 @@
-import { ReceiptData } from '@/components/ReceiptGenerator';
+// Define ReceiptData interface locally since it's not exported
+interface ReceiptData {
+  order_id: string;
+  order_number: string;
+  cafe_name: string;
+  customer_name: string;
+  customer_phone: string;
+  delivery_block: string;
+  items: {
+    id: string;
+    name: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+    special_instructions?: string;
+  }[];
+  subtotal: number;
+  tax_amount: number;
+  discount_amount: number;
+  final_amount: number;
+  payment_method: string;
+  order_date: string;
+  estimated_delivery: string;
+  points_earned: number;
+  points_redeemed: number;
+}
 
 export interface PrintNodeConfig {
   apiKey: string;
@@ -133,7 +158,7 @@ export class PrintNodeService {
       const kotContent = this.formatKOTForThermal(receiptData);
       const kotJob = {
         printer: targetPrinterId,
-        content: kotContent,
+        content: this.unicodeToBase64(kotContent),
         contentType: 'raw_base64',
         source: 'MUJFOODCLUB',
         title: `KOT ${receiptData.order_number}`
@@ -148,11 +173,14 @@ export class PrintNodeService {
         throw new Error(`KOT print failed: HTTP ${kotResponse.status}: ${kotResponse.statusText}`);
       }
 
+      // Add a small delay to ensure separate printing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Print Order Receipt
       const receiptContent = this.formatReceiptForThermal(receiptData);
       const receiptJob = {
         printer: targetPrinterId,
-        content: receiptContent,
+        content: this.unicodeToBase64(receiptContent),
         contentType: 'raw_base64',
         source: 'MUJFOODCLUB',
         title: `Receipt ${receiptData.order_number}`
@@ -169,9 +197,6 @@ export class PrintNodeService {
 
       const kotResult = await kotResponse.json();
       const receiptResult = await receiptResponse.json();
-
-      // Add a small delay to ensure separate printing
-      await new Promise(resolve => setTimeout(resolve, 1000));
 
       return {
         success: true,
@@ -275,47 +300,46 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    let receipt = `        The Food Court Co
+    let receipt = `        THE FOOD COURT CO
 (MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
-GSTIN : 08ADNPG4024A1Z2
+        GSTIN : 08ADNPG4024A1Z2
 --------------------------------
-Name: ${customer_name || 'Walk-in Customer'} (M: ${customer_phone || 'N/A'})
-Date: ${dateStr}                    ${payment_method?.toUpperCase() === 'COD' ? 'Pick Up' : 'Delivery'}
-${timeStr}
-Cashier: biller
-Bill No.: ${order_number}    Token No.: ${order_number.slice(-2)}
+NAME: ${customer_name || 'WALK-IN CUSTOMER'} (M: ${customer_phone || 'N/A'})
+DATE: ${dateStr}            ${payment_method?.toUpperCase() === 'COD' ? 'PICK UP' : 'DELIVERY'}
+        ${timeStr}
+CASHIER: BILLER
+BILL NO.: ${order_number}    TOKEN NO.: ${order_number.slice(-2)}
 --------------------------------
-Item                    Qty.    Price    Amount
+ITEM                QTY    PRICE    AMOUNT
 --------------------------------`;
 
-    // Add items with bold formatting
+    // Add items with uppercase formatting
     items.forEach(item => {
-      const itemName = item.name.padEnd(20);
+      const itemName = item.name.toUpperCase().padEnd(20);
       const qty = item.quantity.toString().padStart(3);
-      const price = item.unit_price.toFixed(2).padStart(8);
-      const amount = item.total_price.toFixed(2).padStart(8);
-      receipt += `\n${itemName} ${qty} ${price} ${amount}`;
+      const price = item.unit_price.toFixed(2).padStart(6);
+      const amount = item.total_price.toFixed(2).padStart(6);
+      receipt += `\n${itemName} ${qty}    ${price}    ${amount}`;
       
       if (item.special_instructions) {
-        receipt += `\n  Note: ${item.special_instructions}`;
+        receipt += `\n  NOTE: ${item.special_instructions.toUpperCase()}`;
       }
     });
 
     receipt += `\n--------------------------------
-Total Qty: ${totalQty}
-Sub Total                    ${subtotal.toFixed(2)}
+TOTAL QTY: ${totalQty}
+SUB TOTAL                    ${subtotal.toFixed(2)}
 CGST@2.5 2.5%                ${cgst.toFixed(2)}
 SGST@2.5 2.5%                ${sgst.toFixed(2)}
-MUJFOODCLUB Discount         ${discount >= 0 ? '+' : ''}${discount.toFixed(2)}
+MUJFOODCLUB DISCOUNT        ${discount >= 0 ? '+' : ''}${discount.toFixed(2)}
 --------------------------------
-Grand Total                  Rs ${final_amount.toFixed(2)}
-Paid via ${payment_method?.toUpperCase() || 'COD'} [UPI]
+        GRAND TOTAL    RS ${final_amount.toFixed(2)}
+PAID VIA ${payment_method?.toUpperCase() || 'COD'} [UPI]
 --------------------------------
-        Thanks For Visit!!
+        THANKS FOR VISIT!!
         MUJFOODCLUB`;
 
-    // Convert to base64 for PrintNode (Unicode-safe)
-    return this.unicodeToBase64(receipt);
+    return receipt;
   }
 
   /**
@@ -329,27 +353,26 @@ Paid via ${payment_method?.toUpperCase() || 'COD'} [UPI]
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    let kot = `        The Food Court Co
+    let kot = `        THE FOOD COURT CO
 --------------------------------
-${dateStr} ${timeStr}
-KOT - ${order_number.slice(-2)}
-Pick Up
+        ${dateStr} ${timeStr}
+        KOT - ${order_number.slice(-2)}
+        PICK UP
 --------------------------------
-Item                    Special Note Qty.
+ITEM                SPECIAL NOTE QTY
 --------------------------------`;
 
-    // Add items
+    // Add items with uppercase formatting
     items.forEach(item => {
-      const itemName = item.name.padEnd(20);
-      const specialNote = item.special_instructions ? item.special_instructions.substring(0, 10) : '--';
+      const itemName = item.name.toUpperCase().padEnd(20);
+      const specialNote = item.special_instructions ? item.special_instructions.substring(0, 10).toUpperCase() : '--';
       const qty = item.quantity.toString().padStart(3);
-      kot += `\n${itemName} ${specialNote} ${qty}`;
+      kot += `\n${itemName} ${specialNote.padEnd(15)} ${qty}`;
     });
 
     kot += `\n--------------------------------`;
 
-    // Convert to base64 for PrintNode (Unicode-safe)
-    return this.unicodeToBase64(kot);
+    return kot;
   }
 
   /**
