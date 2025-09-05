@@ -408,43 +408,43 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Format with proper content and padding to fix cutting point
-    let receipt = `THE FOOD COURT CO
-GSTIN: 08ADNPG4024A1Z2
---------------------------------
-${customer_name || 'WALK-IN'} (${customer_phone || 'N/A'})
-${dateStr} ${timeStr} ${payment_method?.toUpperCase() === 'COD' ? 'PICK UP' : 'DELIVERY'}
-BILL: ${order_number} TOKEN: ${order_number.slice(-2)}
---------------------------------
-ITEM            QTY PRICE AMOUNT
---------------------------------`;
+    // Center-aligned receipt format matching reference image
+    let receipt = `        THE FOOD COURT CO
+    (MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
+    GSTIN : 08ADNPG4024A1Z2
+    ------------------------------------------------
+    Name: ${customer_name || 'WALK-IN'} (M: ${customer_phone || '9999999999'})
+    Date: ${dateStr}    ${timeStr}    ${payment_method?.toUpperCase() === 'COD' ? 'Pick Up' : 'Delivery'}
+    Cashier: biller    Bill No.: ${order_number}
+    Token No.: ${order_number.slice(-2)}
+    ------------------------------------------------
+    Item                    Qty. Price Amount
+    ------------------------------------------------`;
 
-    // Add items with proper formatting
+    // Add items with center-aligned formatting matching reference
     items.forEach(item => {
-      const itemName = item.name.toUpperCase().substring(0, 18).padEnd(18);
+      const itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
       const qty = item.quantity.toString().padStart(2);
       const price = item.unit_price.toFixed(0).padStart(4);
       const amount = item.total_price.toFixed(0).padStart(5);
-      receipt += `\n${itemName} ${qty} ${price} ${amount}`;
-      
-      if (item.special_instructions) {
-        receipt += `\n  ${item.special_instructions.toUpperCase()}`;
-      }
+      receipt += `\n    ${itemName} ${qty}    ${price}    ${amount}`;
     });
 
-    receipt += `\n--------------------------------
-TOTAL: ${totalQty} SUB: ${subtotal.toFixed(0)}
-CGST: ${cgst.toFixed(0)} SGST: ${sgst.toFixed(0)}
-DISCOUNT: ${discount.toFixed(0)}
---------------------------------
-TOTAL: RS ${final_amount.toFixed(0)}
-PAID: ${payment_method?.toUpperCase() || 'COD'}
---------------------------------
-THANKS FOR VISIT!!
-MUJFOODCLUB
---------------------------------
---------------------------------
---------------------------------`;
+    receipt += `\n    ------------------------------------------------
+    Total Qty: ${totalQty}
+    Sub                             ${subtotal.toFixed(0)}
+    Total                           ${subtotal.toFixed(0)}
+    CGST@2.5 2.5%                   ${cgst.toFixed(0)}
+    SGST@2.5 2.5%                   ${sgst.toFixed(0)}
+    MUJFOODCLUB Discount            ${discount.toFixed(0)}
+    ------------------------------------------------
+    Grand Total                     ${final_amount.toFixed(0)}
+    Paid via ${payment_method?.toUpperCase() || 'COD'}
+    ------------------------------------------------
+    Thanks For Visit!!
+    ------------------------------------------------
+    ------------------------------------------------
+    ------------------------------------------------`;
 
     return receipt;
   }
@@ -460,34 +460,31 @@ MUJFOODCLUB
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Format with proper content and padding to fix cutting point
-    let kot = `THE FOOD COURT CO
---------------------------------
-${dateStr} ${timeStr}
-KOT - ${order_number.slice(-2)}
-PICK UP
---------------------------------
-ITEM            QTY
---------------------------------`;
+    // Center-aligned KOT format
+    let kot = `        THE FOOD COURT CO
+    (MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
+    ------------------------------------------------
+    ${dateStr} ${timeStr}
+    KOT - ${order_number.slice(-2)}
+    PICK UP
+    ------------------------------------------------
+    ITEM            QTY
+    ------------------------------------------------`;
 
-    // Add items with proper formatting
+    // Add items with center-aligned formatting
     items.forEach(item => {
       const itemName = item.name.toUpperCase().substring(0, 18).padEnd(18);
       const qty = item.quantity.toString().padStart(2);
-      kot += `\n${itemName} ${qty}`;
-      
-      if (item.special_instructions) {
-        kot += `\n  ${item.special_instructions.toUpperCase()}`;
-      }
+      kot += `\n    ${itemName} ${qty}`;
     });
 
-    // Add padding to push cutting point further down
-    kot += `\n--------------------------------
-THANKS FOR VISIT!!
-MUJFOODCLUB
---------------------------------
---------------------------------
---------------------------------`;
+    // Add center-aligned footer
+    kot += `\n    ------------------------------------------------
+    THANKS FOR VISIT!!
+    MUJFOODCLUB
+    ------------------------------------------------
+    ------------------------------------------------
+    ------------------------------------------------`;
 
     return kot;
   }
