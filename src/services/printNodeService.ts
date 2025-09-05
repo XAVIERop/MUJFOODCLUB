@@ -408,7 +408,7 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Center-aligned receipt format matching reference image
+    // Proper center-aligned receipt format
     let receipt = `        THE FOOD COURT CO
     (MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
     GSTIN : 08ADNPG4024A1Z2
@@ -421,7 +421,7 @@ MUJFOODCLUB!`;
     Item                    Qty. Price Amount
     ------------------------------------------------`;
 
-    // Add items with center-aligned formatting matching reference
+    // Add items with proper center-aligned formatting
     items.forEach(item => {
       const itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
       const qty = item.quantity.toString().padStart(2);
@@ -441,7 +441,10 @@ MUJFOODCLUB!`;
     Grand Total                     ${final_amount.toFixed(0)}
     Paid via ${payment_method?.toUpperCase() || 'COD'}
     ------------------------------------------------
-    Thanks For Visit!!`;
+    Thanks For Visit!!
+    ------------------------------------------------
+    ------------------------------------------------
+    ------------------------------------------------`;
 
     return receipt;
   }
@@ -457,7 +460,7 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Center-aligned KOT format
+    // Proper center-aligned KOT format
     let kot = `        THE FOOD COURT CO
     (MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
     ------------------------------------------------
@@ -468,17 +471,20 @@ MUJFOODCLUB!`;
     ITEM            QTY
     ------------------------------------------------`;
 
-    // Add items with center-aligned formatting
+    // Add items with proper center-aligned formatting
     items.forEach(item => {
       const itemName = item.name.toUpperCase().substring(0, 18).padEnd(18);
       const qty = item.quantity.toString().padStart(2);
       kot += `\n    ${itemName} ${qty}`;
     });
 
-    // Add center-aligned footer
+    // Add proper center-aligned footer with padding
     kot += `\n    ------------------------------------------------
     THANKS FOR VISIT!!
-    MUJFOODCLUB`;
+    MUJFOODCLUB
+    ------------------------------------------------
+    ------------------------------------------------
+    ------------------------------------------------`;
 
     return kot;
   }
