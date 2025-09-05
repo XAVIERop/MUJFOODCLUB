@@ -412,14 +412,14 @@ MUJFOODCLUB!`;
     let receipt = `        THE FOOD COURT CO
     (MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
     GSTIN : 08ADNPG4024A1Z2
-    ------------------------------------------------
+    ----------------------------------------
     Name: ${customer_name || 'WALK-IN'} (M: ${customer_phone || '9999999999'})
     Date: ${dateStr}    ${timeStr}    ${payment_method?.toUpperCase() === 'COD' ? 'Pick Up' : 'Delivery'}
     Cashier: biller    Bill No.: ${order_number}
     Token No.: ${order_number.slice(-2)}
-    ------------------------------------------------
+    ----------------------------------------
     Item                    Qty. Price Amount
-    ------------------------------------------------`;
+    ----------------------------------------`;
 
     // Add items with proper center-aligned formatting
     items.forEach(item => {
@@ -430,21 +430,21 @@ MUJFOODCLUB!`;
       receipt += `\n    ${itemName} ${qty}    ${price}    ${amount}`;
     });
 
-    receipt += `\n    ------------------------------------------------
+    receipt += `\n    ----------------------------------------
     Total Qty: ${totalQty}
     Sub                             ${subtotal.toFixed(0)}
     Total                           ${subtotal.toFixed(0)}
     CGST@2.5 2.5%                   ${cgst.toFixed(0)}
     SGST@2.5 2.5%                   ${sgst.toFixed(0)}
     MUJFOODCLUB Discount            ${discount.toFixed(0)}
-    ------------------------------------------------
+    ----------------------------------------
     Grand Total                     ${final_amount.toFixed(0)}
     Paid via ${payment_method?.toUpperCase() || 'COD'}
-    ------------------------------------------------
+    ----------------------------------------
     Thanks For Visit!!
-    ------------------------------------------------
-    ------------------------------------------------
-    ------------------------------------------------`;
+    ----------------------------------------
+    ----------------------------------------
+    ----------------------------------------`;
 
     return receipt;
   }
@@ -460,16 +460,14 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Proper center-aligned KOT format
-    let kot = `        THE FOOD COURT CO
-    (MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
-    ------------------------------------------------
+    // Proper center-aligned KOT format without cafe name
+    let kot = `    ----------------------------------------
     ${dateStr} ${timeStr}
     KOT - ${order_number.slice(-2)}
     PICK UP
-    ------------------------------------------------
+    ----------------------------------------
     ITEM            QTY
-    ------------------------------------------------`;
+    ----------------------------------------`;
 
     // Add items with proper center-aligned formatting
     items.forEach(item => {
@@ -479,12 +477,12 @@ MUJFOODCLUB!`;
     });
 
     // Add proper center-aligned footer with padding
-    kot += `\n    ------------------------------------------------
+    kot += `\n    ----------------------------------------
     THANKS FOR VISIT!!
     MUJFOODCLUB
-    ------------------------------------------------
-    ------------------------------------------------
-    ------------------------------------------------`;
+    ----------------------------------------
+    ----------------------------------------
+    ----------------------------------------`;
 
     return kot;
   }
