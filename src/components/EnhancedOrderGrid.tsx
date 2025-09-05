@@ -250,8 +250,14 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
         points_redeemed: 0
       };
 
-      // Try PrintNode first (cloud-based, professional)
-      if (printNodeAvailable && printNodePrinters.length > 0) {
+      // Force PrintNode usage (cloud-based, professional)
+      console.log('PrintNode Status:', { 
+        available: printNodeAvailable, 
+        printers: printNodePrinters.length,
+        printerNames: printNodePrinters.map(p => p.name)
+      });
+      
+      if (printNodeAvailable) {
         const result = await printNodePrintReceipt(receiptData);
         
         if (result.success) {
@@ -262,28 +268,25 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
           });
           return;
         } else {
-          console.log('PrintNode failed, trying local service:', result.error);
-        }
-      }
-
-      // Fallback to local print service
-      if (localPrintAvailable) {
-        const result = await localPrintReceipt(receiptData);
-        
-        if (result.success) {
+          console.error('PrintNode failed:', result.error);
           toast({
-            title: "Receipt Printed",
-            description: "Professional thermal receipt sent via local service",
-            variant: "default",
+            title: "PrintNode Error",
+            description: result.error || "Failed to print via PrintNode",
+            variant: "destructive",
           });
-          return;
-        } else {
-          console.log('Local print failed, falling back to browser print:', result.error);
+          return; // Don't fallback to browser print
         }
+      } else {
+        console.error('PrintNode not available');
+        toast({
+          title: "PrintNode Not Available",
+          description: "PrintNode service is not configured or available",
+          variant: "destructive",
+        });
+        return; // Don't fallback to browser print
       }
 
-      // Final fallback to browser printing
-      handlePrint(order);
+      // No fallbacks - PrintNode only
 
     } catch (error) {
       console.error('Professional print error:', error);

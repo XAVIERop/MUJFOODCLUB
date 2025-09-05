@@ -29,9 +29,12 @@ export const usePrintNode = (): UsePrintNodeReturn => {
     // Initialize PrintNode service with API key from environment
     const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY;
     
+    console.log('PrintNode API Key:', apiKey ? 'Found' : 'Not found');
+    
     if (apiKey) {
       const service = new PrintNodeService({ apiKey });
       setPrintNodeService(service);
+      console.log('PrintNode service initialized');
     } else {
       console.warn('PrintNode API key not found. Set VITE_PRINTNODE_API_KEY in your environment variables.');
       setError('PrintNode API key not configured');
@@ -40,11 +43,16 @@ export const usePrintNode = (): UsePrintNodeReturn => {
 
   // Check PrintNode availability
   const checkAvailability = useCallback(async () => {
-    if (!printNodeService) return;
+    if (!printNodeService) {
+      console.log('PrintNode service not initialized yet');
+      return;
+    }
 
     try {
       setError(null);
+      console.log('Checking PrintNode availability...');
       const available = await printNodeService.isAvailable();
+      console.log('PrintNode available:', available);
       setIsAvailable(available);
       setIsConnected(available);
 
@@ -52,6 +60,7 @@ export const usePrintNode = (): UsePrintNodeReturn => {
         // Get account info
         const info = await printNodeService.getAccountInfo();
         setAccountInfo(info);
+        console.log('PrintNode account info:', info);
       }
     } catch (error) {
       console.error('PrintNode availability check failed:', error);
