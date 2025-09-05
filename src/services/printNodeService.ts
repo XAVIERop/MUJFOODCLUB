@@ -339,6 +339,12 @@ PrintNode is working!
 ========================
 Thank you for using
 MUJFOODCLUB!
+========================
+Test Print Completed
+Printer is working correctly
+========================
+End of Test Print
+========================
 
 `;
 
@@ -449,6 +455,20 @@ PAID VIA ${payment_method?.toUpperCase() || 'COD'} [UPI]
 --------------------------------
         THANKS FOR VISIT!!
         MUJFOODCLUB
+--------------------------------
+        ORDER COMPLETED
+        ${new Date().toLocaleTimeString('en-GB', { hour12: false })}
+--------------------------------
+        HAVE A GREAT DAY!
+        VISIT US AGAIN SOON
+--------------------------------
+        MUJFOODCLUB
+        FOOD COURT
+--------------------------------
+        END OF RECEIPT
+--------------------------------
+        
+        
 
 `;
 
@@ -485,6 +505,22 @@ ITEM                SPECIAL NOTE QTY
     });
 
     kot += `\n--------------------------------
+        KITCHEN ORDER TICKET
+        ORDER #${order_number}
+--------------------------------
+        PREPARE WITH CARE
+        FRESH INGREDIENTS
+--------------------------------
+        KOT COMPLETED
+        ${new Date().toLocaleTimeString('en-GB', { hour12: false })}
+--------------------------------
+        THANK YOU KITCHEN TEAM
+        MUJFOODCLUB
+--------------------------------
+        END OF KOT
+--------------------------------
+        
+        
 
 `;
 
