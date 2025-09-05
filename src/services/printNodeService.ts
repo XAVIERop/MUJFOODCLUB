@@ -408,26 +408,43 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Absolute minimal formatting for very limited thermal printer
-    let receipt = `BILL: ${order_number}
-${customer_name || 'WALK-IN'} ${dateStr} ${timeStr}
+    // Format with proper content and padding to fix cutting point
+    let receipt = `THE FOOD COURT CO
+GSTIN: 08ADNPG4024A1Z2
 --------------------------------
-ITEM        QTY PRICE AMOUNT
+${customer_name || 'WALK-IN'} (${customer_phone || 'N/A'})
+${dateStr} ${timeStr} ${payment_method?.toUpperCase() === 'COD' ? 'PICK UP' : 'DELIVERY'}
+BILL: ${order_number} TOKEN: ${order_number.slice(-2)}
+--------------------------------
+ITEM            QTY PRICE AMOUNT
 --------------------------------`;
 
-    // Add items with absolute minimal formatting
+    // Add items with proper formatting
     items.forEach(item => {
-      const itemName = item.name.toUpperCase().substring(0, 10).padEnd(10);
-      const qty = item.quantity.toString();
-      const price = item.unit_price.toFixed(0);
-      const amount = item.total_price.toFixed(0);
+      const itemName = item.name.toUpperCase().substring(0, 18).padEnd(18);
+      const qty = item.quantity.toString().padStart(2);
+      const price = item.unit_price.toFixed(0).padStart(4);
+      const amount = item.total_price.toFixed(0).padStart(5);
       receipt += `\n${itemName} ${qty} ${price} ${amount}`;
+      
+      if (item.special_instructions) {
+        receipt += `\n  ${item.special_instructions.toUpperCase()}`;
+      }
     });
 
     receipt += `\n--------------------------------
-TOTAL: ${final_amount.toFixed(0)}
+TOTAL: ${totalQty} SUB: ${subtotal.toFixed(0)}
+CGST: ${cgst.toFixed(0)} SGST: ${sgst.toFixed(0)}
+DISCOUNT: ${discount.toFixed(0)}
+--------------------------------
+TOTAL: RS ${final_amount.toFixed(0)}
 PAID: ${payment_method?.toUpperCase() || 'COD'}
-`;
+--------------------------------
+THANKS FOR VISIT!!
+MUJFOODCLUB
+--------------------------------
+--------------------------------
+--------------------------------`;
 
     return receipt;
   }
@@ -443,17 +460,34 @@ PAID: ${payment_method?.toUpperCase() || 'COD'}
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Absolute minimal formatting for very limited thermal printer
-    let kot = `KOT ${order_number.slice(-2)}
+    // Format with proper content and padding to fix cutting point
+    let kot = `THE FOOD COURT CO
+--------------------------------
 ${dateStr} ${timeStr}
+KOT - ${order_number.slice(-2)}
+PICK UP
+--------------------------------
+ITEM            QTY
 --------------------------------`;
 
-    // Add items with absolute minimal formatting
+    // Add items with proper formatting
     items.forEach(item => {
-      const itemName = item.name.toUpperCase().substring(0, 12).padEnd(12);
-      const qty = item.quantity.toString();
+      const itemName = item.name.toUpperCase().substring(0, 18).padEnd(18);
+      const qty = item.quantity.toString().padStart(2);
       kot += `\n${itemName} ${qty}`;
+      
+      if (item.special_instructions) {
+        kot += `\n  ${item.special_instructions.toUpperCase()}`;
+      }
     });
+
+    // Add padding to push cutting point further down
+    kot += `\n--------------------------------
+THANKS FOR VISIT!!
+MUJFOODCLUB
+--------------------------------
+--------------------------------
+--------------------------------`;
 
     return kot;
   }
