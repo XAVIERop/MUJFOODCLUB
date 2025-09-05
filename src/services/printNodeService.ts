@@ -416,57 +416,70 @@ End of Test Print
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Plain text formatting - no special characters
+    // Plain text formatting with increased line spacing
     let receipt = `        THE FOOD COURT CO
+
 (MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
+
         GSTIN : 08ADNPG4024A1Z2
+
 --------------------------------
+
 NAME: ${customer_name || 'WALK-IN CUSTOMER'} (M: ${customer_phone || 'N/A'})
+
 DATE: ${dateStr}            ${payment_method?.toUpperCase() === 'COD' ? 'PICK UP' : 'DELIVERY'}
+
         ${timeStr}
+
 CASHIER: BILLER
+
 BILL NO.: ${order_number}    TOKEN NO.: ${order_number.slice(-2)}
+
 --------------------------------
+
 ITEM                QTY    PRICE    AMOUNT
+
 --------------------------------`;
 
-    // Add items with plain text formatting
+    // Add items with increased line spacing
     items.forEach(item => {
       const itemName = item.name.toUpperCase().padEnd(20);
       const qty = item.quantity.toString().padStart(3);
       const price = item.unit_price.toFixed(2).padStart(6);
       const amount = item.total_price.toFixed(2).padStart(6);
-      receipt += `\n${itemName} ${qty}    ${price}    ${amount}`;
+      receipt += `\n\n${itemName} ${qty}    ${price}    ${amount}`;
       
       if (item.special_instructions) {
-        receipt += `\n  NOTE: ${item.special_instructions.toUpperCase()}`;
+        receipt += `\n\n  NOTE: ${item.special_instructions.toUpperCase()}`;
       }
     });
 
-    receipt += `\n--------------------------------
+    receipt += `\n\n--------------------------------
+
 TOTAL QTY: ${totalQty}
+
 SUB TOTAL                    ${subtotal.toFixed(2)}
+
 CGST@2.5 2.5%                ${cgst.toFixed(2)}
+
 SGST@2.5 2.5%                ${sgst.toFixed(2)}
+
 MUJFOODCLUB DISCOUNT        ${discount >= 0 ? '+' : ''}${discount.toFixed(2)}
+
 --------------------------------
+
         GRAND TOTAL    RS ${final_amount.toFixed(2)}
+
 PAID VIA ${payment_method?.toUpperCase() || 'COD'} [UPI]
+
 --------------------------------
+
         THANKS FOR VISIT!!
+
         MUJFOODCLUB
+
 --------------------------------
-        ORDER COMPLETED
-        ${new Date().toLocaleTimeString('en-GB', { hour12: false })}
---------------------------------
-        HAVE A GREAT DAY!
-        VISIT US AGAIN SOON
---------------------------------
-        MUJFOODCLUB
-        FOOD COURT
---------------------------------
-        END OF RECEIPT
---------------------------------
+
         
         
 
@@ -486,39 +499,39 @@ PAID VIA ${payment_method?.toUpperCase() || 'COD'} [UPI]
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Plain text formatting - no special characters
+    // Plain text formatting with increased line spacing
     let kot = `        THE FOOD COURT CO
+
 --------------------------------
+
         ${dateStr} ${timeStr}
+
         KOT - ${order_number.slice(-2)}
+
         PICK UP
+
 --------------------------------
+
 ITEM                SPECIAL NOTE QTY
+
 --------------------------------`;
 
-    // Add items with plain text formatting
+    // Add items with increased line spacing
     items.forEach(item => {
       const itemName = item.name.toUpperCase().padEnd(20);
       const specialNote = item.special_instructions ? item.special_instructions.substring(0, 10).toUpperCase() : '--';
       const qty = item.quantity.toString().padStart(3);
-      kot += `\n${itemName} ${specialNote.padEnd(15)} ${qty}`;
+      kot += `\n\n${itemName} ${specialNote.padEnd(15)} ${qty}`;
     });
 
-    kot += `\n--------------------------------
-        KITCHEN ORDER TICKET
-        ORDER #${order_number}
---------------------------------
-        PREPARE WITH CARE
-        FRESH INGREDIENTS
---------------------------------
-        KOT COMPLETED
-        ${new Date().toLocaleTimeString('en-GB', { hour12: false })}
---------------------------------
+    kot += `\n\n--------------------------------
+
         THANK YOU KITCHEN TEAM
+
         MUJFOODCLUB
+
 --------------------------------
-        END OF KOT
---------------------------------
+
         
         
 
