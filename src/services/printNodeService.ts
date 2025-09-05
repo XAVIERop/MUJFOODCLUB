@@ -111,7 +111,7 @@ export class PrintNodeService {
   }
 
   /**
-   * Print a receipt using PrintNode
+   * Print both KOT and Order Receipt using PrintNode
    */
   async printReceipt(receiptData: ReceiptData, printerId?: number): Promise<PrintJobResult> {
     try {
@@ -129,11 +129,28 @@ export class PrintNodeService {
         targetPrinterId = defaultPrinter.id;
       }
 
-      // Format receipt for thermal printing
-      const receiptContent = this.formatReceiptForThermal(receiptData);
+      // Print KOT first
+      const kotContent = this.formatKOTForThermal(receiptData);
+      const kotJob = {
+        printer: targetPrinterId,
+        content: kotContent,
+        contentType: 'raw_base64',
+        source: 'MUJFOODCLUB',
+        title: `KOT ${receiptData.order_number}`
+      };
 
-      // Create print job
-      const printJob = {
+      const kotResponse = await this.makeRequest('/printjobs', {
+        method: 'POST',
+        body: JSON.stringify(kotJob)
+      });
+
+      if (!kotResponse.ok) {
+        throw new Error(`KOT print failed: HTTP ${kotResponse.status}: ${kotResponse.statusText}`);
+      }
+
+      // Print Order Receipt
+      const receiptContent = this.formatReceiptForThermal(receiptData);
+      const receiptJob = {
         printer: targetPrinterId,
         content: receiptContent,
         contentType: 'raw_base64',
@@ -141,21 +158,21 @@ export class PrintNodeService {
         title: `Receipt ${receiptData.order_number}`
       };
 
-      // Send print job
-      const response = await this.makeRequest('/printjobs', {
+      const receiptResponse = await this.makeRequest('/printjobs', {
         method: 'POST',
-        body: JSON.stringify(printJob)
+        body: JSON.stringify(receiptJob)
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      if (!receiptResponse.ok) {
+        throw new Error(`Receipt print failed: HTTP ${receiptResponse.status}: ${receiptResponse.statusText}`);
       }
 
-      const result = await response.json();
+      const kotResult = await kotResponse.json();
+      const receiptResult = await receiptResponse.json();
 
       return {
         success: true,
-        jobId: result.id
+        jobId: receiptResult.id // Return the receipt job ID as primary
       };
 
     } catch (error) {
@@ -237,38 +254,99 @@ MUJFOODCLUB!`;
   }
 
   /**
-   * Format receipt data for thermal printing
+   * Format customer receipt for thermal printing (exact format from reference image)
    */
   private formatReceiptForThermal(data: ReceiptData): string {
-    const { order_number, cafe_name, customer_name, items, final_amount, payment_method } = data;
+    const { order_number, cafe_name, customer_name, customer_phone, items, final_amount, payment_method } = data;
     
-    let receipt = `MUJ FOOD CLUB
-${cafe_name}
-========================
-Order: ${order_number}
-Customer: ${customer_name}
-========================`;
+    // Calculate totals
+    const subtotal = items.reduce((sum, item) => sum + item.total_price, 0);
+    const taxRate = 0.05; // 5% tax (2.5% CGST + 2.5% SGST)
+    const cgst = subtotal * 0.025;
+    const sgst = subtotal * 0.025;
+    const totalTax = cgst + sgst;
+    const roundOff = final_amount - (subtotal + totalTax);
+    const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
+    
+    // Format date and time
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
+    const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
+    
+    let receipt = `        The Food Court Co
+(MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
+GSTIN : 08ADNPG4024A1Z2
+--------------------------------
+Name: ${customer_name || 'Walk-in Customer'} (M: ${customer_phone || 'N/A'})
+Date: ${dateStr}                    ${payment_method?.toUpperCase() === 'COD' ? 'Pick Up' : 'Delivery'}
+17:${timeStr.split(':')[1]}
+Cashier: biller                    Bill No.: ${order_number}
+Token No.: ${order_number.slice(-2)}
+--------------------------------
+Item                    Qty.    Price    Amount
+--------------------------------`;
 
     // Add items
     items.forEach(item => {
-      receipt += `\n${item.name} x${item.quantity}`;
+      const itemName = item.name.padEnd(20);
+      const qty = item.quantity.toString().padStart(3);
+      const price = item.unit_price.toFixed(2).padStart(8);
+      const amount = item.total_price.toFixed(2).padStart(8);
+      receipt += `\n${itemName} ${qty} ${price} ${amount}`;
+      
       if (item.special_instructions) {
         receipt += `\n  Note: ${item.special_instructions}`;
       }
-      receipt += `\n  ₹${item.total_price}`;
     });
 
-    receipt += `\n========================
-Total: ₹${final_amount}
-Payment: ${payment_method?.toUpperCase() || 'COD'}
-========================
-Thank you for ordering!
-MUJFOODCLUB
-========================
-${new Date().toLocaleString()}`;
+    receipt += `\n--------------------------------
+Total Qty: ${totalQty}
+Sub Total                    ${subtotal.toFixed(2)}
+CGST@2.5 2.5%                ${cgst.toFixed(2)}
+SGST@2.5 2.5%                ${sgst.toFixed(2)}
+Round off                    ${roundOff >= 0 ? '+' : ''}${roundOff.toFixed(2)}
+--------------------------------
+Grand Total                  ₹${final_amount.toFixed(2)}
+Paid via ${payment_method?.toUpperCase() || 'COD'} [UPI]
+--------------------------------
+        Thanks For Visit!!
+        MUJFOODCLUB`;
 
     // Convert to base64 for PrintNode (Unicode-safe)
     return this.unicodeToBase64(receipt);
+  }
+
+  /**
+   * Format KOT (Kitchen Order Ticket) for thermal printing
+   */
+  private formatKOTForThermal(data: ReceiptData): string {
+    const { order_number, cafe_name, items } = data;
+    
+    // Format date and time
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
+    const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
+    
+    let kot = `${dateStr} ${timeStr}
+KOT - ${order_number.slice(-2)}
+Pick Up
+................................
+Item                    Special Note Qty.
+................................`;
+
+    // Add items
+    items.forEach(item => {
+      const itemName = item.name.padEnd(20);
+      const specialNote = item.special_instructions ? item.special_instructions.substring(0, 10) : '--';
+      const qty = item.quantity.toString().padStart(3);
+      kot += `\n${itemName} ${specialNote} ${qty}`;
+    });
+
+    kot += `\n................................
+        MUJFOODCLUB KOT`;
+
+    // Convert to base64 for PrintNode (Unicode-safe)
+    return this.unicodeToBase64(kot);
   }
 
   /**
