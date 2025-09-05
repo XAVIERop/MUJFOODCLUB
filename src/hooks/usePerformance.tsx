@@ -67,7 +67,7 @@ export const usePerformance = () => {
 };
 
 // Hook for debouncing expensive operations
-export const useDebounce = <T,>(value: T, delay: number): T => {
+export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
@@ -81,13 +81,13 @@ export const useDebounce = <T,>(value: T, delay: number): T => {
   }, [value, delay]);
 
   return debouncedValue;
-};
+}
 
 // Hook for throttling function calls
-export const useThrottle = <T extends (...args: any[]) => any,>(
+export function useThrottle<T extends (...args: any[]) => any>(
   callback: T,
   delay: number
-): T => {
+): T {
   const [lastCall, setLastCall] = useState(0);
 
   return useCallback(
@@ -100,7 +100,7 @@ export const useThrottle = <T extends (...args: any[]) => any,>(
     }) as T,
     [callback, delay, lastCall]
   );
-};
+}
 
 // Hook for lazy loading components
 export const useLazyLoad = (threshold = 0.1) => {
@@ -171,11 +171,11 @@ export const useRenderPerformance = (componentName: string) => {
 };
 
 // Hook for optimizing list rendering
-export const useVirtualization = <T,>(
+export function useVirtualization<T>(
   items: T[],
   itemHeight: number,
   containerHeight: number
-) => {
+) {
   const [scrollTop, setScrollTop] = useState(0);
 
   const visibleStart = Math.floor(scrollTop / itemHeight);
@@ -194,7 +194,7 @@ export const useVirtualization = <T,>(
     offsetY,
     setScrollTop
   };
-};
+}
 
 // Hook for managing loading states efficiently
 export const useLoadingStates = () => {
