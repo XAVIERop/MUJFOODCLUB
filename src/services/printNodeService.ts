@@ -282,8 +282,8 @@ GSTIN : 08ADNPG4024A1Z2
 Name: ${customer_name || 'Walk-in Customer'} (M: ${customer_phone || 'N/A'})
 Date: ${dateStr}                    ${payment_method?.toUpperCase() === 'COD' ? 'Pick Up' : 'Delivery'}
 ${timeStr}
-Cashier: biller                    Bill No.: ${order_number}
-Token No.: ${order_number.slice(-2)}
+Cashier: biller
+Bill No.: ${order_number}    Token No.: ${order_number.slice(-2)}
 --------------------------------
 Item                    Qty.    Price    Amount
 --------------------------------`;
@@ -308,7 +308,7 @@ CGST@2.5 2.5%                ${cgst.toFixed(2)}
 SGST@2.5 2.5%                ${sgst.toFixed(2)}
 MUJFOODCLUB Discount         ${discount >= 0 ? '+' : ''}${discount.toFixed(2)}
 --------------------------------
-Grand Total                  ${final_amount.toFixed(2)}
+Grand Total                  Rs ${final_amount.toFixed(2)}
 Paid via ${payment_method?.toUpperCase() || 'COD'} [UPI]
 --------------------------------
         Thanks For Visit!!
@@ -329,8 +329,7 @@ Paid via ${payment_method?.toUpperCase() || 'COD'} [UPI]
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    let kot = `        MUJFOODCLUB KOT
-        The Food Court Co
+    let kot = `        The Food Court Co
 --------------------------------
 ${dateStr} ${timeStr}
 KOT - ${order_number.slice(-2)}
@@ -347,9 +346,7 @@ Item                    Special Note Qty.
       kot += `\n${itemName} ${specialNote} ${qty}`;
     });
 
-    kot += `\n--------------------------------
-        Thanks For Visit!!
-        MUJFOODCLUB KOT`;
+    kot += `\n--------------------------------`;
 
     // Convert to base64 for PrintNode (Unicode-safe)
     return this.unicodeToBase64(kot);
