@@ -408,42 +408,37 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Compact formatting to fit all content
+    // Ultra-compact formatting for limited thermal printer
     let receipt = `THE FOOD COURT CO
-(MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
 GSTIN: 08ADNPG4024A1Z2
 --------------------------------
-NAME: ${customer_name || 'WALK-IN CUSTOMER'} (M: ${customer_phone || 'N/A'})
-DATE: ${dateStr} ${payment_method?.toUpperCase() === 'COD' ? 'PICK UP' : 'DELIVERY'}
-TIME: ${timeStr}
-CASHIER: BILLER
-BILL NO.: ${order_number} TOKEN NO.: ${order_number.slice(-2)}
+${customer_name || 'WALK-IN'} (${customer_phone || 'N/A'})
+${dateStr} ${timeStr} ${payment_method?.toUpperCase() === 'COD' ? 'PICK UP' : 'DELIVERY'}
+BILL: ${order_number} TOKEN: ${order_number.slice(-2)}
 --------------------------------
-ITEM                QTY    PRICE    AMOUNT
+ITEM            QTY PRICE AMOUNT
 --------------------------------`;
 
-    // Add items with compact formatting
+    // Add items with ultra-compact formatting
     items.forEach(item => {
-      const itemName = item.name.toUpperCase().substring(0, 18).padEnd(18);
-      const qty = item.quantity.toString().padStart(3);
-      const price = item.unit_price.toFixed(2).padStart(6);
-      const amount = item.total_price.toFixed(2).padStart(6);
-      receipt += `\n${itemName} ${qty}    ${price}    ${amount}`;
+      const itemName = item.name.toUpperCase().substring(0, 14).padEnd(14);
+      const qty = item.quantity.toString().padStart(2);
+      const price = item.unit_price.toFixed(0).padStart(4);
+      const amount = item.total_price.toFixed(0).padStart(5);
+      receipt += `\n${itemName} ${qty} ${price} ${amount}`;
       
       if (item.special_instructions) {
-        receipt += `\n  NOTE: ${item.special_instructions.toUpperCase()}`;
+        receipt += `\n  ${item.special_instructions.toUpperCase()}`;
       }
     });
 
     receipt += `\n--------------------------------
-TOTAL QTY: ${totalQty}
-SUB TOTAL                    ${subtotal.toFixed(2)}
-CGST@2.5 2.5%                ${cgst.toFixed(2)}
-SGST@2.5 2.5%                ${sgst.toFixed(2)}
-MUJFOODCLUB DISCOUNT        ${discount >= 0 ? '+' : ''}${discount.toFixed(2)}
+TOTAL: ${totalQty} SUB: ${subtotal.toFixed(0)}
+CGST: ${cgst.toFixed(0)} SGST: ${sgst.toFixed(0)}
+DISCOUNT: ${discount.toFixed(0)}
 --------------------------------
-GRAND TOTAL                  RS ${final_amount.toFixed(2)}
-PAID VIA ${payment_method?.toUpperCase() || 'COD'} [UPI]
+TOTAL: RS ${final_amount.toFixed(0)}
+PAID: ${payment_method?.toUpperCase() || 'COD'}
 --------------------------------
 THANKS FOR VISIT!!
 MUJFOODCLUB
@@ -463,22 +458,25 @@ MUJFOODCLUB
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Compact formatting to fit all content
+    // Ultra-compact formatting for limited thermal printer
     let kot = `THE FOOD COURT CO
 --------------------------------
 ${dateStr} ${timeStr}
 KOT - ${order_number.slice(-2)}
 PICK UP
 --------------------------------
-ITEM                SPECIAL NOTE QTY
+ITEM            QTY
 --------------------------------`;
 
-    // Add items with compact formatting
+    // Add items with ultra-compact formatting
     items.forEach(item => {
-      const itemName = item.name.toUpperCase().substring(0, 18).padEnd(18);
-      const specialNote = item.special_instructions ? item.special_instructions.substring(0, 8).toUpperCase() : '--';
-      const qty = item.quantity.toString().padStart(3);
-      kot += `\n${itemName} ${specialNote.padEnd(12)} ${qty}`;
+      const itemName = item.name.toUpperCase().substring(0, 14).padEnd(14);
+      const qty = item.quantity.toString().padStart(2);
+      kot += `\n${itemName} ${qty}`;
+      
+      if (item.special_instructions) {
+        kot += `\n  ${item.special_instructions.toUpperCase()}`;
+      }
     });
 
     kot += `\n--------------------------------`;
