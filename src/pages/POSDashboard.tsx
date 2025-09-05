@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Clock, 
   CheckCircle, 
@@ -18,19 +19,31 @@ import {
   BarChart3,
   Settings,
   Users,
-  Package
+  Package,
+  QrCode,
+  Database,
+  Download,
+  TrendingUp,
+  Volume2,
+  ChevronDown
 } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
-import CompactOrderGrid from '@/components/CompactOrderGrid';
+import { useSoundNotifications } from '@/hooks/useSoundNotifications';
+import { soundNotificationService } from '@/services/soundNotificationService';
+import EnhancedOrderGrid from '@/components/EnhancedOrderGrid';
 import POSAnalytics from '@/components/POSAnalytics';
 import ThermalPrinter from '@/components/ThermalPrinter';
 import { thermalPrinterService, formatOrderForPrinting } from '@/api/thermalPrinter';
 import NotificationCenter from '@/components/NotificationCenter';
 import SimplePrinterConfig from '@/components/SimplePrinterConfig';
-import PrintNodeConfig from '@/components/PrintNodeConfig';
+import PrintNodeStatus from '@/components/PrintNodeStatus';
+import ManualOrderEntry from '@/components/ManualOrderEntry';
+import OrderNotificationSound from '@/components/OrderNotificationSound';
+import Header from '@/components/Header';
+import PasswordProtectedSection from '@/components/PasswordProtectedSection';
 
 interface Order {
   id: string;
@@ -48,6 +61,14 @@ interface Order {
   cafe_id: string;
   points_credited: boolean;
   phone_number?: string;
+  customer_name?: string;
+  subtotal?: number;
+  tax_amount?: number;
+  cafe?: {
+    id: string;
+    name: string;
+    type: string;
+  };
   user?: {
     full_name: string;
     phone: string | null;
@@ -82,9 +103,19 @@ const POSDashboard = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState('orders');
   const [cafeId, setCafeId] = useState<string | null>(null);
+  const [isPrinterSetupOpen, setIsPrinterSetupOpen] = useState(false);
+  const [isSettingsPrinterOpen, setIsSettingsPrinterOpen] = useState(false);
 
   // Scroll to top hook
   const { scrollToTopOnTabChange } = useScrollToTop();
+
+  // Sound notification settings
+  const {
+    isEnabled: soundEnabled,
+    volume: soundVolume,
+    toggleSound,
+    setVolume,
+  } = useSoundNotifications();
 
   const fetchOrders = async () => {
     try {
@@ -179,7 +210,7 @@ const POSDashboard = () => {
     try {
       const { error } = await supabase
         .from('orders')
-        .update({ status: newStatus })
+        .update({ status: newStatus } as any)
         .eq('id', orderId);
 
       if (error) {
@@ -666,6 +697,12 @@ const POSDashboard = () => {
 
   const handleCompactStatusUpdate = async (orderId: string, newStatus: Order['status']) => {
     await updateOrderStatus(orderId, newStatus);
+    
+    // Play sound notification for status updates
+    if (soundEnabled) {
+      soundNotificationService.updateSettings(soundEnabled, soundVolume);
+      await soundNotificationService.playOrderReceivedSound();
+    }
   };
 
   const getStatusIcon = (status: Order['status']) => {
@@ -748,7 +785,7 @@ const POSDashboard = () => {
           // Auto-generate and print receipt for new orders
           if (profile?.cafe_id === 'chatkara') {
             setTimeout(() => {
-              autoPrintReceipt(payload.new);
+              autoPrintReceipt(payload.new as Order);
             }, 2000); // Wait 2 seconds for order data to be fetched
           }
         }
@@ -791,6 +828,7 @@ const POSDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header />
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm p-6">
@@ -822,24 +860,39 @@ const POSDashboard = () => {
         </div>
 
         {/* Printer Configuration - MULTIPLE OPTIONS */}
-        <div className="bg-yellow-50 border-2 border-yellow-200 p-4 rounded-lg">
-          <h3 className="text-lg font-bold text-yellow-800 mb-4">🖨️ Printer Setup Options</h3>
-          <p className="text-sm text-yellow-700 mb-4">
-            Choose your preferred printing method. PrintNode is recommended for professional thermal printing.
-          </p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-bold mb-2">Option 1: PrintNode Service (Recommended)</h4>
-              <p className="text-xs text-gray-600 mb-2">Professional thermal printing service</p>
-              <PrintNodeConfig />
+        <Collapsible open={isPrinterSetupOpen} onOpenChange={setIsPrinterSetupOpen}>
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="outline" 
+              className="w-full justify-between bg-yellow-50 border-yellow-200 hover:bg-yellow-100"
+            >
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-yellow-800">🖨️ Printer Setup Options</span>
+                <Badge variant="secondary" className="text-xs">Click to expand</Badge>
+              </div>
+              <ChevronDown className={`h-4 w-4 transition-transform ${isPrinterSetupOpen ? 'rotate-180' : ''}`} />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-4">
+            <div className="bg-yellow-50 border-2 border-yellow-200 p-4 rounded-lg">
+              <p className="text-sm text-yellow-700 mb-4">
+                Choose your preferred printing method. PrintNode is recommended for professional thermal printing.
+              </p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-bold mb-2">Option 1: PrintNode Service (Recommended)</h4>
+                  <p className="text-xs text-gray-600 mb-2">Professional thermal printing service</p>
+                  <PrintNodeStatus />
+                </div>
+                <div>
+                  <h4 className="font-bold mb-2">Option 2: Direct USB Printing</h4>
+                  <p className="text-xs text-gray-600 mb-2">Direct browser printing (may have page size issues)</p>
+                  <SimplePrinterConfig />
+                </div>
+              </div>
             </div>
-            <div>
-              <h4 className="font-bold mb-2">Option 2: Direct USB Printing</h4>
-              <p className="text-xs text-gray-600 mb-2">Direct browser printing (may have page size issues)</p>
-              <SimplePrinterConfig />
-            </div>
-          </div>
-        </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
@@ -892,16 +945,26 @@ const POSDashboard = () => {
           }} 
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-6 gap-1 sm:gap-2">
+          <TabsList className="grid w-full grid-cols-8 gap-1 sm:gap-2">
             <TabsTrigger value="orders" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <Receipt className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Orders</span>
               <span className="sm:hidden">O</span>
             </TabsTrigger>
+            <TabsTrigger value="manual-order" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Manual Order</span>
+              <span className="sm:hidden">M</span>
+            </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Analytics</span>
               <span className="sm:hidden">A</span>
+            </TabsTrigger>
+            <TabsTrigger value="database" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Database className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Database</span>
+              <span className="sm:hidden">D</span>
             </TabsTrigger>
             <TabsTrigger value="inventory" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <Package className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -970,9 +1033,9 @@ const POSDashboard = () => {
               </div>
             </div>
 
-            {/* Compact Grid View */}
+            {/* Enhanced Grid View */}
             {useCompactLayout && (
-              <CompactOrderGrid
+              <EnhancedOrderGrid
                 orders={orders}
                 orderItems={orderItems}
                 onOrderSelect={handleOrderSelect}
@@ -1092,6 +1155,27 @@ const POSDashboard = () => {
             )}
           </TabsContent>
 
+          {/* Manual Order Tab */}
+          <TabsContent value="manual-order" className="space-y-6">
+            {cafeId ? (
+              <ManualOrderEntry cafeId={cafeId} />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Plus className="h-5 w-5" />
+                    Manual Order Entry
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Loading cafe information...
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
             <POSAnalytics 
@@ -1099,6 +1183,82 @@ const POSDashboard = () => {
               orderItems={orderItems}
               loading={loading}
             />
+          </TabsContent>
+
+          {/* Database Tab */}
+          <TabsContent value="database" className="space-y-6">
+            <PasswordProtectedSection
+              title="Database Management"
+              description="Export data and view database statistics"
+              passwordKey="database_access"
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>Database Management</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Export Data</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <Button 
+                          className="w-full" 
+                          variant="outline"
+                          onClick={() => {
+                            toast({
+                              title: "Export Started",
+                              description: "Data export functionality will be implemented",
+                            });
+                          }}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Export Orders
+                        </Button>
+                        <Button 
+                          className="w-full" 
+                          variant="outline"
+                          onClick={() => {
+                            toast({
+                              title: "Export Started",
+                              description: "Customer data export functionality will be implemented",
+                            });
+                          }}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Export Customers
+                        </Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Database Stats</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex justify-between">
+                          <span>Total Orders:</span>
+                          <Badge variant="secondary">{orders.length}</Badge>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Completed Orders:</span>
+                          <Badge variant="secondary">
+                            {orders.filter(o => o.status === 'completed').length}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Pending Orders:</span>
+                          <Badge variant="secondary">
+                            {orders.filter(o => ['received', 'confirmed', 'preparing', 'on_the_way'].includes(o.status)).length}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </PasswordProtectedSection>
           </TabsContent>
 
           {/* Inventory Tab */}
@@ -1128,7 +1288,22 @@ const POSDashboard = () => {
           {/* Print Tab */}
           <TabsContent value="print" className="space-y-6">
             <ThermalPrinter 
-              order={selectedOrder}
+              order={selectedOrder ? {
+                id: selectedOrder.id,
+                order_number: selectedOrder.order_number,
+                customer_name: selectedOrder.user?.full_name || selectedOrder.customer_name || 'Walk-in Customer',
+                customer_phone: selectedOrder.user?.phone || selectedOrder.phone_number || 'N/A',
+                items: (orderItems[selectedOrder.id] || []).map(item => ({
+                  id: item.id,
+                  name: item.menu_item?.name || 'Unknown Item',
+                  quantity: item.quantity,
+                  price: item.unit_price,
+                  total: item.total_price
+                })),
+                total_amount: selectedOrder.total_amount,
+                order_time: selectedOrder.created_at,
+                status: selectedOrder.status
+              } : null}
               onClose={() => setSelectedOrder(null)}
             />
           </TabsContent>
@@ -1139,8 +1314,60 @@ const POSDashboard = () => {
               <CardHeader>
                 <CardTitle>POS Settings</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Settings features coming soon...</p>
+              <CardContent className="space-y-6">
+                {/* Sound Notifications */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Sound Notifications</h3>
+                  <OrderNotificationSound
+                    isEnabled={soundEnabled}
+                    onToggle={toggleSound}
+                    volume={soundVolume}
+                    onVolumeChange={setVolume}
+                  />
+                </div>
+
+                {/* Print Settings */}
+                <Collapsible open={isSettingsPrinterOpen} onOpenChange={setIsSettingsPrinterOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">Print Settings</span>
+                        <Badge variant="secondary" className="text-xs">Click to expand</Badge>
+                      </div>
+                      <ChevronDown className={`h-4 w-4 transition-transform ${isSettingsPrinterOpen ? 'rotate-180' : ''}`} />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4 mt-4">
+                    <PrintNodeStatus />
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* Layout Settings */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Layout Settings</h3>
+                  <div className="flex items-center space-x-4">
+                    <span>Order View:</span>
+                    <Button
+                      variant={useCompactLayout ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setUseCompactLayout(true)}
+                    >
+                      <Grid className="h-4 w-4 mr-2" />
+                      Compact Grid
+                    </Button>
+                    <Button
+                      variant={!useCompactLayout ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setUseCompactLayout(false)}
+                    >
+                      <List className="h-4 w-4 mr-2" />
+                      Detailed List
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

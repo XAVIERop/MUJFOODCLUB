@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Printer, Download, Share2, Copy, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLocalPrint } from '@/hooks/useLocalPrint';
 
 interface ReceiptItem {
   id: string;
@@ -46,6 +47,7 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
   onDownload 
 }) => {
   const { toast } = useToast();
+  const { isAvailable, printReceipt, isPrinting } = useLocalPrint();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -65,25 +67,52 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     });
   };
 
-  const handlePrint = () => {
-    // Generate and print receipt automatically
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      const receiptHTML = generateReceiptHTML();
-      printWindow.document.write(receiptHTML);
-      printWindow.document.close();
+  const handlePrint = async () => {
+    try {
+      // Try local print service first (professional thermal receipts)
+      if (isAvailable) {
+        const result = await printReceipt(orderData);
+        
+        if (result.success) {
+          toast({
+            title: "Receipt Printed",
+            description: "Professional thermal receipt sent to printer",
+          });
+          return;
+        } else {
+          console.log('Local print failed, falling back to browser print:', result.error);
+        }
+      }
       
-      // Auto-print after a short delay
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
+      // Fallback to browser printing
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        const receiptHTML = generateReceiptHTML();
+        printWindow.document.write(receiptHTML);
+        printWindow.document.close();
+        
+        // Auto-print after a short delay
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 500);
+      }
+      
+      toast({
+        title: "Receipt Printed",
+        description: isAvailable 
+          ? "Receipt sent to default printer (local service unavailable)"
+          : "Receipt sent to default printer",
+      });
+      
+    } catch (error) {
+      console.error('Print error:', error);
+      toast({
+        title: "Print Failed",
+        description: "Could not print receipt",
+        variant: "destructive"
+      });
     }
-    
-    toast({
-      title: "Receipt Printed",
-      description: "Receipt has been sent to printer",
-    });
   };
 
   const handleDownload = () => {
@@ -691,9 +720,13 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-3 pt-4">
-            <Button onClick={handlePrint} className="flex-1">
+            <Button 
+              onClick={handlePrint} 
+              className="flex-1"
+              disabled={isPrinting}
+            >
               <Printer className="w-4 h-4 mr-2" />
-              Print Receipt
+              {isPrinting ? 'Printing...' : 'Print Receipt'}
             </Button>
             <Button onClick={handleDownload} variant="outline" className="flex-1">
               <Download className="w-4 h-4 mr-2" />
@@ -709,6 +742,11 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
           <div className="text-center text-sm text-muted-foreground">
             <CheckCircle className="w-4 h-4 inline mr-1 text-green-500" />
             Receipt generated successfully
+            {isAvailable && (
+              <div className="mt-1 text-xs text-blue-600">
+                🖨️ Professional thermal printing available
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -22,8 +22,8 @@ import FoodCourtReceipt from './FoodCourtReceipt';
 import SimpleReceipt from './SimpleReceipt';
 import { usePrinter } from '@/hooks/usePrinter';
 import { directPrinterService } from '@/services/directPrinterService';
+import { useLocalPrint } from '@/hooks/useLocalPrint';
 import { usePrintNode } from '@/hooks/usePrintNode';
-import { directThermalPrinterService } from '@/services/directThermalPrinter';
 
 interface OrderItem {
   id: string;
@@ -79,7 +79,8 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
   console.log('CompactOrderGrid received orderItems:', orderItems);
   const { toast } = useToast();
   const { isConnected, isPrinting, printBothReceipts } = usePrinter();
-  const { isConnected: printNodeConnected, isPrinting: printNodePrinting, printBothReceipts: printNodePrintBothReceipts } = usePrintNode();
+  const { isAvailable: localPrintAvailable, printReceipt: localPrintReceipt, isPrinting: localPrintPrinting } = useLocalPrint();
+  const { isAvailable: printNodeAvailable, printReceipt: printNodePrintReceipt, isPrinting: printNodePrinting, printers: printNodePrinters } = usePrintNode();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -678,8 +679,8 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
     }
   };
 
-  // New direct thermal print function that completely bypasses browser
-  const handleDirectThermalPrint = async (order: Order) => {
+  // Professional print function using PrintNode (primary) or local service (fallback)
+  const handleProfessionalPrint = async (order: Order) => {
     try {
       // Get order items for this order
       const items = orderItems[order.id] || [];
@@ -693,49 +694,73 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
         return;
       }
 
-      // Print KOT first
-      const kotSuccess = await directThermalPrinterService.printReceipt({
-        type: 'kot',
-        orderData: order,
-        orderItems: items
-      });
+      // Convert order data to receipt format
+      const receiptData = {
+        order_id: order.id,
+        order_number: order.order_number,
+        cafe_name: order.cafe?.name || 'Unknown Cafe',
+        customer_name: order.user?.full_name || 'Walk-in Customer',
+        customer_phone: order.user?.phone || order.phone_number || 'N/A',
+        delivery_block: order.delivery_block || order.user?.block || 'N/A',
+        items: items.map(item => ({
+          id: item.id,
+          name: item.menu_item?.name || 'Unknown Item',
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+          special_instructions: item.special_instructions
+        })),
+        subtotal: order.subtotal || 0,
+        tax_amount: order.tax_amount || 0,
+        discount_amount: order.discount_amount || 0,
+        final_amount: order.total_amount || 0,
+        payment_method: order.payment_method || 'cod',
+        order_date: order.created_at,
+        estimated_delivery: order.estimated_delivery || new Date().toISOString(),
+        points_earned: 0,
+        points_redeemed: 0
+      };
 
-      if (kotSuccess) {
-        toast({
-          title: "KOT Sent to Printer",
-          description: "Kitchen Order Ticket sent directly to thermal printer",
-          variant: "default",
-        });
-      }
-
-      // Wait a moment then print customer receipt
-      setTimeout(async () => {
-        const customerSuccess = await directThermalPrinterService.printReceipt({
-          type: 'customer',
-          orderData: order,
-          orderItems: items
-        });
-
-        if (customerSuccess) {
+      // Try PrintNode first (cloud-based, professional)
+      if (printNodeAvailable && printNodePrinters.length > 0) {
+        const result = await printNodePrintReceipt(receiptData);
+        
+        if (result.success) {
           toast({
-            title: "Customer Receipt Sent to Printer",
-            description: "Customer receipt sent directly to thermal printer",
+            title: "Receipt Printed",
+            description: "Professional thermal receipt sent via PrintNode",
             variant: "default",
           });
+          return;
         } else {
-          toast({
-            title: "Print Failed",
-            description: "Could not send customer receipt to printer",
-            variant: "destructive",
-          });
+          console.log('PrintNode failed, trying local service:', result.error);
         }
-      }, 1000);
+      }
+
+      // Fallback to local print service
+      if (localPrintAvailable) {
+        const result = await localPrintReceipt(receiptData);
+        
+        if (result.success) {
+          toast({
+            title: "Receipt Printed",
+            description: "Professional thermal receipt sent via local service",
+            variant: "default",
+          });
+          return;
+        } else {
+          console.log('Local print failed, falling back to browser print:', result.error);
+        }
+      }
+
+      // Final fallback to browser printing
+      handlePrint(order);
 
     } catch (error) {
-      console.error('Direct thermal print error:', error);
+      console.error('Professional print error:', error);
       toast({
         title: "Print Error",
-        description: "Error sending receipts to thermal printer",
+        description: "Error printing receipts",
         variant: "destructive",
       });
     }
@@ -975,8 +1000,8 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
                               });
                               
                               if (isFoodCourt) {
-                                // Use direct thermal printer service (bypasses browser completely)
-                                handleDirectThermalPrint(order);
+                                // Use professional printing (PrintNode + local service fallback)
+                                handleProfessionalPrint(order);
                               } else {
                                 toast({
                                   title: "Receipt Printing",

@@ -1,245 +1,303 @@
-// PrintNode Service for Thermal Printer Integration
-// Handles thermal printing with proper page sizing
+import { ReceiptData } from '@/components/ReceiptGenerator';
 
-interface PrintNodeConfig {
+export interface PrintNodeConfig {
   apiKey: string;
-  printerId: string;
-  baseUrl: string;
+  baseUrl?: string;
 }
 
-interface PrintJob {
-  type: 'kot' | 'customer';
-  orderData: any;
-  orderItems: any[];
+export interface PrintNodePrinter {
+  id: number;
+  name: string;
+  description: string;
+  default: boolean;
+  state: string;
+  computer: {
+    id: number;
+    name: string;
+  };
 }
 
-class PrintNodeService {
-  private config: PrintNodeConfig;
-  private isConnected: boolean = false;
+export interface PrintJobResult {
+  success: boolean;
+  jobId?: number;
+  error?: string;
+}
 
-  constructor() {
-    this.config = {
-      apiKey: '', // Will be set by user
-      printerId: '', // Will be set by user
-      baseUrl: 'https://api.printnode.com'
+export class PrintNodeService {
+  private apiKey: string;
+  private baseUrl: string;
+
+  constructor(config: PrintNodeConfig) {
+    this.apiKey = config.apiKey;
+    this.baseUrl = config.baseUrl || 'https://api.printnode.com';
+  }
+
+  /**
+   * Make authenticated HTTP request to PrintNode API
+   */
+  private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
+    const url = `${this.baseUrl}${endpoint}`;
+    const headers = {
+      'Authorization': `Basic ${btoa(this.apiKey + ':')}`,
+      'Content-Type': 'application/json',
+      ...options.headers
     };
+
+    return fetch(url, {
+      ...options,
+      headers
+    });
   }
 
-  // Set configuration
-  setConfig(apiKey: string, printerId: string) {
-    this.config.apiKey = apiKey;
-    this.config.printerId = printerId;
-  }
-
-  // Test connection
-  async testConnection(): Promise<boolean> {
+  /**
+   * Check if PrintNode service is available
+   */
+  async isAvailable(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.config.baseUrl}/printers`, {
-        headers: {
-          'Authorization': `Basic ${btoa(this.config.apiKey + ':')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        this.isConnected = true;
-        return true;
-      }
-      return false;
+      const response = await this.makeRequest('/whoami');
+      return response.ok;
     } catch (error) {
-      console.error('PrintNode connection test failed:', error);
+      console.error('PrintNode service unavailable:', error);
       return false;
     }
   }
 
-  // Print receipt
-  async printReceipt(job: PrintJob): Promise<boolean> {
+  /**
+   * Get all available printers
+   */
+  async getAvailablePrinters(): Promise<PrintNodePrinter[]> {
     try {
-      const receiptText = this.generateReceiptText(job);
+      const response = await this.makeRequest('/printers');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       
+      const printers = await response.json();
+      return printers.map((printer: any) => ({
+        id: printer.id,
+        name: printer.name,
+        description: printer.description,
+        default: printer.default,
+        state: printer.state,
+        computer: {
+          id: printer.computer.id,
+          name: printer.computer.name
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching printers:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get default printer for a specific computer
+   */
+  async getDefaultPrinter(computerId?: number): Promise<PrintNodePrinter | null> {
+    try {
+      const printers = await this.getAvailablePrinters();
+      
+      if (computerId) {
+        // Find default printer for specific computer
+        return printers.find(p => p.computer.id === computerId && p.default) || null;
+      } else {
+        // Find any default printer
+        return printers.find(p => p.default) || printers[0] || null;
+      }
+    } catch (error) {
+      console.error('Error getting default printer:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Print a receipt using PrintNode
+   */
+  async printReceipt(receiptData: ReceiptData, printerId?: number): Promise<PrintJobResult> {
+    try {
+      // Get printer ID
+      let targetPrinterId = printerId;
+      
+      if (!targetPrinterId) {
+        const defaultPrinter = await this.getDefaultPrinter();
+        if (!defaultPrinter) {
+          return {
+            success: false,
+            error: 'No printer available'
+          };
+        }
+        targetPrinterId = defaultPrinter.id;
+      }
+
+      // Format receipt for thermal printing
+      const receiptContent = this.formatReceiptForThermal(receiptData);
+
+      // Create print job
       const printJob = {
-        printer: this.config.printerId,
-        title: `${job.type.toUpperCase()} - ${job.orderData.order_number}`,
-        content: receiptText,
+        printer: targetPrinterId,
+        content: receiptContent,
         contentType: 'raw_base64',
-        source: 'muj-food-club-pos'
+        source: 'MUJFOODCLUB',
+        title: `Receipt ${receiptData.order_number}`
       };
 
-      const response = await fetch(`${this.config.baseUrl}/printjobs`, {
+      // Send print job
+      const response = await this.makeRequest('/printjobs', {
         method: 'POST',
-        headers: {
-          'Authorization': `Basic ${btoa(this.config.apiKey + ':')}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify(printJob)
       });
 
-      return response.ok;
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      return {
+        success: true,
+        jobId: result.id
+      };
+
     } catch (error) {
-      console.error('PrintNode print failed:', error);
-      return false;
+      console.error('PrintNode print error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
     }
   }
 
-  // Generate compact receipt text
-  private generateReceiptText(job: PrintJob): string {
-    const { orderData, orderItems } = job;
-    const isFoodCourt = orderData.cafe_id === '3e5955ba-9b90-48ce-9d07-cc686678a10e';
-    
-    if (job.type === 'kot') {
-      return this.generateKOTText(orderData, orderItems, isFoodCourt);
-    } else {
-      return this.generateCustomerReceiptText(orderData, orderItems, isFoodCourt);
+  /**
+   * Test print to verify setup
+   */
+  async testPrint(printerId?: number): Promise<PrintJobResult> {
+    try {
+      const testReceipt = `MUJ FOOD CLUB
+Test Print
+========================
+This is a test print from
+MUJFOODCLUB PrintNode Service
+========================
+Date: ${new Date().toLocaleDateString()}
+Time: ${new Date().toLocaleTimeString()}
+========================
+If you can see this,
+PrintNode is working!
+========================
+Thank you for using
+MUJFOODCLUB!`;
+
+      // Get printer ID
+      let targetPrinterId = printerId;
+      
+      if (!targetPrinterId) {
+        const defaultPrinter = await this.getDefaultPrinter();
+        if (!defaultPrinter) {
+          return {
+            success: false,
+            error: 'No printer available for test'
+          };
+        }
+        targetPrinterId = defaultPrinter.id;
+      }
+
+      // Create test print job
+      const printJob = {
+        printer: targetPrinterId,
+        content: testReceipt,
+        contentType: 'raw_base64',
+        source: 'MUJFOODCLUB',
+        title: 'Test Print'
+      };
+
+      // Send test print job
+      const response = await this.makeRequest('/printjobs', {
+        method: 'POST',
+        body: JSON.stringify(printJob)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      return {
+        success: true,
+        jobId: result.id
+      };
+
+    } catch (error) {
+      console.error('PrintNode test print error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Test print failed'
+      };
     }
   }
 
-  // Generate KOT Text - Ultra compact
-  private generateKOTText(orderData: any, orderItems: any[], isFoodCourt: boolean): string {
-    const date = new Date(orderData.created_at);
-    const dateStr = date.toLocaleDateString();
-    const timeStr = date.toLocaleTimeString();
+  /**
+   * Format receipt data for thermal printing
+   */
+  private formatReceiptForThermal(data: ReceiptData): string {
+    const { order_number, cafe_name, customer_name, items, final_amount, payment_method } = data;
+    
+    let receipt = `MUJ FOOD CLUB
+${cafe_name}
+========================
+Order: ${order_number}
+Customer: ${customer_name}
+========================`;
 
-    let text = '';
-    
-    // ESC/POS commands for thermal printer
-    text += '\x1B\x40'; // Initialize printer
-    text += '\x1B\x61\x01'; // Center align
-    
-    // Header
-    text += `${isFoodCourt ? 'THE FOOD COURT CO' : 'MUJ FOOD CLUB'}\n`;
-    text += 'KITCHEN ORDER TICKET\n';
-    text += '========================\n';
-    
-    text += '\x1B\x61\x00'; // Left align
-    
-    // Order info
-    text += `Order #: ${orderData.order_number}\n`;
-    text += `Date: ${dateStr}\n`;
-    text += `Time: ${timeStr}\n`;
-    text += `Customer: ${orderData.user?.full_name || 'Walk-in'}\n`;
-    text += '========================\n';
-    
-    // Items
-    text += 'Item\t\tQty\n';
-    text += '------------------------\n';
-    
-    orderItems.forEach(item => {
-      const itemName = item.menu_item.name.length > 20 ? 
-        item.menu_item.name.substring(0, 17) + '...' : 
-        item.menu_item.name;
-      text += `${itemName}\t\t${item.quantity}\n`;
+    // Add items
+    items.forEach(item => {
+      receipt += `\n${item.name} x${item.quantity}`;
+      if (item.special_instructions) {
+        receipt += `\n  Note: ${item.special_instructions}`;
+      }
+      receipt += `\n  ₹${item.total_price}`;
     });
-    
-    text += '------------------------\n';
-    text += `Total Items: ${orderItems.reduce((sum, item) => sum + item.quantity, 0)}\n`;
-    text += `Total: ₹${orderData.total_amount}\n`;
-    
-    // Cut paper
-    text += '\n\n\n';
-    text += '\x1D\x56\x00'; // Full cut
-    
-    return btoa(text);
+
+    receipt += `\n========================
+Total: ₹${final_amount}
+Payment: ${payment_method?.toUpperCase() || 'COD'}
+========================
+Thank you for ordering!
+MUJFOODCLUB
+========================
+${new Date().toLocaleString()}`;
+
+    // Convert to base64 for PrintNode
+    return btoa(receipt);
   }
 
-  // Generate Customer Receipt Text - Ultra compact
-  private generateCustomerReceiptText(orderData: any, orderItems: any[], isFoodCourt: boolean): string {
-    const date = new Date(orderData.created_at);
-    const dateStr = date.toLocaleDateString();
-    const timeStr = date.toLocaleTimeString();
-
-    let text = '';
-    
-    // ESC/POS commands for thermal printer
-    text += '\x1B\x40'; // Initialize printer
-    text += '\x1B\x61\x01'; // Center align
-    
-    if (isFoodCourt) {
-      // Food Court Receipt
-      text += 'The Food Court Co\n';
-      text += '(MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)\n';
-      text += 'GSTIN: 08ADNPG4024A1Z2\n';
-      text += '========================\n';
-      
-      text += '\x1B\x61\x00'; // Left align
-      
-      text += `Name: ${orderData.user?.full_name || 'Walk-in Customer'}\n`;
-      text += `Phone: ${orderData.user?.phone || orderData.phone_number || 'N/A'}\n`;
-      text += `Date: ${dateStr}\n`;
-      text += `Time: ${timeStr}\n`;
-      text += `Bill No.: ${orderData.order_number.replace(/[^\d]/g, '')}\n`;
-      text += `Token No.: ${Math.floor(Math.random() * 10) + 1}\n`;
-      text += '========================\n';
-      
-      // Items
-      text += 'Item\t\tQty\tPrice\tAmount\n';
-      text += '------------------------\n';
-      
-      orderItems.forEach(item => {
-        const itemName = item.menu_item.name.length > 15 ? 
-          item.menu_item.name.substring(0, 12) + '...' : 
-          item.menu_item.name;
-        text += `${itemName}\t\t${item.quantity}\t${item.unit_price}\t${item.total_price}\n`;
-      });
-      
-      text += '------------------------\n';
-      text += `Total Qty: ${orderItems.reduce((sum, item) => sum + item.quantity, 0)}\n`;
-      text += `Sub Total: ₹${orderData.subtotal}\n`;
-      text += `CGST@2.5%: ₹${(orderData.tax_amount / 2).toFixed(2)}\n`;
-      text += `SGST@2.5%: ₹${(orderData.tax_amount / 2).toFixed(2)}\n`;
-      text += `Grand Total: ₹${orderData.total_amount}\n`;
-      text += '========================\n';
-      text += 'Paid via: UPI\n';
-      text += 'Thanks For Visit!!\n';
-      
-    } else {
-      // MUJ Food Club Receipt
-      text += 'MUJ FOOD CLUB\n';
-      text += 'Delicious Food, Great Service\n';
-      text += 'www.mujfoodclub.in\n';
-      text += '========================\n';
-      
-      text += '\x1B\x61\x00'; // Left align
-      
-      text += `Receipt #: ${orderData.order_number}\n`;
-      text += `Date: ${dateStr}\n`;
-      text += `Time: ${timeStr}\n`;
-      text += `Customer: ${orderData.user?.full_name || 'Walk-in Customer'}\n`;
-      text += `Phone: ${orderData.user?.phone || orderData.phone_number || 'N/A'}\n`;
-      text += `Block: ${orderData.user?.block || orderData.delivery_block || 'N/A'}\n`;
-      text += '========================\n';
-      
-      // Items
-      text += 'Item\t\tQty × Price\tTotal\n';
-      text += '------------------------\n';
-      
-      orderItems.forEach(item => {
-        const itemName = item.menu_item.name.length > 15 ? 
-          item.menu_item.name.substring(0, 12) + '...' : 
-          item.menu_item.name;
-        text += `${itemName}\t\t${item.quantity} × ₹${item.unit_price}\t₹${item.total_price}\n`;
-      });
-      
-      text += '------------------------\n';
-      text += `Subtotal: ₹${orderData.subtotal}\n`;
-      text += `Tax (5%): ₹${orderData.tax_amount}\n`;
-      text += `TOTAL: ₹${orderData.total_amount}\n`;
-      text += '========================\n';
-      text += 'Thank you for your order!\n';
-      text += 'Please collect your receipt\n';
-      text += 'For support: support@mujfoodclub.in\n';
+  /**
+   * Get account information
+   */
+  async getAccountInfo(): Promise<any> {
+    try {
+      const response = await this.makeRequest('/whoami');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting account info:', error);
+      return null;
     }
-    
-    // Cut paper
-    text += '\n\n\n';
-    text += '\x1D\x56\x00'; // Full cut
-    
-    return btoa(text);
-  }
-
-  getConnectionStatus(): boolean {
-    return this.isConnected;
   }
 }
 
-export const printNodeService = new PrintNodeService();
-export default printNodeService;
+// Create singleton instance
+let printNodeService: PrintNodeService | null = null;
+
+export const getPrintNodeService = (): PrintNodeService | null => {
+  return printNodeService;
+};
+
+export const initializePrintNodeService = (config: PrintNodeConfig): PrintNodeService => {
+  printNodeService = new PrintNodeService(config);
+  return printNodeService;
+};
+
+export default PrintNodeService;

@@ -251,10 +251,10 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
             <Button
               size="sm"
               onClick={() => handleOrderNow(cafe.id)}
-              disabled={!cafe.accepting_orders}
+              disabled={!cafe.accepting_orders || !isExclusive}
               className="text-xs font-medium bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
-              Order Now
+              {isExclusive ? "Order Now" : "Coming Soon"}
             </Button>
           </div>
 
