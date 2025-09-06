@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, MapPin, Trophy, Home, ShoppingCart, Receipt, ChefHat, Truck, Star } from 'lucide-react';
@@ -123,6 +122,7 @@ const OrderConfirmation = () => {
 
   useEffect(() => {
     console.log('🚀 OrderConfirmation loaded with real-time updates!', new Date().toISOString());
+    console.log('🔍 Button component check:', typeof Button);
     
     fetchOrder();
 
@@ -262,10 +262,13 @@ const OrderConfirmation = () => {
           <div className="text-center py-16">
             <h1 className="text-2xl font-bold mb-4">Order Not Found</h1>
             <p className="text-muted-foreground mb-6">The order you're looking for doesn't exist.</p>
-            <Button onClick={() => navigate('/')}>
+            <div 
+              onClick={() => navigate('/')}
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 cursor-pointer"
+            >
               <Home className="w-4 h-4 mr-2" />
               Go Home
-            </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -416,14 +419,20 @@ const OrderConfirmation = () => {
 
           {/* Action Buttons */}
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Button onClick={() => navigate('/')} variant="outline">
+            <div 
+              onClick={() => navigate('/')}
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer"
+            >
               <Home className="w-4 h-4 mr-2" />
               Back to Home
-            </Button>
-            <Button onClick={() => navigate('/cafes')}>
+            </div>
+            <div 
+              onClick={() => navigate('/cafes')}
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 cursor-pointer"
+            >
               <ShoppingCart className="w-4 h-4 mr-2" />
               Order Again
-            </Button>
+            </div>
           </div>
         </div>
       </div>
