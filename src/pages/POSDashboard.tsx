@@ -264,6 +264,12 @@ const POSDashboard = () => {
   }, [orders, searchTerm, statusFilter, sortBy, sortOrder]);
 
   const updateOrderStatus = async (orderId: string, newStatus: Order['status']) => {
+    // Prevent multiple rapid updates
+    if (updatingOrder === orderId) {
+      console.log('POS Dashboard: Order update already in progress, ignoring');
+      return;
+    }
+    
     setUpdatingOrder(orderId);
     try {
       const updateData: any = {
@@ -313,6 +319,9 @@ const POSDashboard = () => {
         title: "Status Updated",
         description: `Order status changed to ${newStatus.replace('_', ' ')}`,
       });
+
+      // Small delay to prevent rapid updates
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Refresh orders
       await fetchOrders();
@@ -858,7 +867,7 @@ const POSDashboard = () => {
         if (profile.user_type === 'cafe_owner') {
           // Cafe owners get cafe_id directly from their profile
           console.log('POS Dashboard: User is cafe_owner, using profile.cafe_id:', profile.cafe_id);
-          setCafeId(profile.cafe_id);
+      setCafeId(profile.cafe_id);
         } else if (profile.user_type === 'cafe_staff') {
           // Cafe staff get cafe_id from cafe_staff table
           console.log('POS Dashboard: User is cafe_staff, fetching from cafe_staff table');
@@ -1003,13 +1012,39 @@ const POSDashboard = () => {
         }, 
         (payload) => {
           console.log('POS Dashboard: Order update received:', payload.new);
+          console.log('POS Dashboard: Payload old:', payload.old);
+          
           // Only update if the status actually changed and is valid
           if (payload.new.status && ['received', 'confirmed', 'preparing', 'on_the_way', 'completed', 'cancelled'].includes(payload.new.status)) {
-            setOrders(prev => 
-              prev.map(order => 
-                order.id === payload.new.id ? { ...order, ...payload.new } : order
-              )
-            );
+            // Check if this is actually a status change (not a reversion)
+            if (payload.old && payload.old.status && payload.new.status === payload.old.status) {
+              console.log('POS Dashboard: Status unchanged, ignoring update');
+              return;
+            }
+            
+            // Only update if the new status is actually newer/better than current
+            setOrders(prev => {
+              const currentOrder = prev.find(o => o.id === payload.new.id);
+              if (currentOrder) {
+                const statusOrder = ['received', 'confirmed', 'preparing', 'on_the_way', 'completed', 'cancelled'];
+                const currentIndex = statusOrder.indexOf(currentOrder.status);
+                const newIndex = statusOrder.indexOf(payload.new.status);
+                
+                // Only update if new status is actually an advancement or same
+                if (newIndex >= currentIndex) {
+                  console.log('POS Dashboard: Status advancement, updating');
+                  return prev.map(order => 
+              order.id === payload.new.id ? { ...order, ...payload.new } : order
+                  );
+                } else {
+                  console.log('POS Dashboard: Status reversion detected, ignoring');
+                  return prev;
+                }
+              }
+              
+              // If order not found in current state, add it
+              return [...prev, payload.new];
+            });
           } else {
             console.log('POS Dashboard: Invalid status update received, refreshing orders instead');
             fetchOrders(); // Refresh instead of using potentially corrupted data
@@ -1101,23 +1136,23 @@ const POSDashboard = () => {
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-4">
-            <div className="bg-yellow-50 border-2 border-yellow-200 p-4 rounded-lg">
-              <p className="text-sm text-yellow-700 mb-4">
-                Choose your preferred printing method. PrintNode is recommended for professional thermal printing.
-              </p>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-bold mb-2">Option 1: PrintNode Service (Recommended)</h4>
-                  <p className="text-xs text-gray-600 mb-2">Professional thermal printing service</p>
+        <div className="bg-yellow-50 border-2 border-yellow-200 p-4 rounded-lg">
+          <p className="text-sm text-yellow-700 mb-4">
+            Choose your preferred printing method. PrintNode is recommended for professional thermal printing.
+          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-bold mb-2">Option 1: PrintNode Service (Recommended)</h4>
+              <p className="text-xs text-gray-600 mb-2">Professional thermal printing service</p>
                   <PrintNodeStatus />
-                </div>
-                <div>
-                  <h4 className="font-bold mb-2">Option 2: Direct USB Printing</h4>
-                  <p className="text-xs text-gray-600 mb-2">Direct browser printing (may have page size issues)</p>
-                  <SimplePrinterConfig />
-                </div>
-              </div>
             </div>
+            <div>
+              <h4 className="font-bold mb-2">Option 2: Direct USB Printing</h4>
+              <p className="text-xs text-gray-600 mb-2">Direct browser printing (may have page size issues)</p>
+              <SimplePrinterConfig />
+            </div>
+          </div>
+        </div>
           </CollapsibleContent>
         </Collapsible>
 
