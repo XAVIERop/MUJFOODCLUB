@@ -12,7 +12,7 @@ import { ArrowLeft, MapPin, Clock, Banknote, AlertCircle, CheckCircle, Trophy } 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { getTierInfo } from '@/lib/constants';
+import { SIMPLE_REWARDS } from '@/lib/constants';
 import Header from '@/components/Header';
 
 interface MenuItem {
@@ -150,28 +150,22 @@ const Checkout = () => {
     }
   };
 
-  // Simple points calculation - no multipliers
-  const calculateEnhancedPoints = (amount: number) => {
-    if (!profile) return Math.floor(amount * 0.05); // Default 5% points
-    
-    const tierInfo = getTierInfo(profile.loyalty_tier);
-    const basePoints = Math.floor((amount * tierInfo.pointsRate) / 100);
-    
-    // Very simple: just base points (no multipliers, no bonuses)
-    return basePoints;
+  // Simple points calculation
+  const calculatePoints = (amount: number) => {
+    return Math.floor(amount * SIMPLE_REWARDS.POINTS_PER_RUPEE);
   };
 
   const calculatePointsDiscount = (points: number) => {
     // 1 point = ₹1 discount (1:1 ratio)
-    const discount = points * 1;
+    const discount = points * SIMPLE_REWARDS.POINT_VALUE;
     // Limit to 10% of order value for points redemption
-    const maxPointsDiscount = Math.floor(totalAmount * 0.1);
+    const maxPointsDiscount = Math.floor(totalAmount * SIMPLE_REWARDS.MAX_REDEMPTION_PERCENTAGE / 100);
     return Math.min(discount, maxPointsDiscount);
   };
 
   const calculateMaxRedeemablePoints = () => {
     // Maximum points that can be redeemed (10% of order value)
-    return Math.floor(totalAmount * 0.1);
+    return Math.floor(totalAmount * SIMPLE_REWARDS.MAX_REDEMPTION_PERCENTAGE / 100);
   };
 
   const handlePointsRedeem = (points: number) => {
@@ -200,27 +194,18 @@ const Checkout = () => {
     }
   };
 
-  // Calculate loyalty discount and update final amount
+  // Calculate final amount (no automatic loyalty discounts for now)
   useEffect(() => {
-    if (profile && profile.loyalty_tier) {
-      const tierInfo = getTierInfo(profile.loyalty_tier);
-      const discount = Math.floor((totalAmount * tierInfo.discount) / 100);
-      setLoyaltyDiscount(discount);
-      setFinalAmount(Math.max(0, totalAmount - discount - pointsDiscount));
-    }
-  }, [totalAmount, pointsDiscount, profile]);
+    setFinalAmount(Math.max(0, totalAmount - pointsDiscount));
+  }, [totalAmount, pointsDiscount]);
 
   // Calculate points to earn when component loads or total amount changes
   useEffect(() => {
-    const calculateInitialPoints = async () => {
-      if (user && profile && totalAmount > 0) {
-        const points = await calculateEnhancedPoints(totalAmount);
-        setPointsToEarn(points);
-      }
-    };
-    
-    calculateInitialPoints();
-  }, [user, profile, totalAmount]);
+    if (totalAmount > 0) {
+      const points = calculatePoints(totalAmount);
+      setPointsToEarn(points);
+    }
+  }, [totalAmount]);
 
   const handlePlaceOrder = async () => {
     if (!user || !profile) {

@@ -12,8 +12,6 @@ import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import OrderTracking from "./pages/OrderTracking";
 import Cafes from "./pages/Cafes";
-import Rewards from "./pages/Rewards";
-import CafeRewards from "./pages/CafeRewards";
 import QRCodePage from "./pages/QRCodePage";
 import Profile from "./pages/Profile";
 
@@ -46,8 +44,7 @@ const App = () => (
               <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="/orders" element={<OrderTracking />} />
               <Route path="/cafes" element={<Cafes />} />
-              <Route path="/rewards" element={<CafeRewards />} />
-              <Route path="/rewards-old" element={<Rewards />} />
+              <Route path="/rewards" element={<div className="min-h-screen bg-background flex items-center justify-center"><div className="text-center"><h1 className="text-2xl font-bold mb-4">Rewards System Coming Soon</h1><p className="text-muted-foreground">We're building a new rewards system for you!</p></div></div>} />
               <Route path="/qr-code" element={<QRCodePage />} />
               <Route path="/profile" element={<Profile />} />
 
