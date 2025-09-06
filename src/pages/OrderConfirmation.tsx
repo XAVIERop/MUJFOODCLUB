@@ -94,6 +94,21 @@ const OrderConfirmation = () => {
 
       if (error) {
         console.error('❌ Error fetching order:', error);
+        
+        // Mobile-specific error logging
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+          console.error('📱 Mobile Error Details:', {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            userAgent: navigator.userAgent,
+            online: navigator.onLine,
+            connection: navigator.connection ? navigator.connection.effectiveType : 'Unknown'
+          });
+        }
+        
         throw error;
       }
       
@@ -136,6 +151,10 @@ const OrderConfirmation = () => {
     
     if (isMobile) {
       console.log('📱 MOBILE MODE: Ultra-aggressive polling enabled!');
+      console.log('📱 Mobile User Agent:', navigator.userAgent);
+      console.log('📱 Mobile Connection:', navigator.connection ? navigator.connection.effectiveType : 'Unknown');
+      console.log('📱 Mobile Online Status:', navigator.onLine);
+      
       toast({
         title: "Mobile Mode Active",
         description: "Polling every 3 seconds for faster updates",
@@ -151,6 +170,13 @@ const OrderConfirmation = () => {
     
     const interval = setInterval(() => {
       console.log('🔄 OrderConfirmation: Polling for order updates...');
+      
+      // Mobile-specific: Check if we're still online
+      if (isMobile && !navigator.onLine) {
+        console.log('📱 Mobile: Offline detected, skipping poll');
+        return;
+      }
+      
       fetchOrder();
     }, pollInterval);
 
@@ -162,11 +188,26 @@ const OrderConfirmation = () => {
       }
     };
     
+    // Mobile-specific: Network status monitoring
+    const handleOnlineStatus = () => {
+      if (isMobile) {
+        console.log('📱 Mobile: Network status changed:', navigator.onLine);
+        if (navigator.onLine) {
+          console.log('📱 Mobile: Back online, refreshing...');
+          fetchOrder();
+        }
+      }
+    };
+    
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('online', handleOnlineStatus);
+    window.addEventListener('offline', handleOnlineStatus);
 
     return () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('online', handleOnlineStatus);
+      window.removeEventListener('offline', handleOnlineStatus);
     };
   }, [orderNumber, user?.id]);
 
@@ -273,25 +314,62 @@ const OrderConfirmation = () => {
             
             {/* Refresh Controls */}
             <div className="mt-4 space-y-2">
-              <div className="flex gap-2 justify-center">
-                <Button 
-                  onClick={fetchOrder} 
-                  variant="outline" 
-                  size="sm"
-                  className="text-xs"
-                >
-                  <Clock className="w-3 h-3 mr-1" />
-                  Refresh Status
-                </Button>
-                <Button 
-                  onClick={() => window.location.reload()} 
-                  variant="destructive" 
-                  size="sm"
-                  className="text-xs"
-                >
-                  Force Refresh
-                </Button>
-              </div>
+                <div className="flex gap-2 justify-center">
+                  <Button 
+                    onClick={fetchOrder} 
+                    variant="outline" 
+                    size="sm"
+                    className="text-xs"
+                  >
+                    <Clock className="w-3 h-3 mr-1" />
+                    Refresh Status
+                  </Button>
+                  <Button 
+                    onClick={() => window.location.reload()} 
+                    variant="destructive" 
+                    size="sm"
+                    className="text-xs"
+                  >
+                    Force Refresh
+                  </Button>
+                  {/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && (
+                    <Button 
+                      onClick={async () => {
+                        console.log('📱 Mobile: Testing direct database query...');
+                        try {
+                          const { data, error } = await supabase
+                            .from('orders')
+                            .select('id, order_number, status, status_updated_at')
+                            .eq('order_number', orderNumber)
+                            .eq('user_id', user?.id)
+                            .single();
+                          
+                          if (error) {
+                            console.error('📱 Mobile: Direct query error:', error);
+                            toast({
+                              title: "Mobile Test Failed",
+                              description: `Error: ${error.message}`,
+                              variant: "destructive"
+                            });
+                          } else {
+                            console.log('📱 Mobile: Direct query success:', data);
+                            toast({
+                              title: "Mobile Test Success",
+                              description: `Status: ${data.status}`,
+                            });
+                          }
+                        } catch (err) {
+                          console.error('📱 Mobile: Test error:', err);
+                        }
+                      }} 
+                      variant="secondary" 
+                      size="sm"
+                      className="text-xs"
+                    >
+                      Mobile Test
+                    </Button>
+                  )}
+                </div>
               <p className="text-xs text-muted-foreground">
                 Last updated: {lastRefresh.toLocaleTimeString()}
               </p>
