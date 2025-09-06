@@ -109,28 +109,64 @@ const SearchBar = () => {
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.lang = 'en-US';
+      recognition.maxAlternatives = 1;
       
       recognition.onstart = () => {
         console.log('Voice recognition started');
+        // Visual feedback - you could add a loading state here
       };
       
       recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
+        console.log('Voice recognition result:', transcript);
         setSearchQuery(transcript);
+        // Trigger search after voice input
+        setTimeout(() => {
+          if (transcript.trim()) {
+            if (searchMode === 'cafes') {
+              const filteredCafes = cafes.filter(cafe =>
+                cafe.name.toLowerCase().includes(transcript.toLowerCase())
+              );
+              if (filteredCafes.length > 0) {
+                setShowCafeDropdown(true);
+              }
+            } else {
+              const filteredMenu = menuItems.filter(item =>
+                item.name.toLowerCase().includes(transcript.toLowerCase())
+              );
+              if (filteredMenu.length > 0) {
+                setShowMenuDropdown(true);
+              }
+            }
+          }
+        }, 100);
       };
       
       recognition.onerror = (event: any) => {
         console.error('Voice recognition error:', event.error);
+        // Handle different error types
+        if (event.error === 'not-allowed') {
+          alert('Microphone access denied. Please allow microphone access and try again.');
+        } else if (event.error === 'no-speech') {
+          alert('No speech detected. Please try again.');
+        } else {
+          alert('Voice recognition failed. Please try again.');
+        }
       };
       
-      recognition.start();
+      recognition.onend = () => {
+        console.log('Voice recognition ended');
+      };
+      
+      try {
+        recognition.start();
+      } catch (error) {
+        console.error('Failed to start voice recognition:', error);
+        alert('Voice recognition is not available. Please type your search instead.');
+      }
     } else {
       console.log('Speech recognition not supported');
-      // Fallback: just focus on search input
-      const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
-      if (searchInput) {
-        searchInput.focus();
-      }
+      alert('Voice search is not supported in this browser. Please use Chrome, Edge, or Safari.');
     }
   };
 
