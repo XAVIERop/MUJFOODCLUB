@@ -1,0 +1,23 @@
+MUJ Food Club - Verify Your Email
+
+Hello!
+
+Thank you for joining MUJ Food Club. We're excited to have you on board!
+
+To get started, please verify your email address by clicking the link below:
+{{ .ConfirmationURL }}
+
+Once verified, you'll be able to:
+- Browse delicious food from campus cafes
+- Place orders and track them in real-time
+- Earn loyalty points with every order
+- Get exclusive discounts and offers
+
+If you have any questions, please reply to this email or contact us at support@mujfoodclub.in
+
+Best regards,
+The MUJ Food Club Team
+
+MUJ Food Club - Manipal University Jaipur
+This email was sent to {{ .Email }}. If you didn't sign up for MUJ Food Club, please ignore this email.
+You can unsubscribe from these emails at any time.
