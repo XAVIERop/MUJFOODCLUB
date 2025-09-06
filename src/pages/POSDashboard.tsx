@@ -290,10 +290,13 @@ const POSDashboard = () => {
 
       console.log('POS Dashboard: Updating order with data:', { orderId, updateData });
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('orders')
         .update(updateData as any)
-        .eq('id', orderId);
+        .eq('id', orderId)
+        .select();
+      
+      console.log('POS Dashboard: Update result:', { data, error });
 
       if (error) {
         console.error('Supabase update error:', error);
@@ -999,11 +1002,18 @@ const POSDashboard = () => {
           filter: `cafe_id=eq.${cafeId}`
         }, 
         (payload) => {
-          setOrders(prev => 
-            prev.map(order => 
-              order.id === payload.new.id ? { ...order, ...payload.new } : order
-            )
-          );
+          console.log('POS Dashboard: Order update received:', payload.new);
+          // Only update if the status actually changed and is valid
+          if (payload.new.status && ['received', 'confirmed', 'preparing', 'on_the_way', 'completed', 'cancelled'].includes(payload.new.status)) {
+            setOrders(prev => 
+              prev.map(order => 
+                order.id === payload.new.id ? { ...order, ...payload.new } : order
+              )
+            );
+          } else {
+            console.log('POS Dashboard: Invalid status update received, refreshing orders instead');
+            fetchOrders(); // Refresh instead of using potentially corrupted data
+          }
         }
       )
       .subscribe();
