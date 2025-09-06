@@ -198,6 +198,22 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
       };
     }
     
+    if (cafeName.includes('lets') && cafeName.includes('go') && cafeName.includes('live')) {
+      return {
+        type: 'image',
+        src: '/letsgolive_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
+    if (cafeName.includes('soya') && cafeName.includes('chaap')) {
+      return {
+        type: 'image',
+        src: '/soyachaap_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
     // Fallback to emojis for other cafes
     let emoji = '🍽️'; // default
     
