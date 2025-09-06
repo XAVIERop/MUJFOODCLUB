@@ -30,7 +30,29 @@ const CompactOrdersTest = lazy(() => import("./pages/CompactOrdersTest"));
 const POSDashboard = lazy(() => import("./pages/POSDashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Cache data for 5 minutes
+      staleTime: 5 * 60 * 1000,
+      // Keep data in cache for 10 minutes
+      gcTime: 10 * 60 * 1000,
+      // Retry failed requests 2 times
+      retry: 2,
+      // Refetch on window focus for real-time updates
+      refetchOnWindowFocus: true,
+      // Don't refetch on reconnect (we have real-time subscriptions)
+      refetchOnReconnect: false,
+      // Background refetch every 30 seconds for critical data
+      refetchInterval: 30 * 1000,
+      refetchIntervalInBackground: false,
+    },
+    mutations: {
+      // Retry failed mutations once
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

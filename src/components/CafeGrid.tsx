@@ -2,8 +2,10 @@ import React, { useState, useEffect, memo, useCallback } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useFavorites } from '../hooks/useFavorites';
+import { useCafesQuery } from '../hooks/useCafesQuery';
 import { Button } from './ui/button';
 import { EnhancedCafeCard } from './EnhancedCafeCard';
+import LoadingSpinner from './LoadingSpinner';
 
 interface Cafe {
   id: string;
@@ -27,10 +29,17 @@ interface CafeGridProps {
 }
 
 export const CafeGrid: React.FC<CafeGridProps> = memo(({ showAll = false, maxCafes = 3, cafes: propCafes }) => {
-  const [cafes, setCafes] = useState<Cafe[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
+  
+  // Use optimized query hook for cafes data
+  const { data: cafes = [], isLoading, error } = useCafesQuery({
+    enabled: !propCafes || propCafes.length === 0, // Only fetch if no cafes provided via props
+  });
+
+  // Use propCafes if provided, otherwise use query data
+  const displayCafes = propCafes && propCafes.length > 0 ? propCafes : cafes;
+  const loading = propCafes && propCafes.length > 0 ? false : isLoading;
 
   // Debug logging
   console.log('CafeGrid props received:', { showAll, maxCafes, propCafes: propCafes?.length || 0 });
@@ -38,110 +47,35 @@ export const CafeGrid: React.FC<CafeGridProps> = memo(({ showAll = false, maxCaf
     console.log('First 3 cafes from props:', propCafes.slice(0, 3).map(c => c.name));
   }
 
-  useEffect(() => {
-    if (propCafes && propCafes.length > 0) {
-      // Use cafes passed from parent
-      console.log('Using cafes from props:', propCafes.map(c => c.name));
-      setCafes(propCafes);
-      setLoading(false);
-    } else {
-      // No cafes provided, show empty state
-      console.log('No cafes provided via props');
-      setCafes([]);
-      setLoading(false);
-    }
-  }, [propCafes]);
-
-  const fetchCafes = async () => {
-    try {
-      console.log('Fetching cafes...');
-      
-      // Use the priority-based ordering function
-      let { data, error } = await supabase
-        .rpc('get_cafes_ordered');
-
-      if (error) {
-        console.error('Error fetching cafes:', error);
-        throw error;
-      }
-
-      // Ensure data is an array
-      const cafesData = Array.isArray(data) ? data : [];
-      
-      console.log('Raw cafes data:', cafesData);
-      console.log('Total cafes found:', cafesData.length);
-      
-      // Log each cafe name to see what's available
-      cafesData.forEach((cafe: any, index) => {
-        console.log(`Cafe ${index + 1}:`, {
-          name: cafe.name,
-          priority: cafe.priority,
-          accepting_orders: cafe.accepting_orders,
-          average_rating: cafe.average_rating,
-          total_ratings: cafe.total_ratings,
-          cuisine_categories: cafe.cuisine_categories
-        });
-      });
-
-      // Filter cafes that are accepting orders (if the column exists)
-      let filteredCafes = cafesData;
-      
-      // Check if accepting_orders column exists and filter accordingly
-      if (cafesData.length > 0 && 'accepting_orders' in cafesData[0]) {
-        console.log('accepting_orders column exists, showing all cafes...');
-        filteredCafes = cafesData; // Show all cafes, don't filter out closed ones
-        console.log('Showing all cafes:', filteredCafes.length, 'cafes');
-      } else {
-        console.log('accepting_orders column does not exist, skipping filter');
-        filteredCafes = cafesData;
-      }
-
-      // Cafes are already ordered by priority, rating, and name from the database function
-      console.log('Filtered cafes (already ordered by priority):', filteredCafes);
-      console.log('Final cafe names:', filteredCafes.map(c => c.name));
-
-      // Limit cafes if not showing all
-      const limitedCafes = showAll ? filteredCafes : filteredCafes.slice(0, maxCafes);
-      console.log('Limited cafes for display:', limitedCafes.map(c => c.name));
-      
-      setCafes(limitedCafes || []);
-      
-    } catch (error) {
-      console.error('Error fetching cafes:', error);
-      // Set empty array on error to prevent infinite loading
-      setCafes([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-
-  if (loading) {
+  // Handle error state
+  if (error) {
+    console.error('Error loading cafes:', error);
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(maxCafes)].map((_, i) => (
-          <div key={i} className="bg-white rounded-lg shadow-md p-6 animate-pulse">
-            <div className="h-4 bg-gray-200 rounded mb-2"></div>
-            <div className="h-3 bg-gray-200 rounded mb-4"></div>
-            <div className="h-20 bg-gray-200 rounded mb-4"></div>
-            <div className="h-8 bg-gray-200 rounded"></div>
-          </div>
-        ))}
+      <div className="text-center py-8">
+        <p className="text-red-500">Failed to load cafes. Please try again.</p>
       </div>
     );
   }
 
+
+
+  if (loading) {
+    return <LoadingSpinner size="lg" text="Loading cafes..." />;
+  }
+
+  // Limit cafes if not showing all
+  const limitedCafes = showAll ? displayCafes : displayCafes.slice(0, maxCafes);
+
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cafes.map((cafe) => (
+        {limitedCafes.map((cafe) => (
           <EnhancedCafeCard key={cafe.id} cafe={cafe} />
         ))}
       </div>
 
       {/* Show More Link */}
-      {!showAll && cafes.length >= maxCafes && (
+      {!showAll && displayCafes.length >= maxCafes && (
         <div className="text-center">
           <Button
             variant="outline"
