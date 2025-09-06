@@ -50,6 +50,10 @@ const Checkout = () => {
   const location = useLocation();
   const { user, profile, refreshProfile } = useAuth();
   const { getCafeRewardData } = useCafeRewards();
+  
+  // Get cafe-specific points for redemption
+  const cafeRewardData = cafe ? getCafeRewardData(cafe.id) : null;
+  const availablePoints = cafeRewardData?.points || 0;
   const { toast } = useToast();
   
   const [isLoading, setIsLoading] = useState(false);
@@ -203,7 +207,7 @@ const Checkout = () => {
   const handleCustomPointsRedeem = () => {
     const customPoints = parseInt(customPointsInput);
     const maxRedeemable = calculateMaxRedeemablePointsForOrder();
-    const maxAllowed = Math.min(profile.loyalty_points, maxRedeemable);
+    const maxAllowed = Math.min(availablePoints, maxRedeemable);
     
     if (customPoints && customPoints > 0 && customPoints <= maxAllowed) {
       handlePointsRedeem(customPoints);
@@ -236,10 +240,11 @@ const Checkout = () => {
     }
   }, [totalAmount, loyaltyDiscount, pointsDiscount, cafe]);
 
-  // Calculate tier discount and final amount (simplified for fresh start)
+  // Calculate tier discount and final amount (cafe-specific)
   useEffect(() => {
-    // For fresh start, everyone starts at Foodie tier (5% discount)
-    const tierDiscount = Math.floor((totalAmount * CAFE_REWARDS.TIER_DISCOUNTS.FOODIE) / 100);
+    // Use cafe-specific tier, default to Foodie if no data
+    const tier = cafeRewardData?.tier || 'foodie';
+    const tierDiscount = Math.floor((totalAmount * CAFE_REWARDS.TIER_DISCOUNTS[tier.toUpperCase() as keyof typeof CAFE_REWARDS.TIER_DISCOUNTS]) / 100);
     setLoyaltyDiscount(tierDiscount);
     
     // Calculate final amount including taxes and delivery fees
@@ -429,14 +434,9 @@ const Checkout = () => {
           throw redemptionError;
         }
 
-        // Update user profile to deduct redeemed points immediately
-        const newTotalPoints = (profile.loyalty_points || 0) - pointsToRedeem;
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ 
-            loyalty_points: newTotalPoints
-          })
-          .eq('id', user.id);
+        // Note: Points redemption will be handled by the cafe-specific system
+        // The old unified points system is deprecated
+        console.log('Points redemption:', pointsToRedeem, 'points for cafe:', cafe.id);
 
         if (profileError) {
           console.error('Profile update error:', profileError);
@@ -560,7 +560,7 @@ const Checkout = () => {
                   </div>
 
                   {/* Points Redemption */}
-                  {profile && profile.loyalty_points > 0 && (
+                  {availablePoints > 0 && (
                     <div className="border-t border-border pt-4 mt-4">
                       <div className="mb-4">
                         <h4 className="font-semibold mb-2 flex items-center">
@@ -568,7 +568,7 @@ const Checkout = () => {
                           Redeem Loyalty Points
                         </h4>
                         <p className="text-sm text-muted-foreground mb-3">
-                          You have {profile.loyalty_points} points available
+                          You have {availablePoints} points available at {cafe?.name}
                           <br />
                           <span className="text-blue-600 font-medium">
                             Max redeemable: {calculateMaxRedeemablePointsForOrder()} points (10% of order)
@@ -596,14 +596,14 @@ const Checkout = () => {
                               value={customPointsInput}
                               onChange={(e) => setCustomPointsInput(e.target.value)}
                               min="1"
-                              max={Math.min(profile.loyalty_points, calculateMaxRedeemablePointsForOrder())}
+                              max={Math.min(availablePoints, calculateMaxRedeemablePointsForOrder())}
                               className="flex-1"
                             />
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={handleCustomPointsRedeem}
-                              disabled={!customPointsInput || parseInt(customPointsInput) <= 0 || parseInt(customPointsInput) > Math.min(profile.loyalty_points, calculateMaxRedeemablePointsForOrder())}
+                              disabled={!customPointsInput || parseInt(customPointsInput) <= 0 || parseInt(customPointsInput) > Math.min(availablePoints, calculateMaxRedeemablePointsForOrder())}
                             >
                               Redeem
                             </Button>
@@ -632,7 +632,7 @@ const Checkout = () => {
                   )}
 
                   {/* No Points Message */}
-                  {profile && profile.loyalty_points === 0 && (
+                  {availablePoints === 0 && (
                     <div className="border-t border-border pt-4 mt-4">
                       <div className="text-center p-4 bg-muted/50 rounded-lg">
                         <Trophy className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
@@ -654,7 +654,7 @@ const Checkout = () => {
                       </div>
                       {loyaltyDiscount > 0 && (
                         <div className="flex justify-between items-center text-blue-600">
-                          <span>Loyalty Discount ({profile?.loyalty_tier})</span>
+                          <span>Loyalty Discount ({cafeRewardData?.tier || 'foodie'})</span>
                           <span>-₹{loyaltyDiscount}</span>
                         </div>
                       )}
@@ -701,11 +701,9 @@ const Checkout = () => {
                     <p className="text-xs text-muted-foreground text-center mt-1">
                       Points will be awarded when your order is completed
                     </p>
-                    {profile && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        <span className="font-medium">Tier:</span> {profile.loyalty_tier}
-                      </div>
-                    )}
+                    <div className="text-xs text-muted-foreground mt-1">
+                      <span className="font-medium">Tier:</span> {cafeRewardData?.tier || 'foodie'}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
