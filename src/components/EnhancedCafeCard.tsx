@@ -66,7 +66,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
       'The Waffle Co': '/thewaffleco.png',
       'Soya Chaap Corner': '/chatkara_logo.jpg', // Fallback for now
       'Tea Tradition': '/teatradition_card.jpeg',
-      'The Garrison Co.': '/thegarrisonco_card.jpeg',
+      'China Town': '/thegarrisonco_card.jpeg',
       'Let\'s Go Live': '/letsgolive_card.jpg',
       'LETS GO LIVE': '/letsgolive_card.jpg'
     };
