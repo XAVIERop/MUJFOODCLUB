@@ -317,6 +317,82 @@ const CafeDashboard = () => {
     }
   };
 
+  // Function to credit points to user when order is completed
+  const creditPointsToUser = async (orderId: string) => {
+    try {
+      console.log('Cafe Dashboard: Crediting points for completed order:', orderId);
+      
+      // Get the order details
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .select('user_id, points_earned, total_amount, cafe_id')
+        .eq('id', orderId)
+        .single();
+
+      if (orderError || !order) {
+        console.error('Error fetching order for points crediting:', orderError);
+        return;
+      }
+
+      if (!order.points_earned || order.points_earned <= 0) {
+        console.log('No points to credit for this order');
+        return;
+      }
+
+      // Get current user profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('loyalty_points')
+        .eq('id', order.user_id)
+        .single();
+
+      if (profileError || !profile) {
+        console.error('Error fetching user profile for points crediting:', profileError);
+        return;
+      }
+
+      // Calculate new points total
+      const currentPoints = profile.loyalty_points || 0;
+      const newPointsTotal = currentPoints + order.points_earned;
+
+      // Update user's loyalty points
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          loyalty_points: newPointsTotal,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', order.user_id);
+
+      if (updateError) {
+        console.error('Error updating user points:', updateError);
+        return;
+      }
+
+      // Create loyalty transaction record
+      const { error: transactionError } = await supabase
+        .from('loyalty_transactions')
+        .insert({
+          user_id: order.user_id,
+          order_id: orderId,
+          points_change: order.points_earned,
+          transaction_type: 'earned',
+          description: `Earned ${order.points_earned} points for completed order`
+        });
+
+      if (transactionError) {
+        console.error('Error creating loyalty transaction:', transactionError);
+        // Don't fail the order completion for this
+      }
+
+      console.log(`✅ Successfully credited ${order.points_earned} points to user ${order.user_id}`);
+      
+    } catch (error) {
+      console.error('Error in creditPointsToUser:', error);
+      // Don't fail the order completion for points crediting errors
+    }
+  };
+
   const updateOrderStatus = async (orderId: string, newStatus: Order['status']) => {
     try {
       const updateData: any = {
@@ -338,6 +414,9 @@ const CafeDashboard = () => {
         case 'completed':
           updateData.completed_at = new Date().toISOString();
           updateData.points_credited = true;
+          
+          // Credit points to user when order is completed
+          await creditPointsToUser(orderId);
           break;
       }
 
