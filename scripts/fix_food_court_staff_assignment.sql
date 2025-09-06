@@ -40,8 +40,7 @@ SET
   user_type = 'cafe_owner',
   cafe_id = (SELECT id FROM public.cafes WHERE name = 'FOOD COURT'),
   updated_at = NOW()
-WHERE email = 'pulkit.229302047@muj.manipal.edu'
-ON CONFLICT (email) DO NOTHING;
+WHERE email = 'pulkit.229302047@muj.manipal.edu';
 
 -- 4. Assign Pulkit as Food Court owner in cafe_staff table
 INSERT INTO public.cafe_staff (
