@@ -42,25 +42,25 @@ const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
     'Multi Cuisine'
   ];
 
-  // Map categories to icons and colors
+  // Map categories to food images (Swiggy-style)
   const getCategoryInfo = (type: string) => {
-    const categoryMap: { [key: string]: { icon: string; color: string; bgColor: string; isSvg?: boolean } } = {
-      'Pizza': { icon: '/pizza.svg', color: 'text-red-600', bgColor: 'bg-red-50', isSvg: true },
-      'North Indian': { icon: '🍛', color: 'text-orange-600', bgColor: 'bg-orange-50' },
-      'Chinese': { icon: '🥢', color: 'text-red-600', bgColor: 'bg-red-50' },
-      'Sandwiches': { icon: '🥪', color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
-      'Deserts': { icon: '🍰', color: 'text-pink-600', bgColor: 'bg-pink-50' },
-      'Quick Bites': { icon: '🍔', color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
-      'Chaap': { icon: '🥘', color: 'text-orange-600', bgColor: 'bg-orange-50' },
-      'Coffee': { icon: '☕', color: 'text-brown-600', bgColor: 'bg-brown-50' },
-      'Momos': { icon: '🥟', color: 'text-green-600', bgColor: 'bg-green-50' },
-      'Rolls': { icon: '🌯', color: 'text-purple-600', bgColor: 'bg-purple-50' },
-      'Combos': { icon: '🍱', color: 'text-blue-600', bgColor: 'bg-blue-50' },
-      'Waffles': { icon: '🧇', color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
-      'Multi Cuisine': { icon: '🍽️', color: 'text-gray-600', bgColor: 'bg-gray-50' },
+    const categoryMap: { [key: string]: { image: string; name: string } } = {
+      'Pizza': { image: '/pizza.svg', name: 'Pizza' },
+      'North Indian': { image: '/tasteofindia_card.jpg', name: 'North Indian' },
+      'Chinese': { image: '/china_card.png', name: 'Chinese' },
+      'Sandwiches': { image: '/minimeals_card.png', name: 'Sandwiches' },
+      'Deserts': { image: '/havmor_card.jpg', name: 'Deserts' },
+      'Quick Bites': { image: '/munchbox_card.png', name: 'Quick Bites' },
+      'Chaap': { image: '/soyachaap_card.png', name: 'Chaap' },
+      'Coffee': { image: '/dialog_card.jpg', name: 'Coffee' },
+      'Momos': { image: '/foodcourt_card.jpg', name: 'Momos' },
+      'Rolls': { image: '/letsgolive_card.jpg', name: 'Rolls' },
+      'Combos': { image: '/cookhouse_card.png', name: 'Combos' },
+      'Waffles': { image: '/wafflefitnfresh_card.jpeg', name: 'Waffles' },
+      'Multi Cuisine': { image: '/chatkara_card.png', name: 'Multi Cuisine' },
     };
 
-    return categoryMap[type] || { icon: '🍽️', color: 'text-gray-600', bgColor: 'bg-gray-50' };
+    return categoryMap[type] || { image: '/chatkara_card.png', name: type };
   };
 
   const handleCategoryClick = (category: string) => {
@@ -75,26 +75,22 @@ const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
         {categories.map((category) => {
           const categoryInfo = getCategoryInfo(category);
           return (
-            <Card
+            <div
               key={category}
-              className="flex-shrink-0 w-20 cursor-pointer hover:shadow-md transition-shadow"
+              className="flex-shrink-0 w-20 cursor-pointer hover:scale-105 transition-transform"
               onClick={() => handleCategoryClick(category)}
             >
-              <CardContent className="p-3 text-center">
-                <div className={`w-12 h-12 mx-auto mb-2 rounded-full ${categoryInfo.bgColor} flex items-center justify-center`}>
-                  {categoryInfo.isSvg ? (
-                    <img 
-                      src={categoryInfo.icon} 
-                      alt={category}
-                      className="w-6 h-6"
-                    />
-                  ) : (
-                    <span className="text-2xl">{categoryInfo.icon}</span>
-                  )}
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-2 rounded-lg overflow-hidden bg-white shadow-sm">
+                  <img 
+                    src={categoryInfo.image} 
+                    alt={categoryInfo.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <p className="text-xs font-medium text-gray-700 truncate">{category}</p>
-              </CardContent>
-            </Card>
+                <p className="text-xs font-medium text-gray-700 truncate">{categoryInfo.name}</p>
+              </div>
+            </div>
           );
         })}
         </div>
