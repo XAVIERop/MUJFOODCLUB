@@ -42,25 +42,25 @@ const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
     'Multi Cuisine'
   ];
 
-  // Map categories to food images (Swiggy-style)
+  // Map categories to SVG icons
   const getCategoryInfo = (type: string) => {
     const categoryMap: { [key: string]: { image: string; name: string } } = {
       'Pizza': { image: '/pizza.svg', name: 'Pizza' },
-      'North Indian': { image: '/tasteofindia_card.jpg', name: 'North Indian' },
-      'Chinese': { image: '/china_card.png', name: 'Chinese' },
-      'Sandwiches': { image: '/minimeals_card.png', name: 'Sandwiches' },
-      'Deserts': { image: '/havmor_card.jpg', name: 'Deserts' },
-      'Quick Bites': { image: '/munchbox_card.png', name: 'Quick Bites' },
-      'Chaap': { image: '/soyachaap_card.png', name: 'Chaap' },
-      'Coffee': { image: '/dialog_card.jpg', name: 'Coffee' },
-      'Momos': { image: '/foodcourt_card.jpg', name: 'Momos' },
-      'Rolls': { image: '/letsgolive_card.jpg', name: 'Rolls' },
-      'Combos': { image: '/cookhouse_card.png', name: 'Combos' },
-      'Waffles': { image: '/wafflefitnfresh_card.jpeg', name: 'Waffles' },
-      'Multi Cuisine': { image: '/chatkara_card.png', name: 'Multi Cuisine' },
+      'North Indian': { image: '/NorthIndian.svg', name: 'North Indian' },
+      'Chinese': { image: '/chinese.svg', name: 'Chinese' },
+      'Sandwiches': { image: '/sandwiches.svg', name: 'Sandwiches' },
+      'Deserts': { image: '/deserts.svg', name: 'Deserts' },
+      'Quick Bites': { image: '/QuickBites.svg', name: 'Quick Bites' },
+      'Chaap': { image: '/chaap.svg', name: 'Chaap' },
+      'Coffee': { image: '/coffee.svg', name: 'Coffee' },
+      'Momos': { image: '/momos.svg', name: 'Momos' },
+      'Rolls': { image: '/rolls.svg', name: 'Rolls' },
+      'Combos': { image: '/multicuisine.svg', name: 'Combos' }, // Using multicuisine.svg as fallback
+      'Waffles': { image: '/waffles.svg', name: 'Waffles' },
+      'Multi Cuisine': { image: '/multicuisine.svg', name: 'Multi Cuisine' },
     };
 
-    return categoryMap[type] || { image: '/chatkara_card.png', name: type };
+    return categoryMap[type] || { image: '/multicuisine.svg', name: type };
   };
 
   const handleCategoryClick = (category: string) => {
