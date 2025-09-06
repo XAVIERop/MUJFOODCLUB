@@ -10,6 +10,8 @@ import BottomNavigation from "./components/BottomNavigation";
 import ScrollToTop from "./components/ScrollToTop";
 import { PerformanceMonitor } from "./components/PerformanceMonitor";
 import LoadingSpinner from "./components/LoadingSpinner";
+import ErrorBoundary from "./components/ErrorBoundary";
+import PerformanceDashboard from "./components/PerformanceDashboard";
 
 // Lazy load all pages for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -55,47 +57,52 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop>
-            <Suspense fallback={<LoadingSpinner size="lg" text="Loading page..." />}>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/menu/:cafeId" element={<Menu />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-                <Route path="/orders" element={<OrderTracking />} />
-                <Route path="/cafes" element={<Cafes />} />
-                <Route path="/rewards" element={<CafeRewards />} />
-                <Route path="/qr-code" element={<QRCodePage />} />
-                <Route path="/profile" element={<Profile />} />
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop>
+              <Suspense fallback={<LoadingSpinner size="lg" text="Loading page..." />}>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/menu/:cafeId" element={<Menu />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+                  <Route path="/orders" element={<OrderTracking />} />
+                  <Route path="/cafes" element={<Cafes />} />
+                  <Route path="/rewards" element={<CafeRewards />} />
+                  <Route path="/qr-code" element={<QRCodePage />} />
+                  <Route path="/profile" element={<Profile />} />
 
-                <Route path="/cafe-dashboard" element={<CafeDashboard />} />
-                <Route path="/cafe-management" element={<CafeManagement />} />
-                <Route path="/demo-enhanced-card" element={<EnhancedCafeCardDemo />} />
-                <Route path="/pos-test" element={<POSTest />} />
-                <Route path="/compact-orders-test" element={<CompactOrdersTest />} />
-                <Route path="/pos-dashboard" element={<POSDashboard />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </ScrollToTop>
-          
-          {/* Bottom Navigation - Mobile Only */}
-          <BottomNavigation />
-          
-          {/* Performance Monitor - Development Only */}
-          <PerformanceMonitor />
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+                  <Route path="/cafe-dashboard" element={<CafeDashboard />} />
+                  <Route path="/cafe-management" element={<CafeManagement />} />
+                  <Route path="/demo-enhanced-card" element={<EnhancedCafeCardDemo />} />
+                  <Route path="/pos-test" element={<POSTest />} />
+                  <Route path="/compact-orders-test" element={<CompactOrdersTest />} />
+                  <Route path="/pos-dashboard" element={<POSDashboard />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </ScrollToTop>
+            
+            {/* Bottom Navigation - Mobile Only */}
+            <BottomNavigation />
+            
+            {/* Performance Monitor - Development Only */}
+            <PerformanceMonitor />
+            
+            {/* Performance Dashboard - Development Only */}
+            <PerformanceDashboard />
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
