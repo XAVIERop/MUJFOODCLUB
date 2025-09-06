@@ -44,7 +44,6 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
   // Get cafe logo image or fallback to emoji
   const getCafeLogo = (cafe: Cafe) => {
     const cafeName = cafe.name.toLowerCase();
-    console.log('🔍 Checking cafe:', cafe.name, '-> lowercase:', cafeName);
     
     // Check if we have a logo for this cafe
     if (cafeName.includes('chatkara')) {

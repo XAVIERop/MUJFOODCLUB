@@ -235,8 +235,8 @@ const Index = () => {
               </div>
             )}
 
-            {/* Limited Cafe Grid - Show only 3 cafes */}
-            <FeaturedCafeGrid showAll={false} maxCafes={3} cafes={cafes} />
+            {/* Limited Cafe Grid - Show 6 cafes */}
+            <FeaturedCafeGrid showAll={false} maxCafes={6} cafes={cafes} />
           </div>
         </section>
         
