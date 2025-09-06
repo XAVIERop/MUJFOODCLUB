@@ -81,10 +81,18 @@ const Profile = () => {
   };
 
   const handleResetTestAccount = async () => {
-    if (!user || !profile) return;
+    console.log('🔄 Reset Test Account clicked');
+    console.log('🔍 User:', user);
+    console.log('🔍 Profile:', profile);
+    
+    if (!user || !profile) {
+      console.log('❌ Missing user or profile');
+      return;
+    }
 
     // Safety check: Only allow reset for test account
     if (profile.email !== 'test@muj.manipal.edu') {
+      console.log('❌ Not test account:', profile.email);
       toast({
         title: "Access Denied",
         description: "This feature is only available for test accounts.",
@@ -92,6 +100,8 @@ const Profile = () => {
       });
       return;
     }
+    
+    console.log('✅ Test account confirmed, proceeding with reset...');
 
     // Confirmation dialog
     const confirmed = window.confirm(
@@ -107,23 +117,50 @@ const Profile = () => {
 
     setResetting(true);
     try {
+      console.log('🗑️ Starting reset process...');
+      
       // Delete all orders for the test user
+      console.log('🗑️ Deleting orders for user:', user.id);
       const { error: ordersError } = await supabase
         .from('orders')
         .delete()
         .eq('user_id', user.id);
 
-      if (ordersError) throw ordersError;
+      if (ordersError) {
+        console.error('❌ Error deleting orders:', ordersError);
+        throw ordersError;
+      }
+      console.log('✅ Orders deleted successfully');
 
       // Delete all loyalty transactions
+      console.log('🗑️ Deleting loyalty transactions for user:', user.id);
       const { error: transactionsError } = await supabase
         .from('loyalty_transactions')
         .delete()
         .eq('user_id', user.id);
 
-      if (transactionsError) throw transactionsError;
+      if (transactionsError) {
+        console.error('❌ Error deleting loyalty transactions:', transactionsError);
+        throw transactionsError;
+      }
+      console.log('✅ Loyalty transactions deleted successfully');
+
+      // Delete any order ratings
+      console.log('🗑️ Deleting order ratings for user:', user.id);
+      const { error: ratingsError } = await supabase
+        .from('order_ratings')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (ratingsError) {
+        console.error('❌ Error deleting order ratings:', ratingsError);
+        // Don't throw here, ratings might not exist
+      } else {
+        console.log('✅ Order ratings deleted successfully');
+      }
 
       // Reset profile to initial state
+      console.log('🔄 Resetting profile for user:', user.id);
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -137,25 +174,33 @@ const Profile = () => {
         })
         .eq('id', user.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('❌ Error resetting profile:', profileError);
+        throw profileError;
+      }
+      console.log('✅ Profile reset successfully');
 
       // Refresh profile data
+      console.log('🔄 Refreshing profile data...');
       await refreshProfile();
+      console.log('✅ Profile data refreshed');
 
       toast({
         title: "Test Account Reset Complete!",
         description: "All data has been cleared. You can now test from scratch.",
       });
+      console.log('🎉 Reset completed successfully!');
 
     } catch (error) {
-      console.error('Error resetting test account:', error);
+      console.error('❌ Error resetting test account:', error);
       toast({
         title: "Reset Failed",
-        description: "There was an error resetting your test account. Please try again.",
+        description: `There was an error resetting your test account: ${error.message || 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
       setResetting(false);
+      console.log('🔄 Reset process finished');
     }
   };
 
