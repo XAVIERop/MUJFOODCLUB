@@ -1,0 +1,105 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MapPin, User, LogOut, Settings, Coffee, Gift, Utensils, Bell, Receipt, Store, Package, Heart } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+
+const SimpleHeader = () => {
+  const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [selectedBlock, setSelectedBlock] = useState("B1");
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  const handleProfileClick = () => {
+    if (user) {
+      navigate('/profile');
+    } else {
+      navigate('/auth');
+    }
+  };
+
+  return (
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center justify-between">
+          {/* Location (Top Left) */}
+          <div className="flex items-center space-x-2">
+            <MapPin className="h-5 w-5 text-orange-500" />
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-gray-900">Sankalp</span>
+              <span className="text-xs text-gray-500">Sankalp Tatvam Tower C 1102, Sankal...</span>
+            </div>
+          </div>
+
+          {/* Profile (Top Right) */}
+          <div className="flex items-center space-x-3">
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
+                      <AvatarFallback>
+                        {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {profile?.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/orders')}>
+                    <Receipt className="mr-2 h-4 w-4" />
+                    <span>My Orders</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/rewards')}>
+                    <Gift className="mr-2 h-4 w-4" />
+                    <span>Rewards</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/favorites')}>
+                    <Heart className="mr-2 h-4 w-4" />
+                    <span>Favorites</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button 
+                onClick={handleProfileClick}
+                variant="outline" 
+                size="sm"
+                className="flex items-center space-x-2"
+              >
+                <User className="h-4 w-4" />
+                <span>Sign In</span>
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default SimpleHeader;

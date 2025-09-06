@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import Header from "@/components/Header";
-import HeroSection from "@/components/HeroSection";
+import SimpleHeader from "@/components/SimpleHeader";
+import SearchBar from "@/components/SearchBar";
+import CafeCategories from "@/components/CafeCategories";
 import { FeaturedCafeGrid } from '../components/FeaturedCafeGrid';
 import CafeIconGrid from '../components/CafeIconGrid';
 import { Badge } from "@/components/ui/badge";
@@ -208,10 +209,18 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      {/* Simple Header with Location and Profile */}
+      <SimpleHeader />
+      
+      {/* Search Bar */}
+      <SearchBar />
+      
+      {/* Cafe Categories */}
+      {!loading && cafes.length > 0 && (
+        <CafeCategories cafes={cafes} />
+      )}
+      
       <main className="m-0 p-0">
-        <HeroSection />
-        
         {/* Unified Cafe Section - Merged Icon Grid + Cafe Cards */}
         <section id="cafes" className="py-16 bg-muted/30">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
