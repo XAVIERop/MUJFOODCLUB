@@ -53,14 +53,14 @@ const OrderConfirmation = () => {
     { key: 'completed', label: 'Delivered', icon: CheckCircle, color: 'bg-green-600' }
   ];
 
-  const fetchOrder = async () => {
+  const fetchOrder = async (forceRefresh = false) => {
     if (!orderNumber) {
       console.log('No order number provided');
       navigate('/');
       return;
     }
 
-    console.log('🔄 Order Confirmation: fetchOrder called with:', { orderNumber, userId: user?.id });
+    console.log('🔄 Order Confirmation: fetchOrder called with:', { orderNumber, userId: user?.id, forceRefresh });
 
     try {
       // First, let's check what orders exist with this order number
@@ -76,7 +76,7 @@ const OrderConfirmation = () => {
       }
 
       // Now try to get the specific order for this user
-      const { data, error } = await supabase
+      let query = supabase
         .from('orders')
         .select(`
           id,
@@ -97,8 +97,18 @@ const OrderConfirmation = () => {
           cafe:cafes(name, location, id)
         `)
         .eq('order_number', orderNumber)
-        .eq('user_id', user?.id)
-        .single();
+        .eq('user_id', user?.id);
+
+      // Mobile-specific: Add cache-busting for force refresh
+      if (forceRefresh) {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+          console.log('📱 Mobile: Adding cache-busting parameter');
+          query = query.neq('id', '00000000-0000-0000-0000-000000000000'); // This will always be false, forcing fresh query
+        }
+      }
+
+      const { data, error } = await query.single();
 
       console.log('Specific order result:', { data, error });
 
@@ -120,6 +130,18 @@ const OrderConfirmation = () => {
   useEffect(() => {
     fetchOrder();
 
+    // Mobile-specific: Set up periodic refresh to ensure sync
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    let refreshInterval: NodeJS.Timeout | null = null;
+    
+    if (isMobile) {
+      console.log('📱 Mobile detected: Setting up periodic refresh every 30 seconds');
+      refreshInterval = setInterval(() => {
+        console.log('📱 Mobile: Periodic refresh triggered');
+        fetchOrder(true); // Force refresh
+      }, 30000); // Refresh every 30 seconds
+    }
+
     // Set up real-time subscription for order updates
     if (orderNumber) {
       const channel = supabase
@@ -140,6 +162,18 @@ const OrderConfirmation = () => {
             // Check if old and new payloads are identical (no actual change)
             if (JSON.stringify(payload.old) === JSON.stringify(payload.new)) {
               console.log('🔄 Order Confirmation: Identical payloads received, ignoring update');
+              return;
+            }
+
+            // Mobile-specific: Add timestamp check to prevent stale updates
+            const updateTime = new Date(payload.new.status_updated_at || payload.new.updated_at || Date.now());
+            const currentTime = new Date();
+            const timeDiff = currentTime.getTime() - updateTime.getTime();
+            
+            // If update is older than 30 seconds, it might be stale
+            if (timeDiff > 30000) {
+              console.log('⏰ Order Confirmation: Stale update detected, refreshing instead');
+              fetchOrder(true); // Force refresh
               return;
             }
 
@@ -176,6 +210,13 @@ const OrderConfirmation = () => {
                 } else {
                   console.log('❌ Order Confirmation: Status reversion detected, ignoring');
                   console.log(`📉 Status: ${currentOrder.status} (${currentIndex}) → ${payload.new.status} (${newIndex})`);
+                  
+                  // Mobile-specific: Force refresh on reversion to get latest data
+                  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                  if (isMobile) {
+                    console.log('📱 Mobile detected: Force refreshing order data');
+                    setTimeout(() => fetchOrder(true), 1000); // Force refresh after 1 second
+                  }
                 }
               } else {
                 // If no current order, just set it
@@ -183,7 +224,7 @@ const OrderConfirmation = () => {
               }
             } else {
               console.log('Order Confirmation: Invalid status update received, refreshing order instead');
-              fetchOrder(); // Refresh instead of using potentially corrupted data
+              fetchOrder(true); // Force refresh instead of using potentially corrupted data
             }
             
             // If order is completed, refresh profile to update points
@@ -200,8 +241,17 @@ const OrderConfirmation = () => {
 
       return () => {
         supabase.removeChannel(channel);
+        if (refreshInterval) {
+          clearInterval(refreshInterval);
+        }
       };
     }
+    
+    return () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    };
   }, [orderNumber, user?.id, toast, refreshProfile]);
 
   const getCurrentStepIndex = () => {
