@@ -82,6 +82,12 @@ const OrderTracking = () => {
             console.log('Order updated:', payload.new);
             console.log('Order old:', payload.old);
             
+            // Check if old and new payloads are identical (no actual change)
+            if (JSON.stringify(payload.old) === JSON.stringify(payload.new)) {
+              console.log('🔄 Order Tracking: Identical payloads received, ignoring update');
+              return;
+            }
+
             // Only update if the status is valid and actually an advancement
             if (payload.new.status && ['received', 'confirmed', 'preparing', 'on_the_way', 'completed', 'cancelled'].includes(payload.new.status)) {
               setOrders(prev => {

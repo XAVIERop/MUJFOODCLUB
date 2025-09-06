@@ -60,7 +60,7 @@ const OrderConfirmation = () => {
       return;
     }
 
-    console.log('Fetching order with:', { orderNumber, userId: user?.id });
+    console.log('🔄 Order Confirmation: fetchOrder called with:', { orderNumber, userId: user?.id });
 
     try {
       // First, let's check what orders exist with this order number
@@ -103,6 +103,7 @@ const OrderConfirmation = () => {
       console.log('Specific order result:', { data, error });
 
       if (error) throw error;
+      console.log('📥 Order Confirmation: fetchOrder result:', data);
       setOrder(data);
     } catch (error) {
       console.error('Error fetching order:', error);
@@ -131,14 +132,22 @@ const OrderConfirmation = () => {
             filter: `order_number=eq.${orderNumber}`
           }, 
           (payload) => {
-            console.log('Order updated:', payload.new);
-            console.log('Order old:', payload.old);
+            console.log('🔔 Order Confirmation: Real-time update received');
+            console.log('📦 New payload:', payload.new);
+            console.log('📦 Old payload:', payload.old);
+            console.log('📦 Current order state:', order);
             
+            // Check if old and new payloads are identical (no actual change)
+            if (JSON.stringify(payload.old) === JSON.stringify(payload.new)) {
+              console.log('🔄 Order Confirmation: Identical payloads received, ignoring update');
+              return;
+            }
+
             // Only update if the status is valid and actually an advancement
             if (payload.new.status && ['received', 'confirmed', 'preparing', 'on_the_way', 'completed', 'cancelled'].includes(payload.new.status)) {
               // Check if this is actually a status change (not a reversion)
               if (payload.old && payload.old.status && payload.new.status === payload.old.status) {
-                console.log('Order Confirmation: Status unchanged, ignoring update');
+                console.log('🔄 Order Confirmation: Status unchanged, ignoring update');
                 return;
               }
               
@@ -150,7 +159,8 @@ const OrderConfirmation = () => {
                 
                 // Only update if new status is actually an advancement or same
                 if (newIndex >= currentIndex) {
-                  console.log('Order Confirmation: Status advancement, updating');
+                  console.log('✅ Order Confirmation: Status advancement detected');
+                  console.log(`📈 Status: ${currentOrder.status} (${currentIndex}) → ${payload.new.status} (${newIndex})`);
                   setOrder(payload.new as Order);
                   
                   // Show toast for status updates
@@ -164,7 +174,8 @@ const OrderConfirmation = () => {
                     });
                   }
                 } else {
-                  console.log('Order Confirmation: Status reversion detected, ignoring');
+                  console.log('❌ Order Confirmation: Status reversion detected, ignoring');
+                  console.log(`📉 Status: ${currentOrder.status} (${currentIndex}) → ${payload.new.status} (${newIndex})`);
                 }
               } else {
                 // If no current order, just set it

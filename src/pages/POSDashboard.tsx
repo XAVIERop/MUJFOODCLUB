@@ -1014,13 +1014,19 @@ const POSDashboard = () => {
           console.log('POS Dashboard: Order update received:', payload.new);
           console.log('POS Dashboard: Payload old:', payload.old);
           
-          // Only update if the status actually changed and is valid
-          if (payload.new.status && ['received', 'confirmed', 'preparing', 'on_the_way', 'completed', 'cancelled'].includes(payload.new.status)) {
-            // Check if this is actually a status change (not a reversion)
-            if (payload.old && payload.old.status && payload.new.status === payload.old.status) {
-              console.log('POS Dashboard: Status unchanged, ignoring update');
-              return;
-            }
+    // Check if old and new payloads are identical (no actual change)
+    if (JSON.stringify(payload.old) === JSON.stringify(payload.new)) {
+      console.log('🔄 POS Dashboard: Identical payloads received, ignoring update');
+      return;
+    }
+
+    // Only update if the status actually changed and is valid
+    if (payload.new.status && ['received', 'confirmed', 'preparing', 'on_the_way', 'completed', 'cancelled'].includes(payload.new.status)) {
+      // Check if this is actually a status change (not a reversion)
+      if (payload.old && payload.old.status && payload.new.status === payload.old.status) {
+        console.log('🔄 POS Dashboard: Status unchanged, ignoring update');
+        return;
+      }
             
             // Only update if the new status is actually newer/better than current
             setOrders(prev => {
