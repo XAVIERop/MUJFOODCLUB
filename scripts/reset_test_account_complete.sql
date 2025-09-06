@@ -33,8 +33,8 @@ BEGIN
     
     -- Count order ratings (need to join with orders)
     SELECT COUNT(*) INTO ratings_count 
-    FROM order_ratings or 
-    JOIN orders o ON or.order_id = o.id 
+    FROM order_ratings ord_rat 
+    JOIN orders o ON ord_rat.order_id = o.id 
     WHERE o.user_id = test_user_id;
     
     RAISE NOTICE '📊 Current data for test account:';
@@ -101,8 +101,8 @@ BEGIN
     SELECT COUNT(*) INTO cafe_staff_count FROM cafe_staff WHERE user_id = test_user_id;
     
     SELECT COUNT(*) INTO ratings_count 
-    FROM order_ratings or 
-    JOIN orders o ON or.order_id = o.id 
+    FROM order_ratings ord_rat 
+    JOIN orders o ON ord_rat.order_id = o.id 
     WHERE o.user_id = test_user_id;
     
     RAISE NOTICE '✅ Verification - Remaining data:';
