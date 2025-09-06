@@ -41,7 +41,6 @@ const OrderConfirmation = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const [forceUpdateMode, setForceUpdateMode] = useState(false);
 
   const { orderId } = useParams();
   const orderNumber = orderId || location.state?.orderNumber || new URLSearchParams(window.location.search).get('order');
@@ -95,57 +94,13 @@ const OrderConfirmation = () => {
 
       if (error) {
         console.error('❌ Error fetching order:', error);
-        
-        // Mobile-specific error logging
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile) {
-          console.error('📱 Mobile Error Details:', {
-            code: error.code,
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            userAgent: navigator.userAgent,
-            online: navigator.onLine,
-            connection: navigator.connection ? navigator.connection.effectiveType : 'Unknown'
-          });
-        }
-        
         throw error;
       }
       
       console.log('📥 OrderConfirmation: Order fetched successfully:', data);
       
-      // Check if status changed and show notification for mobile
-      if (order && order.status !== data.status) {
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile) {
-          console.log('📱 Status changed on mobile:', order.status, '→', data.status);
-          toast({
-            title: "Status Updated!",
-            description: `Order is now ${data.status.replace('_', ' ')}`,
-            duration: 5000
-          });
-        }
-      }
-      
-      // Force state update with mobile-specific logging
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      if (isMobile) {
-        console.log('📱 Mobile: Setting order state to:', data);
-        console.log('📱 Mobile: Current order state before update:', order);
-      }
-      
       setOrder(data);
       setLastRefresh(new Date());
-      
-      // Mobile-specific: Force a re-render
-      if (isMobile) {
-        console.log('📱 Mobile: Forcing component re-render...');
-        // Force a state update to trigger re-render
-        setTimeout(() => {
-          setLastRefresh(new Date());
-        }, 100);
-      }
     } catch (error) {
       console.error('Error fetching order:', error);
       toast({
@@ -159,66 +114,33 @@ const OrderConfirmation = () => {
   };
 
   useEffect(() => {
-    // Add a unique identifier to verify this is the new implementation
-    console.log('🚀 NEW OrderConfirmation implementation loaded!', new Date().toISOString());
-    
-    // Detect mobile device
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    console.log('📱 Mobile detected:', isMobile);
-    
-    if (isMobile) {
-      console.log('📱 MOBILE MODE: Ultra-aggressive polling enabled!');
-      console.log('📱 Mobile User Agent:', navigator.userAgent);
-      console.log('📱 Mobile Connection:', navigator.connection ? navigator.connection.effectiveType : 'Unknown');
-      console.log('📱 Mobile Online Status:', navigator.onLine);
-      
-      toast({
-        title: "Mobile Mode Active",
-        description: "Polling every 3 seconds for faster updates",
-        duration: 3000
-      });
-    }
+    console.log('🚀 OrderConfirmation loaded with real-time updates!', new Date().toISOString());
     
     fetchOrder();
 
-    // Set up polling - more aggressive for mobile
-    const pollInterval = isMobile ? 3000 : 10000; // 3 seconds for mobile, 10 for desktop
+    // Set up polling as backup (real-time should handle most updates)
+    const pollInterval = 30000; // 30 seconds as backup
     console.log(`🔄 Setting up polling every ${pollInterval/1000} seconds`);
     
     const interval = setInterval(() => {
-      console.log('🔄 OrderConfirmation: Polling for order updates...');
-      
-      // Mobile-specific: Check if we're still online
-      if (isMobile && !navigator.onLine) {
-        console.log('📱 Mobile: Offline detected, skipping poll');
-        return;
-      }
-      
-      // Skip polling if in force update mode
-      if (forceUpdateMode) {
-        console.log('🔄 OrderConfirmation: Skipping poll - force update mode active');
-        return;
-      }
-      
+      console.log('🔄 OrderConfirmation: Backup polling...');
       fetchOrder();
     }, pollInterval);
 
     // Also refresh when page becomes visible
     const handleVisibilityChange = () => {
-      if (!document.hidden && !forceUpdateMode) {
+      if (!document.hidden) {
         console.log('👁️ Page became visible, refreshing...');
         fetchOrder();
       }
     };
     
-    // Mobile-specific: Network status monitoring
+    // Network status monitoring
     const handleOnlineStatus = () => {
-      if (isMobile) {
-        console.log('📱 Mobile: Network status changed:', navigator.onLine);
-        if (navigator.onLine) {
-          console.log('📱 Mobile: Back online, refreshing...');
-          fetchOrder();
-        }
+      console.log('🌐 Network status changed:', navigator.onLine);
+      if (navigator.onLine) {
+        console.log('🌐 Back online, refreshing...');
+        fetchOrder();
       }
     };
     
@@ -226,11 +148,42 @@ const OrderConfirmation = () => {
     window.addEventListener('online', handleOnlineStatus);
     window.addEventListener('offline', handleOnlineStatus);
 
+    // Set up real-time subscription for live updates
+    console.log('🔄 Setting up real-time subscription for order updates...');
+    const subscription = supabase
+      .channel('order-updates')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'orders',
+        filter: `order_number=eq.${orderNumber}`
+      }, (payload) => {
+        console.log('📡 Real-time update received:', payload);
+        
+        // Check if this is a status update
+        if (payload.new && payload.new.status !== payload.old?.status) {
+          console.log('📡 Status changed via real-time:', payload.old?.status, '→', payload.new.status);
+          
+          // Update the order state immediately
+          setOrder(payload.new as Order);
+          setLastRefresh(new Date());
+          
+          // Show notification
+          toast({
+            title: "Order Updated!",
+            description: `Status changed to ${payload.new.status.replace('_', ' ')}`,
+            duration: 3000
+          });
+        }
+      })
+      .subscribe();
+
     return () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('online', handleOnlineStatus);
       window.removeEventListener('offline', handleOnlineStatus);
+      subscription.unsubscribe();
     };
   }, [orderNumber, user?.id]);
 
@@ -355,109 +308,13 @@ const OrderConfirmation = () => {
                   >
                     Force Refresh
                   </Button>
-                  {/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && (
-                    <>
-                      <Button 
-                        onClick={async () => {
-                          console.log('📱 Mobile: Testing direct database query...');
-                          try {
-                            const { data, error } = await supabase
-                              .from('orders')
-                              .select('id, order_number, status, status_updated_at')
-                              .eq('order_number', orderNumber)
-                              .eq('user_id', user?.id)
-                              .single();
-                            
-                            if (error) {
-                              console.error('📱 Mobile: Direct query error:', error);
-                              toast({
-                                title: "Mobile Test Failed",
-                                description: `Error: ${error.message}`,
-                                variant: "destructive"
-                              });
-                            } else {
-                              console.log('📱 Mobile: Direct query success:', data);
-                              toast({
-                                title: "Mobile Test Success",
-                                description: `Status: ${data.status}`,
-                              });
-                            }
-                          } catch (err) {
-                            console.error('📱 Mobile: Test error:', err);
-                          }
-                        }} 
-                        variant="secondary" 
-                        size="sm"
-                        className="text-xs"
-                      >
-                        Mobile Test
-                      </Button>
-                      <Button 
-                        onClick={async () => {
-                          console.log('📱 Mobile: Force UI update...');
-                          
-                          // Enable force update mode to prevent polling from overriding
-                          setForceUpdateMode(true);
-                          console.log('📱 Mobile: Force update mode enabled');
-                          
-                          try {
-                            const { data, error } = await supabase
-                              .from('orders')
-                              .select('*')
-                              .eq('order_number', orderNumber)
-                              .eq('user_id', user?.id)
-                              .single();
-                            
-                            if (error) {
-                              console.error('📱 Mobile: Force update error:', error);
-                              setForceUpdateMode(false); // Re-enable polling on error
-                            } else {
-                              console.log('📱 Mobile: Force update success:', data);
-                              // Force set the order state
-                              setOrder(data);
-                              setLastRefresh(new Date());
-                              toast({
-                                title: "UI Force Updated",
-                                description: `Status: ${data.status}`,
-                              });
-                              
-                              // Keep force update mode for 10 seconds to prevent immediate override
-                              setTimeout(() => {
-                                console.log('📱 Mobile: Re-enabling polling after force update');
-                                setForceUpdateMode(false);
-                              }, 10000);
-                            }
-                          } catch (err) {
-                            console.error('📱 Mobile: Force update error:', err);
-                            setForceUpdateMode(false); // Re-enable polling on error
-                          }
-                        }} 
-                        variant="default" 
-                        size="sm"
-                        className="text-xs bg-green-600"
-                      >
-                        Force UI Update
-                      </Button>
-                    </>
-                  )}
                 </div>
               <p className="text-xs text-muted-foreground">
                 Last updated: {lastRefresh.toLocaleTimeString()}
               </p>
               <p className="text-xs text-blue-600">
-                Auto-refresh every {/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? '3' : '10'} seconds
+                Live updates enabled - status changes appear instantly
               </p>
-              {/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && order && (
-                <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
-                  <p><strong>Debug Info:</strong></p>
-                  <p>Status: {order.status}</p>
-                  <p>Updated: {order.status_updated_at}</p>
-                  <p>Last Refresh: {lastRefresh.toLocaleTimeString()}</p>
-                  {forceUpdateMode && (
-                    <p className="text-green-600 font-bold">🔄 Force Update Mode Active (10s)</p>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
