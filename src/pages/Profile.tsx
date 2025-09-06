@@ -376,6 +376,22 @@ const Profile = () => {
                       <p className="text-xs text-muted-foreground mt-2 text-center">
                         This will delete all orders, points, and reset your account to initial state
                       </p>
+                      <Button
+                        onClick={async () => {
+                          console.log('🔄 Force refreshing profile data...');
+                          await refreshProfile();
+                          toast({
+                            title: "Profile Refreshed",
+                            description: "Profile data has been refreshed from database",
+                          });
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="w-full mt-2"
+                      >
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Force Refresh Profile
+                      </Button>
                     </div>
                   )}
                 </CardContent>
