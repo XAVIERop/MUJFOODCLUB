@@ -905,6 +905,48 @@ const POSDashboard = () => {
       ordersCount: orders.length,
       filteredOrdersCount: filteredOrders.length
     });
+
+    // Additional debugging for Food Court specifically
+    if (cafeId) {
+      console.log('POS Dashboard: Checking if this is Food Court...');
+      // Check if the cafeId corresponds to Food Court
+      supabase
+        .from('cafes')
+        .select('id, name, accepting_orders, is_active')
+        .eq('id', cafeId)
+        .single()
+        .then(({ data: cafe, error }) => {
+          if (error) {
+            console.error('POS Dashboard: Error fetching cafe info:', error);
+          } else {
+            console.log('POS Dashboard: Cafe info:', cafe);
+            if (cafe?.name === 'FOOD COURT') {
+              console.log('POS Dashboard: ✅ This is Food Court! Checking staff assignments...');
+              supabase
+                .from('cafe_staff')
+                .select(`
+                  id,
+                  role,
+                  is_active,
+                  profiles!inner(email, full_name, user_type)
+                `)
+                .eq('cafe_id', cafeId)
+                .then(({ data: staff, error: staffError }) => {
+                  if (staffError) {
+                    console.error('POS Dashboard: Error fetching Food Court staff:', staffError);
+                  } else {
+                    console.log('POS Dashboard: Food Court staff:', staff);
+                    if (staff.length === 0) {
+                      console.error('POS Dashboard: ❌ NO STAFF ASSIGNED TO FOOD COURT! This is the problem.');
+                    } else {
+                      console.log('POS Dashboard: ✅ Food Court has staff assigned');
+                    }
+                  }
+                });
+            }
+          }
+        });
+    }
   }, [user, profile, cafeId, orders.length, filteredOrders.length]);
 
   // Set up real-time subscription for orders
