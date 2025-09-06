@@ -98,6 +98,20 @@ const OrderConfirmation = () => {
       }
       
       console.log('📥 OrderConfirmation: Order fetched successfully:', data);
+      
+      // Check if status changed and show notification for mobile
+      if (order && order.status !== data.status) {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+          console.log('📱 Status changed on mobile:', order.status, '→', data.status);
+          toast({
+            title: "Status Updated!",
+            description: `Order is now ${data.status.replace('_', ' ')}`,
+            duration: 5000
+          });
+        }
+      }
+      
       setOrder(data);
       setLastRefresh(new Date());
     } catch (error) {
@@ -116,13 +130,29 @@ const OrderConfirmation = () => {
     // Add a unique identifier to verify this is the new implementation
     console.log('🚀 NEW OrderConfirmation implementation loaded!', new Date().toISOString());
     
+    // Detect mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log('📱 Mobile detected:', isMobile);
+    
+    if (isMobile) {
+      console.log('📱 MOBILE MODE: Ultra-aggressive polling enabled!');
+      toast({
+        title: "Mobile Mode Active",
+        description: "Polling every 3 seconds for faster updates",
+        duration: 3000
+      });
+    }
+    
     fetchOrder();
 
-    // Set up polling for all devices (no real-time subscriptions)
-    const pollInterval = setInterval(() => {
+    // Set up polling - more aggressive for mobile
+    const pollInterval = isMobile ? 3000 : 10000; // 3 seconds for mobile, 10 for desktop
+    console.log(`🔄 Setting up polling every ${pollInterval/1000} seconds`);
+    
+    const interval = setInterval(() => {
       console.log('🔄 OrderConfirmation: Polling for order updates...');
       fetchOrder();
-    }, 10000); // Poll every 10 seconds
+    }, pollInterval);
 
     // Also refresh when page becomes visible
     const handleVisibilityChange = () => {
@@ -135,7 +165,7 @@ const OrderConfirmation = () => {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      clearInterval(pollInterval);
+      clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [orderNumber, user?.id]);
@@ -266,7 +296,7 @@ const OrderConfirmation = () => {
                 Last updated: {lastRefresh.toLocaleTimeString()}
               </p>
               <p className="text-xs text-blue-600">
-                Auto-refresh every 10 seconds
+                Auto-refresh every {/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? '3' : '10'} seconds
               </p>
             </div>
           </div>
