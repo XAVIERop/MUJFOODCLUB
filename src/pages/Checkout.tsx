@@ -153,14 +153,10 @@ const Checkout = () => {
     }
   };
 
-  // Get cafe reward data for current cafe
-  const cafeRewardData = cafe ? getCafeRewardData(cafe.id) : null;
-
-  // Calculate points to earn
+  // Calculate points to earn (simplified for fresh start)
   const calculatePointsToEarn = (amount: number) => {
-    if (!cafeRewardData) return Math.floor(amount * CAFE_REWARDS.POINTS_RATE);
-    
-    return calculatePointsEarned(amount, cafeRewardData.is_first_order);
+    // For fresh start, assume first order bonus for orders >= ₹249
+    return calculatePointsEarned(amount, amount >= CAFE_REWARDS.FIRST_ORDER_MIN_AMOUNT);
   };
 
   const calculatePointsDiscount = (points: number) => {
@@ -202,17 +198,13 @@ const Checkout = () => {
     }
   };
 
-  // Calculate tier discount and final amount
+  // Calculate tier discount and final amount (simplified for fresh start)
   useEffect(() => {
-    if (cafeRewardData) {
-      const tierDiscount = Math.floor((totalAmount * getTierDiscount(cafeRewardData.tier)) / 100);
-      setLoyaltyDiscount(tierDiscount);
-      setFinalAmount(Math.max(0, totalAmount - tierDiscount - pointsDiscount));
-    } else {
-      setLoyaltyDiscount(0);
-      setFinalAmount(Math.max(0, totalAmount - pointsDiscount));
-    }
-  }, [totalAmount, pointsDiscount, cafeRewardData]);
+    // For fresh start, everyone starts at Foodie tier (5% discount)
+    const tierDiscount = Math.floor((totalAmount * CAFE_REWARDS.TIER_DISCOUNTS.FOODIE) / 100);
+    setLoyaltyDiscount(tierDiscount);
+    setFinalAmount(Math.max(0, totalAmount - tierDiscount - pointsDiscount));
+  }, [totalAmount, pointsDiscount]);
 
   // Calculate points to earn when component loads or total amount changes
   useEffect(() => {
@@ -220,7 +212,7 @@ const Checkout = () => {
       const points = calculatePointsToEarn(totalAmount);
       setPointsToEarn(points);
     }
-  }, [totalAmount, cafeRewardData]);
+  }, [totalAmount]);
 
   const handlePlaceOrder = async () => {
     if (!user || !profile) {
