@@ -32,7 +32,7 @@ interface Order {
   };
 }
 
-const OrderConfirmationNew = () => {
+const OrderConfirmation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, refreshProfile } = useAuth();
@@ -55,12 +55,12 @@ const OrderConfirmationNew = () => {
 
   const fetchOrder = async () => {
     if (!orderNumber) {
-      console.log('No order number provided');
+      console.log('❌ No order number provided');
       navigate('/');
       return;
     }
 
-    console.log('🔄 Fetching order:', orderNumber);
+    console.log('🔄 OrderConfirmation: Fetching order:', orderNumber, 'User:', user?.id);
 
     try {
       const { data, error } = await supabase
@@ -87,9 +87,12 @@ const OrderConfirmationNew = () => {
         .eq('user_id', user?.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching order:', error);
+        throw error;
+      }
       
-      console.log('📥 Order fetched:', data);
+      console.log('📥 OrderConfirmation: Order fetched successfully:', data);
       setOrder(data);
       setLastRefresh(new Date());
     } catch (error) {
@@ -109,7 +112,7 @@ const OrderConfirmationNew = () => {
 
     // Set up polling for all devices (no real-time subscriptions)
     const pollInterval = setInterval(() => {
-      console.log('🔄 Polling for order updates...');
+      console.log('🔄 OrderConfirmation: Polling for order updates...');
       fetchOrder();
     }, 10000); // Poll every 10 seconds
 
@@ -386,4 +389,4 @@ const OrderConfirmationNew = () => {
   );
 };
 
-export default OrderConfirmationNew;
+export default OrderConfirmation;
