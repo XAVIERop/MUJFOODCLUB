@@ -102,6 +102,7 @@ const POSDashboard = () => {
   const [orderItems, setOrderItems] = useState<{[key: string]: OrderItem[]}>({});
   const [loading, setLoading] = useState(true);
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [useCompactLayout, setUseCompactLayout] = useState(true);
@@ -1014,47 +1015,9 @@ const POSDashboard = () => {
           console.log('POS Dashboard: Order update received:', payload.new);
           console.log('POS Dashboard: Payload old:', payload.old);
           
-    // Check if old and new payloads are identical (no actual change)
-    if (JSON.stringify(payload.old) === JSON.stringify(payload.new)) {
-      console.log('🔄 POS Dashboard: Identical payloads received, ignoring update');
-      return;
-    }
-
-    // Only update if the status actually changed and is valid
-    if (payload.new.status && ['received', 'confirmed', 'preparing', 'on_the_way', 'completed', 'cancelled'].includes(payload.new.status)) {
-      // Check if this is actually a status change (not a reversion)
-      if (payload.old && payload.old.status && payload.new.status === payload.old.status) {
-        console.log('🔄 POS Dashboard: Status unchanged, ignoring update');
-        return;
-      }
-            
-            // Only update if the new status is actually newer/better than current
-            setOrders(prev => {
-              const currentOrder = prev.find(o => o.id === payload.new.id);
-              if (currentOrder) {
-                const statusOrder = ['received', 'confirmed', 'preparing', 'on_the_way', 'completed', 'cancelled'];
-                const currentIndex = statusOrder.indexOf(currentOrder.status);
-                const newIndex = statusOrder.indexOf(payload.new.status);
-                
-                // Only update if new status is actually an advancement or same
-                if (newIndex >= currentIndex) {
-                  console.log('POS Dashboard: Status advancement, updating');
-                  return prev.map(order => 
-              order.id === payload.new.id ? { ...order, ...payload.new } : order
-                  );
-                } else {
-                  console.log('POS Dashboard: Status reversion detected, ignoring');
-                  return prev;
-                }
-              }
-              
-              // If order not found in current state, add it
-              return [...prev, payload.new];
-            });
-          } else {
-            console.log('POS Dashboard: Invalid status update received, refreshing orders instead');
-            fetchOrders(); // Refresh instead of using potentially corrupted data
-          }
+          // Always refresh orders for any update to ensure we have the latest data
+          console.log('POS Dashboard: Refreshing orders due to real-time update');
+          fetchOrders(true); // Show refresh indicator
         }
       )
       .subscribe();
@@ -1064,6 +1027,22 @@ const POSDashboard = () => {
       supabase.removeChannel(channel);
     };
   }, [cafeId, toast, soundEnabled, soundVolume]);
+
+  // Set up polling as backup for real-time updates
+  useEffect(() => {
+    if (!cafeId) return;
+
+    console.log('POS Dashboard: Setting up polling backup every 10 seconds');
+    const pollInterval = setInterval(() => {
+      console.log('POS Dashboard: Backup polling - refreshing orders');
+      fetchOrders(true); // Show refresh indicator
+    }, 10000); // Poll every 10 seconds
+
+    return () => {
+      console.log('POS Dashboard: Cleaning up polling interval');
+      clearInterval(pollInterval);
+    };
+  }, [cafeId]);
 
   // Manual refresh function
   const handleManualRefresh = async () => {
@@ -1101,6 +1080,14 @@ const POSDashboard = () => {
               <p className="text-gray-600 mt-2">Professional Point of Sale System for High-Volume Operations</p>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Refresh Indicator */}
+              {isRefreshing && (
+                <div className="flex items-center text-sm text-blue-600">
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Updating...
+                </div>
+              )}
+              
               <Button
                 variant="outline"
                 onClick={() => setIsNotificationOpen(true)}
