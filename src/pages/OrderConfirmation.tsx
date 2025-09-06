@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, MapPin, Trophy, Home, ShoppingCart, Receipt, ChefHat, Truck, Star } from 'lucide-react';
@@ -288,30 +287,8 @@ const OrderConfirmation = () => {
               {order.status.replace('_', ' ').toUpperCase()}
             </Badge>
             
-            {/* Refresh Controls */}
-            <div className="mt-4 space-y-2">
-                <div className="flex gap-2 justify-center">
-                  <Button 
-                    onClick={fetchOrder} 
-                    variant="outline" 
-                    size="sm"
-                    className="text-xs"
-                  >
-                    <Clock className="w-3 h-3 mr-1" />
-                    Refresh Status
-                  </Button>
-                  <Button 
-                    onClick={() => window.location.reload()} 
-                    variant="destructive" 
-                    size="sm"
-                    className="text-xs"
-                  >
-                    Force Refresh
-                  </Button>
-                </div>
-              <p className="text-xs text-muted-foreground">
-                Last updated: {lastRefresh.toLocaleTimeString()}
-              </p>
+            {/* Live Updates Status */}
+            <div className="mt-4 text-center">
               <p className="text-xs text-blue-600">
                 Live updates enabled - status changes appear instantly
               </p>
