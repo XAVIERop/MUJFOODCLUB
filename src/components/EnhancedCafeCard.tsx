@@ -258,7 +258,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
               disabled={!cafe.accepting_orders || !isExclusive}
               className="text-xs font-medium bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
-              {isExclusive ? "Order Now" : "Coming Soon"}
+              {cafe.name.toLowerCase().includes('food court') ? "Order Now" : "Coming Soon"}
             </Button>
           </div>
 
