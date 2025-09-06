@@ -437,11 +437,6 @@ const Checkout = () => {
         // Note: Points redemption will be handled by the cafe-specific system
         // The old unified points system is deprecated
         console.log('Points redemption:', pointsToRedeem, 'points for cafe:', cafe.id);
-
-        if (profileError) {
-          console.error('Profile update error:', profileError);
-          throw profileError;
-        }
       } else {
         // No points redeemed, just log the order placement
         console.log('Order placed without points redemption');
