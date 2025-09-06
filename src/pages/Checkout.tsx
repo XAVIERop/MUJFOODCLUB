@@ -120,8 +120,8 @@ const Checkout = () => {
   }, [user, navigate, profile, toast]);
 
   const blocks = [
-    'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11',
-    'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'
+    'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'B12',
+    'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8'
   ];
 
   const calculatePoints = async (amount: number) => {

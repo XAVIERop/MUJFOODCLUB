@@ -17,7 +17,7 @@
 - ✅ **Smart Search System** for both cafes and food items
 - ✅ **Food Item Search** with cafe names and prices
 - ✅ **Real-time Dropdown Suggestions** as you type
-- ✅ **Location-based Filtering** (Block numbers B1-B11, G1-G7)
+- ✅ **Location-based Filtering** (Block numbers B1-B12, G1-G8)
 - ✅ **Enhanced Search UI** with categorized results
 
 ### 🎨 **Swiggy-Style Hero Section**

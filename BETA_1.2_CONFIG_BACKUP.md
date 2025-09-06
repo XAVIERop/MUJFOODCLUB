@@ -99,7 +99,7 @@
 ### **Search System**
 - **Cafe Search**: Real-time filtering
 - **Food Item Search**: Menu-based suggestions
-- **Location Filtering**: Block numbers (B1-B11, G1-G7)
+- **Location Filtering**: Block numbers (B1-B12, G1-G8)
 - **Dropdown UI**: Categorized results
 
 ### **Cafe Display**

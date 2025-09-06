@@ -876,6 +876,7 @@ export const Constants = {
         "B9",
         "B10",
         "B11",
+        "B12",
         "G1",
         "G2",
         "G3",
@@ -883,6 +884,7 @@ export const Constants = {
         "G5",
         "G6",
         "G7",
+        "G8",
       ],
       loyalty_tier: ["foodie", "gourmet", "connoisseur"],
       order_status: [
