@@ -1,0 +1,40 @@
+{
+  "domain": "socialstudio.in",
+  "records": [
+    {
+      "type": "TXT",
+      "name": "@",
+      "value": "v=spf1 include:spf.brevo.com ~all",
+      "ttl": 3600,
+      "description": "SPF record - authorizes Brevo to send emails"
+    },
+    {
+      "type": "TXT",
+      "name": "_dmarc",
+      "value": "v=DMARC1; p=quarantine; rua=mailto:dmarc@socialstudio.in; ruf=mailto:dmarc@socialstudio.in; fo=1",
+      "ttl": 3600,
+      "description": "DMARC record - email authentication policy"
+    },
+    {
+      "type": "MX",
+      "name": "@",
+      "value": "mx1.brevo.com",
+      "priority": 10,
+      "ttl": 3600,
+      "description": "MX record - for receiving emails (optional)"
+    }
+  ],
+  "instructions": {
+    "hostinger": [
+      "1. Login to Hostinger control panel",
+      "2. Go to \"DNS Zone Editor\"",
+      "3. Add each record below",
+      "4. Wait 24-48 hours for propagation"
+    ],
+    "verification": [
+      "Use mxtoolbox.com to verify records",
+      "Check Brevo dashboard for domain verification",
+      "Test email deliverability after propagation"
+    ]
+  }
+}
