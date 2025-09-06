@@ -40,6 +40,7 @@ const OrderConfirmation = () => {
   
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   const { orderId } = useParams();
   // Get order data from URL params, navigation state, or fallback
@@ -115,6 +116,7 @@ const OrderConfirmation = () => {
       if (error) throw error;
       console.log('📥 Order Confirmation: fetchOrder result:', data);
       setOrder(data);
+      setLastRefresh(new Date());
     } catch (error) {
       console.error('Error fetching order:', error);
       toast({
@@ -135,15 +137,16 @@ const OrderConfirmation = () => {
     let refreshInterval: NodeJS.Timeout | null = null;
     
     if (isMobile) {
-      console.log('📱 Mobile detected: Setting up periodic refresh every 30 seconds');
+      console.log('📱 Mobile detected: Setting up periodic refresh every 10 seconds');
       refreshInterval = setInterval(() => {
         console.log('📱 Mobile: Periodic refresh triggered');
         fetchOrder(true); // Force refresh
-      }, 30000); // Refresh every 30 seconds
+      }, 10000); // Refresh every 10 seconds for mobile
     }
 
-    // Set up real-time subscription for order updates
-    if (orderNumber) {
+    // Set up real-time subscription for order updates (disabled on mobile)
+    if (orderNumber && !isMobile) {
+      console.log('💻 Desktop: Setting up real-time subscription');
       const channel = supabase
         .channel(`order-tracking-${orderNumber}`)
         .on('postgres_changes', 
@@ -353,6 +356,24 @@ const OrderConfirmation = () => {
               <StatusIcon className="w-4 h-4 mr-2" />
               {order.status.replace('_', ' ').toUpperCase()}
             </Badge>
+            
+            {/* Mobile Refresh Button */}
+            {/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && (
+              <div className="mt-4 space-y-2">
+                <Button 
+                  onClick={() => fetchOrder(true)} 
+                  variant="outline" 
+                  size="sm"
+                  className="text-xs"
+                >
+                  <Clock className="w-3 h-3 mr-1" />
+                  Refresh Status
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Last updated: {lastRefresh.toLocaleTimeString()}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
