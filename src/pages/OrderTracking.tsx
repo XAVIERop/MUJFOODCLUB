@@ -80,11 +80,36 @@ const OrderTracking = () => {
           }, 
           (payload) => {
             console.log('Order updated:', payload.new);
-            setOrders(prev => 
-              prev.map(order => 
-                order.id === payload.new.id ? { ...order, ...payload.new } : order
-              )
-            );
+            console.log('Order old:', payload.old);
+            
+            // Only update if the status is valid and actually an advancement
+            if (payload.new.status && ['received', 'confirmed', 'preparing', 'on_the_way', 'completed', 'cancelled'].includes(payload.new.status)) {
+              setOrders(prev => {
+                const currentOrder = prev.find(o => o.id === payload.new.id);
+                if (currentOrder) {
+                  const statusOrder = ['received', 'confirmed', 'preparing', 'on_the_way', 'completed', 'cancelled'];
+                  const currentIndex = statusOrder.indexOf(currentOrder.status);
+                  const newIndex = statusOrder.indexOf(payload.new.status);
+                  
+                  // Only update if new status is actually an advancement or same
+                  if (newIndex >= currentIndex) {
+                    console.log('Order Tracking: Status advancement, updating');
+                    return prev.map(order => 
+                      order.id === payload.new.id ? { ...order, ...payload.new } : order
+                    );
+                  } else {
+                    console.log('Order Tracking: Status reversion detected, ignoring');
+                    return prev;
+                  }
+                }
+                
+                // If order not found in current state, add it
+                return [...prev, payload.new];
+              });
+            } else {
+              console.log('Order Tracking: Invalid status update received, refreshing orders instead');
+              fetchOrders(); // Refresh instead of using potentially corrupted data
+            }
             
             // Show toast for status updates
             const newStatus = payload.new.status;

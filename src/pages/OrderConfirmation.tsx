@@ -132,26 +132,56 @@ const OrderConfirmation = () => {
           }, 
           (payload) => {
             console.log('Order updated:', payload.new);
-            setOrder(payload.new as Order);
+            console.log('Order old:', payload.old);
             
-            // Show toast for status updates
-            const newStatus = payload.new.status;
-            const oldStatus = order?.status;
-            
-            if (newStatus !== oldStatus) {
-              toast({
-                title: "Order Status Updated",
-                description: `Your order is now ${newStatus.replace('_', ' ')}`,
-              });
-
-              // If order is completed, refresh profile to update points
-              if (newStatus === 'completed') {
-                refreshProfile();
-                toast({
-                  title: "Order Completed!",
-                  description: `You earned ${payload.new.points_earned} loyalty points!`,
-                });
+            // Only update if the status is valid and actually an advancement
+            if (payload.new.status && ['received', 'confirmed', 'preparing', 'on_the_way', 'completed', 'cancelled'].includes(payload.new.status)) {
+              // Check if this is actually a status change (not a reversion)
+              if (payload.old && payload.old.status && payload.new.status === payload.old.status) {
+                console.log('Order Confirmation: Status unchanged, ignoring update');
+                return;
               }
+              
+              // Only update if the new status is actually newer/better than current
+              if (order) {
+                const statusOrder = ['received', 'confirmed', 'preparing', 'on_the_way', 'completed', 'cancelled'];
+                const currentIndex = statusOrder.indexOf(order.status);
+                const newIndex = statusOrder.indexOf(payload.new.status);
+                
+                // Only update if new status is actually an advancement or same
+                if (newIndex >= currentIndex) {
+                  console.log('Order Confirmation: Status advancement, updating');
+                  setOrder(payload.new as Order);
+                  
+                  // Show toast for status updates
+                  const newStatus = payload.new.status;
+                  const oldStatus = order?.status;
+                  
+                  if (newStatus !== oldStatus) {
+                    toast({
+                      title: "Order Status Updated",
+                      description: `Your order is now ${newStatus.replace('_', ' ')}`,
+                    });
+                  }
+                } else {
+                  console.log('Order Confirmation: Status reversion detected, ignoring');
+                }
+              } else {
+                // If no current order, just set it
+                setOrder(payload.new as Order);
+              }
+            } else {
+              console.log('Order Confirmation: Invalid status update received, refreshing order instead');
+              fetchOrder(); // Refresh instead of using potentially corrupted data
+            }
+            
+            // If order is completed, refresh profile to update points
+            if (payload.new.status === 'completed') {
+              refreshProfile();
+              toast({
+                title: "Order Completed!",
+                description: `You earned ${payload.new.points_earned} loyalty points!`,
+              });
             }
           }
         )
