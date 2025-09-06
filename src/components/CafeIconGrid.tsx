@@ -201,7 +201,7 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
     if (cafeName.includes('lets') && cafeName.includes('go') && cafeName.includes('live')) {
       return {
         type: 'image',
-        src: '/letsgolive_logo.png',
+        src: '/letsgo_logo.png',
         alt: `${cafe.name} Logo`
       };
     }
