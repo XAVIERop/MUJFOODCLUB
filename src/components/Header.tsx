@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { QrCode, User, LogOut, Settings, Menu, Home, Coffee, Gift, Utensils, Bell, Receipt, Store, Package, Heart } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useNotificationSubscriptions } from '@/hooks/useSubscriptionManager';
 import NotificationCenter from './NotificationCenter';
 
 const Header = () => {
@@ -100,40 +101,17 @@ const Header = () => {
     };
 
     fetchUnreadCount();
-
-    // Set up real-time subscription for notifications
-    const channel = supabase
-      .channel(`header-notifications-${user.id}`)
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'order_notifications',
-          filter: `user_id=eq.${user.id}`
-        }, 
-        (payload) => {
-          setUnreadNotifications(prev => prev + 1);
-        }
-      )
-      .on('postgres_changes', 
-        { 
-          event: 'UPDATE', 
-          schema: 'public', 
-          table: 'order_notifications',
-          filter: `user_id=eq.${user.id}`
-        }, 
-        (payload) => {
-          if (payload.new.is_read) {
-            setUnreadNotifications(prev => Math.max(0, prev - 1));
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [user]);
+
+  // Set up real-time subscription for notifications using centralized manager
+  useNotificationSubscriptions(
+    user?.id || null,
+    null, // No cafeId for user notifications
+    (newNotification) => {
+      console.log('Header: New notification received via centralized subscription:', newNotification);
+      setUnreadNotifications(prev => prev + 1);
+    }
+  );
 
   const navItems = [
     { href: "/", label: "Home", icon: Home },

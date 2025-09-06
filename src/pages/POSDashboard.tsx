@@ -36,6 +36,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { useSoundNotifications } from '@/hooks/useSoundNotifications';
 import { soundNotificationService } from '@/services/soundNotificationService';
+import { useOrderSubscriptions, useNotificationSubscriptions } from '@/hooks/useSubscriptionManager';
 import EnhancedOrderGrid from '@/components/EnhancedOrderGrid';
 import POSAnalytics from '@/components/POSAnalytics';
 import ThermalPrinter from '@/components/ThermalPrinter';
@@ -1052,71 +1053,42 @@ const POSDashboard = () => {
     }
   }, [user, profile, cafeId, orders.length, filteredOrders.length]);
 
-  // Set up real-time subscription for orders
-  useEffect(() => {
-    if (!cafeId) {
-      console.log('POS Dashboard: No cafeId available for real-time subscription');
-      return;
+  // Set up real-time subscriptions using centralized manager
+  useOrderSubscriptions(
+    cafeId,
+    // New order handler
+    async (newOrder) => {
+      console.log('POS Dashboard: New order received via centralized subscription:', newOrder);
+      fetchOrders();
+      setUnreadNotifications(prev => prev + 1);
+      
+      // Play sound notification for new orders
+      if (soundEnabled) {
+        soundNotificationService.updateSettings(soundEnabled, soundVolume);
+        await soundNotificationService.playOrderReceivedSound();
+      }
+      
+      toast({
+        title: "New Order!",
+        description: `Order #${newOrder.order_number} received`,
+      });
+
+      // Auto-generate and print receipt for new orders
+      if (profile?.cafe_id === 'chatkara') {
+        setTimeout(() => {
+          autoPrintReceipt(newOrder as Order);
+        }, 2000); // Wait 2 seconds for order data to be fetched
+      }
+    },
+    // Order update handler
+    (updatedOrder) => {
+      console.log('POS Dashboard: Order update received via centralized subscription:', updatedOrder);
+      
+      // Always refresh orders for any update to ensure we have the latest data
+      console.log('POS Dashboard: Refreshing orders due to real-time update');
+      fetchOrders(true); // Show refresh indicator
     }
-
-    console.log('POS Dashboard: Setting up real-time subscription for cafeId:', cafeId);
-
-    const channel = supabase
-      .channel(`pos-orders-${cafeId}`)
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'orders',
-          filter: `cafe_id=eq.${cafeId}`
-        }, 
-        async (payload) => {
-          console.log('POS Dashboard: New order received via real-time:', payload.new);
-          fetchOrders();
-          setUnreadNotifications(prev => prev + 1);
-          
-          // Play sound notification for new orders
-          if (soundEnabled) {
-            soundNotificationService.updateSettings(soundEnabled, soundVolume);
-            await soundNotificationService.playOrderReceivedSound();
-          }
-          
-          toast({
-            title: "New Order!",
-            description: `Order #${payload.new.order_number} received`,
-          });
-
-          // Auto-generate and print receipt for new orders
-          if (profile?.cafe_id === 'chatkara') {
-            setTimeout(() => {
-              autoPrintReceipt(payload.new as Order);
-            }, 2000); // Wait 2 seconds for order data to be fetched
-          }
-        }
-      )
-      .on('postgres_changes', 
-        { 
-          event: 'UPDATE', 
-          schema: 'public', 
-          table: 'orders',
-          filter: `cafe_id=eq.${cafeId}`
-        }, 
-        (payload) => {
-          console.log('POS Dashboard: Order update received:', payload.new);
-          console.log('POS Dashboard: Payload old:', payload.old);
-          
-          // Always refresh orders for any update to ensure we have the latest data
-          console.log('POS Dashboard: Refreshing orders due to real-time update');
-          fetchOrders(true); // Show refresh indicator
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('POS Dashboard: Cleaning up real-time subscription for cafeId:', cafeId);
-      supabase.removeChannel(channel);
-    };
-  }, [cafeId, toast, soundEnabled, soundVolume]);
+  );
 
   // Set up polling as backup for real-time updates
   useEffect(() => {

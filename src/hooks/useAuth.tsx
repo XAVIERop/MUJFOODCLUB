@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useProfileSubscriptions } from './useSubscriptionManager';
 
 interface AuthContextType {
   user: User | null;
@@ -117,33 +118,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Set up real-time subscription for profile updates
-  useEffect(() => {
-    if (!user) return;
-
-    console.log('Setting up real-time profile subscription for user:', user.id);
-    
-    const channel = supabase
-      .channel(`profile-updates-${user.id}`)
-      .on('postgres_changes', 
-        { 
-          event: 'UPDATE', 
-          schema: 'public', 
-          table: 'profiles',
-          filter: `id=eq.${user.id}`
-        }, 
-        (payload) => {
-          console.log('Profile updated via real-time:', payload.new);
-          setProfile(payload.new);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('Cleaning up profile subscription');
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
+  // Set up real-time subscription for profile updates using centralized manager
+  useProfileSubscriptions(
+    user?.id || null,
+    (updatedProfile) => {
+      console.log('Profile updated via centralized subscription:', updatedProfile);
+      setProfile(updatedProfile);
+    }
+  );
 
   const signUp = async (email: string, password: string, fullName: string, block: string) => {
     try {
