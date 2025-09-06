@@ -61,6 +61,7 @@ interface Cafe {
   location: string;
   phone: string;
   hours: string;
+  accepting_orders: boolean;
   average_rating: number | null;
   total_ratings: number | null;
 }
@@ -281,15 +282,8 @@ const Menu = () => {
       return;
     }
 
-    // Check if cafe is accepting orders
-    if (!cafe.accepting_orders) {
-      toast({
-        title: "Cafe Not Available",
-        description: `${cafe.name} is currently not accepting orders. Please try again later.`,
-        variant: "destructive"
-      });
-      return;
-    }
+    // Note: Removed accepting_orders check to allow checkout from all cafes
+    // Button labels already indicate the status (Order Now vs Coming Soon)
 
     // Navigate to checkout with cart data
     navigate('/checkout', { 
