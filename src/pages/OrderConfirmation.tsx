@@ -127,8 +127,24 @@ const OrderConfirmation = () => {
         }
       }
       
+      // Force state update with mobile-specific logging
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        console.log('📱 Mobile: Setting order state to:', data);
+        console.log('📱 Mobile: Current order state before update:', order);
+      }
+      
       setOrder(data);
       setLastRefresh(new Date());
+      
+      // Mobile-specific: Force a re-render
+      if (isMobile) {
+        console.log('📱 Mobile: Forcing component re-render...');
+        // Force a state update to trigger re-render
+        setTimeout(() => {
+          setLastRefresh(new Date());
+        }, 100);
+      }
     } catch (error) {
       console.error('Error fetching order:', error);
       toast({
@@ -333,41 +349,76 @@ const OrderConfirmation = () => {
                     Force Refresh
                   </Button>
                   {/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && (
-                    <Button 
-                      onClick={async () => {
-                        console.log('📱 Mobile: Testing direct database query...');
-                        try {
-                          const { data, error } = await supabase
-                            .from('orders')
-                            .select('id, order_number, status, status_updated_at')
-                            .eq('order_number', orderNumber)
-                            .eq('user_id', user?.id)
-                            .single();
-                          
-                          if (error) {
-                            console.error('📱 Mobile: Direct query error:', error);
-                            toast({
-                              title: "Mobile Test Failed",
-                              description: `Error: ${error.message}`,
-                              variant: "destructive"
-                            });
-                          } else {
-                            console.log('📱 Mobile: Direct query success:', data);
-                            toast({
-                              title: "Mobile Test Success",
-                              description: `Status: ${data.status}`,
-                            });
+                    <>
+                      <Button 
+                        onClick={async () => {
+                          console.log('📱 Mobile: Testing direct database query...');
+                          try {
+                            const { data, error } = await supabase
+                              .from('orders')
+                              .select('id, order_number, status, status_updated_at')
+                              .eq('order_number', orderNumber)
+                              .eq('user_id', user?.id)
+                              .single();
+                            
+                            if (error) {
+                              console.error('📱 Mobile: Direct query error:', error);
+                              toast({
+                                title: "Mobile Test Failed",
+                                description: `Error: ${error.message}`,
+                                variant: "destructive"
+                              });
+                            } else {
+                              console.log('📱 Mobile: Direct query success:', data);
+                              toast({
+                                title: "Mobile Test Success",
+                                description: `Status: ${data.status}`,
+                              });
+                            }
+                          } catch (err) {
+                            console.error('📱 Mobile: Test error:', err);
                           }
-                        } catch (err) {
-                          console.error('📱 Mobile: Test error:', err);
-                        }
-                      }} 
-                      variant="secondary" 
-                      size="sm"
-                      className="text-xs"
-                    >
-                      Mobile Test
-                    </Button>
+                        }} 
+                        variant="secondary" 
+                        size="sm"
+                        className="text-xs"
+                      >
+                        Mobile Test
+                      </Button>
+                      <Button 
+                        onClick={async () => {
+                          console.log('📱 Mobile: Force UI update...');
+                          try {
+                            const { data, error } = await supabase
+                              .from('orders')
+                              .select('*')
+                              .eq('order_number', orderNumber)
+                              .eq('user_id', user?.id)
+                              .single();
+                            
+                            if (error) {
+                              console.error('📱 Mobile: Force update error:', error);
+                            } else {
+                              console.log('📱 Mobile: Force update success:', data);
+                              // Force set the order state
+                              setOrder(data);
+                              setLastRefresh(new Date());
+                              toast({
+                                title: "UI Force Updated",
+                                description: `Status: ${data.status}`,
+                              });
+                            }
+                          } catch (err) {
+                            console.error('📱 Mobile: Force update error:', err);
+                          }
+                        }} 
+                        variant="default" 
+                        size="sm"
+                        className="text-xs bg-green-600"
+                      >
+                        Force UI Update
+                      </Button>
+                    </>
                   )}
                 </div>
               <p className="text-xs text-muted-foreground">
@@ -376,6 +427,14 @@ const OrderConfirmation = () => {
               <p className="text-xs text-blue-600">
                 Auto-refresh every {/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? '3' : '10'} seconds
               </p>
+              {/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && order && (
+                <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                  <p><strong>Debug Info:</strong></p>
+                  <p>Status: {order.status}</p>
+                  <p>Updated: {order.status_updated_at}</p>
+                  <p>Last Refresh: {lastRefresh.toLocaleTimeString()}</p>
+                </div>
+              )}
             </div>
           </div>
 
