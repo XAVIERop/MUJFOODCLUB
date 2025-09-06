@@ -1,0 +1,39 @@
+{
+  "domain": "mujfoodclub.in",
+  "records": [
+    {
+      "step": 1,
+      "type": "TXT",
+      "name": "@",
+      "value": "v=spf1 include:spf.brevo.com ~all",
+      "ttl": 3600,
+      "description": "SPF Record - Authorizes Brevo to send emails",
+      "purpose": "Prevents emails from being marked as spam"
+    },
+    {
+      "step": 2,
+      "type": "TXT",
+      "name": "_dmarc",
+      "value": "v=DMARC1; p=quarantine; rua=mailto:dmarc@mujfoodclub.in; ruf=mailto:dmarc@mujfoodclub.in; fo=1",
+      "ttl": 3600,
+      "description": "DMARC Record - Email authentication policy",
+      "purpose": "Tells email providers how to handle authentication failures"
+    },
+    {
+      "step": 3,
+      "type": "MX",
+      "name": "@",
+      "value": "mx1.brevo.com",
+      "priority": 10,
+      "ttl": 3600,
+      "description": "MX Record - For receiving emails (optional)",
+      "purpose": "Allows receiving emails at support@mujfoodclub.in"
+    }
+  ],
+  "notes": {
+    "propagation": "DNS changes take 24-48 hours to propagate globally",
+    "verification": "Use online tools to verify records after adding",
+    "backup": "Always backup current DNS records before making changes",
+    "testing": "Test email deliverability after DNS propagation"
+  }
+}
