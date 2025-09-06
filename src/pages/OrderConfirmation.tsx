@@ -41,6 +41,7 @@ const OrderConfirmation = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [forceUpdateMode, setForceUpdateMode] = useState(false);
 
   const { orderId } = useParams();
   const orderNumber = orderId || location.state?.orderNumber || new URLSearchParams(window.location.search).get('order');
@@ -193,12 +194,18 @@ const OrderConfirmation = () => {
         return;
       }
       
+      // Skip polling if in force update mode
+      if (forceUpdateMode) {
+        console.log('🔄 OrderConfirmation: Skipping poll - force update mode active');
+        return;
+      }
+      
       fetchOrder();
     }, pollInterval);
 
     // Also refresh when page becomes visible
     const handleVisibilityChange = () => {
-      if (!document.hidden) {
+      if (!document.hidden && !forceUpdateMode) {
         console.log('👁️ Page became visible, refreshing...');
         fetchOrder();
       }
@@ -388,6 +395,11 @@ const OrderConfirmation = () => {
                       <Button 
                         onClick={async () => {
                           console.log('📱 Mobile: Force UI update...');
+                          
+                          // Enable force update mode to prevent polling from overriding
+                          setForceUpdateMode(true);
+                          console.log('📱 Mobile: Force update mode enabled');
+                          
                           try {
                             const { data, error } = await supabase
                               .from('orders')
@@ -398,6 +410,7 @@ const OrderConfirmation = () => {
                             
                             if (error) {
                               console.error('📱 Mobile: Force update error:', error);
+                              setForceUpdateMode(false); // Re-enable polling on error
                             } else {
                               console.log('📱 Mobile: Force update success:', data);
                               // Force set the order state
@@ -407,9 +420,16 @@ const OrderConfirmation = () => {
                                 title: "UI Force Updated",
                                 description: `Status: ${data.status}`,
                               });
+                              
+                              // Keep force update mode for 10 seconds to prevent immediate override
+                              setTimeout(() => {
+                                console.log('📱 Mobile: Re-enabling polling after force update');
+                                setForceUpdateMode(false);
+                              }, 10000);
                             }
                           } catch (err) {
                             console.error('📱 Mobile: Force update error:', err);
+                            setForceUpdateMode(false); // Re-enable polling on error
                           }
                         }} 
                         variant="default" 
@@ -433,6 +453,9 @@ const OrderConfirmation = () => {
                   <p>Status: {order.status}</p>
                   <p>Updated: {order.status_updated_at}</p>
                   <p>Last Refresh: {lastRefresh.toLocaleTimeString()}</p>
+                  {forceUpdateMode && (
+                    <p className="text-green-600 font-bold">🔄 Force Update Mode Active (10s)</p>
+                  )}
                 </div>
               )}
             </div>
