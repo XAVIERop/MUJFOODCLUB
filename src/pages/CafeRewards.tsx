@@ -45,7 +45,13 @@ const CafeRewards = () => {
     profile: profile ? 'loaded' : 'not loaded',
     loading,
     error,
-    loyaltyDataLength: loyaltyData.length
+    loyaltyDataLength: loyaltyData.length,
+    profileData: profile ? {
+      loyalty_points: profile.loyalty_points,
+      loyalty_tier: profile.loyalty_tier,
+      total_spent: profile.total_spent,
+      total_orders: profile.total_orders
+    } : null
   });
 
   const [selectedCafe, setSelectedCafe] = useState<string | null>(null);
@@ -128,6 +134,18 @@ const CafeRewards = () => {
           <div className="flex items-center justify-center mb-4">
             <Trophy className="h-8 w-8 text-yellow-500 mr-2" />
             <h1 className="text-3xl font-bold">Cafe Loyalty Rewards</h1>
+            <Button 
+              onClick={() => {
+                refreshLoyaltyData();
+                window.location.reload();
+              }} 
+              variant="outline" 
+              size="sm" 
+              className="ml-4"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Earn points and unlock exclusive benefits at each cafe. Your loyalty is rewarded with discounts, 
