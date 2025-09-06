@@ -225,16 +225,10 @@ const Index = () => {
         <section id="cafes" className="py-16 bg-muted/30">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             {/* Single Section Header */}
-            <div className="text-center mb-12">
-              <Badge className="mb-4 gradient-success text-white">
-                Popular Cafes
-              </Badge>
+            <div className="mb-12">
               <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
                 Choose From Trusted Cafes in One Single Order
               </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Discover delicious food from our partner cafes and earn rewards with every order
-              </p>
             </div>
 
             {/* Cafe Icon Grid with Slide Buttons */}

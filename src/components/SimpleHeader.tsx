@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, User, LogOut, Settings, Coffee, Gift, Utensils, Bell, Receipt, Store, Package, Heart } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -33,7 +34,26 @@ const SimpleHeader = () => {
             <MapPin className="h-5 w-5 text-orange-500" />
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-gray-900">Sankalp</span>
-              <span className="text-xs text-gray-500">Sankalp Tatvam Tower C 1102, Sankal...</span>
+              <div className="flex items-center space-x-1">
+                <span className="text-xs text-gray-500">Delivery to:</span>
+                <Select value={selectedBlock} onValueChange={setSelectedBlock}>
+                  <SelectTrigger className="w-12 h-6 text-xs border-none p-0 bg-transparent">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="B1">B1</SelectItem>
+                    <SelectItem value="B2">B2</SelectItem>
+                    <SelectItem value="B3">B3</SelectItem>
+                    <SelectItem value="B4">B4</SelectItem>
+                    <SelectItem value="B5">B5</SelectItem>
+                    <SelectItem value="B6">B6</SelectItem>
+                    <SelectItem value="B7">B7</SelectItem>
+                    <SelectItem value="B8">B8</SelectItem>
+                    <SelectItem value="B9">B9</SelectItem>
+                    <SelectItem value="B10">B10</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
