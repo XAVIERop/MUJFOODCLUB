@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Refresh Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin: 10px 0;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Profile Refresh Tool</h1>
+        
+        <div class="info">
+            <strong>Instructions:</strong><br>
+            1. Make sure you are logged in to mujfoodclub.in as test@muj.manipal.edu<br>
+            2. Run the SQL reset script in Supabase first<br>
+            3. Click the "Refresh Profile" button below<br>
+            4. The tool will refresh your profile data and redirect you back
+        </div>
+
+        <button id="refreshBtn" class="button" onclick="refreshProfile()">
+            🔄 Refresh Profile Data
+        </button>
+
+        <button id="checkBtn" class="button" onclick="checkProfile()">
+            📊 Check Current Profile Data
+        </button>
+
+        <div id="result"></div>
+        <div id="log" class="log" style="display: none;"></div>
+    </div>
+
+    <script>
+        let logElement = document.getElementById('log');
+        let resultElement = document.getElementById('result');
+
+        function log(message) {
+            console.log(message);
+            if (logElement) {
+                logElement.style.display = 'block';
+                logElement.textContent += message + '\n';
+                logElement.scrollTop = logElement.scrollHeight;
+            }
+        }
+
+        function showResult(message, type = 'info') {
+            if (resultElement) {
+                resultElement.innerHTML = `<div class="${type}">${message}</div>`;
+            }
+        }
+
+        async function checkProfile() {
+            log('🔍 Checking current profile data...');
+            
+            try {
+                // Get session data
+                const sessionData = localStorage.getItem('sb-kblazvxfducwviyyiwde-auth-token');
+                if (!sessionData) {
+                    showResult('❌ No session found. Please log in to mujfoodclub.in first.', 'error');
+                    return;
+                }
+
+                const session = JSON.parse(sessionData);
+                const userId = session?.user?.id;
+                const userEmail = session?.user?.email;
+
+                log(`✅ Found session for: ${userEmail}`);
+                log(`🔍 User ID: ${userId}`);
+
+                // Fetch profile data
+                const response = await fetch('https://kblazvxfducwviyyiwde.supabase.co/rest/v1/profiles', {
+                    method: 'GET',
+                    headers: {
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibGF6dnhmZHVjd3ZpeXlpd2RlIiwicnNlIjoiYW5vbiIsImlhdCI6MTc1NjEzMjQ2OCwiZXhwIjoyMDcxNzA4NDY4fQ.bMtHsQy5cdkF-7ClprpF7HgMKUJpBUuZPaAPNz_LRSA',
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const profileData = await response.json();
+                    log('📊 Current Profile Data:');
+                    log(`   - Email: ${profileData.email}`);
+                    log(`   - Loyalty Points: ${profileData.loyalty_points}`);
+                    log(`   - Total Orders: ${profileData.total_orders}`);
+                    log(`   - Total Spent: ₹${profileData.total_spent}`);
+                    log(`   - Loyalty Tier: ${profileData.loyalty_tier}`);
+                    log(`   - Is New User: ${profileData.is_new_user}`);
+                    
+                    showResult(`
+                        <strong>Current Profile Data:</strong><br>
+                        Email: ${profileData.email}<br>
+                        Loyalty Points: ${profileData.loyalty_points}<br>
+                        Total Orders: ${profileData.total_orders}<br>
+                        Total Spent: ₹${profileData.total_spent}<br>
+                        Loyalty Tier: ${profileData.loyalty_tier}<br>
+                        Is New User: ${profileData.is_new_user}
+                    `, 'info');
+                } else {
+                    showResult(`❌ Failed to fetch profile: ${response.status} ${response.statusText}`, 'error');
+                }
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+                showResult(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function refreshProfile() {
+            log('🔄 Starting profile refresh...');
+            
+            try {
+                // Get session data
+                const sessionData = localStorage.getItem('sb-kblazvxfducwviyyiwde-auth-token');
+                if (!sessionData) {
+                    showResult('❌ No session found. Please log in to mujfoodclub.in first.', 'error');
+                    return;
+                }
+
+                const session = JSON.parse(sessionData);
+                const userId = session?.user?.id;
+                const userEmail = session?.user?.email;
+
+                log(`✅ Found session for: ${userEmail}`);
+                log(`🔍 User ID: ${userId}`);
+
+                // Fetch fresh profile data
+                const response = await fetch('https://kblazvxfducwviyyiwde.supabase.co/rest/v1/profiles', {
+                    method: 'GET',
+                    headers: {
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibGF6dnhmZHVjd3ZpeXlpd2RlIiwicnNlIjoiYW5vbiIsImlhdCI6MTc1NjEzMjQ2OCwiZXhwIjoyMDcxNzA4NDY4fQ.bMtHsQy5cdkF-7ClprpF7HgMKUJpBUuZPaAPNz_LRSA',
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const profileData = await response.json();
+                    log('✅ Profile data refreshed successfully!');
+                    log('📊 Updated Profile Data:');
+                    log(`   - Email: ${profileData.email}`);
+                    log(`   - Loyalty Points: ${profileData.loyalty_points}`);
+                    log(`   - Total Orders: ${profileData.total_orders}`);
+                    log(`   - Total Spent: ₹${profileData.total_spent}`);
+                    log(`   - Loyalty Tier: ${profileData.loyalty_tier}`);
+                    log(`   - Is New User: ${profileData.is_new_user}`);
+                    
+                    showResult(`
+                        <strong>✅ Profile refreshed successfully!</strong><br>
+                        <strong>Updated Data:</strong><br>
+                        Loyalty Points: ${profileData.loyalty_points}<br>
+                        Total Orders: ${profileData.total_orders}<br>
+                        Total Spent: ₹${profileData.total_spent}<br>
+                        Loyalty Tier: ${profileData.loyalty_tier}<br><br>
+                        <strong>Redirecting you back to mujfoodclub.in...</strong>
+                    `, 'success');
+
+                    // Redirect back to the main site
+                    setTimeout(() => {
+                        log('🔄 Redirecting to mujfoodclub.in...');
+                        window.location.href = 'https://mujfoodclub.in';
+                    }, 3000);
+
+                } else {
+                    showResult(`❌ Failed to refresh profile: ${response.status} ${response.statusText}`, 'error');
+                }
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+                showResult(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Check if user is logged in when page loads
+        window.onload = function() {
+            const sessionData = localStorage.getItem('sb-kblazvxfducwviyyiwde-auth-token');
+            if (sessionData) {
+                const session = JSON.parse(sessionData);
+                const userEmail = session?.user?.email;
+                showResult(`✅ Logged in as: ${userEmail}`, 'success');
+            } else {
+                showResult('❌ Not logged in. Please log in to mujfoodclub.in first.', 'error');
+            }
+        };
+    </script>
+</body>
+</html>
