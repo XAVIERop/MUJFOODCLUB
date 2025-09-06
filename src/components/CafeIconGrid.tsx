@@ -182,6 +182,22 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
       };
     }
     
+    if (cafeName.includes('china') && cafeName.includes('town')) {
+      return {
+        type: 'image',
+        src: '/chinatown_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
+    if (cafeName.includes('tea') && cafeName.includes('tradition')) {
+      return {
+        type: 'image',
+        src: '/teatradition_logo.png',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
     // Fallback to emojis for other cafes
     let emoji = '🍽️'; // default
     
