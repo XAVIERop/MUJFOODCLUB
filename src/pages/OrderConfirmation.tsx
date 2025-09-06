@@ -196,6 +196,12 @@ const OrderConfirmation = () => {
           setOrder(payload.new as Order);
           setLastRefresh(new Date());
           
+          // If order is completed, refresh profile to get updated points
+          if (payload.new.status === 'completed') {
+            console.log('🎉 Order completed, refreshing profile for updated points');
+            refreshProfile();
+          }
+          
           // Show notification
           toast({
             title: "Order Updated!",

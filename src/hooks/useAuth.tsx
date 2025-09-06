@@ -117,6 +117,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Set up real-time subscription for profile updates
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('Setting up real-time profile subscription for user:', user.id);
+    
+    const channel = supabase
+      .channel(`profile-updates-${user.id}`)
+      .on('postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'profiles',
+          filter: `id=eq.${user.id}`
+        }, 
+        (payload) => {
+          console.log('Profile updated via real-time:', payload.new);
+          setProfile(payload.new);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up profile subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const signUp = async (email: string, password: string, fullName: string, block: string) => {
     try {
       // Validate email domain
