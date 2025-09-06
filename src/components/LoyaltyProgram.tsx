@@ -4,36 +4,39 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, Star, Gift, Crown, Zap, Target } from "lucide-react";
+import { Trophy, Star, Gift, Crown, Zap, Target, Coffee } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useCafeLoyalty } from '@/hooks/useCafeLoyalty';
 import { useToast } from '@/hooks/use-toast';
-import { TIER_CONFIG, LOYALTY_TIERS } from '@/lib/constants';
 
 const loyaltyTiers = [
   {
-    name: "Foodie",
+    name: "Level 1",
     icon: Star,
-    points: "0 - 150",
-    color: "text-gray-500",
-    bgColor: "bg-gray-100",
-    benefits: TIER_CONFIG[LOYALTY_TIERS.FOODIE].benefits,
+    points: "0 - 2,500",
+    discount: "5%",
+    color: "text-blue-500",
+    bgColor: "bg-blue-100",
+    benefits: ["5% discount on all orders", "Basic loyalty benefits"],
   },
   {
-    name: "Gourmet",
+    name: "Level 2",
     icon: Trophy,
-    points: "151 - 500", 
-    color: "text-orange-500",
-    bgColor: "bg-orange-100",
-    benefits: TIER_CONFIG[LOYALTY_TIERS.GOURMET].benefits,
-  },
-  {
-    name: "Connoisseur", 
-    icon: Crown,
-    points: "501+",
+    points: "2,501 - 6,000", 
+    discount: "7.5%",
     color: "text-purple-500",
     bgColor: "bg-purple-100",
-    benefits: TIER_CONFIG[LOYALTY_TIERS.CONNOISSEUR].benefits,
+    benefits: ["7.5% discount on all orders", "Priority customer support"],
+  },
+  {
+    name: "Level 3", 
+    icon: Crown,
+    points: "6,001+",
+    discount: "10%",
+    color: "text-yellow-500",
+    bgColor: "bg-yellow-100",
+    benefits: ["10% discount on all orders", "VIP status", "Exclusive offers", "Monthly maintenance required"],
   }
 ];
 
@@ -41,51 +44,25 @@ const LoyaltyProgram = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [recentTransactions, setRecentTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { 
+    loyaltyData, 
+    loading, 
+    getTotalPoints, 
+    getTotalSpent, 
+    getHighestLoyaltyLevel,
+    hasMaintenanceWarnings 
+  } = useCafeLoyalty();
 
-  useEffect(() => {
-    if (user) {
-      fetchLoyaltyData();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
-
-  const fetchLoyaltyData = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('loyalty_transactions')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false })
-        .limit(4);
-
-      if (error) throw error;
-      setRecentTransactions(data || []);
-    } catch (error) {
-      console.error('Error fetching loyalty data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Get current tier based on highest loyalty level across all cafes
   const getCurrentTier = () => {
-    const points = profile?.loyalty_points || 0;
-    if (points < 151) return { ...loyaltyTiers[0], current: true, progress: (points / 151) * 100 };
-    if (points < 501) return { ...loyaltyTiers[1], current: true, progress: ((points - 151) / (501 - 151)) * 100 };
-    return { ...loyaltyTiers[2], current: true, progress: 100 };
-  };
-
-  const getNextTierPoints = () => {
-    const points = profile?.loyalty_points || 0;
-    if (points < 151) return 151 - points;
-    if (points < 501) return 501 - points;
-    return 0;
+    const highestLevel = getHighestLoyaltyLevel();
+    const tierIndex = Math.min(highestLevel - 1, loyaltyTiers.length - 1);
+    return { ...loyaltyTiers[tierIndex], current: true, progress: 100 };
   };
 
   const currentTier = getCurrentTier();
-  const pointsToNext = getNextTierPoints();
+  const totalPoints = getTotalPoints();
+  const totalSpent = getTotalSpent();
 
   if (!user) {
     return (
@@ -146,7 +123,7 @@ const LoyaltyProgram = () => {
                     <p className="text-white/80">Keep ordering to unlock rewards!</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-bold">{profile?.loyalty_points || 0}</div>
+                    <div className="text-3xl font-bold">{totalPoints}</div>
                     <div className="text-white/80 text-sm">Total Points</div>
                   </div>
                 </div>
@@ -154,8 +131,8 @@ const LoyaltyProgram = () => {
               <CardContent className="space-y-6">
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-white/90 font-medium">Progress to Next Tier</span>
-                      <span className="text-white/90 text-sm">{pointsToNext} points to go</span>
+                      <span className="text-white/90 font-medium">Current Level</span>
+                      <span className="text-white/90 text-sm">{currentTier.name} - {currentTier.discount} discount</span>
                     </div>
                     <Progress value={currentTier.progress} className="h-3" />
                   </div>
@@ -166,11 +143,11 @@ const LoyaltyProgram = () => {
                       <div className="text-white/80 text-sm">Orders</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xl font-bold">₹{Math.round((profile?.total_spent || 0) * 0.1)}</div>
-                      <div className="text-white/80 text-sm">Saved</div>
+                      <div className="text-xl font-bold">₹{totalSpent.toLocaleString()}</div>
+                      <div className="text-white/80 text-sm">Total Spent</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xl font-bold">3</div>
+                      <div className="text-xl font-bold">{loyaltyData.length}</div>
                       <div className="text-white/80 text-sm">Cafes Visited</div>
                     </div>
                   </div>
@@ -179,10 +156,10 @@ const LoyaltyProgram = () => {
                   <Button 
                     variant="secondary" 
                     className="w-full"
-                    onClick={() => navigate('/cafes')}
+                    onClick={() => navigate('/rewards')}
                   >
                     <Gift className="w-4 h-4 mr-2" />
-                    Redeem Points ({profile?.loyalty_points || 0} Available)
+                    View Cafe Rewards ({totalPoints} Points)
                   </Button>
                 </div>
               </CardContent>
@@ -192,34 +169,37 @@ const LoyaltyProgram = () => {
             <Card className="mt-6 food-card border-0">
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Zap className="w-5 h-5 mr-2 text-primary" />
-                  Recent Activity
+                  <Coffee className="w-5 h-5 mr-2 text-primary" />
+                  Cafe Loyalty Overview
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {recentTransactions.length > 0 ? (
-                    recentTransactions.map((transaction: any) => (
-                      <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  {loyaltyData.length > 0 ? (
+                    loyaltyData.slice(0, 3).map((cafe) => (
+                      <div key={cafe.cafe_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center space-x-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            transaction.transaction_type === 'bonus' ? 'gradient-warm' : 'gradient-success'
+                            cafe.loyalty_level === 3 ? 'bg-yellow-100' : 
+                            cafe.loyalty_level === 2 ? 'bg-purple-100' : 'bg-blue-100'
                           }`}>
-                            {transaction.transaction_type === 'bonus' ? 
-                              <Gift className="w-4 h-4 text-white" /> : 
-                              <Target className="w-4 h-4 text-white" />
+                            {cafe.loyalty_level === 3 ? 
+                              <Crown className="w-4 h-4 text-yellow-600" /> : 
+                              cafe.loyalty_level === 2 ?
+                              <Trophy className="w-4 h-4 text-purple-600" /> :
+                              <Star className="w-4 h-4 text-blue-600" />
                             }
                           </div>
                           <div>
-                            <p className="font-medium text-foreground">{transaction.description}</p>
+                            <p className="font-medium text-foreground">{cafe.cafe_name}</p>
                             <p className="text-sm text-muted-foreground">
-                              {new Date(transaction.created_at).toLocaleDateString()}
+                              Level {cafe.loyalty_level} • {cafe.discount_percentage}% discount
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className={`font-bold ${transaction.points_change > 0 ? 'text-primary' : 'text-red-500'}`}>
-                            {transaction.points_change > 0 ? '+' : ''}{transaction.points_change}
+                          <div className="font-bold text-primary">
+                            {cafe.points}
                           </div>
                           <div className="text-xs text-muted-foreground">points</div>
                         </div>
@@ -227,7 +207,7 @@ const LoyaltyProgram = () => {
                     ))
                   ) : (
                     <p className="text-center text-muted-foreground py-8">
-                      No recent activity. Start ordering to earn points!
+                      No cafe loyalty data yet. Start ordering from cafes to build your loyalty!
                     </p>
                   )}
                 </div>
@@ -256,7 +236,7 @@ const LoyaltyProgram = () => {
                           {tier.name}
                           {isCurrentTier && <Badge className="ml-2 text-xs gradient-primary text-white">Current</Badge>}
                         </h4>
-                        <p className="text-sm text-muted-foreground">{tier.points} points</p>
+                        <p className="text-sm text-muted-foreground">{tier.points} points • {tier.discount} discount</p>
                       </div>
                     </div>
 
