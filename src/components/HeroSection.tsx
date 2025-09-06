@@ -3,11 +3,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, Utensils, Star, Gift, MapPin, Search, Users, Clock, Store } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/img.png";
 
-const HeroSection = () => {
+const HeroSection = memo(() => {
   const navigate = useNavigate();
   const [cafeCount, setCafeCount] = useState(0);
   const [studentCount, setStudentCount] = useState(0);
@@ -78,33 +78,47 @@ const HeroSection = () => {
     fetchData();
   }, []);
 
-  // Filter cafes and menu items based on search query and mode
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      if (searchMode === 'cafes') {
-        const filteredCafes = cafes.filter(cafe =>
-          cafe.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        setFilteredCafes(filteredCafes);
-        setFilteredMenuItems([]);
-        setShowCafeDropdown(filteredCafes.length > 0);
-        setShowMenuDropdown(false);
-      } else {
-        const filteredMenu = menuItems.filter(item =>
-          item.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        setFilteredMenuItems(filteredMenu);
-        setFilteredCafes([]);
-        setShowMenuDropdown(filteredMenu.length > 0);
-        setShowCafeDropdown(false);
-      }
+  // Memoized filtered results for better performance
+  const filteredResults = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return {
+        filteredCafes: [],
+        filteredMenuItems: [],
+        showCafeDropdown: false,
+        showMenuDropdown: false
+      };
+    }
+
+    if (searchMode === 'cafes') {
+      const filteredCafes = cafes.filter(cafe =>
+        cafe.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      return {
+        filteredCafes,
+        filteredMenuItems: [],
+        showCafeDropdown: filteredCafes.length > 0,
+        showMenuDropdown: false
+      };
     } else {
-      setFilteredCafes([]);
-      setFilteredMenuItems([]);
-      setShowCafeDropdown(false);
-      setShowMenuDropdown(false);
+      const filteredMenu = menuItems.filter(item =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      return {
+        filteredCafes: [],
+        filteredMenuItems: filteredMenu,
+        showCafeDropdown: false,
+        showMenuDropdown: filteredMenu.length > 0
+      };
     }
   }, [searchQuery, searchMode, cafes, menuItems]);
+
+  // Update state when filtered results change
+  useEffect(() => {
+    setFilteredCafes(filteredResults.filteredCafes);
+    setFilteredMenuItems(filteredResults.filteredMenuItems);
+    setShowCafeDropdown(filteredResults.showCafeDropdown);
+    setShowMenuDropdown(filteredResults.showMenuDropdown);
+  }, [filteredResults]);
 
   const handleExploreCafes = () => {
     navigate('/cafes');
@@ -385,6 +399,6 @@ const HeroSection = () => {
       </div>
     </section>
   );
-};
+});
 
 export default HeroSection;

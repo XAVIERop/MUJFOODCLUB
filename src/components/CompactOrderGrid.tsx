@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, memo, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -69,7 +69,7 @@ interface CompactOrderGridProps {
   loading?: boolean;
 }
 
-const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
+const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
   orders,
   orderItems,
   onOrderSelect,
@@ -1292,7 +1292,15 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = ({
       )}
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for memo
+  return (
+    prevProps.orders.length === nextProps.orders.length &&
+    prevProps.loading === nextProps.loading &&
+    JSON.stringify(prevProps.orders) === JSON.stringify(nextProps.orders) &&
+    JSON.stringify(prevProps.orderItems) === JSON.stringify(nextProps.orderItems)
+  );
+});
 
 // Helper function to get next status
 const getNextStatus = (currentStatus: Order['status']): Order['status'] => {

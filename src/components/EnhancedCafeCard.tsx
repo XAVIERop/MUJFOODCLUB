@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { Star, Phone, MessageCircle, MapPin, Clock, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
@@ -25,7 +25,7 @@ interface EnhancedCafeCardProps {
   showAll?: boolean;
 }
 
-export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAll = false }) => {
+export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, showAll = false }) => {
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
 
@@ -287,4 +287,13 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
       </div>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for memo
+  return (
+    prevProps.showAll === nextProps.showAll &&
+    prevProps.cafe.id === nextProps.cafe.id &&
+    prevProps.cafe.name === nextProps.cafe.name &&
+    prevProps.cafe.average_rating === nextProps.cafe.average_rating &&
+    prevProps.cafe.accepting_orders === nextProps.cafe.accepting_orders
+  );
+});

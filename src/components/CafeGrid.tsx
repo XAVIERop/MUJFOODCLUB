@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useFavorites } from '../hooks/useFavorites';
@@ -26,7 +26,7 @@ interface CafeGridProps {
   cafes?: Cafe[]; // Accept cafes as prop
 }
 
-export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 3, cafes: propCafes }) => {
+export const CafeGrid: React.FC<CafeGridProps> = memo(({ showAll = false, maxCafes = 3, cafes: propCafes }) => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -155,4 +155,11 @@ export const CafeGrid: React.FC<CafeGridProps> = ({ showAll = false, maxCafes = 
       )}
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for memo
+  return (
+    prevProps.showAll === nextProps.showAll &&
+    prevProps.maxCafes === nextProps.maxCafes &&
+    JSON.stringify(prevProps.cafes) === JSON.stringify(nextProps.cafes)
+  );
+});
