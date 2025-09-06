@@ -12,7 +12,8 @@ import { ArrowLeft, MapPin, Clock, Banknote, AlertCircle, CheckCircle, Trophy } 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { SIMPLE_REWARDS } from '@/lib/constants';
+import { CAFE_REWARDS, calculatePointsEarned, calculateMaxRedeemablePoints, getTierDiscount } from '@/lib/constants';
+import { useCafeRewards } from '@/hooks/useCafeRewards';
 import Header from '@/components/Header';
 
 interface MenuItem {
@@ -35,6 +36,7 @@ interface Cafe {
   hours: string;
   rating: number;
   total_reviews: number;
+  accepting_orders: boolean;
 }
 
 interface CartItem {
@@ -47,6 +49,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, refreshProfile } = useAuth();
+  const { getCafeRewardData } = useCafeRewards();
   const { toast } = useToast();
   
   const [isLoading, setIsLoading] = useState(false);
@@ -150,26 +153,31 @@ const Checkout = () => {
     }
   };
 
-  // Simple points calculation
-  const calculatePoints = (amount: number) => {
-    return Math.floor(amount * SIMPLE_REWARDS.POINTS_PER_RUPEE);
+  // Get cafe reward data for current cafe
+  const cafeRewardData = cafe ? getCafeRewardData(cafe.id) : null;
+
+  // Calculate points to earn
+  const calculatePointsToEarn = (amount: number) => {
+    if (!cafeRewardData) return Math.floor(amount * CAFE_REWARDS.POINTS_RATE);
+    
+    return calculatePointsEarned(amount, cafeRewardData.is_first_order);
   };
 
   const calculatePointsDiscount = (points: number) => {
     // 1 point = ₹1 discount (1:1 ratio)
-    const discount = points * SIMPLE_REWARDS.POINT_VALUE;
+    const discount = points * CAFE_REWARDS.POINT_VALUE;
     // Limit to 10% of order value for points redemption
-    const maxPointsDiscount = Math.floor(totalAmount * SIMPLE_REWARDS.MAX_REDEMPTION_PERCENTAGE / 100);
+    const maxPointsDiscount = calculateMaxRedeemablePoints(totalAmount);
     return Math.min(discount, maxPointsDiscount);
   };
 
-  const calculateMaxRedeemablePoints = () => {
+  const calculateMaxRedeemablePointsForOrder = () => {
     // Maximum points that can be redeemed (10% of order value)
-    return Math.floor(totalAmount * SIMPLE_REWARDS.MAX_REDEMPTION_PERCENTAGE / 100);
+    return calculateMaxRedeemablePoints(totalAmount);
   };
 
   const handlePointsRedeem = (points: number) => {
-    const maxRedeemable = calculateMaxRedeemablePoints();
+    const maxRedeemable = calculateMaxRedeemablePointsForOrder();
     const actualPointsToRedeem = Math.min(points, maxRedeemable);
     const discount = calculatePointsDiscount(actualPointsToRedeem);
     setPointsToRedeem(actualPointsToRedeem);
@@ -179,7 +187,7 @@ const Checkout = () => {
 
   const handleCustomPointsRedeem = () => {
     const customPoints = parseInt(customPointsInput);
-    const maxRedeemable = calculateMaxRedeemablePoints();
+    const maxRedeemable = calculateMaxRedeemablePointsForOrder();
     const maxAllowed = Math.min(profile.loyalty_points, maxRedeemable);
     
     if (customPoints && customPoints > 0 && customPoints <= maxAllowed) {
@@ -194,18 +202,25 @@ const Checkout = () => {
     }
   };
 
-  // Calculate final amount (no automatic loyalty discounts for now)
+  // Calculate tier discount and final amount
   useEffect(() => {
-    setFinalAmount(Math.max(0, totalAmount - pointsDiscount));
-  }, [totalAmount, pointsDiscount]);
+    if (cafeRewardData) {
+      const tierDiscount = Math.floor((totalAmount * getTierDiscount(cafeRewardData.tier)) / 100);
+      setLoyaltyDiscount(tierDiscount);
+      setFinalAmount(Math.max(0, totalAmount - tierDiscount - pointsDiscount));
+    } else {
+      setLoyaltyDiscount(0);
+      setFinalAmount(Math.max(0, totalAmount - pointsDiscount));
+    }
+  }, [totalAmount, pointsDiscount, cafeRewardData]);
 
   // Calculate points to earn when component loads or total amount changes
   useEffect(() => {
     if (totalAmount > 0) {
-      const points = calculatePoints(totalAmount);
+      const points = calculatePointsToEarn(totalAmount);
       setPointsToEarn(points);
     }
-  }, [totalAmount]);
+  }, [totalAmount, cafeRewardData]);
 
   const handlePlaceOrder = async () => {
     if (!user || !profile) {
@@ -528,20 +543,20 @@ const Checkout = () => {
                           You have {profile.loyalty_points} points available
                           <br />
                           <span className="text-blue-600 font-medium">
-                            Max redeemable: {calculateMaxRedeemablePoints()} points (10% of order)
+                            Max redeemable: {calculateMaxRedeemablePointsForOrder()} points (10% of order)
                           </span>
                         </p>
                         
                         <div className="space-y-2">
                           {/* Quick Redeem Button */}
-                          {calculateMaxRedeemablePoints() > 0 && (
+                          {calculateMaxRedeemablePointsForOrder() > 0 && (
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handlePointsRedeem(calculateMaxRedeemablePoints())}
+                              onClick={() => handlePointsRedeem(calculateMaxRedeemablePointsForOrder())}
                               className="w-full"
                             >
-                              Redeem Max ({calculateMaxRedeemablePoints()} points)
+                              Redeem Max ({calculateMaxRedeemablePointsForOrder()} points)
                             </Button>
                           )}
                           
@@ -553,14 +568,14 @@ const Checkout = () => {
                               value={customPointsInput}
                               onChange={(e) => setCustomPointsInput(e.target.value)}
                               min="1"
-                              max={Math.min(profile.loyalty_points, calculateMaxRedeemablePoints())}
+                              max={Math.min(profile.loyalty_points, calculateMaxRedeemablePointsForOrder())}
                               className="flex-1"
                             />
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={handleCustomPointsRedeem}
-                              disabled={!customPointsInput || parseInt(customPointsInput) <= 0 || parseInt(customPointsInput) > Math.min(profile.loyalty_points, calculateMaxRedeemablePoints())}
+                              disabled={!customPointsInput || parseInt(customPointsInput) <= 0 || parseInt(customPointsInput) > Math.min(profile.loyalty_points, calculateMaxRedeemablePointsForOrder())}
                             >
                               Redeem
                             </Button>
