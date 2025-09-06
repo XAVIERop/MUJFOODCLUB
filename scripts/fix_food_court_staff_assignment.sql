@@ -28,44 +28,22 @@ JOIN public.cafes c ON cs.cafe_id = c.id
 WHERE c.name = 'FOOD COURT';
 
 -- 3. Create a Food Court owner profile if it doesn't exist
-INSERT INTO public.profiles (
-  id,
-  email,
-  full_name,
-  block,
-  phone,
-  loyalty_points,
-  loyalty_tier,
-  qr_code,
-  student_id,
-  total_orders,
-  total_spent,
-  user_type,
-  cafe_id,
-  created_at,
-  updated_at
-) VALUES (
-  gen_random_uuid(),
-  'food.court.owner@muj.manipal.edu',
-  'Food Court Manager',
-  'B1',
-  '+91-9876543210',
-  0,
-  'foodie'::loyalty_tier,
-  'QR-FOOD-COURT-OWNER',
-  'FC001',
-  0,
-  0,
-  'cafe_owner',
-  (SELECT id FROM public.cafes WHERE name = 'FOOD COURT'),
-  NOW(),
-  NOW()
-) ON CONFLICT (email) DO UPDATE SET
+-- First, we need to create the auth user, then the profile
+-- Note: This requires manual creation in Supabase Auth dashboard
+-- Email: food.court.owner@muj.manipal.edu
+-- Password: (set manually)
+
+-- For now, let's use an existing user or create a profile without auth user
+-- We'll use Pulkit's profile and assign him as Food Court owner
+UPDATE public.profiles 
+SET 
   user_type = 'cafe_owner',
   cafe_id = (SELECT id FROM public.cafes WHERE name = 'FOOD COURT'),
-  updated_at = NOW();
+  updated_at = NOW()
+WHERE email = 'pulkit.229302047@muj.manipal.edu'
+ON CONFLICT (email) DO NOTHING;
 
--- 4. Assign the Food Court owner to cafe_staff table
+-- 4. Assign Pulkit as Food Court owner in cafe_staff table
 INSERT INTO public.cafe_staff (
   id,
   cafe_id,
@@ -84,39 +62,14 @@ SELECT
   NOW(),
   NOW()
 FROM public.cafes c
-JOIN public.profiles p ON p.email = 'food.court.owner@muj.manipal.edu'
+JOIN public.profiles p ON p.email = 'pulkit.229302047@muj.manipal.edu'
 WHERE c.name = 'FOOD COURT'
 ON CONFLICT (cafe_id, user_id) DO UPDATE SET
   role = 'owner',
   is_active = true,
   updated_at = NOW();
 
--- 5. Also assign Pulkit as staff for Food Court (if he exists)
-INSERT INTO public.cafe_staff (
-  id,
-  cafe_id,
-  user_id,
-  role,
-  is_active,
-  created_at,
-  updated_at
-)
-SELECT 
-  gen_random_uuid(),
-  c.id as cafe_id,
-  p.id as user_id,
-  'staff' as role,
-  true as is_active,
-  NOW(),
-  NOW()
-FROM public.cafes c
-CROSS JOIN public.profiles p
-WHERE p.email = 'pulkit.229302047@muj.manipal.edu'
-  AND c.name = 'FOOD COURT'
-ON CONFLICT (cafe_id, user_id) DO UPDATE SET
-  role = 'staff',
-  is_active = true,
-  updated_at = NOW();
+-- 5. Note: Pulkit is already assigned as owner above, no need for duplicate staff assignment
 
 -- 6. Verify the Food Court staff setup
 SELECT 'Updated Food Court staff:' as status;
