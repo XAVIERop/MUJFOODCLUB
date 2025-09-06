@@ -232,6 +232,16 @@ const Checkout = () => {
       return;
     }
 
+    // Check if cafe is accepting orders
+    if (!cafe.accepting_orders) {
+      toast({
+        title: "Cafe Not Available",
+        description: `${cafe.name} is currently not accepting orders. Please try again later.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Validate phone number
     if (!deliveryDetails.phoneNumber || deliveryDetails.phoneNumber.trim() === '') {
       setError('Phone number is required');

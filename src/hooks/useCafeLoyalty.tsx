@@ -40,17 +40,78 @@ export const useCafeLoyalty = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase.rpc('get_user_cafe_loyalty_summary', {
-        p_user_id: user.id
-      });
+      // Get user's profile data
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
-      if (error) {
-        console.error('Error fetching loyalty summary:', error);
-        setError('Failed to fetch loyalty data');
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        setError('Failed to fetch user profile');
         return;
       }
 
-      setLoyaltyData(data || []);
+      // Get user's orders to calculate cafe-specific data
+      const { data: orders, error: ordersError } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          cafe_id,
+          total_amount,
+          created_at,
+          cafes!inner(id, name)
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'completed');
+
+      if (ordersError) {
+        console.error('Error fetching orders:', ordersError);
+        setError('Failed to fetch order history');
+        return;
+      }
+
+      // Calculate cafe-specific loyalty data
+      const cafeData: { [key: string]: any } = {};
+      
+      orders.forEach((order: any) => {
+        const cafeId = order.cafe_id;
+        if (!cafeData[cafeId]) {
+          cafeData[cafeId] = {
+            cafe_id: cafeId,
+            cafe_name: order.cafes.name,
+            points: 0,
+            total_spent: 0,
+            loyalty_level: 1,
+            discount_percentage: 5,
+            monthly_maintenance_spent: 0,
+            monthly_maintenance_required: 0,
+            maintenance_met: true,
+            days_until_month_end: 30
+          };
+        }
+        
+        cafeData[cafeId].total_spent += parseFloat(order.total_amount);
+        // Simple points calculation: 1 point per ₹10 spent
+        cafeData[cafeId].points += Math.floor(parseFloat(order.total_amount) / 10);
+      });
+
+      // Calculate loyalty levels and discounts
+      Object.values(cafeData).forEach((cafe: any) => {
+        if (cafe.total_spent >= 5000) {
+          cafe.loyalty_level = 3;
+          cafe.discount_percentage = 20;
+        } else if (cafe.total_spent >= 2000) {
+          cafe.loyalty_level = 2;
+          cafe.discount_percentage = 10;
+        } else {
+          cafe.loyalty_level = 1;
+          cafe.discount_percentage = 5;
+        }
+      });
+
+      setLoyaltyData(Object.values(cafeData));
     } catch (err) {
       console.error('Exception fetching loyalty summary:', err);
       setError('Failed to fetch loyalty data');
@@ -64,19 +125,20 @@ export const useCafeLoyalty = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('cafe_loyalty_transactions')
+      // Get orders for the specific cafe to create transaction history
+      const { data: orders, error } = await supabase
+        .from('orders')
         .select(`
           id,
           cafe_id,
-          points_change,
-          transaction_type,
-          description,
+          total_amount,
+          points_earned,
           created_at,
           cafes!inner(name)
         `)
         .eq('user_id', user.id)
         .eq('cafe_id', cafeId)
+        .eq('status', 'completed')
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -85,14 +147,14 @@ export const useCafeLoyalty = () => {
         return;
       }
 
-      const formattedTransactions: CafeLoyaltyTransaction[] = data.map(transaction => ({
-        id: transaction.id,
-        cafe_id: transaction.cafe_id,
-        cafe_name: transaction.cafes.name,
-        points_change: transaction.points_change,
-        transaction_type: transaction.transaction_type,
-        description: transaction.description,
-        created_at: transaction.created_at
+      const formattedTransactions: CafeLoyaltyTransaction[] = orders.map((order: any) => ({
+        id: order.id,
+        cafe_id: order.cafe_id,
+        cafe_name: order.cafes.name,
+        points_change: order.points_earned || Math.floor(parseFloat(order.total_amount) / 10),
+        transaction_type: 'order',
+        description: `Order completed - ₹${parseFloat(order.total_amount).toFixed(2)}`,
+        created_at: order.created_at
       }));
 
       setTransactions(formattedTransactions);

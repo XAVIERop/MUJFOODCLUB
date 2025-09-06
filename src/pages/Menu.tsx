@@ -281,6 +281,16 @@ const Menu = () => {
       return;
     }
 
+    // Check if cafe is accepting orders
+    if (!cafe.accepting_orders) {
+      toast({
+        title: "Cafe Not Available",
+        description: `${cafe.name} is currently not accepting orders. Please try again later.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Navigate to checkout with cart data
     navigate('/checkout', { 
       state: { 

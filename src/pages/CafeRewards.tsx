@@ -16,7 +16,8 @@ import {
   Clock,
   RefreshCw,
   Coffee,
-  ShoppingBag
+  ShoppingBag,
+  Crown
 } from 'lucide-react';
 import Header from '@/components/Header';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
@@ -38,6 +39,15 @@ const CafeRewards = () => {
     refreshLoyaltyData
   } = useCafeLoyalty();
 
+  // Debug logging
+  console.log('CafeRewards Debug:', {
+    user: user ? 'authenticated' : 'not authenticated',
+    profile: profile ? 'loaded' : 'not loaded',
+    loading,
+    error,
+    loyaltyDataLength: loyaltyData.length
+  });
+
   const [selectedCafe, setSelectedCafe] = useState<string | null>(null);
 
   // Get maintenance warnings
@@ -53,6 +63,24 @@ const CafeRewards = () => {
     current.total_spent > top.total_spent ? current : top, 
     loyaltyData[0] || null
   );
+
+  // Show authentication required message if not signed in
+  if (!user || !profile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <Trophy className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-foreground mb-2">Access Denied</h2>
+              <p className="text-muted-foreground">Please sign in to view your loyalty rewards</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -75,10 +103,17 @@ const CafeRewards = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <main className="container mx-auto px-4 py-8">
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-foreground mb-2">Error Loading Rewards</h2>
+              <p className="text-muted-foreground mb-4">{error}</p>
+              <Button onClick={refreshLoyaltyData} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          </div>
         </main>
       </div>
     );
