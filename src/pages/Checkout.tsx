@@ -140,8 +140,6 @@ const Checkout = () => {
       const { data, error } = await (supabase.rpc as any)('calculate_enhanced_points', {
         order_amount: amount,
         user_id: user.id,
-        is_new_user: profile.is_new_user || false,
-        new_user_orders_count: profile.new_user_orders_count || 0
       });
 
       if (error) {
@@ -334,8 +332,6 @@ const Checkout = () => {
         const { data: functionCheck } = await (supabase.rpc as any)('calculate_enhanced_points', {
           order_amount: totalAmount,
           user_id: user.id,
-          is_new_user: profile.is_new_user || false,
-          new_user_orders_count: profile.new_user_orders_count || 0
         });
 
         if (functionCheck !== undefined) {
@@ -352,24 +348,8 @@ const Checkout = () => {
             user_id: user.id
           });
 
-          // Handle new user first order bonus
-          if (profile.is_new_user && (!profile.new_user_orders_count || profile.new_user_orders_count === 0)) {
-            await (supabase.rpc as any)('handle_new_user_first_order', {
-              user_id: user.id
-            });
-          }
-
-          // Update user's new user orders count
-          if (profile.is_new_user && profile.new_user_orders_count !== null) {
-            const newCount = Math.min(profile.new_user_orders_count + 1, 20);
-            await supabase
-              .from('profiles')
-              .update({ 
-                new_user_orders_count: newCount,
-                is_new_user: newCount < 20
-              } as any)
-              .eq('id', user.id);
-          }
+          // Enhanced rewards system is available
+          console.log('✅ Enhanced rewards system active');
         }
       } catch (error) {
         console.error('Enhanced rewards system not available or error occurred:', error);
@@ -701,12 +681,7 @@ const Checkout = () => {
                     </p>
                     {profile && (
                       <div className="text-xs text-muted-foreground mt-1">
-                        <span className="font-medium">Tier:</span> {profile.loyalty_tier} 
-                        {profile.is_new_user && profile.new_user_orders_count && profile.new_user_orders_count <= 20 && (
-                          <span className="ml-2 text-yellow-600">
-                            • {profile.new_user_orders_count === 1 ? '50%' : '25%'} bonus active
-                          </span>
-                        )}
+                        <span className="font-medium">Tier:</span> {profile.loyalty_tier}
                       </div>
                     )}
                   </div>
