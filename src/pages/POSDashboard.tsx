@@ -813,14 +813,59 @@ const POSDashboard = () => {
   };
 
   useEffect(() => {
-    if (profile?.cafe_id) {
-      setCafeId(profile.cafe_id);
-    }
-  }, [profile]);
+    const fetchCafeId = async () => {
+      if (!user || !profile) return;
+
+      try {
+        console.log('POS Dashboard: Fetching cafeId for user:', user.id, 'profile:', profile);
+        
+        if (profile.user_type === 'cafe_owner') {
+          // Cafe owners get cafe_id directly from their profile
+          console.log('POS Dashboard: User is cafe_owner, using profile.cafe_id:', profile.cafe_id);
+          setCafeId(profile.cafe_id);
+        } else if (profile.user_type === 'cafe_staff') {
+          // Cafe staff get cafe_id from cafe_staff table
+          console.log('POS Dashboard: User is cafe_staff, fetching from cafe_staff table');
+          const { data: staffData, error: staffError } = await supabase
+            .from('cafe_staff')
+            .select('*')
+            .eq('user_id', user.id);
+
+          if (staffError) {
+            console.error('Error fetching staff data:', staffError);
+            return;
+          }
+
+          if (!staffData || staffData.length === 0) {
+            console.error('No staff record found for user');
+            return;
+          }
+
+          // Get the cafe_id from the first record
+          const cafeStaffRecord = staffData[0] as any;
+          console.log('POS Dashboard: Found staff record, cafe_id:', cafeStaffRecord.cafe_id);
+          setCafeId(cafeStaffRecord.cafe_id);
+        } else {
+          // Fallback to profile.cafe_id for other user types
+          console.log('POS Dashboard: User type is', profile.user_type, ', using profile.cafe_id:', profile.cafe_id);
+          setCafeId(profile.cafe_id);
+        }
+      } catch (error) {
+        console.error('Error fetching cafe ID:', error);
+      }
+    };
+
+    fetchCafeId();
+  }, [user, profile]);
 
   // Set up real-time subscription for orders
   useEffect(() => {
-    if (!cafeId) return;
+    if (!cafeId) {
+      console.log('POS Dashboard: No cafeId available for real-time subscription');
+      return;
+    }
+
+    console.log('POS Dashboard: Setting up real-time subscription for cafeId:', cafeId);
 
     const channel = supabase
       .channel(`pos-orders-${cafeId}`)
@@ -832,6 +877,7 @@ const POSDashboard = () => {
           filter: `cafe_id=eq.${cafeId}`
         }, 
         async (payload) => {
+          console.log('POS Dashboard: New order received via real-time:', payload.new);
           fetchOrders();
           setUnreadNotifications(prev => prev + 1);
           
