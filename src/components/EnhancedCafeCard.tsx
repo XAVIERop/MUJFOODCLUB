@@ -65,7 +65,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = ({ cafe, showAl
       'Zaika Restaurant': '/zaika_logo.png',
       'ZAIKA': '/zaika_logo.png',
       'Italian Oven': '/italainoven_card.jpg', // Note: filename has typo
-      'Munch Box': '/munchbox_logo.png',
+      'Munch Box': '/munchbox_card.png',
       'Punjabi Tadka': '/punjabitadka_card.jpg',
       'The Waffle Co': '/thewaffleco.png',
       'Soya Chaap Corner': '/chatkara_logo.jpg', // Fallback for now
