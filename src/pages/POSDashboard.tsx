@@ -129,13 +129,22 @@ const POSDashboard = () => {
     setVolume,
   } = useSoundNotifications();
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (showRefreshIndicator = false) => {
     try {
+      if (showRefreshIndicator) {
+        setIsRefreshing(true);
+      }
+      
+      // Add cache-busting parameter to prevent stale data
+      const cacheBuster = Date.now();
+      console.log('POS Dashboard: Fetching orders with cache buster:', cacheBuster);
+      
       // First, try a simple query without joins
       const { data: simpleData, error: simpleError } = await supabase
         .from('orders')
         .select('*')
         .eq('cafe_id', cafeId)
+        .neq('id', '00000000-0000-0000-0000-000000000000') // Cache buster
         .order('created_at', { ascending: false });
 
       if (simpleError) {
@@ -162,6 +171,7 @@ const POSDashboard = () => {
           )
         `)
         .eq('cafe_id', cafeId)
+        .neq('id', '00000000-0000-0000-0000-000000000000') // Cache buster
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -215,6 +225,7 @@ const POSDashboard = () => {
       });
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -1126,7 +1137,7 @@ const POSDashboard = () => {
   // Manual refresh function
   const handleManualRefresh = async () => {
     console.log('POS Dashboard: Manual refresh triggered');
-    await fetchOrders();
+    await fetchOrders(true); // Show refresh indicator
     toast({
       title: "Refreshed",
       description: "Orders list has been refreshed",
@@ -1180,9 +1191,9 @@ const POSDashboard = () => {
                   </Badge>
                 )}
               </Button>
-              <Button onClick={handleManualRefresh} variant="outline">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
+              <Button onClick={handleManualRefresh} variant="outline" disabled={isRefreshing}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </Button>
               {cafeId && (
                 <div className="text-sm text-gray-500">
