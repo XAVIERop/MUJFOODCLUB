@@ -199,7 +199,10 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
       };
     }
     
-    if ((cafeName.includes('lets') || cafeName.includes('let')) && cafeName.includes('go') && cafeName.includes('live')) {
+    // Handle Let's Go Live - check for various forms including apostrophe
+    if ((cafeName.includes('let') && cafeName.includes('go') && cafeName.includes('live')) || 
+        cafeName.includes("let's go live") || 
+        cafeName.includes('lets go live')) {
       return {
         type: 'image',
         src: '/letsgo_logo.png',
