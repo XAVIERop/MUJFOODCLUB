@@ -266,19 +266,49 @@ const POSDashboard = () => {
   const updateOrderStatus = async (orderId: string, newStatus: Order['status']) => {
     setUpdatingOrder(orderId);
     try {
+      const updateData: any = {
+        status: newStatus,
+        status_updated_at: new Date().toISOString()
+      };
+
+      // Add timestamp for specific status
+      switch (newStatus) {
+        case 'confirmed':
+          updateData.accepted_at = new Date().toISOString();
+          break;
+        case 'preparing':
+          updateData.preparing_at = new Date().toISOString();
+          break;
+        case 'on_the_way':
+          updateData.out_for_delivery_at = new Date().toISOString();
+          break;
+        case 'completed':
+          updateData.completed_at = new Date().toISOString();
+          updateData.points_credited = true;
+          break;
+      }
+
+      console.log('POS Dashboard: Updating order with data:', { orderId, updateData });
+      
       const { error } = await supabase
         .from('orders')
-        .update({ status: newStatus } as any)
+        .update(updateData as any)
         .eq('id', orderId);
 
       if (error) {
-        console.error('Database error updating order status:', error);
-        throw new Error(`Database error: ${error.message || 'Unknown database error'}`);
+        console.error('Supabase update error:', error);
+        console.error('Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
       }
 
       toast({
         title: "Status Updated",
-        description: `Order status updated to ${newStatus.replace('_', ' ')}`,
+        description: `Order status changed to ${newStatus.replace('_', ' ')}`,
       });
 
       // Refresh orders
@@ -814,7 +844,10 @@ const POSDashboard = () => {
 
   useEffect(() => {
     const fetchCafeId = async () => {
-      if (!user || !profile) return;
+      if (!user || !profile) {
+        console.log('POS Dashboard: No user or profile available');
+        return;
+      }
 
       try {
         console.log('POS Dashboard: Fetching cafeId for user:', user.id, 'profile:', profile);
@@ -857,6 +890,22 @@ const POSDashboard = () => {
 
     fetchCafeId();
   }, [user, profile]);
+
+  // Debug effect to log current state
+  useEffect(() => {
+    console.log('POS Dashboard: Current state:', {
+      user: user ? { id: user.id, email: user.email } : null,
+      profile: profile ? { 
+        id: profile.id, 
+        user_type: profile.user_type, 
+        cafe_id: profile.cafe_id,
+        full_name: profile.full_name 
+      } : null,
+      cafeId: cafeId,
+      ordersCount: orders.length,
+      filteredOrdersCount: filteredOrders.length
+    });
+  }, [user, profile, cafeId, orders.length, filteredOrders.length]);
 
   // Set up real-time subscription for orders
   useEffect(() => {
@@ -918,9 +967,20 @@ const POSDashboard = () => {
       .subscribe();
 
     return () => {
+      console.log('POS Dashboard: Cleaning up real-time subscription for cafeId:', cafeId);
       supabase.removeChannel(channel);
     };
   }, [cafeId, toast, soundEnabled, soundVolume]);
+
+  // Manual refresh function
+  const handleManualRefresh = async () => {
+    console.log('POS Dashboard: Manual refresh triggered');
+    await fetchOrders();
+    toast({
+      title: "Refreshed",
+      description: "Orders list has been refreshed",
+    });
+  };
 
   useEffect(() => {
     if (cafeId) {
@@ -961,10 +1021,15 @@ const POSDashboard = () => {
                   </Badge>
                 )}
               </Button>
-              <Button onClick={fetchOrders} variant="outline">
+              <Button onClick={handleManualRefresh} variant="outline">
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh
               </Button>
+              {cafeId && (
+                <div className="text-sm text-gray-500">
+                  Cafe ID: {cafeId}
+                </div>
+              )}
             </div>
           </div>
         </div>
