@@ -68,9 +68,10 @@ const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
   };
 
   return (
-    <div className="bg-white px-4 pt-4 pb-2">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">What's on your mind?</h3>
-      <div className="flex space-x-4 overflow-x-auto pb-2 scrollbar-hide">
+    <div className="bg-white pt-4 pb-2">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">What's on your mind?</h3>
+        <div className="flex space-x-4 overflow-x-auto pb-2 scrollbar-hide">
         {categories.map((category) => {
           const categoryInfo = getCategoryInfo(category);
           return (
@@ -88,6 +89,7 @@ const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
             </Card>
           );
         })}
+        </div>
       </div>
     </div>
   );
