@@ -145,18 +145,90 @@ const Profile = () => {
       }
       console.log('✅ Loyalty transactions deleted successfully');
 
-      // Delete any order ratings
+      // Delete any order ratings (need to join with orders table)
       console.log('🗑️ Deleting order ratings for user:', user.id);
-      const { error: ratingsError } = await supabase
-        .from('order_ratings')
+      
+      // First get all order IDs for this user
+      const { data: userOrders, error: ordersQueryError } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', user.id);
+
+      if (ordersQueryError) {
+        console.error('❌ Error fetching user orders for ratings deletion:', ordersQueryError);
+      } else if (userOrders && userOrders.length > 0) {
+        const orderIds = userOrders.map(order => order.id);
+        console.log('🗑️ Found orders to delete ratings for:', orderIds);
+        
+        const { error: ratingsError } = await supabase
+          .from('order_ratings')
+          .delete()
+          .in('order_id', orderIds);
+
+        if (ratingsError) {
+          console.error('❌ Error deleting order ratings:', ratingsError);
+          // Don't throw here, ratings might not exist
+        } else {
+          console.log('✅ Order ratings deleted successfully');
+        }
+      } else {
+        console.log('ℹ️ No orders found for user, skipping ratings deletion');
+      }
+
+      // Delete any order notifications
+      console.log('🗑️ Deleting order notifications for user:', user.id);
+      const { error: notificationsError } = await supabase
+        .from('order_notifications')
         .delete()
         .eq('user_id', user.id);
 
-      if (ratingsError) {
-        console.error('❌ Error deleting order ratings:', ratingsError);
-        // Don't throw here, ratings might not exist
+      if (notificationsError) {
+        console.error('❌ Error deleting order notifications:', notificationsError);
+        // Don't throw here, notifications might not exist
       } else {
-        console.log('✅ Order ratings deleted successfully');
+        console.log('✅ Order notifications deleted successfully');
+      }
+
+      // Delete any cafe staff records
+      console.log('🗑️ Deleting cafe staff records for user:', user.id);
+      const { error: cafeStaffError } = await supabase
+        .from('cafe_staff')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (cafeStaffError) {
+        console.error('❌ Error deleting cafe staff records:', cafeStaffError);
+        // Don't throw here, cafe staff records might not exist
+      } else {
+        console.log('✅ Cafe staff records deleted successfully');
+      }
+
+      // Delete any user bonuses
+      console.log('🗑️ Deleting user bonuses for user:', user.id);
+      const { error: bonusesError } = await supabase
+        .from('user_bonuses')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (bonusesError) {
+        console.error('❌ Error deleting user bonuses:', bonusesError);
+        // Don't throw here, bonuses might not exist
+      } else {
+        console.log('✅ User bonuses deleted successfully');
+      }
+
+      // Delete any maintenance periods
+      console.log('🗑️ Deleting maintenance periods for user:', user.id);
+      const { error: maintenanceError } = await supabase
+        .from('maintenance_periods')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (maintenanceError) {
+        console.error('❌ Error deleting maintenance periods:', maintenanceError);
+        // Don't throw here, maintenance periods might not exist
+      } else {
+        console.log('✅ Maintenance periods deleted successfully');
       }
 
       // Reset profile to initial state
