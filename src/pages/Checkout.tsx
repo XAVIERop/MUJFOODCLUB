@@ -156,10 +156,26 @@ const Checkout = () => {
     }
   };
 
-  // Calculate points to earn (simplified for fresh start)
-  const calculatePointsToEarn = (amount: number) => {
-    // For fresh start, assume first order bonus for orders >= ₹249
-    return calculatePointsEarned(amount, amount >= CAFE_REWARDS.FIRST_ORDER_MIN_AMOUNT);
+  // Calculate points to earn (cafe-specific first order check)
+  const calculatePointsToEarn = async (amount: number, cafeId: string) => {
+    if (!user) return 0;
+    
+    // Check if this is the user's first order from this specific cafe
+    const { data: existingOrders, error } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('cafe_id', cafeId)
+      .eq('status', 'completed')
+      .limit(1);
+    
+    if (error) {
+      console.error('Error checking existing orders:', error);
+      return Math.floor(amount * CAFE_REWARDS.POINTS_RATE); // Fallback to base points only
+    }
+    
+    const isFirstOrderFromCafe = !existingOrders || existingOrders.length === 0;
+    return calculatePointsEarned(amount, isFirstOrderFromCafe && amount >= CAFE_REWARDS.FIRST_ORDER_MIN_AMOUNT);
   };
 
   const calculatePointsDiscount = (points: number) => {
@@ -234,12 +250,13 @@ const Checkout = () => {
 
   // Calculate points to earn when component loads or total amount changes
   useEffect(() => {
-    if (totalAmount > 0) {
+    if (totalAmount > 0 && cafe) {
       // Points are calculated on the original order amount (before taxes and delivery fees)
-      const points = calculatePointsToEarn(totalAmount);
-      setPointsToEarn(points);
+      calculatePointsToEarn(totalAmount, cafe.id).then(points => {
+        setPointsToEarn(points);
+      });
     }
-  }, [totalAmount]);
+  }, [totalAmount, cafe]);
 
   const handlePlaceOrder = async () => {
     if (!user || !profile) {

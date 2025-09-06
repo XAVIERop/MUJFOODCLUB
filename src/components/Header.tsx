@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { QrCode, User, LogOut, Trophy, Settings, Menu, Home, Coffee, Gift, Utensils, Bell, Receipt, Store, Package, Heart } from 'lucide-react';
+import { QrCode, User, LogOut, Settings, Menu, Home, Coffee, Gift, Utensils, Bell, Receipt, Store, Package, Heart } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import NotificationCenter from './NotificationCenter';
@@ -187,15 +187,7 @@ const Header = () => {
           <div className="flex items-center space-x-4">
             {user && profile ? (
               <>
-                {/* Loyalty Points */}
-                <Badge className={`hidden sm:flex items-center ${
-                  isHomePage 
-                    ? 'bg-black/60 text-white border-white/30 backdrop-blur-sm shadow-md' 
-                    : 'gradient-warm text-white'
-                }`}>
-                  <Trophy className="w-3 h-3 mr-1" />
-                  {profile.loyalty_points} pts
-                </Badge>
+                {/* Cafe-specific rewards - removed unified points display */}
 
                 {/* Notifications */}
                 <Button
