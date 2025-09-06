@@ -25,20 +25,39 @@ interface CafeCategoriesProps {
 const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
   const navigate = useNavigate();
 
-  // Get unique cafe types/categories
-  const categories = Array.from(new Set(cafes.map(cafe => cafe.type).filter(Boolean)));
+  // Predefined categories as requested
+  const categories = [
+    'Pizza',
+    'North Indian',
+    'Chinese',
+    'Sandwiches',
+    'Deserts',
+    'Quick Bites',
+    'Chaap',
+    'Coffee',
+    'Momos',
+    'Rolls',
+    'Combos',
+    'Waffles',
+    'Multi Cuisine'
+  ];
 
-  // Map cafe types to icons and colors
+  // Map categories to icons and colors
   const getCategoryInfo = (type: string) => {
     const categoryMap: { [key: string]: { icon: string; color: string; bgColor: string } } = {
+      'Pizza': { icon: '🍕', color: 'text-red-600', bgColor: 'bg-red-50' },
       'North Indian': { icon: '🍛', color: 'text-orange-600', bgColor: 'bg-orange-50' },
-      'South Indian': { icon: '🍽️', color: 'text-green-600', bgColor: 'bg-green-50' },
       'Chinese': { icon: '🥢', color: 'text-red-600', bgColor: 'bg-red-50' },
-      'Italian': { icon: '🍝', color: 'text-blue-600', bgColor: 'bg-blue-50' },
-      'Fast Food': { icon: '🍔', color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
-      'Desserts': { icon: '🍰', color: 'text-pink-600', bgColor: 'bg-pink-50' },
-      'Beverages': { icon: '☕', color: 'text-brown-600', bgColor: 'bg-brown-50' },
-      'Street Food': { icon: '🌮', color: 'text-purple-600', bgColor: 'bg-purple-50' },
+      'Sandwiches': { icon: '🥪', color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
+      'Deserts': { icon: '🍰', color: 'text-pink-600', bgColor: 'bg-pink-50' },
+      'Quick Bites': { icon: '🍔', color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
+      'Chaap': { icon: '🥘', color: 'text-orange-600', bgColor: 'bg-orange-50' },
+      'Coffee': { icon: '☕', color: 'text-brown-600', bgColor: 'bg-brown-50' },
+      'Momos': { icon: '🥟', color: 'text-green-600', bgColor: 'bg-green-50' },
+      'Rolls': { icon: '🌯', color: 'text-purple-600', bgColor: 'bg-purple-50' },
+      'Combos': { icon: '🍱', color: 'text-blue-600', bgColor: 'bg-blue-50' },
+      'Waffles': { icon: '🧇', color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
+      'Multi Cuisine': { icon: '🍽️', color: 'text-gray-600', bgColor: 'bg-gray-50' },
     };
 
     return categoryMap[type] || { icon: '🍽️', color: 'text-gray-600', bgColor: 'bg-gray-50' };
@@ -47,10 +66,6 @@ const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
   const handleCategoryClick = (category: string) => {
     navigate(`/cafes?category=${encodeURIComponent(category)}`);
   };
-
-  if (categories.length === 0) {
-    return null;
-  }
 
   return (
     <div className="bg-white px-4 pt-4 pb-2">
