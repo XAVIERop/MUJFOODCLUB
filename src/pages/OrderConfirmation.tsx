@@ -67,6 +67,20 @@ const OrderConfirmation = () => {
       return;
     }
 
+    if (!user?.id) {
+      console.log('❌ No user ID provided');
+      console.log('❌ user:', user);
+      console.log('❌ user?.id:', user?.id);
+      setLoading(false);
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to view your order",
+        variant: "destructive"
+      });
+      navigate('/auth');
+      return;
+    }
+
     console.log('🔄 OrderConfirmation: Fetching order:', orderNumber, 'User:', user?.id);
 
     try {
@@ -122,9 +136,15 @@ const OrderConfirmation = () => {
 
   useEffect(() => {
     console.log('🚀 OrderConfirmation loaded with real-time updates!', new Date().toISOString());
-    console.log('🔍 Button component check:', typeof Button);
+    console.log('🔍 User state:', user);
+    console.log('🔍 Profile state:', profile);
     
-    fetchOrder();
+    // Wait for user to be loaded before fetching order
+    if (user?.id) {
+      fetchOrder();
+    } else {
+      console.log('⏳ Waiting for user to be loaded...');
+    }
 
     // Set up polling as backup (real-time should handle most updates)
     const pollInterval = 30000; // 30 seconds as backup
@@ -184,7 +204,14 @@ const OrderConfirmation = () => {
           });
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Real-time subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Real-time subscription active');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Real-time subscription error');
+        }
+      });
 
     return () => {
       clearInterval(interval);
@@ -194,6 +221,14 @@ const OrderConfirmation = () => {
       subscription.unsubscribe();
     };
   }, [orderNumber, user?.id]);
+
+  // Separate effect to handle user loading
+  useEffect(() => {
+    if (user?.id && orderNumber && !order) {
+      console.log('🔄 User loaded, fetching order...');
+      fetchOrder();
+    }
+  }, [user?.id, orderNumber, order]);
 
   const getCurrentStepIndex = () => {
     if (!order) return -1;
@@ -291,7 +326,7 @@ const OrderConfirmation = () => {
               <div className="text-left">
                 <h1 className="text-3xl font-bold">Order Confirmed!</h1>
                 <p className="text-muted-foreground">Order #{order.order_number}</p>
-                <p className="text-xs text-blue-600">v2.0 - Polling Mode</p>
+                <p className="text-xs text-blue-600">v3.0 - Deep Fix Mode</p>
               </div>
             </div>
             <Badge className={`text-white ${getStatusColor(order.status)}`}>
