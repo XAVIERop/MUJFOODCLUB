@@ -50,10 +50,6 @@ const Checkout = () => {
   const location = useLocation();
   const { user, profile, refreshProfile } = useAuth();
   const { getCafeRewardData } = useCafeRewards();
-  
-  // Get cafe-specific points for redemption
-  const cafeRewardData = cafe ? getCafeRewardData(cafe.id) : null;
-  const availablePoints = cafeRewardData?.points || 0;
   const { toast } = useToast();
   
   const [isLoading, setIsLoading] = useState(false);
@@ -63,6 +59,10 @@ const Checkout = () => {
   const cart: {[key: string]: CartItem} = location.state?.cart || {};
   const cafe: Cafe = location.state?.cafe;
   const totalAmount: number = location.state?.totalAmount || 0;
+  
+  // Get cafe-specific points for redemption
+  const cafeRewardData = cafe ? getCafeRewardData(cafe.id) : null;
+  const availablePoints = cafeRewardData?.points || 0;
 
   // Form states
   const [deliveryDetails, setDeliveryDetails] = useState({
