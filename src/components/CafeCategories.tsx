@@ -44,8 +44,8 @@ const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
 
   // Map categories to icons and colors
   const getCategoryInfo = (type: string) => {
-    const categoryMap: { [key: string]: { icon: string; color: string; bgColor: string } } = {
-      'Pizza': { icon: '🍕', color: 'text-red-600', bgColor: 'bg-red-50' },
+    const categoryMap: { [key: string]: { icon: string; color: string; bgColor: string; isSvg?: boolean } } = {
+      'Pizza': { icon: '/pizza.svg', color: 'text-red-600', bgColor: 'bg-red-50', isSvg: true },
       'North Indian': { icon: '🍛', color: 'text-orange-600', bgColor: 'bg-orange-50' },
       'Chinese': { icon: '🥢', color: 'text-red-600', bgColor: 'bg-red-50' },
       'Sandwiches': { icon: '🥪', color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
@@ -82,7 +82,15 @@ const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
             >
               <CardContent className="p-3 text-center">
                 <div className={`w-12 h-12 mx-auto mb-2 rounded-full ${categoryInfo.bgColor} flex items-center justify-center`}>
-                  <span className="text-2xl">{categoryInfo.icon}</span>
+                  {categoryInfo.isSvg ? (
+                    <img 
+                      src={categoryInfo.icon} 
+                      alt={category}
+                      className="w-6 h-6"
+                    />
+                  ) : (
+                    <span className="text-2xl">{categoryInfo.icon}</span>
+                  )}
                 </div>
                 <p className="text-xs font-medium text-gray-700 truncate">{category}</p>
               </CardContent>
