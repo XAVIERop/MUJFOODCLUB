@@ -63,6 +63,10 @@ const OrderConfirmation = () => {
     console.log('🔄 OrderConfirmation: Fetching order:', orderNumber, 'User:', user?.id);
 
     try {
+      // Add cache-busting parameter
+      const cacheBuster = Date.now();
+      console.log('🔄 Fetching with cache buster:', cacheBuster);
+      
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -85,6 +89,7 @@ const OrderConfirmation = () => {
         `)
         .eq('order_number', orderNumber)
         .eq('user_id', user?.id)
+        .neq('id', '00000000-0000-0000-0000-000000000000') // Cache buster
         .single();
 
       if (error) {
@@ -108,6 +113,9 @@ const OrderConfirmation = () => {
   };
 
   useEffect(() => {
+    // Add a unique identifier to verify this is the new implementation
+    console.log('🚀 NEW OrderConfirmation implementation loaded!', new Date().toISOString());
+    
     fetchOrder();
 
     // Set up polling for all devices (no real-time subscriptions)
@@ -225,6 +233,7 @@ const OrderConfirmation = () => {
               <div className="text-left">
                 <h1 className="text-3xl font-bold">Order Confirmed!</h1>
                 <p className="text-muted-foreground">Order #{order.order_number}</p>
+                <p className="text-xs text-blue-600">v2.0 - Polling Mode</p>
               </div>
             </div>
             <Badge className={`text-white ${getStatusColor(order.status)}`}>
