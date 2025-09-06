@@ -36,26 +36,22 @@ const Cafes = () => {
 
   const { toggleFavorite, isFavorite, getFavoriteCafes } = useFavorites();
 
-  // Available cuisine categories
+  // Available cuisine categories (matching the 13 predefined categories)
   const cuisineCategories = [
     'All',
+    'Pizza',
     'North Indian',
     'Chinese',
-    'Quick Bytes',
-    'Multi-Cuisine',
-    'Italian',
-    'Pizza',
-    'Pasta',
-    'Street Food',
-    'Multi-Brand',
-    'Ice Cream',
-    'Desserts',
-    'Beverages',
-    'Café',
-    'Lounge',
+    'Sandwiches',
+    'Deserts',
+    'Quick Bites',
+    'Chaap',
+    'Coffee',
+    'Momos',
+    'Rolls',
+    'Combos',
     'Waffles',
-    'Fast Food',
-    'Burgers'
+    'Multi Cuisine'
   ];
 
   useEffect(() => {
