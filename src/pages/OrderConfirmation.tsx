@@ -137,11 +137,26 @@ const OrderConfirmation = () => {
     let refreshInterval: NodeJS.Timeout | null = null;
     
     if (isMobile) {
-      console.log('📱 Mobile detected: Setting up periodic refresh every 10 seconds');
+      console.log('📱 Mobile detected: Setting up periodic refresh every 5 seconds');
       refreshInterval = setInterval(() => {
         console.log('📱 Mobile: Periodic refresh triggered');
         fetchOrder(true); // Force refresh
-      }, 10000); // Refresh every 10 seconds for mobile
+      }, 5000); // Refresh every 5 seconds for mobile
+      
+      // Also refresh when page becomes visible (user returns to app)
+      const handleVisibilityChange = () => {
+        if (!document.hidden) {
+          console.log('📱 Mobile: Page became visible, refreshing');
+          fetchOrder(true);
+        }
+      };
+      
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      
+      // Cleanup visibility listener
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     }
 
     // Set up real-time subscription for order updates (disabled on mobile)
@@ -250,6 +265,7 @@ const OrderConfirmation = () => {
       };
     }
     
+    // Cleanup for mobile
     return () => {
       if (refreshInterval) {
         clearInterval(refreshInterval);
@@ -360,17 +376,34 @@ const OrderConfirmation = () => {
             {/* Mobile Refresh Button */}
             {/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && (
               <div className="mt-4 space-y-2">
-                <Button 
-                  onClick={() => fetchOrder(true)} 
-                  variant="outline" 
-                  size="sm"
-                  className="text-xs"
-                >
-                  <Clock className="w-3 h-3 mr-1" />
-                  Refresh Status
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => fetchOrder(true)} 
+                    variant="outline" 
+                    size="sm"
+                    className="text-xs"
+                  >
+                    <Clock className="w-3 h-3 mr-1" />
+                    Refresh Status
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      console.log('📱 Mobile: Force refresh with cache clear');
+                      // Force a complete refresh
+                      window.location.reload();
+                    }} 
+                    variant="destructive" 
+                    size="sm"
+                    className="text-xs"
+                  >
+                    Force Refresh
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Last updated: {lastRefresh.toLocaleTimeString()}
+                </p>
+                <p className="text-xs text-blue-600">
+                  Auto-refresh every 5 seconds
                 </p>
               </div>
             )}
