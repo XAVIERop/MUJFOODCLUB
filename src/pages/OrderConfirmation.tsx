@@ -43,6 +43,11 @@ const OrderConfirmation = () => {
 
   const { orderId } = useParams();
   const orderNumber = orderId || location.state?.orderNumber || new URLSearchParams(window.location.search).get('order');
+  
+  console.log('🔍 OrderConfirmation: orderId from params:', orderId);
+  console.log('🔍 OrderConfirmation: orderNumber from location.state:', location.state?.orderNumber);
+  console.log('🔍 OrderConfirmation: orderNumber from URL:', new URLSearchParams(window.location.search).get('order'));
+  console.log('🔍 OrderConfirmation: Final orderNumber:', orderNumber);
 
   const statusSteps = [
     { key: 'received', label: 'Order Received', icon: Receipt, color: 'bg-blue-500' },
@@ -55,6 +60,9 @@ const OrderConfirmation = () => {
   const fetchOrder = async () => {
     if (!orderNumber) {
       console.log('❌ No order number provided');
+      console.log('❌ orderNumber:', orderNumber);
+      console.log('❌ user?.id:', user?.id);
+      setLoading(false);
       navigate('/');
       return;
     }
