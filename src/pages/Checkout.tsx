@@ -76,6 +76,11 @@ const Checkout = () => {
   const [finalAmount, setFinalAmount] = useState(totalAmount);
   const [pointsToEarn, setPointsToEarn] = useState(0);
   const [customPointsInput, setCustomPointsInput] = useState('');
+  
+  // Tax and delivery charges
+  const [cgst, setCgst] = useState(0);
+  const [sgst, setSgst] = useState(0);
+  const [deliveryFee, setDeliveryFee] = useState(0);
 
   // Redirect if no cart data
   useEffect(() => {
@@ -198,17 +203,41 @@ const Checkout = () => {
     }
   };
 
+  // Calculate taxes and delivery fees for Food Court
+  useEffect(() => {
+    if (cafe && cafe.name === 'FOOD COURT') {
+      // Calculate CGST and SGST (2.5% each on subtotal)
+      const subtotal = totalAmount - loyaltyDiscount - pointsDiscount;
+      const cgstAmount = Math.round((subtotal * 2.5) / 100);
+      const sgstAmount = Math.round((subtotal * 2.5) / 100);
+      const deliveryFeeAmount = 10; // ₹10 delivery fee
+      
+      setCgst(cgstAmount);
+      setSgst(sgstAmount);
+      setDeliveryFee(deliveryFeeAmount);
+    } else {
+      setCgst(0);
+      setSgst(0);
+      setDeliveryFee(0);
+    }
+  }, [totalAmount, loyaltyDiscount, pointsDiscount, cafe]);
+
   // Calculate tier discount and final amount (simplified for fresh start)
   useEffect(() => {
     // For fresh start, everyone starts at Foodie tier (5% discount)
     const tierDiscount = Math.floor((totalAmount * CAFE_REWARDS.TIER_DISCOUNTS.FOODIE) / 100);
     setLoyaltyDiscount(tierDiscount);
-    setFinalAmount(Math.max(0, totalAmount - tierDiscount - pointsDiscount));
-  }, [totalAmount, pointsDiscount]);
+    
+    // Calculate final amount including taxes and delivery fees
+    const subtotal = totalAmount - tierDiscount - pointsDiscount;
+    const finalAmountWithTaxes = subtotal + cgst + sgst + deliveryFee;
+    setFinalAmount(Math.max(0, finalAmountWithTaxes));
+  }, [totalAmount, pointsDiscount, cgst, sgst, deliveryFee]);
 
   // Calculate points to earn when component loads or total amount changes
   useEffect(() => {
     if (totalAmount > 0) {
+      // Points are calculated on the original order amount (before taxes and delivery fees)
       const points = calculatePointsToEarn(totalAmount);
       setPointsToEarn(points);
     }
@@ -499,6 +528,11 @@ const Checkout = () => {
                       <MapPin className="w-4 h-4 mr-1" />
                       {cafe.location}
                     </div>
+                    {cafe.name === 'FOOD COURT' && (
+                      <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
+                        <strong>Note:</strong> CGST @ 2.5%, SGST @ 2.5%, and ₹10 delivery fee will be added to your order.
+                      </div>
+                    )}
                   </div>
 
                   {/* Order Items */}
@@ -628,6 +662,31 @@ const Checkout = () => {
                           <span>-₹{pointsDiscount}</span>
                         </div>
                       )}
+                      
+                      {/* Tax and Delivery Charges for Food Court */}
+                      {cafe && cafe.name === 'FOOD COURT' && (
+                        <>
+                          {cgst > 0 && (
+                            <div className="flex justify-between items-center text-sm">
+                              <span>CGST @ 2.5%</span>
+                              <span>₹{cgst}</span>
+                            </div>
+                          )}
+                          {sgst > 0 && (
+                            <div className="flex justify-between items-center text-sm">
+                              <span>SGST @ 2.5%</span>
+                              <span>₹{sgst}</span>
+                            </div>
+                          )}
+                          {deliveryFee > 0 && (
+                            <div className="flex justify-between items-center text-sm">
+                              <span>Delivery Fee</span>
+                              <span>₹{deliveryFee}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      
                       <div className="flex justify-between items-center text-lg font-bold border-t border-border pt-2">
                         <span>Final Amount</span>
                         <span className="text-primary">₹{finalAmount}</span>
