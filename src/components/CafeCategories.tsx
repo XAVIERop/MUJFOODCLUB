@@ -53,7 +53,7 @@ const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
   }
 
   return (
-    <div className="bg-white px-4 py-4">
+    <div className="bg-white px-4 pt-4 pb-2">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">What's on your mind?</h3>
       <div className="flex space-x-4 overflow-x-auto pb-2 scrollbar-hide">
         {categories.map((category) => {
