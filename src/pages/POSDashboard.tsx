@@ -529,6 +529,7 @@ const POSDashboard = () => {
         console.log('  - Raw cafe name:', orderData.cafe?.name);
         console.log('  - Cafe name type:', typeof orderData.cafe?.name);
         console.log('  - Cafe name length:', orderData.cafe?.name?.length);
+        console.log('  - Full orderData.cafe object:', orderData.cafe);
         
         const isChatkara = orderData.cafe?.name?.toLowerCase().includes('chatkara') || 
                            orderData.cafe?.name === 'CHATKARA' ||
@@ -539,6 +540,10 @@ const POSDashboard = () => {
         
         console.log('  - Is Chatkara:', isChatkara);
         console.log('  - Is Food Court:', isFoodCourt);
+        console.log('  - Chatkara check details:');
+        console.log('    - includes("chatkara"):', orderData.cafe?.name?.toLowerCase().includes('chatkara'));
+        console.log('    - equals "CHATKARA":', orderData.cafe?.name === 'CHATKARA');
+        console.log('    - equals "chatkara":', orderData.cafe?.name?.toLowerCase() === 'chatkara');
         
         if (isChatkara) {
           console.log('✅ POSDashboard - Using Chatkara receipt format');
@@ -547,7 +552,8 @@ const POSDashboard = () => {
           console.log('✅ POSDashboard - Using Food Court receipt format');
           return generateFoodCourtReceipt(orderData, orderItems);
         } else {
-          console.log('✅ POSDashboard - Using MUJ Food Club receipt format');
+          console.log('⚠️ POSDashboard - Cafe name not recognized, using default format');
+          console.log('  - This might be the issue! Check cafe name in database');
           return generateMUJFoodClubReceipt(orderData, orderItems);
         }
       };
