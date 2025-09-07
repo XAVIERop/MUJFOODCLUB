@@ -169,15 +169,192 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     const isFoodCourt = orderData.cafe_name?.toLowerCase().includes('food court') || 
                        orderData.cafe_name === 'FOOD COURT' ||
                        orderData.cafe_name?.toLowerCase() === 'food court';
+    const isChatkara = orderData.cafe_name?.toLowerCase().includes('chatkara') || 
+                       orderData.cafe_name === 'CHATKARA' ||
+                       orderData.cafe_name?.toLowerCase() === 'chatkara';
+    
     console.log('ReceiptGenerator - Is Food Court:', isFoodCourt);
-    const receiptFormat = isFoodCourt ? 'foodcourt' : 'mujfoodclub';
+    console.log('ReceiptGenerator - Is Chatkara:', isChatkara);
+    
+    let receiptFormat = 'mujfoodclub'; // default
+    if (isFoodCourt) {
+      receiptFormat = 'foodcourt';
+    } else if (isChatkara) {
+      receiptFormat = 'chatkara';
+    }
+    
     console.log('ReceiptGenerator - Receipt format:', receiptFormat);
     
     if (receiptFormat === 'foodcourt') {
       return generateFoodCourtReceipt();
+    } else if (receiptFormat === 'chatkara') {
+      return generateChatkaraReceipt();
     } else {
       return generateMUJFoodClubReceipt();
     }
+  };
+
+  const generateChatkaraReceipt = () => {
+    const orderDate = new Date(orderData.order_date);
+    const dateStr = orderDate.toLocaleDateString('en-GB', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric' 
+    });
+    const timeStr = orderDate.toLocaleTimeString('en-GB', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Receipt - ${orderData.order_number}</title>
+          <style>
+            @page {
+              size: 80mm auto;
+              margin: 0;
+            }
+            
+            @media print {
+              * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              
+              body { 
+                width: 80mm !important;
+                max-width: 80mm !important;
+                margin: 0 !important; 
+                padding: 5mm !important;
+                font-family: 'Courier New', monospace !important;
+                font-size: 12px !important;
+                line-height: 1.2 !important;
+                color: #000 !important;
+                background: #fff !important;
+              }
+              .no-print { display: none !important; }
+            }
+            
+            body {
+              font-family: 'Courier New', monospace;
+              font-size: 12px;
+              line-height: 1.2;
+              color: #000;
+              background: #fff;
+              width: 80mm;
+              max-width: 80mm;
+              margin: 0;
+              padding: 5mm;
+            }
+            
+            .receipt {
+              width: 100%;
+              text-align: center;
+            }
+            
+            .cafe-name {
+              font-size: 18px;
+              font-weight: bold;
+              margin-bottom: 10px;
+              text-transform: uppercase;
+            }
+            
+            .customer-info {
+              text-align: left;
+              margin-bottom: 10px;
+              font-size: 11px;
+            }
+            
+            .order-details {
+              text-align: left;
+              margin-bottom: 10px;
+              font-size: 11px;
+            }
+            
+            .items-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 10px;
+              font-size: 11px;
+            }
+            
+            .items-table th {
+              text-align: left;
+              border-bottom: 1px solid #000;
+              padding: 2px 0;
+            }
+            
+            .items-table td {
+              padding: 2px 0;
+            }
+            
+            .summary {
+              text-align: left;
+              margin-top: 10px;
+              font-size: 11px;
+            }
+            
+            .footer {
+              text-align: center;
+              margin-top: 15px;
+              font-size: 12px;
+              font-weight: bold;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="receipt">
+            <div class="cafe-name">${orderData.cafe_name}</div>
+            
+            <div class="customer-info">
+              <div>Name: (M: ${orderData.customer_phone})</div>
+              <div>Adr: ${orderData.delivery_block}</div>
+            </div>
+            
+            <div class="order-details">
+              <div>Date: ${dateStr}</div>
+              <div>${timeStr}</div>
+              <div>Delivery</div>
+              <div>Cashier: biller</div>
+              <div>Bill No.: ${orderData.order_number}</div>
+              <div>Token No.: ${orderData.order_number}</div>
+            </div>
+            
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Qty.</th>
+                  <th>Price</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${orderData.items.map(item => `
+                  <tr>
+                    <td>${item.name}</td>
+                    <td>${item.quantity}</td>
+                    <td>${item.unit_price.toFixed(2)}</td>
+                    <td>${item.total_price.toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            
+            <div class="summary">
+              <div>Total Qty: ${orderData.items.reduce((sum, item) => sum + item.quantity, 0)}</div>
+              <div>Sub Total: ${orderData.subtotal.toFixed(2)}</div>
+              <div>Delivery Charge: ${(orderData.final_amount - orderData.subtotal).toFixed(2)}</div>
+              <div>Grand Total: ₹${orderData.final_amount.toFixed(2)}</div>
+            </div>
+            
+            <div class="footer">Thanks</div>
+          </div>
+        </body>
+      </html>
+    `;
   };
 
   const generateMUJFoodClubReceipt = () => {

@@ -528,11 +528,19 @@ const POSDashboard = () => {
         const isFoodCourt = orderData.cafe?.name?.toLowerCase().includes('food court') || 
                            orderData.cafe?.name === 'FOOD COURT' ||
                            orderData.cafe?.name?.toLowerCase() === 'food court';
+        const isChatkara = orderData.cafe?.name?.toLowerCase().includes('chatkara') || 
+                           orderData.cafe?.name === 'CHATKARA' ||
+                           orderData.cafe?.name?.toLowerCase() === 'chatkara';
+        
         console.log('POSDashboard - Is Food Court:', isFoodCourt);
+        console.log('POSDashboard - Is Chatkara:', isChatkara);
         
         if (isFoodCourt) {
           console.log('POSDashboard - Using Food Court receipt format');
           return generateFoodCourtReceipt(orderData, orderItems);
+        } else if (isChatkara) {
+          console.log('POSDashboard - Using Chatkara receipt format');
+          return generateChatkaraReceipt(orderData, orderItems);
         } else {
           console.log('POSDashboard - Using MUJ Food Club receipt format');
           return generateMUJFoodClubReceipt(orderData, orderItems);
@@ -713,6 +721,153 @@ const POSDashboard = () => {
                 <div>Thank you for your order!</div>
                 <div>Please collect your receipt</div>
                 <div>For support: support@mujfoodclub.in</div>
+              </div>
+            </body>
+          </html>
+        `;
+      };
+
+      const generateChatkaraReceipt = (orderData: Order, orderItems: any[]) => {
+        const orderDate = new Date(orderData.created_at);
+        const dateStr = orderDate.toLocaleDateString('en-GB', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric' 
+        });
+        const timeStr = orderDate.toLocaleTimeString('en-GB', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+
+        return `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Receipt #${orderData.order_number}</title>
+              <style>
+                @media print {
+                  body { 
+                    width: 80mm; 
+                    margin: 0; 
+                    padding: 5mm;
+                    font-size: 12px; 
+                    font-family: 'Courier New', monospace;
+                    line-height: 1.2;
+                  }
+                  .no-print { display: none; }
+                }
+                
+                body {
+                  font-family: 'Courier New', monospace;
+                  line-height: 1.2;
+                  margin: 0;
+                  padding: 5mm;
+                  width: 80mm;
+                }
+                
+                .receipt {
+                  width: 100%;
+                  text-align: center;
+                }
+                
+                .cafe-name {
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin-bottom: 10px;
+                  text-transform: uppercase;
+                }
+                
+                .customer-info {
+                  text-align: left;
+                  margin-bottom: 10px;
+                  font-size: 11px;
+                }
+                
+                .order-details {
+                  text-align: left;
+                  margin-bottom: 10px;
+                  font-size: 11px;
+                }
+                
+                .items-table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin-bottom: 10px;
+                  font-size: 11px;
+                }
+                
+                .items-table th {
+                  text-align: left;
+                  border-bottom: 1px solid #000;
+                  padding: 2px 0;
+                }
+                
+                .items-table td {
+                  padding: 2px 0;
+                }
+                
+                .summary {
+                  text-align: left;
+                  margin-top: 10px;
+                  font-size: 11px;
+                }
+                
+                .footer {
+                  text-align: center;
+                  margin-top: 15px;
+                  font-size: 12px;
+                  font-weight: bold;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="receipt">
+                <div class="cafe-name">${orderData.cafe?.name || 'Chatkara'}</div>
+                
+                <div class="customer-info">
+                  <div>Name: (M: ${orderData.user?.phone || orderData.phone_number || 'N/A'})</div>
+                  <div>Adr: ${orderData.user?.block || orderData.delivery_block || 'N/A'}</div>
+                </div>
+                
+                <div class="order-details">
+                  <div>Date: ${dateStr}</div>
+                  <div>${timeStr}</div>
+                  <div>Delivery</div>
+                  <div>Cashier: biller</div>
+                  <div>Bill No.: ${orderData.order_number}</div>
+                  <div>Token No.: ${orderData.order_number}</div>
+                </div>
+                
+                <table class="items-table">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Qty.</th>
+                      <th>Price</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${orderItems.map(item => `
+                      <tr>
+                        <td>${item.menu_item?.name || 'Unknown Item'}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.unit_price.toFixed(2)}</td>
+                        <td>${item.total_price.toFixed(2)}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+                
+                <div class="summary">
+                  <div>Total Qty: ${orderItems.reduce((sum, item) => sum + item.quantity, 0)}</div>
+                  <div>Sub Total: ${orderData.total_amount.toFixed(2)}</div>
+                  <div>Delivery Charge: 10.00</div>
+                  <div>Grand Total: ₹${(orderData.total_amount + 10).toFixed(2)}</div>
+                </div>
+                
+                <div class="footer">Thanks</div>
               </div>
             </body>
           </html>
