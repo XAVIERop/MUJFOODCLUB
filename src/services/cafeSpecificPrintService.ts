@@ -151,10 +151,10 @@ export class CafeSpecificPrintService {
         return { success: false, error: 'No printer configuration found for this cafe' };
       }
 
-      // Use PrintNode with cafe-specific account (first available printer)
-      if (this.printNodeService) {
-        console.log(`Printing KOT using cafe-specific PrintNode account for cafe ${this.cafeId}`);
-        const result = await this.printNodeService.printKOT(receiptData);
+      // Use PrintNode with cafe-specific account and specific printer ID
+      if (this.printNodeService && this.cafePrinterConfig.printnode_printer_id) {
+        console.log(`Printing KOT using cafe-specific PrintNode account for cafe ${this.cafeId} to printer ID ${this.cafePrinterConfig.printnode_printer_id}`);
+        const result = await this.printNodeService.printKOT(receiptData, this.cafePrinterConfig.printnode_printer_id);
         return { success: result.success, error: result.error };
       }
 
@@ -189,10 +189,10 @@ export class CafeSpecificPrintService {
         return { success: false, error: 'No printer configuration found for this cafe' };
       }
 
-      // Use PrintNode with cafe-specific account (first available printer)
-      if (this.printNodeService) {
-        console.log(`Printing Receipt using cafe-specific PrintNode account for cafe ${this.cafeId}`);
-        const result = await this.printNodeService.printOrderReceipt(receiptData);
+      // Use PrintNode with cafe-specific account and specific printer ID
+      if (this.printNodeService && this.cafePrinterConfig.printnode_printer_id) {
+        console.log(`Printing Receipt using cafe-specific PrintNode account for cafe ${this.cafeId} to printer ID ${this.cafePrinterConfig.printnode_printer_id}`);
+        const result = await this.printNodeService.printOrderReceipt(receiptData, this.cafePrinterConfig.printnode_printer_id);
         return { success: result.success, error: result.error };
       }
 
