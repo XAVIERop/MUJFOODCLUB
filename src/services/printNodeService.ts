@@ -408,8 +408,38 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Proper center-aligned receipt format
-    let receipt = `        THE FOOD COURT CO
+    // Determine cafe-specific format
+    const isChatkara = cafe_name?.toLowerCase().includes('chatkara') || 
+                       cafe_name === 'CHATKARA' ||
+                       cafe_name?.toLowerCase() === 'chatkara';
+    const isFoodCourt = cafe_name?.toLowerCase().includes('food court') || 
+                        cafe_name === 'FOOD COURT' ||
+                        cafe_name?.toLowerCase() === 'food court';
+    
+    console.log('🔍 PrintNode Service - Cafe name:', cafe_name);
+    console.log('🔍 PrintNode Service - Is Chatkara:', isChatkara);
+    console.log('🔍 PrintNode Service - Is Food Court:', isFoodCourt);
+    
+    let receipt;
+    
+    if (isChatkara) {
+      // Chatkara format (compact, thermal printer optimized)
+      receipt = `        ${cafe_name?.toUpperCase() || 'CHATKARA'}
+    ----------------------------------------
+    Name: ${customer_name || 'WALK-IN'} (M: ${customer_phone || '9999999999'})
+    Adr: ${data.delivery_block || 'N/A'}
+    Date: ${dateStr}
+    ${timeStr}
+    Delivery
+    Cashier: biller
+    Bill No.: ${order_number}
+    Token No.: ${order_number}
+    ----------------------------------------
+    Item                    Qty. Price Amount
+    ----------------------------------------`;
+    } else if (isFoodCourt) {
+      // Food Court format
+      receipt = `        THE FOOD COURT CO
   (MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
     GSTIN : 08ADNPG4024A1Z2
     ----------------------------------------
@@ -420,6 +450,18 @@ MUJFOODCLUB!`;
     ----------------------------------------
     Item                    Qty. Price Amount
     ----------------------------------------`;
+    } else {
+      // Default MUJ Food Club format
+      receipt = `        MUJ FOOD CLUB
+    ----------------------------------------
+    Name: ${customer_name || 'WALK-IN'} (M: ${customer_phone || '9999999999'})
+    Date: ${dateStr}    ${timeStr}    ${payment_method?.toUpperCase() === 'COD' ? 'Pick Up' : 'Delivery'}
+    Cashier: biller    Bill No.: ${order_number}
+    Token No.: ${order_number.slice(-2)}
+    ----------------------------------------
+    Item                    Qty. Price Amount
+    ----------------------------------------`;
+    }
 
     // Add items with proper center-aligned formatting
     items.forEach(item => {
@@ -430,7 +472,20 @@ MUJFOODCLUB!`;
       receipt += `\n    ${itemName} ${qty}    ${price}    ${amount}`;
     });
 
-    receipt += `\n    ----------------------------------------
+    // Add cafe-specific footer
+    if (isChatkara) {
+      receipt += `\n    ----------------------------------------
+    Total Qty: ${totalQty}
+    Sub Total: ${subtotal.toFixed(2)}
+    Delivery Charge: ${(final_amount - subtotal).toFixed(2)}
+    Grand Total: ₹${final_amount.toFixed(2)}
+    ----------------------------------------
+    Thanks
+    ----------------------------------------
+    ----------------------------------------
+    ----------------------------------------`;
+    } else if (isFoodCourt) {
+      receipt += `\n    ----------------------------------------
     Total Qty: ${totalQty}
     Sub                             ${subtotal.toFixed(0)}
     Total                           ${subtotal.toFixed(0)}
@@ -445,6 +500,17 @@ MUJFOODCLUB!`;
     ----------------------------------------
     ----------------------------------------
     ----------------------------------------`;
+    } else {
+      receipt += `\n    ----------------------------------------
+    Total Qty: ${totalQty}
+    Sub Total: ${subtotal.toFixed(2)}
+    Grand Total: ₹${final_amount.toFixed(2)}
+    ----------------------------------------
+    Thanks For Visit!!
+    ----------------------------------------
+    ----------------------------------------
+    ----------------------------------------`;
+    }
 
     return receipt;
   }
@@ -460,11 +526,23 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Proper center-aligned KOT format without cafe name
+    // Determine cafe-specific format
+    const isChatkara = cafe_name?.toLowerCase().includes('chatkara') || 
+                       cafe_name === 'CHATKARA' ||
+                       cafe_name?.toLowerCase() === 'chatkara';
+    const isFoodCourt = cafe_name?.toLowerCase().includes('food court') || 
+                        cafe_name === 'FOOD COURT' ||
+                        cafe_name?.toLowerCase() === 'food court';
+    
+    console.log('🔍 PrintNode KOT - Cafe name:', cafe_name);
+    console.log('🔍 PrintNode KOT - Is Chatkara:', isChatkara);
+    console.log('🔍 PrintNode KOT - Is Food Court:', isFoodCourt);
+    
+    // Proper center-aligned KOT format
     let kot = `    ----------------------------------------
     ${dateStr} ${timeStr}
     KOT - ${order_number.slice(-2)}
-    PICK UP
+    ${isChatkara ? 'DELIVERY' : 'PICK UP'}
     ----------------------------------------
     ITEM            QTY
     ----------------------------------------`;
@@ -476,13 +554,29 @@ MUJFOODCLUB!`;
       kot += `\n    ${itemName} ${qty}`;
     });
 
-    // Add proper center-aligned footer with padding
-    kot += `\n    ----------------------------------------
+    // Add cafe-specific footer
+    if (isChatkara) {
+      kot += `\n    ----------------------------------------
+    THANKS FOR VISIT!!
+    ${cafe_name?.toUpperCase() || 'CHATKARA'}
+    ----------------------------------------
+    ----------------------------------------
+    ----------------------------------------`;
+    } else if (isFoodCourt) {
+      kot += `\n    ----------------------------------------
+    THANKS FOR VISIT!!
+    THE FOOD COURT CO
+    ----------------------------------------
+    ----------------------------------------
+    ----------------------------------------`;
+    } else {
+      kot += `\n    ----------------------------------------
     THANKS FOR VISIT!!
     MUJFOODCLUB
     ----------------------------------------
     ----------------------------------------
     ----------------------------------------`;
+    }
 
     return kot;
   }
