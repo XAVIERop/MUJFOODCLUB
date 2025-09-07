@@ -18,6 +18,9 @@ interface CafePrinterConfig {
   auto_cut: boolean;
   is_active: boolean;
   is_default: boolean;
+  cafes?: {
+    name: string;
+  };
 }
 
 interface ReceiptData {
@@ -62,11 +65,14 @@ export class CafeSpecificPrintService {
     try {
       console.log(`🔍 Initializing print service for cafe ${this.cafeId}...`);
       
-      // Fetch cafe-specific printer configuration
+      // Fetch cafe-specific printer configuration with cafe name
       console.log(`🔍 Fetching printer config for cafe_id: ${this.cafeId}`);
       const { data: printerConfig, error } = await supabase
         .from('cafe_printer_configs')
-        .select('*')
+        .select(`
+          *,
+          cafes!inner(name)
+        `)
         .eq('cafe_id', this.cafeId)
         .eq('is_active', true)
         .eq('is_default', true)
@@ -113,17 +119,22 @@ export class CafeSpecificPrintService {
    * Each cafe has their own PrintNode account
    */
   private getCafePrintNodeApiKey(cafeId: string): string {
-    // Get cafe name to determine which API key to use
-    const cafeName = this.cafePrinterConfig?.printer_name || '';
+    // Get cafe name from database to determine which API key to use
+    const cafeName = this.cafePrinterConfig?.cafes?.name || '';
+    
+    console.log(`🔍 Getting API key for cafe: ${cafeName} (ID: ${cafeId})`);
     
     // Return cafe-specific API key
     if (cafeName.toLowerCase().includes('chatkara')) {
+      console.log('✅ Using Chatkara API key');
       return import.meta.env.VITE_CHATKARA_PRINTNODE_API_KEY || '';
     } else if (cafeName.toLowerCase().includes('food court')) {
+      console.log('✅ Using Food Court API key');
       return import.meta.env.VITE_FOODCOURT_PRINTNODE_API_KEY || '';
     }
     
     // Fallback to general API key
+    console.log('⚠️ Using fallback API key');
     return import.meta.env.VITE_PRINTNODE_API_KEY || '';
   }
 
