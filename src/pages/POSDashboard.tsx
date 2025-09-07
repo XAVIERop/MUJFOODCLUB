@@ -163,6 +163,7 @@ const POSDashboard = () => {
         .select(`
           *,
           user:profiles(full_name, phone, block, email),
+          cafe:cafes(name, description),
           order_items(
             id,
             menu_item_id,
