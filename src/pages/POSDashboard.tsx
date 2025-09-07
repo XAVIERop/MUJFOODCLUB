@@ -480,16 +480,21 @@ const POSDashboard = () => {
       console.log('  - receiptData.cafe_name type:', typeof receiptData.cafe_name);
 
       // Print KOT and Receipt using cafe-specific service
+      console.log('🔍 About to call cafe-specific printing...');
       const kotResult = await cafePrintService.printKOT(receiptData);
+      console.log('🔍 KOT result:', kotResult);
       const receiptResult = await cafePrintService.printReceipt(receiptData);
+      console.log('🔍 Receipt result:', receiptResult);
       
       if (kotResult.success && receiptResult.success) {
+        console.log('✅ Cafe-specific printing successful!');
         toast({
           title: "Receipt Printed",
           description: `KOT and Receipt for order #${order.order_number} sent to cafe printer`,
         });
       } else {
-        console.error('Cafe-specific printing failed:', { kotResult, receiptResult });
+        console.error('❌ Cafe-specific printing failed:', { kotResult, receiptResult });
+        console.log('🔄 Falling back to autoPrintReceipt...');
         // Fallback to original method
         autoPrintReceipt(order);
       }
@@ -501,6 +506,8 @@ const POSDashboard = () => {
   };
 
   const autoPrintReceipt = async (order: Order) => {
+    console.log('🔄 autoPrintReceipt called - this is the FALLBACK method!');
+    console.log('🔄 This will use MUJ Food Club format, not Chatkara format!');
     try {
       // Fetch order items for the new order
       const { data: items, error } = await supabase
