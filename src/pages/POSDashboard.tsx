@@ -525,25 +525,29 @@ const POSDashboard = () => {
 
       // Fallback to browser-based printing
       const generateThermalHTML = (orderData: Order, orderItems: any[]) => {
-        console.log('POSDashboard - Cafe name:', orderData.cafe?.name);
-        const isFoodCourt = orderData.cafe?.name?.toLowerCase().includes('food court') || 
-                           orderData.cafe?.name === 'FOOD COURT' ||
-                           orderData.cafe?.name?.toLowerCase() === 'food court';
+        console.log('🔍 POSDashboard DEBUG:');
+        console.log('  - Raw cafe name:', orderData.cafe?.name);
+        console.log('  - Cafe name type:', typeof orderData.cafe?.name);
+        console.log('  - Cafe name length:', orderData.cafe?.name?.length);
+        
         const isChatkara = orderData.cafe?.name?.toLowerCase().includes('chatkara') || 
                            orderData.cafe?.name === 'CHATKARA' ||
                            orderData.cafe?.name?.toLowerCase() === 'chatkara';
+        const isFoodCourt = orderData.cafe?.name?.toLowerCase().includes('food court') || 
+                           orderData.cafe?.name === 'FOOD COURT' ||
+                           orderData.cafe?.name?.toLowerCase() === 'food court';
         
-        console.log('POSDashboard - Is Food Court:', isFoodCourt);
-        console.log('POSDashboard - Is Chatkara:', isChatkara);
+        console.log('  - Is Chatkara:', isChatkara);
+        console.log('  - Is Food Court:', isFoodCourt);
         
-        if (isFoodCourt) {
-          console.log('POSDashboard - Using Food Court receipt format');
-          return generateFoodCourtReceipt(orderData, orderItems);
-        } else if (isChatkara) {
-          console.log('POSDashboard - Using Chatkara receipt format');
+        if (isChatkara) {
+          console.log('✅ POSDashboard - Using Chatkara receipt format');
           return generateChatkaraReceipt(orderData, orderItems);
+        } else if (isFoodCourt) {
+          console.log('✅ POSDashboard - Using Food Court receipt format');
+          return generateFoodCourtReceipt(orderData, orderItems);
         } else {
-          console.log('POSDashboard - Using MUJ Food Club receipt format');
+          console.log('✅ POSDashboard - Using MUJ Food Club receipt format');
           return generateMUJFoodClubReceipt(orderData, orderItems);
         }
       };

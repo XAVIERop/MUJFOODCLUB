@@ -165,25 +165,33 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
   };
 
   const generateReceiptHTML = () => {
-    console.log('ReceiptGenerator - Cafe name:', orderData.cafe_name);
-    const isFoodCourt = orderData.cafe_name?.toLowerCase().includes('food court') || 
-                       orderData.cafe_name === 'FOOD COURT' ||
-                       orderData.cafe_name?.toLowerCase() === 'food court';
+    console.log('🔍 ReceiptGenerator DEBUG:');
+    console.log('  - Raw cafe_name:', orderData.cafe_name);
+    console.log('  - Cafe name type:', typeof orderData.cafe_name);
+    console.log('  - Cafe name length:', orderData.cafe_name?.length);
+    
     const isChatkara = orderData.cafe_name?.toLowerCase().includes('chatkara') || 
                        orderData.cafe_name === 'CHATKARA' ||
                        orderData.cafe_name?.toLowerCase() === 'chatkara';
+    const isFoodCourt = orderData.cafe_name?.toLowerCase().includes('food court') || 
+                       orderData.cafe_name === 'FOOD COURT' ||
+                       orderData.cafe_name?.toLowerCase() === 'food court';
     
-    console.log('ReceiptGenerator - Is Food Court:', isFoodCourt);
-    console.log('ReceiptGenerator - Is Chatkara:', isChatkara);
+    console.log('  - Is Chatkara:', isChatkara);
+    console.log('  - Is Food Court:', isFoodCourt);
     
     let receiptFormat = 'mujfoodclub'; // default
-    if (isFoodCourt) {
-      receiptFormat = 'foodcourt';
-    } else if (isChatkara) {
+    if (isChatkara) {
       receiptFormat = 'chatkara';
+      console.log('✅ Using Chatkara format');
+    } else if (isFoodCourt) {
+      receiptFormat = 'foodcourt';
+      console.log('✅ Using Food Court format');
+    } else {
+      console.log('✅ Using default MUJ Food Club format');
     }
     
-    console.log('ReceiptGenerator - Receipt format:', receiptFormat);
+    console.log('  - Final receipt format:', receiptFormat);
     
     if (receiptFormat === 'foodcourt') {
       return generateFoodCourtReceipt();
