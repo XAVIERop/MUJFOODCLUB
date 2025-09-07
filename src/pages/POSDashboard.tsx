@@ -467,7 +467,10 @@ const POSDashboard = () => {
       };
 
       console.log('🚀 SIMPLE PRINT: Cafe name:', receiptData.cafe_name);
+      console.log('🚀 SIMPLE PRINT: Cafe name type:', typeof receiptData.cafe_name);
+      console.log('🚀 SIMPLE PRINT: Cafe name length:', receiptData.cafe_name?.length);
       console.log('🚀 SIMPLE PRINT: Is Chatkara?', receiptData.cafe_name?.toLowerCase().includes('chatkara'));
+      console.log('🚀 SIMPLE PRINT: Full receiptData:', receiptData);
       
       // Use Universal Print Service - always uses cafe-specific formatting
       const kotResult = await universalPrintService.printKOT(receiptData);
