@@ -444,6 +444,11 @@ const POSDashboard = () => {
       const initResult = await cafePrintService.initialize();
       console.log('🔍 Cafe-specific print service initialization result:', initResult);
 
+      console.log('🔍 POS Dashboard - Creating receipt data:');
+      console.log('  - order.cafe:', order.cafe);
+      console.log('  - order.cafe?.name:', order.cafe?.name);
+      console.log('  - order.cafe?.name type:', typeof order.cafe?.name);
+      
       const receiptData = {
         order_id: order.id,
         order_number: order.order_number,
@@ -469,6 +474,10 @@ const POSDashboard = () => {
         points_earned: order.points_earned || 0,
         points_redeemed: 0 // Will be calculated from order data
       };
+
+      console.log('🔍 POS Dashboard - Final receipt data:');
+      console.log('  - receiptData.cafe_name:', receiptData.cafe_name);
+      console.log('  - receiptData.cafe_name type:', typeof receiptData.cafe_name);
 
       // Print KOT and Receipt using cafe-specific service
       const kotResult = await cafePrintService.printKOT(receiptData);
