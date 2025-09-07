@@ -751,73 +751,72 @@ const POSDashboard = () => {
                   body { 
                     width: 80mm; 
                     margin: 0; 
-                    padding: 5mm;
-                    font-size: 12px; 
+                    padding: 3mm;
+                    font-size: 11px; 
                     font-family: 'Courier New', monospace;
-                    line-height: 1.2;
+                    line-height: 1.1;
                   }
                   .no-print { display: none; }
                 }
                 
                 body {
                   font-family: 'Courier New', monospace;
-                  line-height: 1.2;
+                  line-height: 1.1;
                   margin: 0;
-                  padding: 5mm;
+                  padding: 3mm;
                   width: 80mm;
+                  font-size: 11px;
                 }
                 
                 .receipt {
                   width: 100%;
-                  text-align: center;
                 }
                 
                 .cafe-name {
-                  font-size: 18px;
+                  font-size: 16px;
                   font-weight: bold;
-                  margin-bottom: 10px;
+                  text-align: center;
+                  margin-bottom: 8px;
                   text-transform: uppercase;
                 }
                 
                 .customer-info {
-                  text-align: left;
-                  margin-bottom: 10px;
-                  font-size: 11px;
+                  margin-bottom: 6px;
+                  font-size: 10px;
                 }
                 
                 .order-details {
-                  text-align: left;
-                  margin-bottom: 10px;
-                  font-size: 11px;
+                  margin-bottom: 6px;
+                  font-size: 10px;
                 }
                 
                 .items-table {
                   width: 100%;
                   border-collapse: collapse;
-                  margin-bottom: 10px;
-                  font-size: 11px;
+                  margin-bottom: 6px;
+                  font-size: 10px;
                 }
                 
                 .items-table th {
                   text-align: left;
                   border-bottom: 1px solid #000;
-                  padding: 2px 0;
+                  padding: 1px 0;
+                  font-weight: normal;
                 }
                 
                 .items-table td {
-                  padding: 2px 0;
+                  padding: 1px 0;
                 }
                 
                 .summary {
-                  text-align: left;
-                  margin-top: 10px;
-                  font-size: 11px;
+                  margin-top: 6px;
+                  font-size: 10px;
                 }
                 
                 .footer {
                   text-align: center;
-                  margin-top: 15px;
-                  font-size: 12px;
+                  margin-top: 8px;
+                  font-size: 11px;
                   font-weight: bold;
                 }
               </style>

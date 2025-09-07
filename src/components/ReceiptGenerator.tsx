@@ -227,10 +227,10 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
                 width: 80mm !important;
                 max-width: 80mm !important;
                 margin: 0 !important; 
-                padding: 5mm !important;
+                padding: 3mm !important;
                 font-family: 'Courier New', monospace !important;
-                font-size: 12px !important;
-                line-height: 1.2 !important;
+                font-size: 11px !important;
+                line-height: 1.1 !important;
                 color: #000 !important;
                 background: #fff !important;
               }
@@ -239,67 +239,65 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             
             body {
               font-family: 'Courier New', monospace;
-              font-size: 12px;
-              line-height: 1.2;
+              font-size: 11px;
+              line-height: 1.1;
               color: #000;
               background: #fff;
               width: 80mm;
               max-width: 80mm;
               margin: 0;
-              padding: 5mm;
+              padding: 3mm;
             }
             
             .receipt {
               width: 100%;
-              text-align: center;
             }
             
             .cafe-name {
-              font-size: 18px;
+              font-size: 16px;
               font-weight: bold;
-              margin-bottom: 10px;
+              text-align: center;
+              margin-bottom: 8px;
               text-transform: uppercase;
             }
             
             .customer-info {
-              text-align: left;
-              margin-bottom: 10px;
-              font-size: 11px;
+              margin-bottom: 6px;
+              font-size: 10px;
             }
             
             .order-details {
-              text-align: left;
-              margin-bottom: 10px;
-              font-size: 11px;
+              margin-bottom: 6px;
+              font-size: 10px;
             }
             
             .items-table {
               width: 100%;
               border-collapse: collapse;
-              margin-bottom: 10px;
-              font-size: 11px;
+              margin-bottom: 6px;
+              font-size: 10px;
             }
             
             .items-table th {
               text-align: left;
               border-bottom: 1px solid #000;
-              padding: 2px 0;
+              padding: 1px 0;
+              font-weight: normal;
             }
             
             .items-table td {
-              padding: 2px 0;
+              padding: 1px 0;
             }
             
             .summary {
-              text-align: left;
-              margin-top: 10px;
-              font-size: 11px;
+              margin-top: 6px;
+              font-size: 10px;
             }
             
             .footer {
               text-align: center;
-              margin-top: 15px;
-              font-size: 12px;
+              margin-top: 8px;
+              font-size: 11px;
               font-weight: bold;
             }
           </style>
