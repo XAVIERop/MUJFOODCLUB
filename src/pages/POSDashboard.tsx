@@ -48,6 +48,7 @@ import PrintNodeStatus from '@/components/PrintNodeStatus';
 import ManualOrderEntry from '@/components/ManualOrderEntry';
 import OrderNotificationSound from '@/components/OrderNotificationSound';
 import SoundDebugger from '@/components/SoundDebugger';
+import { testPrintNodeSetup } from '@/utils/testPrintNodeSetup';
 import Header from '@/components/Header';
 import PasswordProtectedSection from '@/components/PasswordProtectedSection';
 
@@ -1712,6 +1713,36 @@ const POSDashboard = () => {
 
           {/* Print Tab */}
           <TabsContent value="print" className="space-y-6">
+            {/* PrintNode Setup Test */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span>🖨️</span>
+                  PrintNode Setup Test
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Test your PrintNode environment variables and cafe-specific API key setup.
+                  </p>
+                  <Button 
+                    onClick={() => {
+                      const result = testPrintNodeSetup();
+                      console.log('PrintNode Setup Test Result:', result);
+                      toast({
+                        title: "PrintNode Setup Test",
+                        description: "Check console for detailed results",
+                      });
+                    }}
+                    className="w-full"
+                  >
+                    Test PrintNode Setup
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             <ThermalPrinter 
               order={selectedOrder ? {
                 id: selectedOrder.id,
