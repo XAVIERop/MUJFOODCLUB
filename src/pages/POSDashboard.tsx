@@ -42,6 +42,7 @@ import POSAnalytics from '@/components/POSAnalytics';
 import ThermalPrinter from '@/components/ThermalPrinter';
 import { thermalPrinterService, formatOrderForPrinting } from '@/api/thermalPrinter';
 import { createCafePrintService } from '@/services/cafeSpecificPrintService';
+import { universalPrintService } from '@/services/universalPrintService';
 import NotificationCenter from '@/components/NotificationCenter';
 import SimplePrinterConfig from '@/components/SimplePrinterConfig';
 import PrintNodeStatus from '@/components/PrintNodeStatus';
@@ -416,8 +417,9 @@ const POSDashboard = () => {
   };
 
   const autoPrintReceiptWithCafeService = async (order: Order) => {
+    console.log('🚀 SIMPLE PRINT: Using Universal Print Service directly!');
     try {
-      console.log('Auto-printing with cafe-specific service for order:', order.order_number);
+      console.log('Auto-printing with Universal Print Service for order:', order.order_number);
       
       // Get order items
       const { data: items, error: itemsError } = await supabase
@@ -437,18 +439,7 @@ const POSDashboard = () => {
         return;
       }
 
-      // Use cafe-specific print service
-      console.log('🔍 Creating cafe-specific print service for cafe_id:', order.cafe_id);
-      const cafePrintService = createCafePrintService(order.cafe_id);
-      console.log('🔍 Initializing cafe-specific print service...');
-      const initResult = await cafePrintService.initialize();
-      console.log('🔍 Cafe-specific print service initialization result:', initResult);
-
-      console.log('🔍 POS Dashboard - Creating receipt data:');
-      console.log('  - order.cafe:', order.cafe);
-      console.log('  - order.cafe?.name:', order.cafe?.name);
-      console.log('  - order.cafe?.name type:', typeof order.cafe?.name);
-      
+      // Create receipt data with cafe information
       const receiptData = {
         order_id: order.id,
         order_number: order.order_number,
@@ -466,48 +457,48 @@ const POSDashboard = () => {
         })),
         subtotal: order.subtotal || 0,
         tax_amount: order.tax_amount || 0,
-        discount_amount: 0, // Will be calculated from order data
+        discount_amount: 0,
         final_amount: order.total_amount,
         payment_method: order.payment_method || 'COD',
         order_date: order.created_at,
         estimated_delivery: order.estimated_delivery || '30 minutes',
         points_earned: order.points_earned || 0,
-        points_redeemed: 0 // Will be calculated from order data
+        points_redeemed: 0
       };
 
-      console.log('🔍 POS Dashboard - Final receipt data:');
-      console.log('  - receiptData.cafe_name:', receiptData.cafe_name);
-      console.log('  - receiptData.cafe_name type:', typeof receiptData.cafe_name);
-
-      // Print KOT and Receipt using cafe-specific service
-      console.log('🔍 About to call cafe-specific printing...');
-      const kotResult = await cafePrintService.printKOT(receiptData);
-      console.log('🔍 KOT result:', kotResult);
-      const receiptResult = await cafePrintService.printReceipt(receiptData);
-      console.log('🔍 Receipt result:', receiptResult);
+      console.log('🚀 SIMPLE PRINT: Cafe name:', receiptData.cafe_name);
+      console.log('🚀 SIMPLE PRINT: Is Chatkara?', receiptData.cafe_name?.toLowerCase().includes('chatkara'));
+      
+      // Use Universal Print Service - always uses cafe-specific formatting
+      const kotResult = await universalPrintService.printKOT(receiptData);
+      const receiptResult = await universalPrintService.printReceipt(receiptData);
       
       if (kotResult.success && receiptResult.success) {
-        console.log('✅ Cafe-specific printing successful!');
+        console.log('✅ SIMPLE PRINT: Success!');
         toast({
           title: "Receipt Printed",
-          description: `KOT and Receipt for order #${order.order_number} sent to cafe printer`,
+          description: `KOT and Receipt for order #${order.order_number} printed with cafe-specific format`,
         });
       } else {
-        console.error('❌ Cafe-specific printing failed:', { kotResult, receiptResult });
-        console.log('🔄 Falling back to autoPrintReceipt...');
-        // Fallback to original method
-        autoPrintReceipt(order);
+        console.error('❌ SIMPLE PRINT: Failed:', { kotResult, receiptResult });
+        toast({
+          title: "Print Failed",
+          description: `Failed to print receipt: ${kotResult.error || receiptResult.error}`,
+          variant: "destructive"
+        });
       }
     } catch (error) {
-      console.error('Error in cafe-specific auto-print:', error);
-      // Fallback to original method
-      autoPrintReceipt(order);
+      console.error('❌ SIMPLE PRINT: Error:', error);
+      toast({
+        title: "Print Error",
+        description: `Error printing receipt: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive"
+      });
     }
   };
 
   const autoPrintReceipt = async (order: Order) => {
-    console.log('🔄 autoPrintReceipt called - this is the FALLBACK method!');
-    console.log('🔄 This will use MUJ Food Club format, not Chatkara format!');
+    console.log('🔄 autoPrintReceipt called - using Universal Print Service!');
     try {
       // Fetch order items for the new order
       const { data: items, error } = await supabase
@@ -523,20 +514,47 @@ const POSDashboard = () => {
         return;
       }
 
-      // Try direct thermal printer first
-      try {
-        const printJob = formatOrderForPrinting(order, items || []);
-        const result = await thermalPrinterService.printReceipt(printJob);
-        
-        if (result.success) {
-          toast({
-            title: "Receipt Printed",
-            description: `Receipt for order #${order.order_number} printed on PIXEL DP80`,
-          });
-          return;
-        }
-      } catch (thermalError) {
-        console.log('Direct thermal printing failed, falling back to browser printing:', thermalError);
+      // Create receipt data with cafe information
+      const receiptData = {
+        order_id: order.id,
+        order_number: order.order_number,
+        cafe_name: order.cafe?.name || 'Cafe',
+        customer_name: order.user?.full_name || 'Customer',
+        customer_phone: order.user?.phone || order.phone_number || 'N/A',
+        delivery_block: order.delivery_block || order.user?.block || 'N/A',
+        items: (items || []).map(item => ({
+          id: item.id,
+          name: item.menu_item?.name || 'Item',
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+          special_instructions: item.special_instructions
+        })),
+        subtotal: order.subtotal || 0,
+        tax_amount: order.tax_amount || 0,
+        discount_amount: 0,
+        final_amount: order.total_amount,
+        payment_method: order.payment_method || 'COD',
+        order_date: order.created_at,
+        estimated_delivery: order.estimated_delivery || '30 minutes',
+        points_earned: order.points_earned || 0,
+        points_redeemed: 0
+      };
+      
+      console.log('🔄 Universal Print Service: Cafe name:', receiptData.cafe_name);
+      
+      // Use Universal Print Service - always uses cafe-specific formatting
+      const kotResult = await universalPrintService.printKOT(receiptData);
+      const receiptResult = await universalPrintService.printReceipt(receiptData);
+      
+      if (kotResult.success && receiptResult.success) {
+        toast({
+          title: "Receipt Printed",
+          description: `KOT and Receipt for order #${order.order_number} printed with cafe-specific format`,
+        });
+        return;
+      } else {
+        console.error('Universal Print Service failed:', { kotResult, receiptResult });
       }
 
       // Fallback to browser-based printing
