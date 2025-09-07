@@ -81,16 +81,17 @@ export class CafeSpecificPrintService {
 
       this.cafePrinterConfig = printerConfig;
 
-      // Initialize PrintNode service for all printer types (shared account approach)
-      if (printerConfig.printnode_printer_id) {
-        // For all printers with PrintNode IDs, use the shared PrintNode configuration
+      // Initialize PrintNode service for all printer types (cafe-specific accounts)
+      const apiKey = this.getCafePrintNodeApiKey(printerConfig.cafe_id);
+      if (apiKey) {
+        // For each cafe, use their own PrintNode account
         const printNodeConfig: PrintNodeConfig = {
-          apiKey: this.getCafePrintNodeApiKey(printerConfig.cafe_id),
+          apiKey: apiKey,
           baseUrl: 'https://api.printnode.com'
         };
         
         this.printNodeService = new PrintNodeService(printNodeConfig);
-        console.log(`🖨️ PrintNode service initialized for cafe ${this.cafeId} with printer ID ${printerConfig.printnode_printer_id}`);
+        console.log(`🖨️ PrintNode service initialized for cafe ${this.cafeId} with cafe-specific API key`);
       }
 
       console.log(`✅ Print service initialized for cafe ${this.cafeId}:`, {
@@ -108,11 +109,21 @@ export class CafeSpecificPrintService {
   }
 
   /**
-   * Get shared PrintNode API key
-   * All cafes use the same PrintNode account but different printer IDs
+   * Get cafe-specific PrintNode API key
+   * Each cafe has their own PrintNode account
    */
   private getCafePrintNodeApiKey(cafeId: string): string {
-    // Use the same API key for all cafes (shared account)
+    // Get cafe name to determine which API key to use
+    const cafeName = this.cafePrinterConfig?.printer_name || '';
+    
+    // Return cafe-specific API key
+    if (cafeName.toLowerCase().includes('chatkara')) {
+      return import.meta.env.VITE_CHATKARA_PRINTNODE_API_KEY || '';
+    } else if (cafeName.toLowerCase().includes('food court')) {
+      return import.meta.env.VITE_FOODCOURT_PRINTNODE_API_KEY || '';
+    }
+    
+    // Fallback to general API key
     return import.meta.env.VITE_PRINTNODE_API_KEY || '';
   }
 
@@ -129,10 +140,10 @@ export class CafeSpecificPrintService {
         return { success: false, error: 'No printer configuration found for this cafe' };
       }
 
-      // Use PrintNode with cafe-specific printer ID
-      if (this.cafePrinterConfig.printnode_printer_id && this.printNodeService) {
-        console.log(`Printing KOT to printer ID ${this.cafePrinterConfig.printnode_printer_id} for cafe ${this.cafeId}`);
-        const result = await this.printNodeService.printKOT(receiptData, this.cafePrinterConfig.printnode_printer_id);
+      // Use PrintNode with cafe-specific account (first available printer)
+      if (this.printNodeService) {
+        console.log(`Printing KOT using cafe-specific PrintNode account for cafe ${this.cafeId}`);
+        const result = await this.printNodeService.printKOT(receiptData);
         return { success: result.success, error: result.error };
       }
 
@@ -167,10 +178,10 @@ export class CafeSpecificPrintService {
         return { success: false, error: 'No printer configuration found for this cafe' };
       }
 
-      // Use PrintNode with cafe-specific printer ID
-      if (this.cafePrinterConfig.printnode_printer_id && this.printNodeService) {
-        console.log(`Printing Receipt to printer ID ${this.cafePrinterConfig.printnode_printer_id} for cafe ${this.cafeId}`);
-        const result = await this.printNodeService.printOrderReceipt(receiptData, this.cafePrinterConfig.printnode_printer_id);
+      // Use PrintNode with cafe-specific account (first available printer)
+      if (this.printNodeService) {
+        console.log(`Printing Receipt using cafe-specific PrintNode account for cafe ${this.cafeId}`);
+        const result = await this.printNodeService.printOrderReceipt(receiptData);
         return { success: result.success, error: result.error };
       }
 
