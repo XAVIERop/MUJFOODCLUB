@@ -555,10 +555,23 @@ const POSDashboard = () => {
         return;
       } else {
         console.error('Universal Print Service failed:', { kotResult, receiptResult });
+        toast({
+          title: "Print Failed",
+          description: `Failed to print receipt: ${kotResult.error || receiptResult.error}`,
+          variant: "destructive"
+        });
       }
+    } catch (error) {
+      console.error('❌ Universal Print Service Error:', error);
+      toast({
+        title: "Print Error",
+        description: `Error printing receipt: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive"
+      });
+    }
+  };
 
-      // Fallback to browser-based printing
-      const generateThermalHTML = (orderData: Order, orderItems: any[]) => {
+  const generateThermalHTML = (orderData: Order, orderItems: any[]) => {
         console.log('🔍 POSDashboard DEBUG:');
         console.log('  - Raw cafe name:', orderData.cafe?.name);
         console.log('  - Cafe name type:', typeof orderData.cafe?.name);
