@@ -13,7 +13,7 @@ import {
   AlertCircle,
   TestTube
 } from 'lucide-react';
-import { useLocalPrint } from '@/hooks/useLocalPrint';
+// import { useLocalPrint } from '@/hooks/useLocalPrint'; // Disabled - using cafe-specific PrintNode service
 import { useToast } from '@/hooks/use-toast';
 
 interface LocalPrinterStatusProps {
@@ -21,16 +21,26 @@ interface LocalPrinterStatusProps {
 }
 
 export const LocalPrinterStatus: React.FC<LocalPrinterStatusProps> = ({ className }) => {
-  const { 
-    isAvailable, 
-    printers, 
-    isLoading, 
-    isPrinting, 
-    lastPrintResult, 
-    serviceInfo,
-    testPrint,
-    refreshStatus 
-  } = useLocalPrint();
+  // const { 
+  //   isAvailable, 
+  //   printers, 
+  //   isLoading, 
+  //   isPrinting, 
+  //   lastPrintResult, 
+  //   serviceInfo,
+  //   testPrint,
+  //   refreshStatus 
+  // } = useLocalPrint(); // Disabled - using cafe-specific PrintNode service
+  
+  // Mock values since local print service is disabled
+  const isAvailable = false;
+  const printers: any[] = [];
+  const isLoading = false;
+  const isPrinting = false;
+  const lastPrintResult = null;
+  const serviceInfo = null;
+  const testPrint = () => Promise.resolve({ success: false, error: 'Local print service disabled' });
+  const refreshStatus = () => Promise.resolve();
   
   const { toast } = useToast();
 

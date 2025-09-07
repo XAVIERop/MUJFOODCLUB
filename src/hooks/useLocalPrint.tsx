@@ -1,5 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
-import { localPrintService, type Printer, type PrintResponse, type ReceiptData } from '@/services/localPrintService';
+// Local Print Service Hook - DISABLED
+// This hook is disabled in favor of cafe-specific PrintNode service
+
+import { useState, useCallback } from 'react';
+
+// Mock types since we're not using the actual service
+type Printer = any;
+type PrintResponse = any;
+type ReceiptData = any;
 
 interface UseLocalPrintReturn {
   // State
@@ -18,142 +25,50 @@ interface UseLocalPrintReturn {
 }
 
 export const useLocalPrint = (): UseLocalPrintReturn => {
-  const [isAvailable, setIsAvailable] = useState(false);
-  const [printers, setPrinters] = useState<Printer[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isPrinting, setIsPrinting] = useState(false);
-  const [lastPrintResult, setLastPrintResult] = useState<PrintResponse | null>(null);
-  const [serviceInfo, setServiceInfo] = useState<any>(null);
+  // Mock values since local print service is disabled
+  const [isAvailable] = useState(false);
+  const [printers] = useState<Printer[]>([]);
+  const [isLoading] = useState(false);
+  const [isPrinting] = useState(false);
+  const [lastPrintResult] = useState<PrintResponse | null>(null);
+  const [serviceInfo] = useState<any>(null);
 
-  // Check availability and get printers
+  // Mock functions since local print service is disabled
   const checkAvailability = useCallback(async (): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-      const available = await localPrintService.isAvailable();
-      setIsAvailable(available);
-      
-      if (available) {
-        const printers = await localPrintService.getAvailablePrinters();
-        setPrinters(printers);
-      } else {
-        setPrinters([]);
-      }
-      
-      return available;
-    } catch (error) {
-      console.error('Error checking local print availability:', error);
-      setIsAvailable(false);
-      setPrinters([]);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
+    console.log('Local print service is disabled - using cafe-specific PrintNode service');
+    return false;
   }, []);
 
-  // Get full service status
   const refreshStatus = useCallback(async (): Promise<void> => {
-    try {
-      setIsLoading(true);
-      const status = await localPrintService.getServiceStatus();
-      
-      setIsAvailable(status.available);
-      setPrinters(status.printers);
-      setServiceInfo(status.serviceInfo);
-    } catch (error) {
-      console.error('Error refreshing local print status:', error);
-      setIsAvailable(false);
-      setPrinters([]);
-      setServiceInfo(null);
-    } finally {
-      setIsLoading(false);
-    }
+    console.log('Local print service is disabled - using cafe-specific PrintNode service');
   }, []);
 
-  // Print receipt
   const printReceipt = useCallback(async (
     receiptData: ReceiptData, 
     printerId?: string
   ): Promise<PrintResponse> => {
-    if (!isAvailable) {
-      const errorResult: PrintResponse = {
-        success: false,
-        error: 'Local print service not available',
-      };
-      setLastPrintResult(errorResult);
-      return errorResult;
-    }
+    console.log('Local print service is disabled - using cafe-specific PrintNode service');
+    return {
+      success: false,
+      error: 'Local print service is disabled - using cafe-specific PrintNode service',
+    };
+  }, []);
 
-    try {
-      setIsPrinting(true);
-      const result = await localPrintService.printReceipt(receiptData, printerId);
-      setLastPrintResult(result);
-      return result;
-    } catch (error) {
-      const errorResult: PrintResponse = {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
-      };
-      setLastPrintResult(errorResult);
-      return errorResult;
-    } finally {
-      setIsPrinting(false);
-    }
-  }, [isAvailable]);
-
-  // Test print
   const testPrint = useCallback(async (): Promise<PrintResponse> => {
-    if (!isAvailable) {
-      const errorResult: PrintResponse = {
-        success: false,
-        error: 'Local print service not available',
-      };
-      setLastPrintResult(errorResult);
-      return errorResult;
-    }
-
-    try {
-      setIsPrinting(true);
-      const result = await localPrintService.testPrint();
-      setLastPrintResult(result);
-      return result;
-    } catch (error) {
-      const errorResult: PrintResponse = {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
-      };
-      setLastPrintResult(errorResult);
-      return errorResult;
-    } finally {
-      setIsPrinting(false);
-    }
-  }, [isAvailable]);
-
-  // Check availability on mount
-  useEffect(() => {
-    checkAvailability();
-  }, [checkAvailability]);
-
-  // Auto-refresh status every 30 seconds
-  useEffect(() => {
-    if (!isAvailable) return;
-
-    const interval = setInterval(() => {
-      refreshStatus();
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [isAvailable, refreshStatus]);
+    console.log('Local print service is disabled - using cafe-specific PrintNode service');
+    return {
+      success: false,
+      error: 'Local print service is disabled - using cafe-specific PrintNode service',
+    };
+  }, []);
 
   return {
-    // State
     isAvailable,
     printers,
     isLoading,
     isPrinting,
     lastPrintResult,
     serviceInfo,
-    
-    // Actions
     printReceipt,
     testPrint,
     refreshStatus,

@@ -16,6 +16,9 @@ interface Cafe {
   id: string;
   name: string;
   accepting_orders: boolean;
+  whatsapp_phone?: string;
+  whatsapp_enabled?: boolean;
+  whatsapp_notifications?: boolean;
 }
 
 interface MenuItem {
@@ -33,6 +36,11 @@ const CafeManagement = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  
+  // WhatsApp settings state
+  const [whatsappPhone, setWhatsappPhone] = useState<string>('');
+  const [whatsappEnabled, setWhatsappEnabled] = useState<boolean>(false);
+  const [whatsappNotifications, setWhatsappNotifications] = useState<boolean>(true);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, profile } = useAuth();
@@ -103,7 +111,7 @@ const CafeManagement = () => {
         return;
       }
 
-      // Get cafe details
+      // Get cafe details including WhatsApp settings
       const { data: cafeData, error: cafeError } = await supabase
         .from('cafes')
         .select('*')
@@ -112,6 +120,11 @@ const CafeManagement = () => {
 
       if (cafeError) throw cafeError;
       setCafe(cafeData);
+      
+      // Initialize WhatsApp settings
+      setWhatsappPhone(cafeData.whatsapp_phone || '');
+      setWhatsappEnabled(cafeData.whatsapp_enabled || false);
+      setWhatsappNotifications(cafeData.whatsapp_notifications !== false); // Default to true
 
       // Get menu items
       const { data: menuData, error: menuError } = await supabase
@@ -219,6 +232,46 @@ const CafeManagement = () => {
     }
   };
 
+  const saveWhatsAppSettings = async () => {
+    if (!cafe) return;
+    
+    setUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('cafes')
+        .update({
+          whatsapp_phone: whatsappPhone.trim() || null,
+          whatsapp_enabled: whatsappEnabled,
+          whatsapp_notifications: whatsappNotifications
+        })
+        .eq('id', cafe.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setCafe(prev => prev ? {
+        ...prev,
+        whatsapp_phone: whatsappPhone.trim() || undefined,
+        whatsapp_enabled: whatsappEnabled,
+        whatsapp_notifications: whatsappNotifications
+      } : null);
+
+      toast({
+        title: "WhatsApp Settings Saved",
+        description: "Your WhatsApp notification settings have been updated successfully",
+      });
+    } catch (error) {
+      console.error('Error saving WhatsApp settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save WhatsApp settings",
+        variant: "destructive"
+      });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -310,6 +363,90 @@ const CafeManagement = () => {
                     <span className="text-sm text-red-600">Not accepting orders</span>
                   </>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* WhatsApp Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <span className="text-2xl mr-2">📱</span>
+                WhatsApp Notifications
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="whatsapp-phone" className="text-base font-medium">
+                    WhatsApp Phone Number
+                  </Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Enter your WhatsApp number (with country code, e.g., +91XXXXXXXXXX)
+                  </p>
+                  <Input
+                    id="whatsapp-phone"
+                    type="tel"
+                    placeholder="+91 98765 43210"
+                    value={whatsappPhone}
+                    onChange={(e) => setWhatsappPhone(e.target.value)}
+                    disabled={updating}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base font-medium">Enable WhatsApp</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Allow WhatsApp notifications for this cafe
+                    </p>
+                  </div>
+                  <Switch
+                    checked={whatsappEnabled}
+                    onCheckedChange={setWhatsappEnabled}
+                    disabled={updating}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base font-medium">Order Notifications</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Send WhatsApp messages for new orders
+                    </p>
+                  </div>
+                  <Switch
+                    checked={whatsappNotifications}
+                    onCheckedChange={setWhatsappNotifications}
+                    disabled={updating || !whatsappEnabled}
+                  />
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  {whatsappEnabled && whatsappPhone ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span className="text-sm text-green-600">
+                        WhatsApp notifications enabled for {whatsappPhone}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                      <span className="text-sm text-yellow-600">
+                        WhatsApp notifications disabled
+                      </span>
+                    </>
+                  )}
+                </div>
+                
+                <Button 
+                  onClick={saveWhatsAppSettings}
+                  disabled={updating}
+                  className="w-full"
+                >
+                  {updating ? 'Saving...' : 'Save WhatsApp Settings'}
+                </Button>
               </div>
             </CardContent>
           </Card>

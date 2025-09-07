@@ -40,7 +40,26 @@ export const useCafeRewards = () => {
 
       console.log('🔄 Fetching cafe-specific rewards for user:', user.id);
 
-      // Fetch user's orders with cafe information
+      // Fetch cafe-specific loyalty points from the proper table
+      const { data: loyaltyData, error: loyaltyError } = await supabase
+        .from('cafe_loyalty_points')
+        .select(`
+          cafe_id,
+          points,
+          total_spent,
+          loyalty_level,
+          cafe:cafes(name)
+        `)
+        .eq('user_id', user.id);
+
+      if (loyaltyError) {
+        console.error('Error fetching cafe loyalty points:', loyaltyError);
+        throw loyaltyError;
+      }
+
+      console.log('📋 Found cafe loyalty data:', loyaltyData?.length || 0);
+
+      // Fetch user's orders for monthly spend calculation and transactions
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
         .select(`
@@ -61,30 +80,21 @@ export const useCafeRewards = () => {
         throw ordersError;
       }
 
-      console.log('📋 Found orders:', orders?.length || 0);
-
-      // Group orders by cafe
-      const cafeData: { [cafeId: string]: any } = {};
+      // Group orders by cafe for monthly spend calculation
+      const cafeOrderData: { [cafeId: string]: any } = {};
       const cafeTransactions: CafeTransaction[] = [];
 
       (orders || []).forEach(order => {
         const cafeId = order.cafe_id;
         
-        if (!cafeData[cafeId]) {
-          cafeData[cafeId] = {
-            cafe_id: cafeId,
-            cafe_name: order.cafe?.name || 'Unknown Cafe',
-            total_spend: 0,
+        if (!cafeOrderData[cafeId]) {
+          cafeOrderData[cafeId] = {
             total_orders: 0,
-            monthly_spend: 0,
-            points: 0
+            monthly_spend: 0
           };
         }
 
-        // Add to totals
-        cafeData[cafeId].total_spend += order.total_amount;
-        cafeData[cafeId].total_orders += 1;
-        cafeData[cafeId].points += order.points_earned || 0;
+        cafeOrderData[cafeId].total_orders += 1;
 
         // Calculate monthly spend (current month)
         const orderDate = new Date(order.created_at);
@@ -93,7 +103,7 @@ export const useCafeRewards = () => {
                               orderDate.getFullYear() === currentDate.getFullYear();
         
         if (isCurrentMonth) {
-          cafeData[cafeId].monthly_spend += order.total_amount;
+          cafeOrderData[cafeId].monthly_spend += order.total_amount;
         }
 
         // Add transaction
@@ -107,13 +117,23 @@ export const useCafeRewards = () => {
         });
       });
 
-      // Convert to array and calculate tiers
-      const rewardsData: CafeRewardData[] = Object.values(cafeData).map((cafe: any) => ({
-        ...cafe,
-        tier: getTierByMonthlySpend(cafe.monthly_spend),
-        discount_percentage: getTierDiscount(getTierByMonthlySpend(cafe.monthly_spend)),
-        is_first_order: cafe.total_orders === 1
-      }));
+      // Convert loyalty data to rewards data
+      const rewardsData: CafeRewardData[] = (loyaltyData || []).map((loyalty: any) => {
+        const cafeId = loyalty.cafe_id;
+        const orderData = cafeOrderData[cafeId] || { total_orders: 0, monthly_spend: 0 };
+        
+        return {
+          cafe_id: cafeId,
+          cafe_name: loyalty.cafe?.name || 'Unknown Cafe',
+          points: loyalty.points || 0,
+          tier: getTierByMonthlySpend(orderData.monthly_spend),
+          monthly_spend: orderData.monthly_spend,
+          total_spend: loyalty.total_spent || 0,
+          total_orders: orderData.total_orders,
+          discount_percentage: getTierDiscount(getTierByMonthlySpend(orderData.monthly_spend)),
+          is_first_order: orderData.total_orders === 1
+        };
+      });
 
       console.log('🎯 Calculated cafe rewards:', rewardsData);
       console.log('📊 Transactions:', cafeTransactions);

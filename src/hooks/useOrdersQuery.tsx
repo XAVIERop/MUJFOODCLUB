@@ -10,15 +10,27 @@ interface Order {
   total_amount: number;
   points_earned: number;
   delivery_block: string;
+  delivery_notes?: string;
+  payment_method: string;
+  estimated_delivery: string;
   special_instructions: string;
   created_at: string;
   updated_at: string;
+  status_updated_at: string;
   completed_at: string | null;
+  points_credited: boolean;
+  has_rating?: boolean;
+  rating_submitted_at?: string;
   user: {
     full_name: string;
     phone: string;
     block: string;
     email: string;
+  };
+  cafe?: {
+    id: string;
+    name: string;
+    location: string;
   };
   order_items: Array<{
     id: string;
@@ -142,7 +154,7 @@ export const useUserOrdersQuery = (userId: string | null, options?: {
   });
 };
 
-// Hook to fetch a specific order
+// Hook to fetch a specific order by ID
 export const useOrderQuery = (orderId: string | null, options?: {
   enabled?: boolean;
   staleTime?: number;
@@ -152,7 +164,7 @@ export const useOrderQuery = (orderId: string | null, options?: {
     queryFn: async (): Promise<Order | null> => {
       if (!orderId) return null;
       
-      console.log('🔄 Fetching order details:', orderId);
+      console.log('🔄 Fetching order details by ID:', orderId);
       
       const { data, error } = await supabase
         .from('orders')
@@ -184,6 +196,55 @@ export const useOrderQuery = (orderId: string | null, options?: {
     gcTime: 2 * 60 * 1000, // 2 minutes
     enabled: options?.enabled !== false && !!orderId,
     retry: 2,
+  });
+};
+
+// Hook to fetch a specific order by order number
+export const useOrderByNumberQuery = (orderNumber: string | null, userId: string | null, options?: {
+  enabled?: boolean;
+  staleTime?: number;
+}) => {
+  return useQuery({
+    queryKey: [...orderKeys.details(), 'byNumber', orderNumber || '', userId || ''],
+    queryFn: async (): Promise<Order | null> => {
+      if (!orderNumber || !userId) return null;
+      
+      console.log('🔄 Fetching order details by number:', orderNumber, 'for user:', userId);
+      
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          user:profiles(full_name, phone, block, email),
+          order_items(
+            id,
+            menu_item_id,
+            quantity,
+            unit_price,
+            total_price,
+            special_instructions,
+            menu_item:menu_items(name, description)
+          ),
+          cafe:cafes(name, location, id)
+        `)
+        .eq('order_number', orderNumber)
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching order by number:', error);
+        throw new Error(`Failed to fetch order: ${error.message}`);
+      }
+
+      console.log('✅ Fetched order details by number:', data?.order_number);
+      return data;
+    },
+    staleTime: options?.staleTime || 10 * 1000, // 10 seconds for real-time updates
+    gcTime: 2 * 60 * 1000, // 2 minutes
+    enabled: options?.enabled !== false && !!orderNumber && !!userId,
+    retry: 2,
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds for real-time updates
+    refetchIntervalInBackground: false,
   });
 };
 

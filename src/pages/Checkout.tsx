@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { CAFE_REWARDS, calculatePointsEarned, calculateMaxRedeemablePoints, getTierDiscount } from '@/lib/constants';
 import { useCafeRewards } from '@/hooks/useCafeRewards';
+import { whatsappService } from '@/services/whatsappService';
 import Header from '@/components/Header';
 
 interface MenuItem {
@@ -454,16 +455,64 @@ const Checkout = () => {
         description: `Your order #${order!.order_number} has been confirmed. Estimated delivery: 30 minutes.`,
       });
 
+      // Send WhatsApp notification to cafe owner
+      try {
+        console.log('📱 Sending WhatsApp notification for order:', order?.order_number);
+        
+        // Get order items for the notification
+        const orderItems = Object.values(cart).map(cartItem => ({
+          quantity: cartItem.quantity,
+          menu_item: {
+            name: cartItem.item.name,
+            price: cartItem.item.price
+          },
+          total_price: cartItem.item.price * cartItem.quantity
+        }));
+
+        if (order && cafe) {
+          const orderData = {
+            id: order.id,
+            order_number: order.order_number,
+            customer_name: profile?.full_name || 'Customer',
+            phone_number: deliveryDetails.phoneNumber,
+            delivery_block: deliveryDetails.orderType === 'delivery' ? deliveryDetails.block : 'TAKEAWAY',
+            total_amount: finalAmount,
+            created_at: order.created_at,
+            delivery_notes: deliveryDetails.deliveryNotes,
+            order_items: orderItems
+          };
+
+          // Send WhatsApp notification (non-blocking)
+          whatsappService.sendOrderNotification(cafe.id, orderData)
+            .then(success => {
+              if (success) {
+                console.log('✅ WhatsApp notification sent successfully');
+              } else {
+                console.log('❌ WhatsApp notification failed');
+              }
+            })
+            .catch(error => {
+              console.error('❌ WhatsApp notification error:', error);
+            });
+        }
+          
+      } catch (error) {
+        console.error('❌ Error preparing WhatsApp notification:', error);
+        // Don't fail the order for notification errors
+      }
+
       // Refresh profile to update loyalty points
       await refreshProfile();
 
       // Navigate to order confirmation with the ACTUAL order number from database
-      navigate(`/order-confirmation/${order!.order_number}`, { 
-        state: { 
-          order,
-          pointsEarned: pointsToEarn
-        } 
-      });
+      if (order) {
+        navigate(`/order-confirmation/${order.order_number}`, { 
+          state: { 
+            order,
+            pointsEarned: pointsToEarn
+          } 
+        });
+      }
 
     } catch (error) {
       console.error('Error placing order:', error);

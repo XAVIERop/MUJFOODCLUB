@@ -28,7 +28,7 @@ import FoodCourtReceipt from './FoodCourtReceipt';
 import SimpleReceipt from './SimpleReceipt';
 import { usePrinter } from '@/hooks/usePrinter';
 import { directPrinterService } from '@/services/directPrinterService';
-import { useLocalPrint } from '@/hooks/useLocalPrint';
+// import { useLocalPrint } from '@/hooks/useLocalPrint'; // Disabled - using cafe-specific PrintNode service
 import { usePrintNode } from '@/hooks/usePrintNode';
 
 interface OrderItem {
@@ -84,7 +84,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
 }) => {
   const { toast } = useToast();
   const { isConnected, isPrinting, printBothReceipts } = usePrinter();
-  const { isAvailable: localPrintAvailable, printReceipt: localPrintReceipt, isPrinting: localPrintPrinting } = useLocalPrint();
+  // const { isAvailable: localPrintAvailable, printReceipt: localPrintReceipt, isPrinting: localPrintPrinting } = useLocalPrint(); // Disabled - using cafe-specific PrintNode service
   const { isAvailable: printNodeAvailable, printReceipt: printNodePrintReceipt, printKOT: printNodePrintKOT, printOrderReceipt: printNodePrintOrderReceipt, isPrinting: printNodePrinting, printers: printNodePrinters } = usePrintNode();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -554,7 +554,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                       e.stopPropagation();
                       handlePrintKOT(order);
                     }}
-                    disabled={isPrinting || localPrintPrinting || printNodePrinting}
+                    disabled={isPrinting || printNodePrinting}
                     className="text-lg px-2 py-1 h-7 w-7"
                     title="Print KOT"
                   >
@@ -568,7 +568,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                       e.stopPropagation();
                       handlePrintOrderReceipt(order);
                     }}
-                    disabled={isPrinting || localPrintPrinting || printNodePrinting}
+                    disabled={isPrinting || printNodePrinting}
                     className="text-lg px-2 py-1 h-7 w-7"
                     title="Print Receipt"
                   >
@@ -688,7 +688,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                   handlePrintKOT(hoveredOrder);
                   closePopup();
                 }}
-                disabled={isPrinting || localPrintPrinting || printNodePrinting}
+                disabled={isPrinting || printNodePrinting}
                 className="text-lg px-3 py-2"
                 title="Print KOT"
               >
@@ -703,7 +703,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                   handlePrintOrderReceipt(hoveredOrder);
                   closePopup();
                 }}
-                disabled={isPrinting || localPrintPrinting || printNodePrinting}
+                disabled={isPrinting || printNodePrinting}
                 className="text-lg px-3 py-2"
                 title="Print Receipt"
               >

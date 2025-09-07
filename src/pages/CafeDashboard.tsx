@@ -129,7 +129,7 @@ const CafeDashboard = () => {
 
           // Get the cafe_id from the first record
           const cafeStaffRecord = staffData[0];
-          setCafeId(cafeStaffRecord.cafe_id);
+          setCafeId((cafeStaffRecord as any).cafe_id);
         }
       } catch (error) {
         console.error('Error fetching cafe ID:', error);
@@ -317,7 +317,7 @@ const CafeDashboard = () => {
     }
   };
 
-  // Function to credit points to user when order is completed
+  // Function to credit points to user when order is completed (Cafe-specific system)
   const creditPointsToUser = async (orderId: string) => {
     try {
       console.log('Cafe Dashboard: Crediting points for completed order:', orderId);
@@ -327,7 +327,7 @@ const CafeDashboard = () => {
         .from('orders')
         .select('user_id, points_earned, total_amount, cafe_id')
         .eq('id', orderId)
-        .single();
+        .single() as any;
 
       if (orderError || !order) {
         console.error('Error fetching order for points crediting:', orderError);
@@ -339,53 +339,35 @@ const CafeDashboard = () => {
         return;
       }
 
-      // Get current user profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('loyalty_points')
-        .eq('id', order.user_id)
-        .single();
-
-      if (profileError || !profile) {
-        console.error('Error fetching user profile for points crediting:', profileError);
-        return;
-      }
-
-      // Calculate new points total
-      const currentPoints = profile.loyalty_points || 0;
-      const newPointsTotal = currentPoints + order.points_earned;
-
-      // Update user's loyalty points
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          loyalty_points: newPointsTotal,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', order.user_id);
-
-      if (updateError) {
-        console.error('Error updating user points:', updateError);
-        return;
-      }
-
-      // Create loyalty transaction record
-      const { error: transactionError } = await supabase
-        .from('loyalty_transactions')
-        .insert({
-          user_id: order.user_id,
-          order_id: orderId,
-          points_change: order.points_earned,
-          transaction_type: 'earned',
-          description: `Earned ${order.points_earned} points for completed order`
+      // Use the cafe-specific loyalty system
+      const { error: loyaltyError } = await (supabase as any)
+        .rpc('update_cafe_loyalty_points', {
+          p_user_id: order.user_id,
+          p_cafe_id: order.cafe_id,
+          p_order_id: orderId,
+          p_order_amount: order.total_amount
         });
 
-      if (transactionError) {
-        console.error('Error creating loyalty transaction:', transactionError);
-        // Don't fail the order completion for this
+      if (loyaltyError) {
+        console.error('Error updating cafe loyalty points:', loyaltyError);
+        // Fallback: create manual transaction record
+        const { error: fallbackError } = await supabase
+          .from('cafe_loyalty_transactions')
+          .insert({
+            user_id: order.user_id,
+            cafe_id: order.cafe_id,
+            order_id: orderId,
+            points_change: order.points_earned,
+            transaction_type: 'earned',
+            description: `Earned ${order.points_earned} points for completed order`
+          } as any);
+
+        if (fallbackError) {
+          console.error('Error creating fallback loyalty transaction:', fallbackError);
+        }
       }
 
-      console.log(`✅ Successfully credited ${order.points_earned} points to user ${order.user_id}`);
+      console.log(`✅ Successfully credited ${order.points_earned} points to user ${order.user_id} for cafe ${order.cafe_id}`);
       
     } catch (error) {
       console.error('Error in creditPointsToUser:', error);
@@ -422,7 +404,7 @@ const CafeDashboard = () => {
 
       console.log('Updating order with data:', { orderId, updateData });
       
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('orders')
         .update(updateData)
         .eq('id', orderId);
@@ -570,7 +552,7 @@ const CafeDashboard = () => {
     }
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('orders')
         .update({ 
           status: 'cancelled',

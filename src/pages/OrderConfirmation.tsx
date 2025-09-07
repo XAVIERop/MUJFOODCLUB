@@ -6,30 +6,9 @@ import { CheckCircle, Clock, MapPin, Trophy, Home, ShoppingCart, Receipt, ChefHa
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useOrderByNumberQuery } from '@/hooks/useOrdersQuery';
 import Header from '@/components/Header';
 import OrderRating from '@/components/OrderRating';
-
-interface Order {
-  id: string;
-  cafe_id: string;
-  order_number: string;
-  status: 'received' | 'confirmed' | 'preparing' | 'on_the_way' | 'completed' | 'cancelled';
-  total_amount: number;
-  delivery_block: string;
-  delivery_notes?: string;
-  payment_method: string;
-  points_earned: number;
-  estimated_delivery: string;
-  created_at: string;
-  status_updated_at: string;
-  points_credited: boolean;
-  has_rating?: boolean;
-  cafe: {
-    id: string;
-    name: string;
-    location: string;
-  };
-}
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();
@@ -37,8 +16,6 @@ const OrderConfirmation = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
   
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   const { orderId } = useParams();
@@ -57,21 +34,50 @@ const OrderConfirmation = () => {
     { key: 'completed', label: 'Delivered', icon: CheckCircle, color: 'bg-green-600' }
   ];
 
-  const fetchOrder = async () => {
+  // Use React Query to fetch order data by order number
+  const { 
+    data: order, 
+    isLoading: loading, 
+    error: orderError,
+    refetch: refetchOrder
+  } = useOrderByNumberQuery(orderNumber, user?.id || null, {
+    enabled: !!orderNumber && !!user?.id,
+    staleTime: 10 * 1000, // 10 seconds for real-time updates
+  });
+
+  // Handle order data updates and errors
+  useEffect(() => {
+    if (orderError) {
+      console.error('❌ Order fetch error:', orderError);
+      toast({
+        title: "Error",
+        description: "Failed to fetch order details",
+        variant: "destructive"
+      });
+    }
+
+    if (order) {
+      console.log('📥 OrderConfirmation: Order data updated:', order);
+      setLastRefresh(new Date());
+      
+      // If order is completed, refresh profile to get updated points
+      if (order.status === 'completed') {
+        console.log('🎉 Order completed, refreshing profile for updated points');
+        refreshProfile();
+      }
+    }
+  }, [order, orderError, refreshProfile, toast]);
+
+  // Handle navigation for missing order number or user
+  useEffect(() => {
     if (!orderNumber) {
       console.log('❌ No order number provided');
-      console.log('❌ orderNumber:', orderNumber);
-      console.log('❌ user?.id:', user?.id);
-      setLoading(false);
       navigate('/');
       return;
     }
 
     if (!user?.id) {
       console.log('❌ No user ID provided');
-      console.log('❌ user:', user);
-      console.log('❌ user?.id:', user?.id);
-      setLoading(false);
       toast({
         title: "Authentication Error",
         description: "Please log in to view your order",
@@ -80,161 +86,7 @@ const OrderConfirmation = () => {
       navigate('/auth');
       return;
     }
-
-    console.log('🔄 OrderConfirmation: Fetching order:', orderNumber, 'User:', user?.id);
-
-    try {
-      // Add cache-busting parameter
-      const cacheBuster = Date.now();
-      console.log('🔄 Fetching with cache buster:', cacheBuster);
-      
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          id,
-          order_number,
-          status,
-          total_amount,
-          delivery_block,
-          delivery_notes,
-          payment_method,
-          points_earned,
-          estimated_delivery,
-          created_at,
-          status_updated_at,
-          points_credited,
-          has_rating,
-          rating_submitted_at,
-          cafe_id,
-          cafe:cafes(name, location, id)
-        `)
-        .eq('order_number', orderNumber)
-        .eq('user_id', user?.id)
-        .neq('id', '00000000-0000-0000-0000-000000000000') // Cache buster
-        .single();
-
-      if (error) {
-        console.error('❌ Error fetching order:', error);
-        throw error;
-      }
-      
-      console.log('📥 OrderConfirmation: Order fetched successfully:', data);
-      
-      setOrder(data);
-      setLastRefresh(new Date());
-    } catch (error) {
-      console.error('Error fetching order:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch order details",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    console.log('🚀 OrderConfirmation loaded with real-time updates!', new Date().toISOString());
-    console.log('🔍 User state:', user);
-    console.log('🔍 Profile state:', profile);
-    
-    // Wait for user to be loaded before fetching order
-    if (user?.id) {
-      fetchOrder();
-    } else {
-      console.log('⏳ Waiting for user to be loaded...');
-    }
-
-    // Set up polling as backup (real-time should handle most updates)
-    const pollInterval = 30000; // 30 seconds as backup
-    console.log(`🔄 Setting up polling every ${pollInterval/1000} seconds`);
-    
-    const interval = setInterval(() => {
-      console.log('🔄 OrderConfirmation: Backup polling...');
-      fetchOrder();
-    }, pollInterval);
-
-    // Also refresh when page becomes visible
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log('👁️ Page became visible, refreshing...');
-        fetchOrder();
-      }
-    };
-    
-    // Network status monitoring
-    const handleOnlineStatus = () => {
-      console.log('🌐 Network status changed:', navigator.onLine);
-      if (navigator.onLine) {
-        console.log('🌐 Back online, refreshing...');
-        fetchOrder();
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('online', handleOnlineStatus);
-    window.addEventListener('offline', handleOnlineStatus);
-
-    // Set up real-time subscription for live updates
-    console.log('🔄 Setting up real-time subscription for order updates...');
-    const subscription = supabase
-      .channel('order-updates')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'orders',
-        filter: `order_number=eq.${orderNumber}`
-      }, (payload) => {
-        console.log('📡 Real-time update received:', payload);
-        
-        // Check if this is a status update
-        if (payload.new && payload.new.status !== payload.old?.status) {
-          console.log('📡 Status changed via real-time:', payload.old?.status, '→', payload.new.status);
-          
-          // Update the order state immediately
-          setOrder(payload.new as Order);
-          setLastRefresh(new Date());
-          
-          // If order is completed, refresh profile to get updated points
-          if (payload.new.status === 'completed') {
-            console.log('🎉 Order completed, refreshing profile for updated points');
-            refreshProfile();
-          }
-          
-          // Show notification
-          toast({
-            title: "Order Updated!",
-            description: `Status changed to ${payload.new.status.replace('_', ' ')}`,
-            duration: 3000
-          });
-        }
-      })
-      .subscribe((status) => {
-        console.log('📡 Real-time subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Real-time subscription active');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Real-time subscription error');
-        }
-      });
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('online', handleOnlineStatus);
-      window.removeEventListener('offline', handleOnlineStatus);
-      subscription.unsubscribe();
-    };
-  }, [orderNumber, user?.id]);
-
-  // Separate effect to handle user loading
-  useEffect(() => {
-    if (user?.id && orderNumber && !order) {
-      console.log('🔄 User loaded, fetching order...');
-      fetchOrder();
-    }
-  }, [user?.id, orderNumber, order]);
+  }, [orderNumber, user?.id, navigate, toast]);
 
   const getCurrentStepIndex = () => {
     if (!order) return -1;
@@ -448,9 +300,10 @@ const OrderConfirmation = () => {
                 <CardContent>
                   <OrderRating
                     orderId={order.id}
+                    orderNumber={order.order_number}
                     cafeName={order.cafe?.name || 'Cafe'}
                     onRatingSubmitted={() => {
-                      fetchOrder();
+                      refetchOrder();
                     }}
                   />
                 </CardContent>

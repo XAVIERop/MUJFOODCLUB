@@ -22,7 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useLocalPrint } from '@/hooks/useLocalPrint';
+// import { useLocalPrint } from '@/hooks/useLocalPrint'; // Disabled - using cafe-specific PrintNode service
 import { usePrintNode } from '@/hooks/usePrintNode';
 
 interface MenuItem {
@@ -62,7 +62,7 @@ interface ManualOrderEntryProps {
 const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  const { isAvailable: localPrintAvailable, printReceipt: localPrintReceipt } = useLocalPrint();
+  // const { isAvailable: localPrintAvailable, printReceipt: localPrintReceipt } = useLocalPrint(); // Disabled - using cafe-specific PrintNode service
   const { isAvailable: printNodeAvailable, printReceipt: printNodePrintReceipt } = usePrintNode();
 
   // State management
@@ -396,17 +396,17 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
         }
       }
 
-      // Fallback to local print service
-      if (localPrintAvailable) {
-        const result = await localPrintReceipt(receiptData);
-        if (result.success) {
-          toast({
-            title: "Receipt Printed",
-            description: "Professional thermal receipt sent via local service",
-          });
-          return;
-        }
-      }
+      // Fallback to local print service - DISABLED (using cafe-specific PrintNode service)
+      // if (localPrintAvailable) {
+      //   const result = await localPrintReceipt(receiptData);
+      //   if (result.success) {
+      //     toast({
+      //       title: "Receipt Printed",
+      //       description: "Professional thermal receipt sent via local service",
+      //     });
+      //     return;
+      //   }
+      // }
 
       toast({
         title: "Print Service Unavailable",

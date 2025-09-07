@@ -20,6 +20,8 @@ const Menu = lazy(() => import("./pages/Menu"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
 const OrderTracking = lazy(() => import("./pages/OrderTracking"));
+const MyOrders = lazy(() => import("./pages/MyOrders"));
+const OrderAnalyticsPage = lazy(() => import("./pages/OrderAnalyticsPage"));
 const Cafes = lazy(() => import("./pages/Cafes"));
 const QRCodePage = lazy(() => import("./pages/QRCodePage"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -30,6 +32,7 @@ const EnhancedCafeCardDemo = lazy(() => import("./components/EnhancedCafeCardDem
 const POSTest = lazy(() => import("./pages/POSTest"));
 const CompactOrdersTest = lazy(() => import("./pages/CompactOrdersTest"));
 const POSDashboard = lazy(() => import("./pages/POSDashboard"));
+const WhatsAppTest = lazy(() => import("./pages/WhatsAppTest"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -72,7 +75,8 @@ const App = () => (
                   <Route path="/menu/:cafeId" element={<Menu />} />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-                  <Route path="/orders" element={<OrderTracking />} />
+                  <Route path="/orders" element={<MyOrders />} />
+                  <Route path="/order-analytics" element={<OrderAnalyticsPage />} />
                   <Route path="/cafes" element={<Cafes />} />
                   <Route path="/rewards" element={<CafeRewards />} />
                   <Route path="/qr-code" element={<QRCodePage />} />
@@ -84,6 +88,7 @@ const App = () => (
                   <Route path="/pos-test" element={<POSTest />} />
                   <Route path="/compact-orders-test" element={<CompactOrdersTest />} />
                   <Route path="/pos-dashboard" element={<POSDashboard />} />
+                  <Route path="/whatsapp-test" element={<WhatsAppTest />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

@@ -41,6 +41,7 @@ import EnhancedOrderGrid from '@/components/EnhancedOrderGrid';
 import POSAnalytics from '@/components/POSAnalytics';
 import ThermalPrinter from '@/components/ThermalPrinter';
 import { thermalPrinterService, formatOrderForPrinting } from '@/api/thermalPrinter';
+import { createCafePrintService } from '@/services/cafeSpecificPrintService';
 import NotificationCenter from '@/components/NotificationCenter';
 import SimplePrinterConfig from '@/components/SimplePrinterConfig';
 import PrintNodeStatus from '@/components/PrintNodeStatus';
@@ -276,7 +277,7 @@ const POSDashboard = () => {
     setFilteredOrders(filtered);
   }, [orders, searchTerm, statusFilter, sortBy, sortOrder]);
 
-  // Function to credit points to user when order is completed
+  // Function to credit points to user when order is completed (Cafe-specific system)
   const creditPointsToUser = async (orderId: string) => {
     try {
       console.log('POS Dashboard: Crediting points for completed order:', orderId);
@@ -286,7 +287,7 @@ const POSDashboard = () => {
         .from('orders')
         .select('user_id, points_earned, total_amount, cafe_id')
         .eq('id', orderId)
-        .single();
+        .single() as any;
 
       if (orderError || !order) {
         console.error('Error fetching order for points crediting:', orderError);
@@ -298,53 +299,35 @@ const POSDashboard = () => {
         return;
       }
 
-      // Get current user profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('loyalty_points')
-        .eq('id', order.user_id)
-        .single();
-
-      if (profileError || !profile) {
-        console.error('Error fetching user profile for points crediting:', profileError);
-        return;
-      }
-
-      // Calculate new points total
-      const currentPoints = profile.loyalty_points || 0;
-      const newPointsTotal = currentPoints + order.points_earned;
-
-      // Update user's loyalty points
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          loyalty_points: newPointsTotal,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', order.user_id);
-
-      if (updateError) {
-        console.error('Error updating user points:', updateError);
-        return;
-      }
-
-      // Create loyalty transaction record
-      const { error: transactionError } = await supabase
-        .from('loyalty_transactions')
-        .insert({
-          user_id: order.user_id,
-          order_id: orderId,
-          points_change: order.points_earned,
-          transaction_type: 'earned',
-          description: `Earned ${order.points_earned} points for completed order`
+      // Use the cafe-specific loyalty system
+      const { error: loyaltyError } = await (supabase as any)
+        .rpc('update_cafe_loyalty_points', {
+          p_user_id: order.user_id,
+          p_cafe_id: order.cafe_id,
+          p_order_id: orderId,
+          p_order_amount: order.total_amount
         });
 
-      if (transactionError) {
-        console.error('Error creating loyalty transaction:', transactionError);
-        // Don't fail the order completion for this
+      if (loyaltyError) {
+        console.error('Error updating cafe loyalty points:', loyaltyError);
+        // Fallback: create manual transaction record
+        const { error: fallbackError } = await supabase
+          .from('cafe_loyalty_transactions')
+          .insert({
+            user_id: order.user_id,
+            cafe_id: order.cafe_id,
+            order_id: orderId,
+            points_change: order.points_earned,
+            transaction_type: 'earned',
+            description: `Earned ${order.points_earned} points for completed order`
+          } as any);
+
+        if (fallbackError) {
+          console.error('Error creating fallback loyalty transaction:', fallbackError);
+        }
       }
 
-      console.log(`✅ Successfully credited ${order.points_earned} points to user ${order.user_id}`);
+      console.log(`✅ Successfully credited ${order.points_earned} points to user ${order.user_id} for cafe ${order.cafe_id}`);
       
     } catch (error) {
       console.error('Error in creditPointsToUser:', error);
@@ -388,9 +371,9 @@ const POSDashboard = () => {
 
       console.log('POS Dashboard: Updating order with data:', { orderId, updateData });
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('orders')
-        .update(updateData as any)
+        .update(updateData)
         .eq('id', orderId)
         .select();
       
@@ -427,6 +410,82 @@ const POSDashboard = () => {
       });
     } finally {
       setUpdatingOrder(null);
+    }
+  };
+
+  const autoPrintReceiptWithCafeService = async (order: Order) => {
+    try {
+      console.log('Auto-printing with cafe-specific service for order:', order.order_number);
+      
+      // Get order items
+      const { data: items, error: itemsError } = await supabase
+        .from('order_items')
+        .select(`
+          id,
+          quantity,
+          unit_price,
+          total_price,
+          special_instructions,
+          menu_item:menu_items(name, description)
+        `)
+        .eq('order_id', order.id);
+
+      if (itemsError) {
+        console.error('Error fetching order items:', itemsError);
+        return;
+      }
+
+      // Use cafe-specific print service
+      console.log('🔍 Creating cafe-specific print service for cafe_id:', order.cafe_id);
+      const cafePrintService = createCafePrintService(order.cafe_id);
+      console.log('🔍 Initializing cafe-specific print service...');
+      const initResult = await cafePrintService.initialize();
+      console.log('🔍 Cafe-specific print service initialization result:', initResult);
+
+      const receiptData = {
+        order_id: order.id,
+        order_number: order.order_number,
+        cafe_name: order.cafe?.name || 'Cafe',
+        customer_name: order.user?.full_name || 'Customer',
+        customer_phone: order.user?.phone || order.phone_number || 'N/A',
+        delivery_block: order.delivery_block || order.user?.block || 'N/A',
+        items: (items || []).map(item => ({
+          id: item.id,
+          name: item.menu_item?.name || 'Item',
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+          special_instructions: item.special_instructions
+        })),
+        subtotal: order.subtotal || 0,
+        tax_amount: order.tax_amount || 0,
+        discount_amount: 0, // Will be calculated from order data
+        final_amount: order.total_amount,
+        payment_method: order.payment_method || 'COD',
+        order_date: order.created_at,
+        estimated_delivery: order.estimated_delivery || '30 minutes',
+        points_earned: order.points_earned || 0,
+        points_redeemed: 0 // Will be calculated from order data
+      };
+
+      // Print KOT and Receipt using cafe-specific service
+      const kotResult = await cafePrintService.printKOT(receiptData);
+      const receiptResult = await cafePrintService.printReceipt(receiptData);
+      
+      if (kotResult.success && receiptResult.success) {
+        toast({
+          title: "Receipt Printed",
+          description: `KOT and Receipt for order #${order.order_number} sent to cafe printer`,
+        });
+      } else {
+        console.error('Cafe-specific printing failed:', { kotResult, receiptResult });
+        // Fallback to original method
+        autoPrintReceipt(order);
+      }
+    } catch (error) {
+      console.error('Error in cafe-specific auto-print:', error);
+      // Fallback to original method
+      autoPrintReceipt(order);
     }
   };
 
@@ -1024,7 +1083,7 @@ const POSDashboard = () => {
             console.error('POS Dashboard: Error fetching cafe info:', error);
           } else {
             console.log('POS Dashboard: Cafe info:', cafe);
-            if (cafe?.name === 'FOOD COURT') {
+            if (cafe && (cafe as any).name === 'FOOD COURT') {
               console.log('POS Dashboard: ✅ This is Food Court! Checking staff assignments...');
               supabase
                 .from('cafe_staff')
@@ -1073,12 +1132,10 @@ const POSDashboard = () => {
         description: `Order #${newOrder.order_number} received`,
       });
 
-      // Auto-generate and print receipt for new orders
-      if (profile?.cafe_id === 'chatkara') {
-        setTimeout(() => {
-          autoPrintReceipt(newOrder as Order);
-        }, 2000); // Wait 2 seconds for order data to be fetched
-      }
+      // Auto-generate and print receipt for new orders using cafe-specific print service
+      setTimeout(() => {
+        autoPrintReceiptWithCafeService(newOrder as Order);
+      }, 2000); // Wait 2 seconds for order data to be fetched
     },
     // Order update handler
     (updatedOrder) => {

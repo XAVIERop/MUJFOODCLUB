@@ -22,7 +22,7 @@ import FoodCourtReceipt from './FoodCourtReceipt';
 import SimpleReceipt from './SimpleReceipt';
 import { usePrinter } from '@/hooks/usePrinter';
 import { directPrinterService } from '@/services/directPrinterService';
-import { useLocalPrint } from '@/hooks/useLocalPrint';
+// import { useLocalPrint } from '@/hooks/useLocalPrint'; // Disabled - using cafe-specific PrintNode service
 import { usePrintNode } from '@/hooks/usePrintNode';
 
 interface OrderItem {
@@ -79,7 +79,7 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
   console.log('CompactOrderGrid received orderItems:', orderItems);
   const { toast } = useToast();
   const { isConnected, isPrinting, printBothReceipts } = usePrinter();
-  const { isAvailable: localPrintAvailable, printReceipt: localPrintReceipt, isPrinting: localPrintPrinting } = useLocalPrint();
+  // const { isAvailable: localPrintAvailable, printReceipt: localPrintReceipt, isPrinting: localPrintPrinting } = useLocalPrint(); // Disabled - using cafe-specific PrintNode service
   const { isAvailable: printNodeAvailable, printReceipt: printNodePrintReceipt, isPrinting: printNodePrinting, printers: printNodePrinters } = usePrintNode();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
@@ -737,21 +737,20 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
         }
       }
 
-      // Fallback to local print service
-      if (localPrintAvailable) {
-        const result = await localPrintReceipt(receiptData);
-        
-        if (result.success) {
-          toast({
-            title: "Receipt Printed",
-            description: "Professional thermal receipt sent via local service",
-            variant: "default",
-          });
-          return;
-        } else {
-          console.log('Local print failed, falling back to browser print:', result.error);
-        }
-      }
+      // Fallback to local print service - DISABLED (using cafe-specific PrintNode service)
+      // if (localPrintAvailable) {
+      //   const result = await localPrintReceipt(receiptData);
+      //   if (result.success) {
+      //     toast({
+      //       title: "Receipt Printed",
+      //       description: "Professional thermal receipt sent via local service",
+      //       variant: "default",
+      //     });
+      //     return;
+      //   } else {
+      //     console.log('Local print failed, falling back to browser print:', result.error);
+      //   }
+      // }
 
       // Final fallback to browser printing
       handlePrint(order);

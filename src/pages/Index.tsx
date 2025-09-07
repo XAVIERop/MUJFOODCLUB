@@ -179,6 +179,38 @@ const Index = () => {
     fetchCafes();
   }, []);
 
+  // Real-time subscription for cafe updates (ratings, etc.)
+  useEffect(() => {
+    const channel = supabase
+      .channel('cafe-updates')
+      .on('postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'cafes'
+        }, 
+        (payload) => {
+          console.log('🏪 Index: Cafe updated via real-time:', payload.new);
+          
+          // Update the specific cafe in the state
+          setCafes(prevCafes => 
+            prevCafes.map(cafe => 
+              cafe.id === payload.new.id 
+                ? { ...cafe, ...payload.new }
+                : cafe
+            )
+          );
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Index: Cafe subscription status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const fetchCafes = async () => {
     try {
       console.log('🚀 Index.tsx: Fetching cafes using get_cafes_ordered...', new Date().toISOString());

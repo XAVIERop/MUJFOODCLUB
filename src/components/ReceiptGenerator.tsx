@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Printer, Download, Share2, Copy, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalPrint } from '@/hooks/useLocalPrint';
+// import { useLocalPrint } from '@/hooks/useLocalPrint'; // Disabled - using cafe-specific PrintNode service
 
 interface ReceiptItem {
   id: string;
@@ -47,7 +47,7 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
   onDownload 
 }) => {
   const { toast } = useToast();
-  const { isAvailable, printReceipt, isPrinting } = useLocalPrint();
+  // const { isAvailable, printReceipt, isPrinting } = useLocalPrint(); // Disabled - using cafe-specific PrintNode service
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {

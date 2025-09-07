@@ -67,6 +67,38 @@ const Cafes = () => {
     }
   }, []);
 
+  // Real-time subscription for cafe updates (ratings, etc.)
+  useEffect(() => {
+    const channel = supabase
+      .channel('cafes-page-updates')
+      .on('postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'cafes'
+        }, 
+        (payload) => {
+          console.log('🏪 Cafes page: Cafe updated via real-time:', payload.new);
+          
+          // Update the specific cafe in the state
+          setCafes(prevCafes => 
+            prevCafes.map(cafe => 
+              cafe.id === payload.new.id 
+                ? { ...cafe, ...payload.new }
+                : cafe
+            )
+          );
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Cafes page: Cafe subscription status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   useEffect(() => {
     filterCafes();
   }, [cafes, searchQuery, selectedCategory, showFavoritesOnly]);
