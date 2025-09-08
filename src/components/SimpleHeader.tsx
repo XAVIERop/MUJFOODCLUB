@@ -67,6 +67,15 @@ const SimpleHeader = () => {
             </div>
           </div>
 
+          {/* FCC Logo (Center) */}
+          <div className="flex items-center justify-center">
+            <img 
+              src="/fcc.svg" 
+              alt="MUJ Food Club" 
+              className="h-8 w-auto"
+            />
+          </div>
+
           {/* Profile (Top Right) */}
           <div className="flex items-center space-x-3">
             {user ? (
@@ -106,6 +115,15 @@ const SimpleHeader = () => {
                   <DropdownMenuItem onClick={() => navigate('/favorites')}>
                     <Heart className="mr-2 h-4 w-4" />
                     <span>Favorites</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/pos-dashboard')}>
+                    <Store className="mr-2 h-4 w-4" />
+                    <span>POS Dashboard</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/cafe-dashboard')}>
+                    <Utensils className="mr-2 h-4 w-4" />
+                    <span>Cafe Dashboard</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
