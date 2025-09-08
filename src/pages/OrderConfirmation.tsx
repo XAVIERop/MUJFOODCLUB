@@ -64,6 +64,7 @@ const OrderConfirmation = () => {
           console.log('🔄 OrderConfirmation: Real-time update received:', payload.new);
           console.log('🔄 OrderConfirmation: Old status:', payload.old?.status);
           console.log('🔄 OrderConfirmation: New status:', payload.new?.status);
+          console.log('🔄 OrderConfirmation: Full payload:', payload);
           
           // Force refetch to get the latest data with all relations
           refetchOrder();
@@ -79,10 +80,13 @@ const OrderConfirmation = () => {
               'cancelled': 'Order Cancelled'
             };
             
+            console.log('🔄 OrderConfirmation: Status changed, showing toast');
             toast({
               title: "Order Status Updated!",
               description: `Your order is now: ${statusLabels[payload.new?.status as keyof typeof statusLabels] || payload.new?.status}`,
             });
+          } else {
+            console.log('🔄 OrderConfirmation: No status change detected');
           }
         }
       )
@@ -107,6 +111,8 @@ const OrderConfirmation = () => {
 
     if (order) {
       console.log('📥 OrderConfirmation: Order data updated:', order);
+      console.log('📥 OrderConfirmation: Order status:', order.status);
+      console.log('📥 OrderConfirmation: Order ID:', order.id);
       setLastRefresh(new Date());
       
       // If order is completed, refresh profile to get updated points
@@ -139,7 +145,9 @@ const OrderConfirmation = () => {
 
   const getCurrentStepIndex = () => {
     if (!order) return -1;
-    return statusSteps.findIndex(step => step.key === order.status);
+    const currentIndex = statusSteps.findIndex(step => step.key === order.status);
+    console.log('🔍 OrderConfirmation: Current status:', order.status, 'Index:', currentIndex);
+    return currentIndex;
   };
 
   const getStatusColor = (status: string) => {
