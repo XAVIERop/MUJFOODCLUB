@@ -70,7 +70,7 @@ const SimpleHeader = () => {
           {/* FCC Logo (Center) */}
           <div className="flex items-center justify-center">
             <img 
-              src="/fcc.svg" 
+              src="/fclog.jpeg" 
               alt="MUJ Food Club" 
               className="h-16 w-auto"
             />
