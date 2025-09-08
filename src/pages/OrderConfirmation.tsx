@@ -45,6 +45,55 @@ const OrderConfirmation = () => {
     staleTime: 10 * 1000, // 10 seconds for real-time updates
   });
 
+  // Set up real-time subscription for order updates
+  useEffect(() => {
+    if (!order?.id) return;
+
+    console.log('🔴 Setting up real-time subscription for order:', order.id);
+
+    const channel = supabase
+      .channel(`order-confirmation-${order.id}`)
+      .on('postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'orders',
+          filter: `id=eq.${order.id}`
+        }, 
+        (payload) => {
+          console.log('🔄 OrderConfirmation: Real-time update received:', payload.new);
+          console.log('🔄 OrderConfirmation: Old status:', payload.old?.status);
+          console.log('🔄 OrderConfirmation: New status:', payload.new?.status);
+          
+          // Force refetch to get the latest data with all relations
+          refetchOrder();
+          
+          // Show toast notification for status changes
+          if (payload.old?.status !== payload.new?.status) {
+            const statusLabels = {
+              'received': 'Order Received',
+              'confirmed': 'Order Confirmed',
+              'preparing': 'Preparing Your Order',
+              'on_the_way': 'Out for Delivery',
+              'completed': 'Order Delivered',
+              'cancelled': 'Order Cancelled'
+            };
+            
+            toast({
+              title: "Order Status Updated!",
+              description: `Your order is now: ${statusLabels[payload.new?.status as keyof typeof statusLabels] || payload.new?.status}`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔴 Cleaning up real-time subscription for order:', order.id);
+      supabase.removeChannel(channel);
+    };
+  }, [order?.id, refetchOrder, toast]);
+
   // Handle order data updates and errors
   useEffect(() => {
     if (orderError) {
@@ -194,8 +243,14 @@ const OrderConfirmation = () => {
             
             {/* Live Updates Status */}
             <div className="mt-4 text-center">
-              <p className="text-xs text-blue-600">
-                Live updates enabled - status changes appear instantly
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <p className="text-xs text-green-600 font-medium">
+                  Live updates active - status changes appear instantly
+                </p>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Last updated: {lastRefresh.toLocaleTimeString()}
               </p>
             </div>
           </div>

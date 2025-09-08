@@ -243,7 +243,7 @@ export const useOrderByNumberQuery = (orderNumber: string | null, userId: string
     gcTime: 2 * 60 * 1000, // 2 minutes
     enabled: options?.enabled !== false && !!orderNumber && !!userId,
     retry: 2,
-    refetchInterval: 30 * 1000, // Refetch every 30 seconds for real-time updates
+    // Removed refetchInterval - using real-time subscriptions instead
     refetchIntervalInBackground: false,
   });
 };
