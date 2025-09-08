@@ -1,0 +1,156 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = 'https://kblazvxfducwviyyiwde.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibGF6dnhmZHVjd3ZpeXlpd2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMzI0NjgsImV4cCI6MjA3MTcwODQ2OH0.bMtHsQy5cdkF-7ClprpF7HgMKUJpBUuZPaAPNz_LRSA';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+async function setupCookHouseEzeepSimple() {
+  console.log('🖨️ Setting up Cook House Ezeep Configuration (Simple)...');
+  
+  try {
+    // 1. Get Cook House cafe ID
+    console.log('\n🔍 Getting Cook House cafe ID...');
+    const { data: cookHouse, error: cafeError } = await supabase
+      .from('cafes')
+      .select('id, name, priority')
+      .ilike('name', '%cook house%')
+      .single();
+
+    if (cafeError || !cookHouse) {
+      console.error('❌ Error finding Cook House:', cafeError);
+      return;
+    }
+
+    console.log('✅ Cook House found:', cookHouse);
+
+    // 2. Check if printer config already exists
+    console.log('\n🔍 Checking existing printer configuration...');
+    const { data: existingConfig, error: configCheckError } = await supabase
+      .from('cafe_printer_configs')
+      .select('*')
+      .eq('cafe_id', cookHouse.id)
+      .eq('is_default', true)
+      .single();
+
+    if (existingConfig) {
+      console.log('✅ Printer config already exists, updating for Ezeep...');
+      
+      // Update existing config for Ezeep (using available columns)
+      const { data: updatedConfig, error: updateError } = await supabase
+        .from('cafe_printer_configs')
+        .update({
+          printer_name: 'Cook House Xprinter',
+          printer_type: 'xprinter_thermal',
+          connection_type: 'ezeep_cloud',
+          paper_width: 80,
+          print_density: 8,
+          auto_cut: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingConfig.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('❌ Error updating printer config:', updateError);
+        return;
+      }
+
+      console.log('✅ Printer config updated:', updatedConfig);
+    } else {
+      console.log('🆕 Creating new Ezeep printer configuration...');
+      
+      // Create new Ezeep config (using available columns)
+      const { data: newConfig, error: createError } = await supabase
+        .from('cafe_printer_configs')
+        .insert({
+          id: crypto.randomUUID(),
+          cafe_id: cookHouse.id,
+          printer_name: 'Cook House Xprinter',
+          printer_type: 'xprinter_thermal',
+          connection_type: 'ezeep_cloud',
+          paper_width: 80,
+          print_density: 8,
+          auto_cut: true,
+          is_active: true,
+          is_default: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('❌ Error creating printer config:', createError);
+        return;
+      }
+
+      console.log('✅ Printer config created:', newConfig);
+    }
+
+    // 3. Verify the configuration
+    console.log('\n🔍 Verifying Cook House Ezeep configuration...');
+    const { data: verification, error: verifyError } = await supabase
+      .from('cafe_printer_configs')
+      .select(`
+        id,
+        printer_name,
+        printer_type,
+        connection_type,
+        paper_width,
+        print_density,
+        auto_cut,
+        is_active,
+        is_default,
+        cafes!inner(
+          id,
+          name,
+          priority
+        )
+      `)
+      .eq('cafe_id', cookHouse.id)
+      .eq('is_active', true);
+
+    if (verifyError) {
+      console.error('❌ Error verifying configuration:', verifyError);
+      return;
+    }
+
+    console.log('✅ Cook House Ezeep configuration verified:');
+    verification.forEach(config => {
+      console.log(`  - Printer: ${config.printer_name}`);
+      console.log(`    Type: ${config.printer_type}`);
+      console.log(`    Connection: ${config.connection_type}`);
+      console.log(`    Paper Width: ${config.paper_width}mm`);
+      console.log(`    Print Density: ${config.print_density}`);
+      console.log(`    Auto Cut: ${config.auto_cut ? 'Yes' : 'No'}`);
+      console.log(`    Cafe: ${config.cafes.name} (Priority: ${config.cafes.priority})`);
+      console.log(`    Status: ${config.is_active ? 'Active' : 'Inactive'}`);
+    });
+
+    console.log('\n🎉 Cook House Ezeep configuration setup completed!');
+    console.log('📝 Current Status:');
+    console.log('✅ Cook House is active and accepting orders');
+    console.log('✅ Priority set to 7');
+    console.log('✅ Staff account created');
+    console.log('✅ Printer configuration ready for Ezeep');
+    console.log('\n📝 Next steps for Ezeep integration:');
+    console.log('1. Create Ezeep account for Cook House');
+    console.log('2. Add Xprinter to Ezeep');
+    console.log('3. Get Ezeep API key and printer ID');
+    console.log('4. Update the Ezeep service with real credentials');
+    console.log('5. Test printing with sample receipts');
+    console.log('\n🔗 Ezeep Setup Guide:');
+    console.log('1. Go to https://ezeep.com');
+    console.log('2. Sign up for free account');
+    console.log('3. Add your Xprinter to Ezeep');
+    console.log('4. Get API key from Ezeep dashboard');
+    console.log('5. Update ezeepPrintService.ts with real credentials');
+
+  } catch (error) {
+    console.error('❌ Unexpected error:', error);
+  }
+}
+
+setupCookHouseEzeepSimple();

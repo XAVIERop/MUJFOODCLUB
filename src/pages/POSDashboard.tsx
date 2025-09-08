@@ -41,8 +41,7 @@ import EnhancedOrderGrid from '@/components/EnhancedOrderGrid';
 import POSAnalytics from '@/components/POSAnalytics';
 import ThermalPrinter from '@/components/ThermalPrinter';
 import { thermalPrinterService, formatOrderForPrinting } from '@/api/thermalPrinter';
-import { createCafePrintService } from '@/services/cafeSpecificPrintService';
-import { universalPrintService } from '@/services/universalPrintService';
+import { unifiedPrintService } from '@/services/unifiedPrintService';
 import NotificationCenter from '@/components/NotificationCenter';
 import SimplePrinterConfig from '@/components/SimplePrinterConfig';
 import PrintNodeStatus from '@/components/PrintNodeStatus';
@@ -417,9 +416,9 @@ const POSDashboard = () => {
   };
 
   const autoPrintReceiptWithCafeService = async (order: Order) => {
-    console.log('🚀 SIMPLE PRINT: Using Universal Print Service directly!');
+    console.log('🚀 UNIFIED PRINT: Using Unified Print Service!');
     try {
-      console.log('Auto-printing with Universal Print Service for order:', order.order_number);
+      console.log('Auto-printing with Unified Print Service for order:', order.order_number);
       
       // Get order items
       const { data: items, error: itemsError } = await supabase
@@ -466,32 +465,33 @@ const POSDashboard = () => {
         points_redeemed: 0
       };
 
-      console.log('🚀 SIMPLE PRINT: Cafe name:', receiptData.cafe_name);
-      console.log('🚀 SIMPLE PRINT: Cafe name type:', typeof receiptData.cafe_name);
-      console.log('🚀 SIMPLE PRINT: Cafe name length:', receiptData.cafe_name?.length);
-      console.log('🚀 SIMPLE PRINT: Is Chatkara?', receiptData.cafe_name?.toLowerCase().includes('chatkara'));
-      console.log('🚀 SIMPLE PRINT: Full receiptData:', receiptData);
+      console.log('🚀 UNIFIED PRINT: Cafe ID:', cafeId);
+      console.log('🚀 UNIFIED PRINT: Cafe name:', receiptData.cafe_name);
+      console.log('🚀 UNIFIED PRINT: Full receiptData:', receiptData);
       
-      // Use Universal Print Service - always uses cafe-specific formatting
-      const kotResult = await universalPrintService.printKOT(receiptData);
-      const receiptResult = await universalPrintService.printReceipt(receiptData);
+      // Use Unified Print Service with cafe-specific routing
+      if (!cafeId) {
+        throw new Error('Cafe ID not available for printing');
+      }
       
-      if (kotResult.success && receiptResult.success) {
-        console.log('✅ SIMPLE PRINT: Success!');
+      const result = await unifiedPrintService.printBoth(receiptData, cafeId);
+      
+      if (result.success) {
+        console.log('✅ UNIFIED PRINT: Success!', result);
         toast({
           title: "Receipt Printed",
-          description: `KOT and Receipt for order #${order.order_number} printed with cafe-specific format`,
+          description: `KOT and Receipt for order #${order.order_number} printed using ${result.method}`,
         });
       } else {
-        console.error('❌ SIMPLE PRINT: Failed:', { kotResult, receiptResult });
+        console.error('❌ UNIFIED PRINT: Failed:', result);
         toast({
           title: "Print Failed",
-          description: `Failed to print receipt: ${kotResult.error || receiptResult.error}`,
+          description: `Failed to print receipt: ${result.error}`,
           variant: "destructive"
         });
       }
     } catch (error) {
-      console.error('❌ SIMPLE PRINT: Error:', error);
+      console.error('❌ UNIFIED PRINT: Error:', error);
       toast({
         title: "Print Error",
         description: `Error printing receipt: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -501,7 +501,7 @@ const POSDashboard = () => {
   };
 
   const autoPrintReceipt = async (order: Order) => {
-    console.log('🔄 autoPrintReceipt called - using Universal Print Service!');
+    console.log('🔄 autoPrintReceipt called - using Unified Print Service!');
     try {
       // Fetch order items for the new order
       const { data: items, error } = await supabase
@@ -544,20 +544,25 @@ const POSDashboard = () => {
         points_redeemed: 0
       };
       
-      console.log('🔄 Universal Print Service: Cafe name:', receiptData.cafe_name);
+      console.log('🔄 Unified Print Service: Cafe ID:', cafeId);
+      console.log('🔄 Unified Print Service: Cafe name:', receiptData.cafe_name);
       
-      // Use Universal Print Service - always uses cafe-specific formatting
-      const kotResult = await universalPrintService.printKOT(receiptData);
-      const receiptResult = await universalPrintService.printReceipt(receiptData);
+      // Use Unified Print Service with cafe-specific routing
+      if (!cafeId) {
+        console.error('Cafe ID not available for printing');
+        return;
+      }
       
-      if (kotResult.success && receiptResult.success) {
+      const result = await unifiedPrintService.printBoth(receiptData, cafeId);
+      
+      if (result.success) {
         toast({
           title: "Receipt Printed",
-          description: `KOT and Receipt for order #${order.order_number} printed with cafe-specific format`,
+          description: `KOT and Receipt for order #${order.order_number} printed using ${result.method}`,
         });
         return;
       } else {
-        console.error('Universal Print Service failed:', { kotResult, receiptResult });
+        console.error('Unified Print Service failed:', result);
       }
 
       // Fallback to browser-based printing

@@ -1,0 +1,208 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = 'https://kblazvxfducwviyyiwde.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibGF6dnhmZHVjd3ZpeXlpd2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMzI0NjgsImV4cCI6MjA3MTcwODQ2OH0.bMtHsQy5cdkF-7ClprpF7HgMKUJpBUuZPaAPNz_LRSA';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+async function createCookHouseStaff() {
+  console.log('👥 Creating Cook House Staff Account...');
+  
+  try {
+    // 1. Get Cook House cafe ID
+    console.log('\n🔍 Getting Cook House cafe ID...');
+    const { data: cookHouse, error: cafeError } = await supabase
+      .from('cafes')
+      .select('id, name')
+      .ilike('name', '%cook house%')
+      .single();
+
+    if (cafeError || !cookHouse) {
+      console.error('❌ Error finding Cook House:', cafeError);
+      return;
+    }
+
+    console.log('✅ Cook House found:', cookHouse);
+
+    // 2. Create auth user first
+    console.log('\n🔐 Creating auth user for Cook House owner...');
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: 'cookhouse.owner@muj.manipal.edu',
+      password: 'CookHouse2025!',
+      options: {
+        data: {
+          full_name: 'Cook House Owner',
+          user_type: 'cafe_owner'
+        }
+      }
+    });
+
+    if (authError) {
+      console.error('❌ Error creating auth user:', authError);
+      return;
+    }
+
+    console.log('✅ Auth user created:', authData.user?.email);
+    console.log('User ID:', authData.user?.id);
+
+    // 3. Wait a moment for the profile to be created by trigger
+    console.log('\n⏳ Waiting for profile to be created...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // 4. Check if profile exists
+    const { data: existingProfile, error: profileCheckError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single();
+
+    if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+      console.error('❌ Error checking profile:', profileCheckError);
+      return;
+    }
+
+    if (existingProfile) {
+      console.log('✅ Profile exists, updating...');
+      
+      // Update existing profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: 'Cook House Owner',
+          block: 'B1',
+          phone: '+91-9876543210',
+          user_type: 'cafe_owner',
+          cafe_id: cookHouse.id,
+          loyalty_points: 0,
+          loyalty_tier: 'foodie',
+          qr_code: `QR-COOKHOUSE-OWNER-${Date.now()}`,
+          student_id: 'COOK001',
+          total_orders: 0,
+          total_spent: 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', authData.user.id)
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('❌ Error updating profile:', profileError);
+        return;
+      }
+
+      console.log('✅ Profile updated:', profileData);
+    } else {
+      console.log('❌ Profile not found, creating manually...');
+      
+      // Create profile manually
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          email: 'cookhouse.owner@muj.manipal.edu',
+          full_name: 'Cook House Owner',
+          block: 'B1',
+          phone: '+91-9876543210',
+          user_type: 'cafe_owner',
+          cafe_id: cookHouse.id,
+          loyalty_points: 0,
+          loyalty_tier: 'foodie',
+          qr_code: `QR-COOKHOUSE-OWNER-${Date.now()}`,
+          student_id: 'COOK001',
+          total_orders: 0,
+          total_spent: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('❌ Error creating profile:', profileError);
+        return;
+      }
+
+      console.log('✅ Profile created:', profileData);
+    }
+
+    // 5. Create cafe staff record
+    console.log('\n🏪 Creating cafe staff record...');
+    const staffRecord = {
+      id: crypto.randomUUID(),
+      cafe_id: cookHouse.id,
+      user_id: authData.user.id,
+      role: 'owner',
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: staffData, error: staffError } = await supabase
+      .from('cafe_staff')
+      .insert(staffRecord)
+      .select()
+      .single();
+
+    if (staffError) {
+      console.error('❌ Error creating staff record:', staffError);
+      return;
+    }
+
+    console.log('✅ Staff record created:', staffData);
+
+    // 6. Verify the setup
+    console.log('\n🔍 Verifying Cook House staff setup...');
+    const { data: verification, error: verifyError } = await supabase
+      .from('cafe_staff')
+      .select(`
+        id,
+        role,
+        is_active,
+        cafe_id,
+        profiles!inner(
+          id,
+          email,
+          full_name,
+          user_type,
+          cafe_id
+        ),
+        cafes!inner(
+          id,
+          name,
+          priority,
+          is_active
+        )
+      `)
+      .eq('cafe_id', cookHouse.id)
+      .eq('is_active', true);
+
+    if (verifyError) {
+      console.error('❌ Error verifying setup:', verifyError);
+      return;
+    }
+
+    console.log('✅ Cook House staff setup verified:');
+    verification.forEach(staff => {
+      console.log(`  - ${staff.profiles.full_name} (${staff.profiles.email})`);
+      console.log(`    Role: ${staff.role}`);
+      console.log(`    Cafe: ${staff.cafes.name} (Priority: ${staff.cafes.priority})`);
+      console.log(`    Status: ${staff.is_active ? 'Active' : 'Inactive'}`);
+    });
+
+    console.log('\n🎉 Cook House staff account created successfully!');
+    console.log('📝 Login Details:');
+    console.log(`  Email: cookhouse.owner@muj.manipal.edu`);
+    console.log(`  Password: CookHouse2025!`);
+    console.log(`  Role: Cafe Owner`);
+    console.log(`  Cafe: COOK HOUSE`);
+    console.log(`  Priority: 7`);
+    console.log('\n📝 Next steps:');
+    console.log('1. Set up Ezeep integration for Xprinter');
+    console.log('2. Test the complete system');
+
+  } catch (error) {
+    console.error('❌ Unexpected error:', error);
+  }
+}
+
+createCookHouseStaff();

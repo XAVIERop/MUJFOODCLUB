@@ -25,21 +25,21 @@ interface CafeCategoriesProps {
 const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
   const navigate = useNavigate();
 
-  // Predefined categories as requested
+  // Categories that match the database cuisine_categories
   const categories = [
     'Pizza',
     'North Indian',
     'Chinese',
-    'Sandwiches',
-    'Deserts',
-    'Quick Bites',
-    'Chaap',
-    'Coffee',
-    'Momos',
-    'Rolls',
-    'Combos',
+    'Quick Bytes',
+    'Desserts',
+    'Italian',
+    'Street Food',
+    'Multi-Cuisine',
     'Waffles',
-    'Multi Cuisine'
+    'Ice Cream',
+    'Beverages',
+    'Fast Food',
+    'Café'
   ];
 
   // Map categories to SVG icons
@@ -48,16 +48,16 @@ const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
       'Pizza': { image: '/pizza.svg', name: 'Pizza' },
       'North Indian': { image: '/NorthIndian.svg', name: 'North Indian' },
       'Chinese': { image: '/chinese.svg', name: 'Chinese' },
-      'Sandwiches': { image: '/sandwiches.svg', name: 'Sandwiches' },
-      'Deserts': { image: '/deserts.svg', name: 'Deserts' },
-      'Quick Bites': { image: '/QuickBites.svg', name: 'Quick Bites' },
-      'Chaap': { image: '/chaap.svg', name: 'Chaap' },
-      'Coffee': { image: '/coffee.svg', name: 'Coffee' },
-      'Momos': { image: '/momos.svg', name: 'Momos' },
-      'Rolls': { image: '/rolls.svg', name: 'Rolls' },
-      'Combos': { image: '/multicuisine.svg', name: 'Combos' }, // Using multicuisine.svg as fallback
+      'Quick Bytes': { image: '/QuickBites.svg', name: 'Quick Bytes' },
+      'Desserts': { image: '/deserts.svg', name: 'Desserts' },
+      'Italian': { image: '/pizza.svg', name: 'Italian' }, // Using pizza.svg as fallback
+      'Street Food': { image: '/chaap.svg', name: 'Street Food' }, // Using chaap.svg as fallback
+      'Multi-Cuisine': { image: '/multicuisine.svg', name: 'Multi-Cuisine' },
       'Waffles': { image: '/waffles.svg', name: 'Waffles' },
-      'Multi Cuisine': { image: '/multicuisine.svg', name: 'Multi Cuisine' },
+      'Ice Cream': { image: '/deserts.svg', name: 'Ice Cream' }, // Using deserts.svg as fallback
+      'Beverages': { image: '/coffee.svg', name: 'Beverages' }, // Using coffee.svg as fallback
+      'Fast Food': { image: '/QuickBites.svg', name: 'Fast Food' }, // Using QuickBites.svg as fallback
+      'Café': { image: '/coffee.svg', name: 'Café' }, // Using coffee.svg as fallback
     };
 
     return categoryMap[type] || { image: '/multicuisine.svg', name: type };

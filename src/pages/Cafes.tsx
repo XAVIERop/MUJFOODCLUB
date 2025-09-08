@@ -36,34 +36,37 @@ const Cafes = () => {
 
   const { toggleFavorite, isFavorite, getFavoriteCafes } = useFavorites();
 
-  // Available cuisine categories (matching the 13 predefined categories)
+  // Available cuisine categories (matching the database cuisine_categories)
   const cuisineCategories = [
     'All',
     'Pizza',
     'North Indian',
     'Chinese',
-    'Sandwiches',
-    'Deserts',
-    'Quick Bites',
-    'Chaap',
-    'Coffee',
-    'Momos',
-    'Rolls',
-    'Combos',
+    'Quick Bytes',
+    'Desserts',
+    'Italian',
+    'Street Food',
+    'Multi-Cuisine',
     'Waffles',
-    'Multi Cuisine'
+    'Ice Cream',
+    'Beverages',
+    'Fast Food',
+    'Café'
   ];
 
   useEffect(() => {
     fetchCafes();
     
-    // Check URL parameters for favorites and search
+    // Check URL parameters for favorites, search, and category
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('favorites') === 'true') {
       setShowFavoritesOnly(true);
     }
     if (urlParams.get('search')) {
       setSearchQuery(urlParams.get('search') || '');
+    }
+    if (urlParams.get('category')) {
+      setSelectedCategory(urlParams.get('category') || 'All');
     }
   }, []);
 
