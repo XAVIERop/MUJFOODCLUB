@@ -72,7 +72,7 @@ const SimpleHeader = () => {
             <img 
               src="/fcc.svg" 
               alt="MUJ Food Club" 
-              className="h-12 w-auto"
+              className="h-16 w-auto"
             />
           </div>
 
