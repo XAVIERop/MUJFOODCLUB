@@ -122,8 +122,11 @@ const Menu = () => {
   useEffect(() => {
     if (cafeId) {
       fetchCafeData();
+    } else {
+      // If no cafeId, redirect to cafes page
+      navigate('/cafes');
     }
-  }, [cafeId]);
+  }, [cafeId, navigate]);
 
   // Real-time subscription for cafe rating updates
   useEffect(() => {
@@ -155,6 +158,8 @@ const Menu = () => {
 
   const fetchCafeData = async () => {
     try {
+      setLoading(true);
+      
       // Fetch cafe details
       const { data: cafeData, error: cafeError } = await supabase
         .from('cafes')
@@ -162,7 +167,27 @@ const Menu = () => {
         .eq('id', cafeId)
         .single();
 
-      if (cafeError) throw cafeError;
+      if (cafeError) {
+        console.error('Cafe not found:', cafeError);
+        toast({
+          title: "Cafe Not Found",
+          description: "The requested cafe does not exist or has been removed.",
+          variant: "destructive"
+        });
+        navigate('/cafes');
+        return;
+      }
+      
+      if (!cafeData) {
+        toast({
+          title: "Cafe Not Found",
+          description: "The requested cafe does not exist.",
+          variant: "destructive"
+        });
+        navigate('/cafes');
+        return;
+      }
+      
       setCafe(cafeData);
 
       // Fetch menu items
@@ -173,7 +198,15 @@ const Menu = () => {
         .eq('is_available', true)
         .order('category', { ascending: true });
 
-      if (menuError) throw menuError;
+      if (menuError) {
+        console.error('Error fetching menu items:', menuError);
+        toast({
+          title: "Menu Error",
+          description: "Failed to load menu items",
+          variant: "destructive"
+        });
+      }
+      
       setMenuItems(menuData || []);
       
       // Group menu items by name and portion
@@ -183,9 +216,10 @@ const Menu = () => {
       console.error('Error fetching cafe data:', error);
       toast({
         title: "Error",
-        description: "Failed to load cafe menu",
+        description: "Failed to load cafe menu. Please try again.",
         variant: "destructive"
       });
+      navigate('/cafes');
     } finally {
       setLoading(false);
     }
@@ -402,6 +436,20 @@ const Menu = () => {
     groups[category].push(item);
     return groups;
   }, {} as {[key: string]: GroupedMenuItem[]});
+
+  // Early return if no cafeId
+  if (!cafeId) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SimpleHeader />
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-center">
+            <p className="text-muted-foreground">Redirecting to cafes...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
