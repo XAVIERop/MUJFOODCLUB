@@ -4,8 +4,34 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/((?!api|_next/static|_next/image|favicon.ico|.*\\.).*)$",
+      "source": "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|pdf|woff|woff2|ttf|eot)).*)$",
       "destination": "/index.html"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/menu/(.*)",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/cafes",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/checkout",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/profile",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/rewards",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/orders",
+      "dest": "/index.html"
     }
   ],
   "headers": [
