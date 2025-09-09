@@ -69,33 +69,33 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-            <ScrollToTop>
-              <Suspense fallback={<LoadingSpinner size="lg" text="Loading page..." />}>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/menu/:cafeId" element={<Menu />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-                  <Route path="/orders" element={<MyOrders />} />
-                  <Route path="/order-analytics" element={<OrderAnalyticsPage />} />
-                  <Route path="/cafes" element={<Cafes />} />
-                  <Route path="/rewards" element={<CafeRewards />} />
-                  <Route path="/qr-code" element={<QRCodePage />} />
-                  <Route path="/profile" element={<Profile />} />
+              <ScrollToTop>
+                <Suspense fallback={<LoadingSpinner size="lg" text="Loading page..." />}>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/menu/:cafeId" element={<Menu />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+                    <Route path="/orders" element={<MyOrders />} />
+                    <Route path="/order-analytics" element={<OrderAnalyticsPage />} />
+                    <Route path="/cafes" element={<Cafes />} />
+                    <Route path="/rewards" element={<CafeRewards />} />
+                    <Route path="/qr-code" element={<QRCodePage />} />
+                    <Route path="/profile" element={<Profile />} />
 
-                  <Route path="/cafe-dashboard" element={<CafeDashboard />} />
-                  <Route path="/cafe-management" element={<CafeManagement />} />
-                  <Route path="/demo-enhanced-card" element={<EnhancedCafeCardDemo />} />
-                  <Route path="/pos-test" element={<POSTest />} />
-                  <Route path="/compact-orders-test" element={<CompactOrdersTest />} />
-                  <Route path="/pos-dashboard" element={<POSDashboard />} />
-                  <Route path="/whatsapp-test" element={<WhatsAppTest />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </ScrollToTop>
+                    <Route path="/cafe-dashboard" element={<CafeDashboard />} />
+                    <Route path="/cafe-management" element={<CafeManagement />} />
+                    <Route path="/demo-enhanced-card" element={<EnhancedCafeCardDemo />} />
+                    <Route path="/pos-test" element={<POSTest />} />
+                    <Route path="/compact-orders-test" element={<CompactOrdersTest />} />
+                    <Route path="/pos-dashboard" element={<POSDashboard />} />
+                    <Route path="/whatsapp-test" element={<WhatsAppTest />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </ScrollToTop>
             
             {/* Bottom Navigation - Mobile Only */}
             <BottomNavigation />
