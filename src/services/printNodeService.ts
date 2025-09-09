@@ -427,12 +427,10 @@ MUJFOODCLUB!`;
       // Chatkara format (compact, thermal printer optimized with bold text)
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'CHATKARA'}\x1B\x21\x00
     ----------------------------------------
-    \x1B\x21\x08Name: ${customer_name || 'WALK-IN'} (M: ${customer_phone || '9999999999'})\x1B\x21\x00
-    \x1B\x21\x08Adr: ${data.delivery_block || 'N/A'}\x1B\x21\x00
-    Date: ${dateStr}
-    ${timeStr}
-    \x1B\x21\x08Delivery\x1B\x21\x00
-    Cashier: biller
+    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x08Name: ${customer_name || 'WALK-IN'}\x1B\x21\x00
+    \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
+    \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
     \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Token No.: ${order_number}\x1B\x21\x00
     ----------------------------------------
@@ -468,20 +466,40 @@ MUJFOODCLUB!`;
     items.forEach(item => {
       const itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
       const qty = item.quantity.toString().padStart(2);
-      const price = item.unit_price.toFixed(0).padStart(4);
-      const amount = item.total_price.toFixed(0).padStart(5);
-      receipt += `\n    ${itemName} ${qty}    ${price}    ${amount}`;
+      
+      // Use different format for Chatkara vs others
+      let price, amount;
+      if (isChatkara) {
+        price = item.unit_price.toFixed(0).padStart(4);
+        amount = item.total_price.toFixed(0).padStart(5);
+      } else {
+        price = item.unit_price.toFixed(0).padStart(4);
+        amount = item.total_price.toFixed(0).padStart(5);
+      }
+      
+      if (isChatkara) {
+        // Keep normal size for item names in receipt
+        receipt += `\n    \x1B\x21\x08${itemName}\x1B\x21\x00 ${qty}    ${price}    ${amount}`;
+      } else {
+        receipt += `\n    ${itemName} ${qty}    ${price}    ${amount}`;
+      }
     });
 
     // Add cafe-specific footer
     if (isChatkara) {
+      const deliveryCharge = 10;
+      const discountAmount = subtotal * 0.05; // 5% discount
+      const finalTotal = subtotal + deliveryCharge - discountAmount;
+      
       receipt += `\n    ----------------------------------------
-    Total Qty: ${totalQty}
-    Sub Total: ${subtotal.toFixed(2)}
-    Delivery Charge: ${(final_amount - subtotal).toFixed(2)}
-    \x1B\x21\x30Grand Total: ₹${final_amount.toFixed(2)}\x1B\x21\x00
+    \x1B\x21\x08Total Qty: ${totalQty}\x1B\x21\x00
+    \x1B\x21\x08Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00
+    \x1B\x21\x08Delivery Charge: +${deliveryCharge}\x1B\x21\x00
+    \x1B\x21\x08MUJ Food Club Discount: -${discountAmount.toFixed(0)}\x1B\x21\x00
+    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
     ----------------------------------------
-    \x1B\x21\x08Thanks\x1B\x21\x00
+    \x1B\x21\x08Thanks Order Again\x1B\x21\x00
+    \x1B\x21\x08mujfoodclub.in\x1B\x21\x00
     ----------------------------------------
     ----------------------------------------
     ----------------------------------------`;
@@ -543,24 +561,60 @@ MUJFOODCLUB!`;
     // Proper center-aligned KOT format with bold formatting
     let kot = `    ----------------------------------------
     ${dateStr} ${timeStr}
-    \x1B\x21\x30KOT - ${order_number.slice(-2)}\x1B\x21\x00
+    \x1B\x21\x30KOT - ${order_number}\x1B\x21\x00
     \x1B\x21\x08${isChatkara ? 'DELIVERY' : 'PICK UP'}\x1B\x21\x00
     ----------------------------------------
     \x1B\x21\x08ITEM            QTY\x1B\x21\x00
     ----------------------------------------`;
 
-    // Add items with proper center-aligned formatting
+    // Add items with proper two-column layout
     items.forEach(item => {
-      const itemName = item.name.toUpperCase().substring(0, 18).padEnd(18);
-      const qty = item.quantity.toString().padStart(2);
-      kot += `\n    ${itemName} ${qty}`;
+      const itemName = item.name.toUpperCase(); // Don't cut the item name
+      const qty = item.quantity.toString();
+      
+      if (isChatkara) {
+        // Create proper two-column layout with word wrapping for item names
+        const maxItemWidth = 20; // Maximum characters for item name column
+        const qtyWidth = 3; // Width for quantity column
+        
+        // Truncate very long item names to prevent excessive wrapping
+        const truncatedName = itemName.length > 25 ? itemName.substring(0, 25) + '...' : itemName;
+        
+        // Split long item names into multiple lines
+        const words = truncatedName.split(' ');
+        let currentLine = '';
+        let lines = [];
+        
+        for (const word of words) {
+          if ((currentLine + ' ' + word).length <= maxItemWidth) {
+            currentLine = currentLine ? currentLine + ' ' + word : word;
+          } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+        
+        // Print each line with proper column alignment
+        lines.forEach((line, index) => {
+          const paddedLine = line.padEnd(maxItemWidth);
+          if (index === 0) {
+            // First line: show quantity (item name large size, quantity large size)
+            kot += `\n    \x1B\x21\x30${paddedLine}\x1B\x21\x00 \x1B\x21\x30${qty.padStart(qtyWidth)}\x1B\x21\x00`;
+          } else {
+            // Subsequent lines: no quantity, just item name (large size)
+            kot += `\n    \x1B\x21\x30${paddedLine}\x1B\x21\x00`;
+          }
+        });
+      } else {
+        kot += `\n    ${itemName} ${qty}`;
+      }
     });
 
     // Add cafe-specific footer
     if (isChatkara) {
       kot += `\n    ----------------------------------------
-    \x1B\x21\x08THANKS FOR VISIT!!\x1B\x21\x00
-    \x1B\x21\x30${cafe_name?.toUpperCase() || 'CHATKARA'}\x1B\x21\x00
+    \x1B\x21\x08Thanks\x1B\x21\x00
     ----------------------------------------
     ----------------------------------------
     ----------------------------------------`;

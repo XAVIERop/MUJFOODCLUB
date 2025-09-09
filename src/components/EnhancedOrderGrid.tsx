@@ -73,6 +73,7 @@ interface EnhancedOrderGridProps {
   onOrderSelect: (order: Order) => void;
   onStatusUpdate: (orderId: string, newStatus: Order['status']) => void;
   loading?: boolean;
+  cafeId?: string;
 }
 
 const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
@@ -80,12 +81,13 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
   orderItems,
   onOrderSelect,
   onStatusUpdate,
-  loading = false
+  loading = false,
+  cafeId
 }) => {
   const { toast } = useToast();
   const { isConnected, isPrinting, printBothReceipts } = usePrinter();
   // const { isAvailable: localPrintAvailable, printReceipt: localPrintReceipt, isPrinting: localPrintPrinting } = useLocalPrint(); // Disabled - using cafe-specific PrintNode service
-  const { isAvailable: printNodeAvailable, printReceipt: printNodePrintReceipt, printKOT: printNodePrintKOT, printOrderReceipt: printNodePrintOrderReceipt, isPrinting: printNodePrinting, printers: printNodePrinters } = usePrintNode();
+  const { isAvailable: printNodeAvailable, printReceipt: printNodePrintReceipt, printKOT: printNodePrintKOT, printOrderReceipt: printNodePrintOrderReceipt, isPrinting: printNodePrinting, printers: printNodePrinters } = usePrintNode(cafeId);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
@@ -224,7 +226,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
     return {
       order_id: order.id,
       order_number: order.order_number,
-      cafe_name: order.cafes?.name || 'Unknown Cafe',
+      cafe_name: order.cafe?.name || order.cafes?.name || 'Unknown Cafe',
       customer_name: order.user?.full_name || order.customer_name || 'Walk-in Customer',
       customer_phone: order.user?.phone || order.phone_number || 'N/A',
       delivery_block: order.delivery_block || order.user?.block || 'N/A',
@@ -487,7 +489,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
           const statusInfo = getStatusInfo(order.status);
           const StatusIcon = statusInfo.icon;
           const items = orderItems[order.id] || [];
-          const isFoodCourt = order.cafes?.type === 'food_court';
+          const isFoodCourt = order.cafe?.type === 'food_court' || order.cafes?.type === 'food_court';
 
           return (
             <Card

@@ -340,23 +340,27 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               <tbody>
                 ${orderData.items.map(item => `
                   <tr>
-                    <td>${item.name}</td>
-                    <td>${item.quantity}</td>
-                    <td>${item.unit_price.toFixed(2)}</td>
-                    <td>${item.total_price.toFixed(2)}</td>
+                    <td style="font-weight: bold;">${item.name}</td>
+                    <td style="font-weight: bold;">${item.quantity}</td>
+                    <td style="font-weight: bold;">${item.unit_price.toFixed(0)}</td>
+                    <td style="font-weight: bold;">${item.total_price.toFixed(0)}</td>
                   </tr>
                 `).join('')}
               </tbody>
             </table>
             
             <div class="summary">
-              <div>Total Qty: ${orderData.items.reduce((sum, item) => sum + item.quantity, 0)}</div>
-              <div>Sub Total: ${orderData.subtotal.toFixed(2)}</div>
-              <div>Delivery Charge: ${(orderData.final_amount - orderData.subtotal).toFixed(2)}</div>
-              <div>Grand Total: ₹${orderData.final_amount.toFixed(2)}</div>
+              <div style="font-weight: bold;">Total Qty: ${orderData.items.reduce((sum, item) => sum + item.quantity, 0)}</div>
+              <div style="font-weight: bold;">Sub Total: ${orderData.subtotal.toFixed(0)}</div>
+              <div style="font-weight: bold;">Delivery Charge: +10</div>
+              <div style="font-weight: bold;">MUJ Food Club Discount: -${(orderData.subtotal * 0.05).toFixed(0)}</div>
+              <div style="font-weight: bold; font-size: 16px; margin-top: 8px;">Grand Total: ${(orderData.subtotal + 10 - orderData.subtotal * 0.05).toFixed(0)}rs</div>
             </div>
             
-            <div class="footer">Thanks</div>
+            <div class="footer">
+              <div style="font-weight: bold;">Thanks Order Again</div>
+              <div style="font-weight: bold;">mujfoodclub.in</div>
+            </div>
           </div>
         </body>
       </html>

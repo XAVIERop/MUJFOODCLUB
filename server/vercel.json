@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "whatsapp-webhook.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/whatsapp-webhook",
+      "dest": "/whatsapp-webhook"
+    },
+    {
+      "src": "/health",
+      "dest": "/health"
+    },
+    {
+      "src": "/test",
+      "dest": "/test"
+    }
+  ]
+}

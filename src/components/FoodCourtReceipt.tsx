@@ -66,7 +66,7 @@ const FoodCourtReceipt: React.FC<FoodCourtReceiptProps> = ({ order, orderItems, 
           .right { text-align: right; }
           .separator { border-top: 1px dashed #000; margin: 5px 0; }
           .item-row { display: flex; justify-content: space-between; margin: 2px 0; }
-          .item-name { flex: 1; }
+          .item-name { flex: 1; font-size: 14px; font-weight: bold; }
           .item-qty { width: 20px; text-align: right; }
         </style>
       </head>
@@ -128,7 +128,7 @@ const FoodCourtReceipt: React.FC<FoodCourtReceiptProps> = ({ order, orderItems, 
           .right { text-align: right; }
           .separator { border-top: 1px solid #000; margin: 5px 0; }
           .item-row { display: flex; justify-content: space-between; margin: 2px 0; }
-          .item-name { flex: 1; }
+          .item-name { flex: 1; font-size: 14px; font-weight: bold; }
           .item-qty { width: 20px; text-align: center; }
           .item-price { width: 40px; text-align: right; }
           .item-amount { width: 50px; text-align: right; }
@@ -166,8 +166,8 @@ const FoodCourtReceipt: React.FC<FoodCourtReceiptProps> = ({ order, orderItems, 
             <div class="item-row">
               <span class="item-name">${item.menu_item.name}</span>
               <span class="item-qty">${item.quantity}</span>
-              <span class="item-price">${item.unit_price.toFixed(2)}</span>
-              <span class="item-amount">${item.total_price.toFixed(2)}</span>
+              <span class="item-price">rs${item.unit_price.toFixed(2)}</span>
+              <span class="item-amount">rs${item.total_price.toFixed(2)}</span>
             </div>
           `).join('')}
           <div class="separator"></div>
@@ -176,24 +176,24 @@ const FoodCourtReceipt: React.FC<FoodCourtReceiptProps> = ({ order, orderItems, 
           </div>
           <div class="total-row">
             <span>Sub Total:</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>rs${subtotal.toFixed(2)}</span>
           </div>
           <div class="total-row">
             <span>CGST@2.5 2.5%:</span>
-            <span>${cgst}</span>
+            <span>rs${cgst}</span>
           </div>
           <div class="total-row">
             <span>SGST@2.5 2.5%:</span>
-            <span>${sgst}</span>
+            <span>rs${sgst}</span>
           </div>
           <div class="total-row">
             <span>Round off:</span>
-            <span>+${roundOff}</span>
+            <span>+rs${roundOff}</span>
           </div>
           <div class="separator"></div>
           <div class="total-row grand-total">
             <span>Grand Total:</span>
-            <span>₹${grandTotal}</span>
+            <span>rs${grandTotal}</span>
           </div>
           <div class="separator"></div>
           <div>Paid via: Other [UPI]</div>

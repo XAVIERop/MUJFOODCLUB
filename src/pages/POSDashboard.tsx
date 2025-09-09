@@ -860,6 +860,11 @@ const POSDashboard = () => {
                   padding: 1px 0;
                 }
                 
+                .items-table td:first-child {
+                  font-size: 14px;
+                  font-weight: bold;
+                }
+                
                 .summary {
                   margin-top: 6px;
                   font-size: 10px;
@@ -878,8 +883,8 @@ const POSDashboard = () => {
                 <div class="cafe-name">${orderData.cafe?.name || 'Chatkara'}</div>
                 
                 <div class="customer-info">
-                  <div>Name: (M: ${orderData.user?.phone || orderData.phone_number || 'N/A'})</div>
-                  <div>Adr: ${orderData.user?.block || orderData.delivery_block || 'N/A'}</div>
+                  <div>${orderData.user?.phone || orderData.phone_number || 'N/A'} ${orderData.user?.block || orderData.delivery_block || 'N/A'}</div>
+                  <div>Name: ${orderData.user?.full_name || 'WALK-IN'}</div>
                 </div>
                 
                 <div class="order-details">
@@ -903,23 +908,27 @@ const POSDashboard = () => {
                   <tbody>
                     ${orderItems.map(item => `
                       <tr>
-                        <td>${item.menu_item?.name || 'Unknown Item'}</td>
-                        <td>${item.quantity}</td>
-                        <td>${item.unit_price.toFixed(2)}</td>
-                        <td>${item.total_price.toFixed(2)}</td>
+                        <td style="font-weight: bold;">${item.menu_item?.name || 'Unknown Item'}</td>
+                        <td style="font-weight: bold;">${item.quantity}</td>
+                        <td style="font-weight: bold;">${item.unit_price.toFixed(0)}</td>
+                        <td style="font-weight: bold;">${item.total_price.toFixed(0)}</td>
                       </tr>
                     `).join('')}
                   </tbody>
                 </table>
                 
                 <div class="summary">
-                  <div>Total Qty: ${orderItems.reduce((sum, item) => sum + item.quantity, 0)}</div>
-                  <div>Sub Total: ${orderData.total_amount.toFixed(2)}</div>
-                  <div>Delivery Charge: 10.00</div>
-                  <div>Grand Total: ₹${(orderData.total_amount + 10).toFixed(2)}</div>
+                  <div style="font-weight: bold;">Total Qty: ${orderItems.reduce((sum, item) => sum + item.quantity, 0)}</div>
+                  <div style="font-weight: bold;">Sub Total: ${orderData.total_amount.toFixed(0)}</div>
+                  <div style="font-weight: bold;">Delivery Charge: +10</div>
+                  <div style="font-weight: bold;">MUJ Food Club Discount: -${(orderData.total_amount * 0.05).toFixed(0)}</div>
+                  <div style="font-weight: bold; font-size: 16px; margin-top: 8px;">Grand Total: ${(orderData.total_amount + 10 - orderData.total_amount * 0.05).toFixed(0)}rs</div>
                 </div>
                 
-                <div class="footer">Thanks</div>
+                <div class="footer">
+                  <div style="font-weight: bold;">Thanks Order Again</div>
+                  <div style="font-weight: bold;">mujfoodclub.in</div>
+                </div>
               </div>
             </body>
           </html>
@@ -1039,24 +1048,24 @@ const POSDashboard = () => {
               
               <div class="order-info">
                 <div class="info-row">
+                  <span>M:</span>
+                  <span style="font-size: 16px; font-weight: bold;">${orderData.user?.phone || orderData.phone_number || 'N/A'}</span>
+                </div>
+                <div class="info-row">
                   <span>Name:</span>
-                  <span>${orderData.user?.full_name || 'Walk-in Customer'} (M: ${orderData.user?.phone || orderData.phone_number || 'N/A'})</span>
+                  <span>${orderData.user?.full_name || 'Walk-in Customer'}</span>
+                </div>
+                <div class="info-row">
+                  <span>Adr:</span>
+                  <span>${orderData.user?.block || orderData.delivery_block || 'N/A'}</span>
                 </div>
                 <div class="info-row">
                   <span>Date:</span>
-                  <span>${dateStr}</span>
+                  <span>${dateStr} ${timeStr}</span>
                 </div>
                 <div class="info-row">
-                  <span>Time:</span>
-                  <span>${timeStr}</span>
-                </div>
-                <div class="info-row">
-                  <span>Order Type:</span>
-                  <span>Pick Up</span>
-                </div>
-                <div class="info-row">
-                  <span>Cashier:</span>
-                  <span>biller</span>
+                  <span>Delivery</span>
+                  <span>Cashier: biller</span>
                 </div>
                 <div class="info-row">
                   <span>Bill No.:</span>
@@ -1064,7 +1073,7 @@ const POSDashboard = () => {
                 </div>
                 <div class="info-row">
                   <span>Token No.:</span>
-                  <span>${Math.floor(Math.random() * 10) + 1}</span>
+                  <span>${orderData.order_number.replace(/[^\d]/g, '')}</span>
                 </div>
               </div>
               
@@ -1464,7 +1473,7 @@ const POSDashboard = () => {
             <div>
               <h4 className="font-bold mb-2">Option 1: PrintNode Service (Recommended)</h4>
               <p className="text-xs text-gray-600 mb-2">Professional thermal printing service</p>
-                  <PrintNodeStatus />
+                  <PrintNodeStatus cafeId={cafeId} />
             </div>
             <div>
               <h4 className="font-bold mb-2">Option 2: Direct USB Printing</h4>
@@ -1674,6 +1683,7 @@ const POSDashboard = () => {
                 onOrderSelect={handleOrderSelect}
                 onStatusUpdate={handleCompactStatusUpdate}
                 loading={loading}
+                cafeId={cafeId}
               />
             )}
 
@@ -2010,7 +2020,7 @@ const POSDashboard = () => {
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-4 mt-4">
-                    <PrintNodeStatus />
+                    <PrintNodeStatus cafeId={cafeId} />
                   </CollapsibleContent>
                 </Collapsible>
 

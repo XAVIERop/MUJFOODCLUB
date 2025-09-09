@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { LocationProvider } from "@/contexts/LocationContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import BottomNavigation from "./components/BottomNavigation";
 import ScrollToTop from "./components/ScrollToTop";
@@ -63,10 +64,11 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+        <LocationProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
             <ScrollToTop>
               <Suspense fallback={<LoadingSpinner size="lg" text="Loading page..." />}>
                 <Routes>
@@ -105,6 +107,7 @@ const App = () => (
             <PerformanceDashboard />
           </BrowserRouter>
         </TooltipProvider>
+        </LocationProvider>
       </AuthProvider>
     </QueryClientProvider>
   </ErrorBoundary>

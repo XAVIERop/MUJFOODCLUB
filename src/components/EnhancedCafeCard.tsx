@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useFavorites } from '../hooks/useFavorites';
+import MenuViewer from './MenuViewer';
 
 interface Cafe {
   id: string;
@@ -18,6 +19,7 @@ interface Cafe {
   total_ratings: number | null;
   cuisine_categories: string[] | null;
   priority: number | null;
+  menu_pdf_url?: string | null;
 }
 
 interface EnhancedCafeCardProps {
@@ -34,7 +36,8 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
                      cafe.name.toLowerCase().includes('food court') ||
                      cafe.name.toLowerCase().includes('punjabi tadka') ||
                      cafe.name.toLowerCase().includes('munch box') ||
-                     cafe.name.toLowerCase().includes('mini meals') ||
+                     cafe.name.toLowerCase().includes('cook house') ||
+                     cafe.name.toLowerCase().includes('havmor') ||
                      cafe.name.toLowerCase().includes('china town');
 
   const getCafeImage = () => {
@@ -244,14 +247,33 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
         <div className="space-y-3">
           {/* Primary Actions */}
           <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleViewMenu(cafe.id)}
-              className="text-xs font-medium hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition-all duration-200"
-            >
-              View Menu
-            </Button>
+            {(cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('havmor')) ? (
+              <MenuViewer 
+                cafeName={cafe.name} 
+                menuPdfUrl={
+                  cafe.name.toLowerCase().includes('chatkara') ? "/chatkaramenu.pdf" : 
+                  cafe.name.toLowerCase().includes('cook house') ? "/cookhousemenu.pdf" :
+                  cafe.name.toLowerCase().includes('havmor') ? "/havmormenu.pdf" : ""
+                }
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs font-medium hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition-all duration-200"
+                >
+                  View Menu
+                </Button>
+              </MenuViewer>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleViewMenu(cafe.id)}
+                className="text-xs font-medium hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition-all duration-200"
+              >
+                View Menu
+              </Button>
+            )}
             <Button
               size="sm"
               onClick={() => handleOrderNow(cafe.id)}
@@ -273,15 +295,31 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               <Phone className="w-3 h-3 mr-1" />
               Call
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleWhatsApp(cafe.phone, cafe.name)}
-              className="text-xs text-gray-600 hover:text-green-600 hover:bg-green-50"
-            >
-              <MessageCircle className="w-3 h-3 mr-1" />
-              WhatsApp
-            </Button>
+            {cafe.name.toLowerCase().includes('havmor') ? (
+              <MenuViewer 
+                cafeName={cafe.name} 
+                menuPdfUrl="/havmormenu.pdf"
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-gray-600 hover:text-orange-600 hover:bg-orange-50"
+                >
+                  <MessageCircle className="w-3 h-3 mr-1" />
+                  View Menu
+                </Button>
+              </MenuViewer>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleWhatsApp(cafe.phone, cafe.name)}
+                className="text-xs text-gray-600 hover:text-green-600 hover:bg-green-50"
+              >
+                <MessageCircle className="w-3 h-3 mr-1" />
+                WhatsApp
+              </Button>
+            )}
           </div>
         </div>
       </div>

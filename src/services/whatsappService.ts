@@ -43,9 +43,11 @@ export class WhatsAppService {
   async sendOrderNotification(cafeId: string, orderData: OrderData): Promise<boolean> {
     try {
       console.log('📱 WhatsApp Service: Sending order notification for cafe:', cafeId);
+      console.log('📱 WhatsApp Service: Order data:', orderData);
       
       // Get cafe WhatsApp settings
       const cafeSettings = await this.getCafeWhatsAppSettings(cafeId);
+      console.log('📱 WhatsApp Service: Cafe settings:', cafeSettings);
       
       if (!cafeSettings) {
         console.log('❌ WhatsApp Service: Cafe not found');
@@ -119,14 +121,14 @@ export class WhatsAppService {
     });
 
     const itemsText = orderData.order_items
-      .map(item => `• ${item.menu_item.name} x${item.quantity} - ₹${item.total_price}`)
+      .map(item => `• *${item.menu_item.name}* x${item.quantity} - ₹${item.total_price}`)
       .join('\n');
 
     const notesText = orderData.delivery_notes && orderData.delivery_notes.trim() 
       ? `\n📋 *Notes:* ${orderData.delivery_notes}` 
       : '';
 
-    return `🍽️ *New Order Alert!*
+    return `🍽️ *MUJ Food Club* - New Order Alert!
 
 📋 *Order:* #${orderData.order_number}
 👤 *Customer:* ${orderData.customer_name}
@@ -138,7 +140,7 @@ export class WhatsAppService {
 📝 *Items:*
 ${itemsText}${notesText}
 
-🔗 *Manage Order:* ${window.location.origin}/pos-dashboard`;
+🔗 *Full Dashboard:* ${window.location.origin}/pos-dashboard`;
   }
 
   /**
@@ -150,10 +152,18 @@ ${itemsText}${notesText}
       console.log('📱 WhatsApp Service: Sending message to:', phoneNumber);
       console.log('📱 WhatsApp Service: Message:', message);
       
-      // Try Twilio first, then fallback to Meta API
+      // Debug: Check environment variables
+      console.log('🔍 Environment Variables Debug:');
+      console.log('TWILIO_ACCOUNT_SID:', WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID ? '✅ Set' : '❌ Missing');
+      console.log('TWILIO_AUTH_TOKEN:', WHATSAPP_CONFIG.TWILIO_AUTH_TOKEN ? '✅ Set' : '❌ Missing');
+      console.log('TWILIO_WHATSAPP_FROM:', WHATSAPP_CONFIG.TWILIO_WHATSAPP_FROM || '❌ Missing');
+      
+      // Try Twilio first, then fallback to WhatsApp Web
       if (WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID && WHATSAPP_CONFIG.TWILIO_AUTH_TOKEN) {
+        console.log('✅ Using Twilio API');
         return await this.sendViaTwilio(phoneNumber, message);
       } else if (META_WHATSAPP_CONFIG.ACCESS_TOKEN && META_WHATSAPP_CONFIG.PHONE_NUMBER_ID) {
+        console.log('✅ Using Meta API');
         return await this.sendViaMeta(phoneNumber, message);
       } else {
         console.warn('⚠️ No WhatsApp API credentials configured. Falling back to WhatsApp Web.');
@@ -171,12 +181,17 @@ ${itemsText}${notesText}
    */
   private async sendViaTwilio(phoneNumber: string, message: string): Promise<boolean> {
     try {
-      // Format phone number for Twilio
-      const formattedNumber = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
-      const toNumber = `whatsapp:${formattedNumber}`;
+      // Format phone number for Twilio (remove + and spaces)
+      const cleanNumber = phoneNumber.replace(/[^0-9]/g, '');
+      const toNumber = `whatsapp:${cleanNumber}`;
       
       console.log('📱 Sending via Twilio to:', toNumber);
       console.log('📱 From:', WHATSAPP_CONFIG.TWILIO_WHATSAPP_FROM);
+      console.log('📱 Sandbox Mode:', WHATSAPP_CONFIG.SANDBOX_MODE);
+      
+      // For sandbox mode, we need to use a template or simple text
+      // The sandbox requires the recipient to first send "join <sandbox-code>" to start the conversation
+      const finalMessage = message;
       
       // For now, we'll use a direct approach since we're in development
       // In production, you should use a backend API
@@ -193,7 +208,7 @@ ${itemsText}${notesText}
       const formData = new FormData();
       formData.append('To', toNumber);
       formData.append('From', WHATSAPP_CONFIG.TWILIO_WHATSAPP_FROM);
-      formData.append('Body', message);
+      formData.append('Body', finalMessage);
       
       // Make the API call
       const response = await fetch(twilioUrl, {
@@ -261,15 +276,27 @@ ${itemsText}${notesText}
   }
 
   /**
-   * Fallback: Send via WhatsApp Web (opens in new tab)
+   * Send via WhatsApp Web (opens in new tab with pre-filled message)
    */
   private async sendViaWhatsAppWeb(phoneNumber: string, message: string): Promise<boolean> {
     try {
+      const cleanNumber = phoneNumber.replace(/[^0-9]/g, '');
       const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/${phoneNumber.replace(/[^0-9]/g, '')}?text=${encodedMessage}`;
+      const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodedMessage}`;
       
       console.log('📱 Opening WhatsApp Web:', whatsappUrl);
+      console.log('📱 Phone Number:', cleanNumber);
+      console.log('📱 Message Preview:', message.substring(0, 100) + '...');
+      
+      // Open WhatsApp Web in new tab
       window.open(whatsappUrl, '_blank');
+      
+      // Show a notification to the user
+      if (typeof window !== 'undefined' && window.alert) {
+        setTimeout(() => {
+          alert(`📱 WhatsApp notification ready!\n\nPhone: ${phoneNumber}\n\nWhatsApp Web has opened with the order details pre-filled. Just click send!`);
+        }, 1000);
+      }
       
       return true;
     } catch (error) {
@@ -299,7 +326,10 @@ ${itemsText}${notesText}
 💰 *Total:* ₹${orderData.total_amount}
 👤 *Customer:* ${orderData.customer_name} (${orderData.delivery_block})
 
-🔗 *View Details:* ${window.location.origin}/pos-dashboard`;
+🔄 *Next Actions:*
+${this.getNextStatusActions(orderData.order_number, newStatus)}
+
+🔗 *Full Dashboard:* ${window.location.origin}/pos-dashboard`;
       
       return await this.sendMessage(cafeSettings.whatsapp_phone, message);
       
@@ -321,6 +351,35 @@ ${itemsText}${notesText}
       case 'completed': return '🎉';
       case 'cancelled': return '❌';
       default: return '📋';
+    }
+  }
+
+  /**
+   * Get next status actions based on current status
+   */
+  private getNextStatusActions(orderNumber: string, currentStatus: string): string {
+    switch (currentStatus.toLowerCase()) {
+      case 'received':
+        return `• Reply "CONFIRM ${orderNumber}" to confirm order
+• Reply "PREPARING ${orderNumber}" to start preparing`;
+      case 'confirmed':
+        return `• Reply "PREPARING ${orderNumber}" to start preparing
+• Reply "READY ${orderNumber}" when order is ready`;
+      case 'preparing':
+        return `• Reply "READY ${orderNumber}" when order is ready
+• Reply "DELIVERED ${orderNumber}" when delivered`;
+      case 'ready':
+        return `• Reply "DELIVERED ${orderNumber}" when delivered
+• Reply "CANCELLED ${orderNumber}" to cancel order`;
+      case 'delivered':
+        return `• Order completed! 🎉
+• Reply "CANCELLED ${orderNumber}" if there was an issue`;
+      case 'cancelled':
+        return `• Order cancelled ❌
+• Contact customer if needed`;
+      default:
+        return `• Reply "CONFIRM ${orderNumber}" to confirm order
+• Reply "PREPARING ${orderNumber}" to start preparing`;
     }
   }
 }

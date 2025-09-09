@@ -5,11 +5,47 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Minus, ShoppingCart, Clock, Star, ArrowLeft, Filter, Search, Phone, MessageCircle } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Clock, Star, ArrowLeft, Filter, Search, Phone, MessageCircle, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import Header from '@/components/Header';
+import SimpleHeader from '@/components/SimpleHeader';
+import MenuViewer from '@/components/MenuViewer';
+import SwiggyStyleHero from '@/components/SwiggyStyleHero';
+import BrandSelector from '@/components/BrandSelector';
+// Brand counting utility for Food Court
+const getBrandItemCounts = (items: MenuItem[]): Record<string, number> => {
+  const counts: Record<string, number> = {
+    'all': items.length,
+    'gobblers': 0,
+    'momo-street': 0,
+    'krispp': 0,
+    'waffles-more': 0,
+    'monginis': 0,
+    'tata-bistro': 0
+  };
+  
+  items.forEach(item => {
+    const brand = item.category.split(' - ')[0].toLowerCase();
+    const brandMap: Record<string, string> = {
+      'gobblers': 'gobblers',
+      'momo street': 'momo-street',
+      'momo-street': 'momo-street',
+      'krispp': 'krispp',
+      'waffles': 'waffles-more',
+      'waffles & more': 'waffles-more',
+      'monginis': 'monginis',
+      'tata bistro': 'tata-bistro'
+    };
+    
+    const brandId = brandMap[brand];
+    if (brandId && counts.hasOwnProperty(brandId)) {
+      counts[brandId]++;
+    }
+  });
+  
+  return counts;
+};
 
 interface MenuItem {
   id: string;
@@ -78,8 +114,10 @@ const Menu = () => {
   const [cart, setCart] = useState<{[key: string]: CartItem}>({});
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedMenuCategory, setSelectedMenuCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
 
   useEffect(() => {
     if (cafeId) {
@@ -307,9 +345,27 @@ const Menu = () => {
   // Get unique categories for the filter
   const categories = Object.keys(groupedItems);
   
-  // Filter items based on selected category (veg/non-veg) and search query
+  // Filter items based on selected category (veg/non-veg), menu category, brand, and search query
   const getFilteredItems = () => {
     let filtered = groupedMenuItems;
+    
+    // Apply brand filter first (for Food Court)
+    if (selectedBrand && cafe?.name === 'FOOD COURT') {
+      filtered = filtered.filter(item => {
+        const itemBrand = item.category.split(' - ')[0].toLowerCase();
+        const brandMap: Record<string, string> = {
+          'gobblers': 'gobblers',
+          'momo street': 'momo-street',
+          'momo-street': 'momo-street',
+          'krispp': 'krispp',
+          'waffles': 'waffles-more',
+          'waffles & more': 'waffles-more',
+          'monginis': 'monginis',
+          'tata bistro': 'tata-bistro'
+        };
+        return brandMap[itemBrand] === selectedBrand;
+      });
+    }
     
     // Apply veg/non-veg filter
     if (selectedCategory === 'veg') {
@@ -317,7 +373,12 @@ const Menu = () => {
     } else if (selectedCategory === 'non-veg') {
       filtered = filtered.filter(item => item.is_vegetarian === false);
     }
-    // If selectedCategory === 'all', show all items (no filtering)
+    // If selectedCategory === 'all', show all items (no dietary filtering)
+    
+    // Apply menu category filter
+    if (selectedMenuCategory !== 'all') {
+      filtered = filtered.filter(item => item.category === selectedMenuCategory);
+    }
     
     // Apply search filter if search query exists
     if (searchQuery.trim()) {
@@ -345,7 +406,7 @@ const Menu = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        <SimpleHeader />
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -359,7 +420,7 @@ const Menu = () => {
   if (!cafe) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        <SimpleHeader />
         <div className="container mx-auto px-4 py-8">
           <p className="text-center text-muted-foreground">Cafe not found</p>
         </div>
@@ -369,79 +430,25 @@ const Menu = () => {
 
   return (
     <div className="min-h-screen bg-background pb-16 lg:pb-0">
-      <Header />
+      <SimpleHeader />
       
-      {/* Cafe Header */}
-      <div className="relative text-white py-12 overflow-hidden">
-        {/* Background Image - Mobile Optimized */}
-        <div 
-          className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: 'url("/menu_hero.png")'
-          }}
-        />
-        {/* Dark overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/40"></div>
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/cafes')}
-            className="text-white hover:bg-white/20 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Cafes
-          </Button>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div>
-              <Badge className="bg-white/20 text-white mb-4">{cafe.type}</Badge>
-              <h1 className="text-4xl font-bold mb-4">{cafe.name}</h1>
-              <p className="text-white/90 text-lg mb-4">
-                Pure Veg, Packed with Flavors – From Soya Chaap to Momos, Tandoori to Curries, we serve veg with the taste of non-veg!
-              </p>
-              
-              <div className="flex items-center space-x-6 text-white/80">
-                <div className="flex items-center">
-                  <Star className="w-4 h-4 mr-1 fill-yellow-400 text-yellow-400" />
-                  <span>{cafe.average_rating ? cafe.average_rating.toFixed(1) : '0.0'}</span>
-                  {cafe.total_ratings && cafe.total_ratings > 0 && (
-                    <span className="ml-1 text-sm opacity-75">
-                      ({cafe.total_ratings})
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center">
-                  <Clock className="w-4 h-4 mr-1" />
-                  <span>{cafe.hours}</span>
-                </div>
-                <div className="flex items-center">
-                  <Phone className="w-4 h-4 mr-1 text-green-400" />
-                  <a 
-                    href={`tel:${cafe.phone}`} 
-                    className="text-white hover:text-green-300 transition-colors duration-200 hover:underline"
-                  >
-                    {cafe.phone}
-                  </a>
-                </div>
-                <div className="flex items-center">
-                  <MessageCircle className="w-4 h-4 mr-1 text-blue-400" />
-                  <a 
-                    href={`https://wa.me/${cafe.phone.replace(/\D/g, '')}?text=Hi ${cafe.name}, I have a question about your menu.`} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-white hover:text-blue-300 transition-colors duration-200 hover:underline"
-                  >
-                    WhatsApp
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Swiggy Style Hero Section */}
+      <SwiggyStyleHero 
+        cafe={cafe}
+        onBackClick={() => navigate('/cafes')}
+        onMenuClick={() => navigate(`/menu/${cafe.id}`)}
+      />
 
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Brand Selector for Food Court */}
+        {cafe?.name === 'FOOD COURT' && (
+          <BrandSelector
+            selectedBrand={selectedBrand}
+            onBrandSelect={setSelectedBrand}
+            brandItemCounts={getBrandItemCounts(menuItems)}
+          />
+        )}
+        
         {/* Mobile-Optimized Category System */}
         <div className="mb-6 sm:mb-8">
           {/* Desktop: Full Filter System */}
@@ -452,7 +459,7 @@ const Menu = () => {
                 <h3 className="text-lg font-semibold text-foreground">Filter by Category</h3>
               </div>
               
-              {/* Search Bar */}
+              {/* Search Bar and PDF Menu */}
               <div className="flex items-center space-x-3">
                 <Search className="w-5 h-5 text-primary" />
                 <div className="relative">
@@ -472,6 +479,25 @@ const Menu = () => {
                     </button>
                   )}
                 </div>
+                {(cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('havmor')) && (
+                  <MenuViewer 
+                    cafeName={cafe.name} 
+                    menuPdfUrl={
+                      cafe.name.toLowerCase().includes('chatkara') ? "/chatkaramenu.pdf" : 
+                      cafe.name.toLowerCase().includes('cook house') ? "/cookhousemenu.pdf" :
+                      cafe.name.toLowerCase().includes('havmor') ? "/havmormenu.pdf" : ""
+                    }
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2 text-primary border-primary hover:bg-primary hover:text-white transition-all duration-200"
+                    >
+                      <FileText className="w-4 h-4" />
+                      PDF Menu
+                    </Button>
+                  </MenuViewer>
+                )}
               </div>
             </div>
             
@@ -509,7 +535,7 @@ const Menu = () => {
             {/* Category Dropdown */}
             <div className="flex items-center space-x-4">
               <span className="text-sm font-medium text-foreground">Category:</span>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select value={selectedMenuCategory} onValueChange={setSelectedMenuCategory}>
                 <SelectTrigger className="w-64">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
@@ -601,18 +627,18 @@ const Menu = () => {
               </CardHeader>
               <CardContent className="space-y-2">
                 <Button
-                  variant={selectedCategory === 'all' ? 'default' : 'ghost'}
+                  variant={selectedMenuCategory === 'all' ? 'default' : 'ghost'}
                   className="w-full justify-start"
-                  onClick={() => setSelectedCategory('all')}
+                  onClick={() => setSelectedMenuCategory('all')}
                 >
                   All Categories ({groupedMenuItems.length})
                 </Button>
                 {categories.map((category) => (
                   <Button
                     key={category}
-                    variant={selectedCategory === category ? 'default' : 'ghost'}
+                    variant={selectedMenuCategory === category ? 'default' : 'ghost'}
                     className="w-full justify-start"
-                    onClick={() => setSelectedCategory(category)}
+                    onClick={() => setSelectedMenuCategory(category)}
                   >
                     {category} ({groupedItems[category].length})
                   </Button>
@@ -911,10 +937,10 @@ const Menu = () => {
               <div className="space-y-2">
                 <h4 className="text-sm font-medium text-foreground mb-3">Categories:</h4>
                 <Button
-                  variant={selectedCategory === 'all' ? 'default' : 'ghost'}
+                  variant={selectedMenuCategory === 'all' ? 'default' : 'ghost'}
                   className="w-full justify-start text-left"
                   onClick={() => {
-                    setSelectedCategory('all');
+                    setSelectedMenuCategory('all');
                     setIsMobileMenuOpen(false);
                   }}
                 >
@@ -929,10 +955,10 @@ const Menu = () => {
                 {categories.map((category) => (
                   <Button
                     key={category}
-                    variant={selectedCategory === category ? 'default' : 'ghost'}
+                    variant={selectedMenuCategory === category ? 'default' : 'ghost'}
                     className="w-full justify-start text-left"
                     onClick={() => {
-                      setSelectedCategory(category);
+                      setSelectedMenuCategory(category);
                       setIsMobileMenuOpen(false);
                     }}
                   >

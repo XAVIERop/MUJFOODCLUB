@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-const PrintNodeStatus: React.FC = () => {
+interface PrintNodeStatusProps {
+  cafeId?: string;
+}
+
+const PrintNodeStatus: React.FC<PrintNodeStatusProps> = ({ cafeId }) => {
   const { 
     isAvailable, 
     isConnected, 
@@ -15,7 +19,7 @@ const PrintNodeStatus: React.FC = () => {
     refreshPrinters, 
     accountInfo, 
     error 
-  } = usePrintNode();
+  } = usePrintNode(cafeId);
 
   const getStatusIcon = () => {
     if (isPrinting) return <Loader2 className="h-4 w-4 animate-spin" />;

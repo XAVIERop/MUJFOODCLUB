@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { PrintNodeService, PrintNodeConfig } from './printNodeService';
 import { ezeepPrintService } from './ezeepPrintService';
+import { enhancedBrowserPrintService } from './enhancedBrowserPrintService';
 
 interface ReceiptData {
   order_id: string;
@@ -65,20 +66,65 @@ class UnifiedPrintService {
   }
 
   /**
-   * Initialize PrintNode service with proper API key management
+   * Initialize PrintNode service with cafe-specific API key
    */
-  private initializePrintNode() {
-    // Use the main PrintNode API key for all cafes
-    const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
-    
-    if (apiKey) {
-      this.printNodeService = new PrintNodeService({
-        apiKey: apiKey,
-        baseUrl: 'https://api.printnode.com'
-      });
-      console.log('✅ Unified Print Service: PrintNode initialized with main API key');
-    } else {
-      console.log('⚠️ Unified Print Service: No PrintNode API key found');
+  private async initializePrintNode(cafeId?: string) {
+    if (!cafeId) {
+      // Use the main PrintNode API key as fallback
+      const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+      
+      if (apiKey) {
+        this.printNodeService = new PrintNodeService({
+          apiKey: apiKey,
+          baseUrl: 'https://api.printnode.com'
+        });
+        console.log('✅ Unified Print Service: PrintNode initialized with main API key');
+      } else {
+        console.log('⚠️ Unified Print Service: No PrintNode API key found');
+      }
+      return;
+    }
+
+    try {
+      // Get cafe name to determine which API key to use
+      const { data: cafe } = await supabase
+        .from('cafes')
+        .select('name')
+        .eq('id', cafeId)
+        .single();
+
+      if (!cafe) {
+        console.warn('Cafe not found, using fallback API key');
+        this.initializePrintNode(); // Use fallback
+        return;
+      }
+
+      // Get cafe-specific API key
+      let apiKey: string;
+      if (cafe.name.toLowerCase().includes('chatkara')) {
+        apiKey = import.meta.env.VITE_CHATKARA_PRINTNODE_API_KEY || '';
+        console.log('✅ Unified Print Service: Using Chatkara API key');
+      } else if (cafe.name.toLowerCase().includes('food court')) {
+        apiKey = import.meta.env.VITE_FOODCOURT_PRINTNODE_API_KEY || '';
+        console.log('✅ Unified Print Service: Using Food Court API key');
+      } else {
+        apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+        console.log('✅ Unified Print Service: Using main API key');
+      }
+
+      if (apiKey) {
+        this.printNodeService = new PrintNodeService({
+          apiKey: apiKey,
+          baseUrl: 'https://api.printnode.com'
+        });
+        console.log(`✅ Unified Print Service: PrintNode initialized for ${cafe.name}`);
+      } else {
+        console.warn('No API key found for cafe, using fallback');
+        this.initializePrintNode(); // Use fallback
+      }
+    } catch (error) {
+      console.error('Error fetching cafe info:', error);
+      this.initializePrintNode(); // Use fallback
     }
   }
 
@@ -159,9 +205,24 @@ class UnifiedPrintService {
     console.log(`🔄 Unified Print Service: Printing KOT for cafe ${cafeId}`);
     
     try {
+      // Reinitialize PrintNode service with cafe-specific API key
+      await this.initializePrintNode(cafeId);
+      
+      // Get proper cafe name for formatting
+      const cafeName = await this.getCafeName(cafeId);
+      const formattedReceiptData = { ...receiptData, cafe_name: cafeName };
+      
       // Get cafe printer configuration
       const config = await this.getCafePrinterConfig(cafeId);
       if (!config) {
+        console.log('⚠️ No printer configuration found, trying direct PrintNode printing...');
+        // Try direct PrintNode printing without database configuration
+        if (this.printNodeService) {
+          const result = await this.printNodeService.printKOT(formattedReceiptData);
+          if (result.success) {
+            return { ...result, method: 'printnode-direct' };
+          }
+        }
         return { 
           success: false, 
           error: 'No printer configuration found for this cafe',
@@ -169,11 +230,18 @@ class UnifiedPrintService {
         };
       }
 
-      // Get proper cafe name for formatting
-      const cafeName = await this.getCafeName(cafeId);
-      const formattedReceiptData = { ...receiptData, cafe_name: cafeName };
+      // Try local print server first if configured
+      if (config.connection_type === 'browser' && config.printer_ip === 'localhost' && config.printer_port) {
+        console.log(`🖨️ Using Local Print Server for KOT (Port: ${config.printer_port})`);
+        
+        const result = await this.printViaLocalServer(formattedReceiptData, config, 'KOT');
+        if (result.success) {
+          return result;
+        }
+        console.log('⚠️ Local print server KOT failed, falling back to browser');
+      }
 
-      // Try Ezeep first if configured
+      // Try Ezeep if configured
       if (config.ezeep_api_key && config.ezeep_printer_id) {
         console.log(`🖨️ Using Ezeep for KOT (Printer ID: ${config.ezeep_printer_id})`);
         
@@ -198,9 +266,9 @@ class UnifiedPrintService {
         console.log('⚠️ PrintNode KOT failed, falling back to browser printing');
       }
 
-      // Fallback to browser printing
-      console.log('🌐 Using browser printing for KOT');
-      return await this.printKOTViaBrowser(formattedReceiptData, config);
+      // Use enhanced browser printing
+      console.log('🌐 Using enhanced browser printing for KOT');
+      return await enhancedBrowserPrintService.printKOT(formattedReceiptData);
 
     } catch (error) {
       console.error(`Error printing KOT for cafe ${cafeId}:`, error);
@@ -219,9 +287,24 @@ class UnifiedPrintService {
     console.log(`🔄 Unified Print Service: Printing Receipt for cafe ${cafeId}`);
     
     try {
+      // Reinitialize PrintNode service with cafe-specific API key
+      await this.initializePrintNode(cafeId);
+      
+      // Get proper cafe name for formatting
+      const cafeName = await this.getCafeName(cafeId);
+      const formattedReceiptData = { ...receiptData, cafe_name: cafeName };
+      
       // Get cafe printer configuration
       const config = await this.getCafePrinterConfig(cafeId);
       if (!config) {
+        console.log('⚠️ No printer configuration found, trying direct PrintNode printing...');
+        // Try direct PrintNode printing without database configuration
+        if (this.printNodeService) {
+          const result = await this.printNodeService.printOrderReceipt(formattedReceiptData);
+          if (result.success) {
+            return { ...result, method: 'printnode-direct' };
+          }
+        }
         return { 
           success: false, 
           error: 'No printer configuration found for this cafe',
@@ -229,11 +312,18 @@ class UnifiedPrintService {
         };
       }
 
-      // Get proper cafe name for formatting
-      const cafeName = await this.getCafeName(cafeId);
-      const formattedReceiptData = { ...receiptData, cafe_name: cafeName };
+      // Try local print server first if configured
+      if (config.connection_type === 'browser' && config.printer_ip === 'localhost' && config.printer_port) {
+        console.log(`🖨️ Using Local Print Server for Receipt (Port: ${config.printer_port})`);
+        
+        const result = await this.printViaLocalServer(formattedReceiptData, config, 'RECEIPT');
+        if (result.success) {
+          return result;
+        }
+        console.log('⚠️ Local print server Receipt failed, falling back to browser');
+      }
 
-      // Try Ezeep first if configured
+      // Try Ezeep if configured
       if (config.ezeep_api_key && config.ezeep_printer_id) {
         console.log(`🖨️ Using Ezeep for Receipt (Printer ID: ${config.ezeep_printer_id})`);
         
@@ -258,9 +348,9 @@ class UnifiedPrintService {
         console.log('⚠️ PrintNode Receipt failed, falling back to browser printing');
       }
 
-      // Fallback to browser printing
-      console.log('🌐 Using browser printing for Receipt');
-      return await this.printReceiptViaBrowser(formattedReceiptData, config);
+      // Use enhanced browser printing
+      console.log('🌐 Using enhanced browser printing for Receipt');
+      return await enhancedBrowserPrintService.printReceipt(formattedReceiptData);
 
     } catch (error) {
       console.error(`Error printing receipt for cafe ${cafeId}:`, error);
@@ -301,6 +391,46 @@ class UnifiedPrintService {
         success: false, 
         error: error instanceof Error ? error.message : 'Unknown error',
         method: 'error'
+      };
+    }
+  }
+
+  /**
+   * Print via local print server
+   */
+  private async printViaLocalServer(receiptData: ReceiptData, config: CafePrinterConfig, type: 'KOT' | 'RECEIPT'): Promise<PrintResult> {
+    try {
+      const serverUrl = `http://${config.printer_ip}:${config.printer_port}/print`;
+      
+      const response = await fetch(serverUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type,
+          content: receiptData,
+          orderNumber: receiptData.order_number
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Local print server job sent successfully:', result);
+        return { 
+          success: true, 
+          method: 'local_server',
+          jobId: result.jobId
+        };
+      } else {
+        throw new Error(`Local server error: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('❌ Local print server failed:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Local print server failed',
+        method: 'local_server'
       };
     }
   }

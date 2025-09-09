@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PrintNodeService, PrintNodePrinter, PrintJobResult } from '@/services/printNodeService';
 import { ReceiptData } from '@/components/ReceiptGenerator';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UsePrintNodeReturn {
   isAvailable: boolean;
@@ -16,7 +17,7 @@ interface UsePrintNodeReturn {
   error: string | null;
 }
 
-export const usePrintNode = (): UsePrintNodeReturn => {
+export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
   const [isAvailable, setIsAvailable] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [printers, setPrinters] = useState<PrintNodePrinter[]>([]);
@@ -27,22 +28,62 @@ export const usePrintNode = (): UsePrintNodeReturn => {
   // Initialize PrintNode service
   const [printNodeService, setPrintNodeService] = useState<PrintNodeService | null>(null);
 
-  useEffect(() => {
-    // Initialize PrintNode service with API key from environment
-    const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || 'TYqkDtkjFvRAfg5_zcR1nUE00Ou2zenJHG-9LpGqkkg';
-    
-    console.log('PrintNode API Key:', apiKey ? 'Found' : 'Not found');
-    console.log('Environment API Key:', import.meta.env.VITE_PRINTNODE_API_KEY);
-    
-    if (apiKey) {
-      const service = new PrintNodeService({ apiKey });
-      setPrintNodeService(service);
-      console.log('PrintNode service initialized with API key:', apiKey.substring(0, 10) + '...');
-    } else {
-      console.warn('PrintNode API key not found. Set VITE_PRINTNODE_API_KEY in your environment variables.');
-      setError('PrintNode API key not configured');
+  // Get cafe-specific API key
+  const getCafeApiKey = useCallback(async (cafeId?: string): Promise<string> => {
+    if (!cafeId) {
+      // Fallback to general API key
+      return import.meta.env.VITE_PRINTNODE_API_KEY || 'TYqkDtkjFvRAfg5_zcR1nUE00Ou2zenJHG-9LpGqkkg';
+    }
+
+    try {
+      // Get cafe name from database
+      const { data: cafe } = await supabase
+        .from('cafes')
+        .select('name')
+        .eq('id', cafeId)
+        .single();
+
+      if (!cafe) {
+        console.warn('Cafe not found, using fallback API key');
+        return import.meta.env.VITE_PRINTNODE_API_KEY || 'TYqkDtkjFvRAfg5_zcR1nUE00Ou2zenJHG-9LpGqkkg';
+      }
+
+      // Return cafe-specific API key
+      if (cafe.name.toLowerCase().includes('chatkara')) {
+        console.log('Using Chatkara API key');
+        return import.meta.env.VITE_CHATKARA_PRINTNODE_API_KEY || '';
+      } else if (cafe.name.toLowerCase().includes('food court')) {
+        console.log('Using Food Court API key');
+        return import.meta.env.VITE_FOODCOURT_PRINTNODE_API_KEY || '';
+      }
+
+      // Fallback to general API key
+      return import.meta.env.VITE_PRINTNODE_API_KEY || 'TYqkDtkjFvRAfg5_zcR1nUE00Ou2zenJHG-9LpGqkkg';
+    } catch (error) {
+      console.error('Error fetching cafe info:', error);
+      return import.meta.env.VITE_PRINTNODE_API_KEY || 'TYqkDtkjFvRAfg5_zcR1nUE00Ou2zenJHG-9LpGqkkg';
     }
   }, []);
+
+  useEffect(() => {
+    const initializeService = async () => {
+      const apiKey = await getCafeApiKey(cafeId);
+      
+      console.log('PrintNode API Key:', apiKey ? 'Found' : 'Not found');
+      console.log('Cafe ID:', cafeId);
+      
+      if (apiKey) {
+        const service = new PrintNodeService({ apiKey });
+        setPrintNodeService(service);
+        console.log('PrintNode service initialized with API key:', apiKey.substring(0, 10) + '...');
+      } else {
+        console.warn('PrintNode API key not found. Set VITE_PRINTNODE_API_KEY in your environment variables.');
+        setError('PrintNode API key not configured');
+      }
+    };
+
+    initializeService();
+  }, [cafeId, getCafeApiKey]);
 
   // Check PrintNode availability
   const checkAvailability = useCallback(async () => {
@@ -127,7 +168,29 @@ export const usePrintNode = (): UsePrintNodeReturn => {
     setError(null);
 
     try {
-      const result = await printNodeService.printKOT(receiptData, printerId);
+      // If no printer ID specified, use cafe-specific printer
+      let targetPrinterId = printerId;
+      if (!targetPrinterId && cafeId) {
+        try {
+          const { data: cafe } = await supabase
+            .from('cafes')
+            .select('name')
+            .eq('id', cafeId)
+            .single();
+
+          if (cafe) {
+            if (cafe.name.toLowerCase().includes('chatkara')) {
+              targetPrinterId = 74698272; // Chatkara POS-80-Series
+            } else if (cafe.name.toLowerCase().includes('food court')) {
+              targetPrinterId = 74692682; // Food Court EPSON TM-T82 Receipt
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching cafe info for printer selection:', error);
+        }
+      }
+
+      const result = await printNodeService.printKOT(receiptData, targetPrinterId);
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'KOT print failed';
@@ -139,7 +202,7 @@ export const usePrintNode = (): UsePrintNodeReturn => {
     } finally {
       setIsPrinting(false);
     }
-  }, [printNodeService, isAvailable]);
+  }, [printNodeService, isAvailable, cafeId]);
 
   // Print Order Receipt only
   const printOrderReceipt = useCallback(async (receiptData: ReceiptData, printerId?: number): Promise<PrintJobResult> => {
@@ -154,7 +217,29 @@ export const usePrintNode = (): UsePrintNodeReturn => {
     setError(null);
 
     try {
-      const result = await printNodeService.printOrderReceipt(receiptData, printerId);
+      // If no printer ID specified, use cafe-specific printer
+      let targetPrinterId = printerId;
+      if (!targetPrinterId && cafeId) {
+        try {
+          const { data: cafe } = await supabase
+            .from('cafes')
+            .select('name')
+            .eq('id', cafeId)
+            .single();
+
+          if (cafe) {
+            if (cafe.name.toLowerCase().includes('chatkara')) {
+              targetPrinterId = 74698272; // Chatkara POS-80-Series
+            } else if (cafe.name.toLowerCase().includes('food court')) {
+              targetPrinterId = 74692682; // Food Court EPSON TM-T82 Receipt
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching cafe info for printer selection:', error);
+        }
+      }
+
+      const result = await printNodeService.printOrderReceipt(receiptData, targetPrinterId);
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Order receipt print failed';
@@ -166,7 +251,7 @@ export const usePrintNode = (): UsePrintNodeReturn => {
     } finally {
       setIsPrinting(false);
     }
-  }, [printNodeService, isAvailable]);
+  }, [printNodeService, isAvailable, cafeId]);
 
   // Test print
   const testPrint = useCallback(async (printerId?: number): Promise<PrintJobResult> => {

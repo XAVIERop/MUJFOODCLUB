@@ -88,7 +88,7 @@ export class CafeSpecificPrintService {
       this.cafePrinterConfig = printerConfig;
 
       // Initialize PrintNode service for all printer types (cafe-specific accounts)
-      const apiKey = this.getCafePrintNodeApiKey(printerConfig.cafe_id);
+      const apiKey = await this.getCafePrintNodeApiKey(printerConfig.cafe_id);
       if (apiKey) {
         // For each cafe, use their own PrintNode account
         const printNodeConfig: PrintNodeConfig = {
@@ -118,9 +118,23 @@ export class CafeSpecificPrintService {
    * Get cafe-specific PrintNode API key
    * Each cafe has their own PrintNode account
    */
-  private getCafePrintNodeApiKey(cafeId: string): string {
+  private async getCafePrintNodeApiKey(cafeId: string): Promise<string> {
     // Get cafe name from database to determine which API key to use
-    const cafeName = this.cafePrinterConfig?.cafes?.name || '';
+    let cafeName = this.cafePrinterConfig?.cafes?.name || '';
+    
+    // If no printer config, fetch cafe name directly
+    if (!cafeName) {
+      try {
+        const { data: cafe } = await supabase
+          .from('cafes')
+          .select('name')
+          .eq('id', cafeId)
+          .single();
+        cafeName = cafe?.name || '';
+      } catch (error) {
+        console.error('Error fetching cafe name:', error);
+      }
+    }
     
     console.log(`🔍 Getting API key for cafe: ${cafeName} (ID: ${cafeId})`);
     
@@ -147,8 +161,10 @@ export class CafeSpecificPrintService {
         await this.initialize();
       }
 
+      // If no printer config found, try direct PrintNode printing
       if (!this.cafePrinterConfig) {
-        return { success: false, error: 'No printer configuration found for this cafe' };
+        console.log(`No printer config found for cafe ${this.cafeId}, trying direct PrintNode printing...`);
+        return await this.printDirectToPrintNode(receiptData, 'KOT');
       }
 
       // Use PrintNode with cafe-specific account and specific printer ID
@@ -177,6 +193,76 @@ export class CafeSpecificPrintService {
   }
 
   /**
+   * Print directly to PrintNode when no database config exists
+   */
+  private async printDirectToPrintNode(receiptData: ReceiptData, type: 'KOT' | 'RECEIPT'): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Get cafe-specific API key
+      const apiKey = await this.getCafePrintNodeApiKey(this.cafeId);
+      if (!apiKey) {
+        return { success: false, error: 'No PrintNode API key found for this cafe' };
+      }
+
+      // Get cafe name to determine printer ID
+      const { data: cafe } = await supabase
+        .from('cafes')
+        .select('name')
+        .eq('id', this.cafeId)
+        .single();
+
+      if (!cafe) {
+        return { success: false, error: 'Cafe not found' };
+      }
+
+      // Determine printer ID based on cafe
+      let printerId: number;
+      if (cafe.name.toLowerCase().includes('chatkara')) {
+        printerId = 74698272; // Chatkara POS-80-Series
+      } else if (cafe.name.toLowerCase().includes('food court')) {
+        printerId = 74692682; // Food Court EPSON TM-T82 Receipt
+      } else {
+        return { success: false, error: 'No printer ID configured for this cafe' };
+      }
+
+      // Format content
+      const content = type === 'KOT' 
+        ? this.formatKOTForBrowser(receiptData)
+        : this.formatReceiptForBrowser(receiptData);
+
+      // Convert to base64
+      const base64Content = btoa(content);
+
+      // Send to PrintNode
+      const response = await fetch('https://api.printnode.com/printjobs', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${btoa(apiKey + ':')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          printer: { id: printerId },
+          content: base64Content,
+          contentType: 'raw_base64',
+          source: `MUJ Food Club - ${cafe.name}`
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return { success: false, error: `PrintNode API error: ${errorText}` };
+      }
+
+      const result = await response.json();
+      console.log(`✅ ${type} sent to PrintNode successfully:`, result);
+      return { success: true };
+
+    } catch (error) {
+      console.error(`Error printing ${type} directly to PrintNode:`, error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  /**
    * Print Receipt for this specific cafe
    */
   async printReceipt(receiptData: ReceiptData): Promise<{ success: boolean; error?: string }> {
@@ -185,8 +271,10 @@ export class CafeSpecificPrintService {
         await this.initialize();
       }
 
+      // If no printer config found, try direct PrintNode printing
       if (!this.cafePrinterConfig) {
-        return { success: false, error: 'No printer configuration found for this cafe' };
+        console.log(`No printer config found for cafe ${this.cafeId}, trying direct PrintNode printing...`);
+        return await this.printDirectToPrintNode(receiptData, 'RECEIPT');
       }
 
       // Use PrintNode with cafe-specific account and specific printer ID
@@ -312,6 +400,50 @@ export class CafeSpecificPrintService {
    * Format KOT for browser printing
    */
   private formatKOTForBrowser(data: ReceiptData): string {
+    const { order_number, items, cafe_name } = data;
+    
+    // Check if this is Chatkara cafe
+    const isChatkara = cafe_name.toLowerCase().includes('chatkara');
+    
+    if (isChatkara) {
+      return this.formatChatkaraKOT(data);
+    } else {
+      return this.formatGenericKOT(data);
+    }
+  }
+
+  /**
+   * Format Chatkara-specific KOT
+   */
+  private formatChatkaraKOT(data: ReceiptData): string {
+    const { order_number, items } = data;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB');
+    const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
+    
+    let kot = `${dateStr} ${timeStr}
+KOT - ${order_number.slice(-2)}
+Pick Up
+
+ITEM            QTY
+----------------------------------------`;
+
+    items.forEach(item => {
+      const itemName = item.name.toUpperCase().substring(0, 18).padEnd(18);
+      const qty = item.quantity.toString().padStart(2);
+      kot += `\n${itemName} ${qty}`;
+    });
+
+    kot += `\n----------------------------------------
+Thanks`;
+
+    return kot;
+  }
+
+  /**
+   * Format generic KOT (for non-Chatkara cafes)
+   */
+  private formatGenericKOT(data: ReceiptData): string {
     const { order_number, items } = data;
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-GB');
@@ -343,6 +475,71 @@ MUJFOODCLUB
    * Format Receipt for browser printing
    */
   private formatReceiptForBrowser(data: ReceiptData): string {
+    const { order_number, cafe_name, customer_name, customer_phone, items, final_amount, payment_method, delivery_block } = data;
+    
+    // Check if this is Chatkara cafe
+    const isChatkara = cafe_name.toLowerCase().includes('chatkara');
+    
+    if (isChatkara) {
+      return this.formatChatkaraReceipt(data);
+    } else {
+      return this.formatGenericReceipt(data);
+    }
+  }
+
+  /**
+   * Format Chatkara-specific receipt
+   */
+  private formatChatkaraReceipt(data: ReceiptData): string {
+    const { order_number, cafe_name, customer_name, customer_phone, items, final_amount, delivery_block } = data;
+    
+    const subtotal = items.reduce((sum, item) => sum + item.total_price, 0);
+    const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
+    const deliveryCharge = final_amount - subtotal;
+    
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB');
+    const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
+    
+    let receipt = `${cafe_name.toUpperCase()}
+
+Name: (M: ${customer_phone || '9999999999'})
+Adr: ${delivery_block || 'N/A'}
+
+Date: ${dateStr}
+${timeStr}
+Delivery
+Cashier: biller
+Bill No.: ${order_number}
+Token No.: ${order_number}
+
+Item                    Qty. Price Amount
+----------------------------------------`;
+
+    items.forEach(item => {
+      const itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
+      const qty = item.quantity.toString().padStart(2);
+      const price = `rs${item.unit_price.toFixed(2)}`.padStart(8);
+      const amount = `rs${item.total_price.toFixed(2)}`.padStart(8);
+      receipt += `\n${itemName} ${qty}    ${price}    ${amount}`;
+    });
+
+    receipt += `
+----------------------------------------
+Total Qty: ${totalQty}
+Sub Total: rs${subtotal.toFixed(2)}
+Delivery Charge: rs${deliveryCharge.toFixed(2)}
+Grand Total: rs${final_amount.toFixed(2)}
+
+Thanks`;
+
+    return receipt;
+  }
+
+  /**
+   * Format generic receipt (for non-Chatkara cafes)
+   */
+  private formatGenericReceipt(data: ReceiptData): string {
     const { order_number, cafe_name, customer_name, customer_phone, items, final_amount, payment_method } = data;
     
     const subtotal = items.reduce((sum, item) => sum + item.total_price, 0);
@@ -370,20 +567,20 @@ MUJFOODCLUB
     items.forEach(item => {
       const itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
       const qty = item.quantity.toString().padStart(2);
-      const price = item.unit_price.toFixed(0).padStart(4);
-      const amount = item.total_price.toFixed(0).padStart(5);
+      const price = `rs${item.unit_price.toFixed(0)}`.padStart(6);
+      const amount = `rs${item.total_price.toFixed(0)}`.padStart(7);
       receipt += `\n    ${itemName} ${qty}    ${price}    ${amount}`;
     });
 
     receipt += `\n    ----------------------------------------
     Total Qty: ${totalQty}
-    Sub                             ${subtotal.toFixed(0)}
-    Total                           ${subtotal.toFixed(0)}
-    CGST@2.5 2.5%                   ${cgst.toFixed(0)}
-    SGST@2.5 2.5%                   ${sgst.toFixed(0)}
-    MUJFOODCLUB Discount            ${discount.toFixed(0)}
+    Sub                             rs${subtotal.toFixed(0)}
+    Total                           rs${subtotal.toFixed(0)}
+    CGST@2.5 2.5%                   rs${cgst.toFixed(0)}
+    SGST@2.5 2.5%                   rs${sgst.toFixed(0)}
+    MUJFOODCLUB Discount            rs${discount.toFixed(0)}
     ----------------------------------------
-    Grand Total                     ${final_amount.toFixed(0)}
+    Grand Total                     rs${final_amount.toFixed(0)}
     Paid via ${payment_method?.toUpperCase() || 'COD'}
     ----------------------------------------
     Thanks For Visit!!

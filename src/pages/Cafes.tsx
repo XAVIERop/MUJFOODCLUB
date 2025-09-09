@@ -6,7 +6,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import Header from '../components/Header';
+import SimpleHeader from '../components/SimpleHeader';
 import { EnhancedCafeCard } from '../components/EnhancedCafeCard';
 
 
@@ -23,6 +23,7 @@ interface Cafe {
   total_ratings: number | null;
   cuisine_categories: string[] | null;
   priority: number | null;
+  menu_pdf_url?: string | null;
 }
 
 const Cafes = () => {
@@ -208,7 +209,7 @@ const Cafes = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-muted/30 pt-4">
-        <Header />
+        <SimpleHeader />
         <div className="container mx-auto px-4">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -221,7 +222,7 @@ const Cafes = () => {
 
   return (
     <div className="min-h-screen bg-muted/30 pt-4">
-      <Header />
+      <SimpleHeader />
       <div className="container mx-auto px-4">
         {/* Page Header */}
         <div className="text-center mb-12">

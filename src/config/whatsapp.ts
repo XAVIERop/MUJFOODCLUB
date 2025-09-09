@@ -10,6 +10,17 @@ export const WHATSAPP_CONFIG = {
   SANDBOX_MODE: import.meta.env.VITE_WHATSAPP_SANDBOX_MODE === 'true',
 };
 
+// Debug: Log environment variables on load
+console.log('🔍 WhatsApp Config Debug:');
+console.log('TWILIO_ACCOUNT_SID:', WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID ? '✅ Set' : '❌ Missing');
+console.log('TWILIO_AUTH_TOKEN:', WHATSAPP_CONFIG.TWILIO_AUTH_TOKEN ? '✅ Set' : '❌ Missing');
+console.log('TWILIO_WHATSAPP_FROM:', WHATSAPP_CONFIG.TWILIO_WHATSAPP_FROM || '❌ Missing');
+console.log('Raw env vars:', {
+  VITE_TWILIO_ACCOUNT_SID: import.meta.env.VITE_TWILIO_ACCOUNT_SID,
+  VITE_TWILIO_AUTH_TOKEN: import.meta.env.VITE_TWILIO_AUTH_TOKEN,
+  VITE_TWILIO_WHATSAPP_FROM: import.meta.env.VITE_TWILIO_WHATSAPP_FROM
+});
+
 // WhatsApp Business API (Meta) Configuration
 export const META_WHATSAPP_CONFIG = {
   ACCESS_TOKEN: import.meta.env.VITE_META_WHATSAPP_ACCESS_TOKEN || '',

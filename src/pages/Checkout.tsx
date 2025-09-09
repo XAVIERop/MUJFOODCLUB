@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, MapPin, Clock, Banknote, AlertCircle, CheckCircle, Trophy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/hooks/use-toast';
 import { CAFE_REWARDS, calculatePointsEarned, calculateMaxRedeemablePoints, getTierDiscount } from '@/lib/constants';
 import { useCafeRewards } from '@/hooks/useCafeRewards';
@@ -48,8 +49,9 @@ interface CartItem {
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const location = useRouterLocation();
   const { user, profile, refreshProfile } = useAuth();
+  const { selectedBlock } = useLocation();
   const { getCafeRewardData } = useCafeRewards();
   const { toast } = useToast();
   
@@ -68,7 +70,7 @@ const Checkout = () => {
   // Form states
   const [deliveryDetails, setDeliveryDetails] = useState({
     orderType: 'delivery', // 'delivery' or 'takeaway'
-    block: profile?.block || 'B1',
+    block: selectedBlock,
     deliveryNotes: '',
     paymentMethod: 'cod',
     phoneNumber: profile?.phone || ''
@@ -112,6 +114,14 @@ const Checkout = () => {
     
     console.log('✅ Cart validation passed - proceeding with checkout');
   }, [cart, cafe, totalAmount, navigate, toast]);
+
+  // Update delivery details when selectedBlock changes
+  useEffect(() => {
+    setDeliveryDetails(prev => ({
+      ...prev,
+      block: selectedBlock
+    }));
+  }, [selectedBlock]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -483,16 +493,20 @@ const Checkout = () => {
           };
 
           // Send WhatsApp notification (non-blocking)
+          console.log('📱 Checkout: About to send WhatsApp notification for cafe:', cafe.id);
+          console.log('📱 Checkout: Cafe name:', cafe.name);
+          console.log('📱 Checkout: Order data:', orderData);
+          
           whatsappService.sendOrderNotification(cafe.id, orderData)
             .then(success => {
               if (success) {
-                console.log('✅ WhatsApp notification sent successfully');
+                console.log('✅ WhatsApp notification sent successfully for cafe:', cafe.name);
               } else {
-                console.log('❌ WhatsApp notification failed');
+                console.log('❌ WhatsApp notification failed for cafe:', cafe.name);
               }
             })
             .catch(error => {
-              console.error('❌ WhatsApp notification error:', error);
+              console.error('❌ WhatsApp notification error for cafe:', cafe.name, error);
             });
         }
           

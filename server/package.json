@@ -1,40 +1,24 @@
 {
-  "name": "mujfoodclub-local-print-server",
+  "name": "whatsapp-webhook-server",
   "version": "1.0.0",
-  "description": "Local print server for MUJFOODCLUB - Free alternative to PrintNode",
-  "main": "local-print-server.js",
+  "description": "Backend server for handling Twilio WhatsApp webhooks and updating order status.",
+  "main": "whatsapp-webhook.js",
   "scripts": {
-    "start": "node local-print-server.js",
-    "dev": "nodemon local-print-server.js",
-    "test": "curl -X POST http://localhost:8080/test",
-    "health": "curl http://localhost:8080/health"
+    "start": "node whatsapp-webhook.js",
+    "dev": "nodemon whatsapp-webhook.js",
+    "test": "node test-webhook.js"
   },
-  "keywords": [
-    "thermal-printer",
-    "receipt-printer",
-    "pos-system",
-    "mujfoodclub",
-    "free-printing"
-  ],
-  "author": "MUJFOODCLUB Team",
-  "license": "MIT",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "node-thermal-printer": "^4.4.4"
+    "@supabase/supabase-js": "^2.43.4",
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "twilio": "^5.1.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
-  },
-  "engines": {
-    "node": ">=14.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/your-repo/mujfoodclub-print-server"
-  },
-  "bugs": {
-    "url": "https://github.com/your-repo/mujfoodclub-print-server/issues"
-  },
-  "homepage": "https://github.com/your-repo/mujfoodclub-print-server#readme"
+    "nodemon": "^3.1.3"
+  }
 }

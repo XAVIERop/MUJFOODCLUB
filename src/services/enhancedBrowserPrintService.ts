@@ -1,4 +1,7 @@
-import { supabase } from '@/integrations/supabase/client';
+/**
+ * Enhanced Browser Print Service for Windows 7
+ * This service provides perfect thermal printing without requiring Node.js or any server
+ */
 
 interface ReceiptData {
   order_id: string;
@@ -32,442 +35,216 @@ interface PrintResult {
   method: string;
 }
 
-interface CafePrinterConfig {
-  id: string;
-  printer_name: string;
-  printer_type: string;
-  connection_type: string;
-  printer_ip?: string;
-  printer_port?: number;
-  com_port?: string;
-  baud_rate?: number;
-  paper_width: number;
-  print_density: number;
-  auto_cut: boolean;
-}
-
-/**
- * Enhanced Browser Print Service - Free alternative to PrintNode
- * This service provides professional thermal printing using browser APIs
- * with fallbacks to local print servers and direct printer access
- */
 class EnhancedBrowserPrintService {
-  private cafeConfigs: Map<string, CafePrinterConfig> = new Map();
-
   /**
-   * Get cafe printer configuration from database
+   * Print KOT using enhanced browser printing
    */
-  private async getCafePrinterConfig(cafeId: string): Promise<CafePrinterConfig | null> {
-    // Check cache first
-    if (this.cafeConfigs.has(cafeId)) {
-      return this.cafeConfigs.get(cafeId)!;
-    }
-
+  async printKOT(receiptData: ReceiptData): Promise<PrintResult> {
     try {
-      const { data, error } = await supabase
-        .from('cafe_printer_configs')
-        .select('*')
-        .eq('cafe_id', cafeId)
-        .eq('is_active', true)
-        .eq('is_default', true)
-        .single();
-
-      if (error) {
-        console.error(`Error fetching printer config for cafe ${cafeId}:`, error);
-        return null;
-      }
-
-      const config: CafePrinterConfig = {
-        id: data.id,
-        printer_name: data.printer_name,
-        printer_type: data.printer_type,
-        connection_type: data.connection_type,
-        printer_ip: data.printer_ip,
-        printer_port: data.printer_port,
-        com_port: data.com_port,
-        baud_rate: data.baud_rate,
-        paper_width: data.paper_width,
-        print_density: data.print_density,
-        auto_cut: data.auto_cut
-      };
-
-      // Cache the configuration
-      this.cafeConfigs.set(cafeId, config);
-      return config;
-    } catch (error) {
-      console.error(`Error getting cafe printer config for ${cafeId}:`, error);
-      return null;
-    }
-  }
-
-  /**
-   * Get cafe name for proper receipt formatting
-   */
-  private async getCafeName(cafeId: string): Promise<string> {
-    try {
-      const { data, error } = await supabase
-        .from('cafes')
-        .select('name')
-        .eq('id', cafeId)
-        .single();
-
-      if (error) {
-        console.error(`Error fetching cafe name for ${cafeId}:`, error);
-        return 'Unknown Cafe';
-      }
-
-      return data.name || 'Unknown Cafe';
-    } catch (error) {
-      console.error(`Error getting cafe name for ${cafeId}:`, error);
-      return 'Unknown Cafe';
-    }
-  }
-
-  /**
-   * Print KOT for a specific cafe using enhanced browser printing
-   */
-  async printKOT(receiptData: ReceiptData, cafeId: string): Promise<PrintResult> {
-    console.log(`🖨️ Enhanced Browser Print: Printing KOT for cafe ${cafeId}`);
-    
-    try {
-      // Get cafe printer configuration
-      const config = await this.getCafePrinterConfig(cafeId);
-      if (!config) {
-        return { 
-          success: false, 
-          error: 'No printer configuration found for this cafe',
-          method: 'none'
-        };
-      }
-
-      // Get proper cafe name for formatting
-      const cafeName = await this.getCafeName(cafeId);
-      const formattedReceiptData = { ...receiptData, cafe_name: cafeName };
-
-      // Try different printing methods based on configuration
-      if (config.connection_type === 'network' && config.printer_ip) {
-        // Try network printing first
-        const networkResult = await this.printViaNetwork(formattedReceiptData, config, 'KOT');
-        if (networkResult.success) return networkResult;
-      }
-
-      if (config.connection_type === 'usb' && config.com_port) {
-        // Try USB printing
-        const usbResult = await this.printViaUSB(formattedReceiptData, config, 'KOT');
-        if (usbResult.success) return usbResult;
-      }
-
-      // Fallback to enhanced browser printing
-      return await this.printViaEnhancedBrowser(formattedReceiptData, config, 'KOT');
-
-    } catch (error) {
-      console.error(`Error printing KOT for cafe ${cafeId}:`, error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error',
-        method: 'error'
-      };
-    }
-  }
-
-  /**
-   * Print Receipt for a specific cafe using enhanced browser printing
-   */
-  async printReceipt(receiptData: ReceiptData, cafeId: string): Promise<PrintResult> {
-    console.log(`🖨️ Enhanced Browser Print: Printing Receipt for cafe ${cafeId}`);
-    
-    try {
-      // Get cafe printer configuration
-      const config = await this.getCafePrinterConfig(cafeId);
-      if (!config) {
-        return { 
-          success: false, 
-          error: 'No printer configuration found for this cafe',
-          method: 'none'
-        };
-      }
-
-      // Get proper cafe name for formatting
-      const cafeName = await this.getCafeName(cafeId);
-      const formattedReceiptData = { ...receiptData, cafe_name: cafeName };
-
-      // Try different printing methods based on configuration
-      if (config.connection_type === 'network' && config.printer_ip) {
-        // Try network printing first
-        const networkResult = await this.printViaNetwork(formattedReceiptData, config, 'RECEIPT');
-        if (networkResult.success) return networkResult;
-      }
-
-      if (config.connection_type === 'usb' && config.com_port) {
-        // Try USB printing
-        const usbResult = await this.printViaUSB(formattedReceiptData, config, 'RECEIPT');
-        if (usbResult.success) return usbResult;
-      }
-
-      // Fallback to enhanced browser printing
-      return await this.printViaEnhancedBrowser(formattedReceiptData, config, 'RECEIPT');
-
-    } catch (error) {
-      console.error(`Error printing receipt for cafe ${cafeId}:`, error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error',
-        method: 'error'
-      };
-    }
-  }
-
-  /**
-   * Print both KOT and Receipt for a specific cafe
-   */
-  async printBoth(receiptData: ReceiptData, cafeId: string): Promise<PrintResult> {
-    console.log(`🖨️ Enhanced Browser Print: Printing both KOT and Receipt for cafe ${cafeId}`);
-    
-    try {
-      const kotResult = await this.printKOT(receiptData, cafeId);
-      const receiptResult = await this.printReceipt(receiptData, cafeId);
-
-      if (kotResult.success && receiptResult.success) {
-        return {
-          success: true,
-          method: `${kotResult.method}+${receiptResult.method}`,
-        };
-      } else {
-        return {
-          success: false,
-          error: `KOT: ${kotResult.error || 'success'}, Receipt: ${receiptResult.error || 'success'}`,
-          method: 'partial'
-        };
-      }
-    } catch (error) {
-      console.error(`Error printing both for cafe ${cafeId}:`, error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error',
-        method: 'error'
-      };
-    }
-  }
-
-  /**
-   * Print via network printer (if local print server is available)
-   */
-  private async printViaNetwork(receiptData: ReceiptData, config: CafePrinterConfig, type: 'KOT' | 'RECEIPT'): Promise<PrintResult> {
-    try {
-      // Try to connect to local print server
-      const printServerUrl = `http://localhost:8080/print`;
-      const content = type === 'KOT' 
-        ? this.formatKOTForThermal(receiptData)
-        : this.formatReceiptForThermal(receiptData);
-
-      const response = await fetch(printServerUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: content,
-          printer_ip: config.printer_ip,
-          printer_port: config.printer_port || 9100,
-          type: type
-        })
-      });
-
-      if (response.ok) {
-        return { success: true, method: 'network' };
-      } else {
-        throw new Error(`Network print failed: ${response.statusText}`);
-      }
-    } catch (error) {
-      console.log('Network printing not available, falling back to browser printing');
-      return { success: false, error: 'Network printing not available', method: 'network' };
-    }
-  }
-
-  /**
-   * Print via USB printer (if local print server is available)
-   */
-  private async printViaUSB(receiptData: ReceiptData, config: CafePrinterConfig, type: 'KOT' | 'RECEIPT'): Promise<PrintResult> {
-    try {
-      // Try to connect to local print server
-      const printServerUrl = `http://localhost:8080/print`;
-      const content = type === 'KOT' 
-        ? this.formatKOTForThermal(receiptData)
-        : this.formatReceiptForThermal(receiptData);
-
-      const response = await fetch(printServerUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: content,
-          com_port: config.com_port,
-          baud_rate: config.baud_rate || 9600,
-          type: type
-        })
-      });
-
-      if (response.ok) {
-        return { success: true, method: 'usb' };
-      } else {
-        throw new Error(`USB print failed: ${response.statusText}`);
-      }
-    } catch (error) {
-      console.log('USB printing not available, falling back to browser printing');
-      return { success: false, error: 'USB printing not available', method: 'usb' };
-    }
-  }
-
-  /**
-   * Enhanced browser printing with thermal printer optimization
-   */
-  private async printViaEnhancedBrowser(receiptData: ReceiptData, config: CafePrinterConfig, type: 'KOT' | 'RECEIPT'): Promise<PrintResult> {
-    try {
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        return { success: false, error: 'Could not open print window', method: 'browser' };
-      }
-
-      const content = type === 'KOT' 
-        ? this.generateKOTHTML(receiptData, config)
-        : this.generateReceiptHTML(receiptData, config);
-
-      printWindow.document.write(content);
-      printWindow.document.close();
+      console.log('🖨️ Enhanced Browser Print: Printing KOT');
       
-      // Auto-print after a short delay
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
-
-      return { success: true, method: 'browser' };
+      const kotHTML = this.generateKOTHTML(receiptData);
+      const success = await this.printHTML(kotHTML, 'KOT');
+      
+      return {
+        success,
+        method: 'enhanced_browser',
+        error: success ? undefined : 'Failed to open print dialog'
+      };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Browser print failed',
-        method: 'browser'
+      console.error('❌ Enhanced browser KOT print failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        method: 'enhanced_browser'
       };
     }
+  }
+
+  /**
+   * Print Receipt using enhanced browser printing
+   */
+  async printReceipt(receiptData: ReceiptData): Promise<PrintResult> {
+    try {
+      console.log('🖨️ Enhanced Browser Print: Printing Receipt');
+      
+      const receiptHTML = this.generateReceiptHTML(receiptData);
+      const success = await this.printHTML(receiptHTML, 'Receipt');
+      
+      return {
+        success,
+        method: 'enhanced_browser',
+        error: success ? undefined : 'Failed to open print dialog'
+      };
+    } catch (error) {
+      console.error('❌ Enhanced browser Receipt print failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        method: 'enhanced_browser'
+      };
+    }
+  }
+
+  /**
+   * Print HTML content using browser
+   */
+  private async printHTML(html: string, title: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      try {
+        // Create a new window for printing
+        const printWindow = window.open('', '_blank', 'width=400,height=600');
+        
+        if (!printWindow) {
+          console.error('❌ Could not open print window');
+          resolve(false);
+          return;
+        }
+
+        // Write HTML content
+        printWindow.document.write(html);
+        printWindow.document.close();
+
+        // Wait for content to load, then print
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+            
+            // Close window after printing
+            setTimeout(() => {
+              printWindow.close();
+            }, 1000);
+            
+            resolve(true);
+          }, 500);
+        };
+
+        // Fallback if onload doesn't fire
+        setTimeout(() => {
+          printWindow.print();
+          setTimeout(() => {
+            printWindow.close();
+          }, 1000);
+          resolve(true);
+        }, 2000);
+
+      } catch (error) {
+        console.error('❌ Print window error:', error);
+        resolve(false);
+      }
+    });
   }
 
   /**
    * Generate KOT HTML optimized for thermal printing
    */
-  private generateKOTHTML(data: ReceiptData, config: CafePrinterConfig): string {
+  private generateKOTHTML(data: ReceiptData): string {
     const isChatkara = data.cafe_name?.toLowerCase().includes('chatkara');
-    const isFoodCourt = data.cafe_name?.toLowerCase().includes('food court');
-    
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-GB');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    return `<!DOCTYPE html>
+    return `
+<!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>KOT - ${data.order_number}</title>
     <style>
         @page {
-            size: ${config.paper_width}mm auto;
+            size: 80mm auto;
             margin: 0;
         }
-        
-        @media print {
-            * {
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            
-            body { 
-                width: ${config.paper_width}mm !important;
-                max-width: ${config.paper_width}mm !important;
-                margin: 0 !important; 
-                padding: 3mm !important;
-                font-family: 'Courier New', monospace !important;
-                font-size: ${config.print_density + 3}px !important;
-                line-height: 1.1 !important;
-                color: #000 !important;
-                background: #fff !important;
-            }
-            .no-print { display: none !important; }
-        }
-        
         body {
             font-family: 'Courier New', monospace;
-            font-size: ${config.print_density + 3}px;
-            line-height: 1.1;
-            color: #000;
-            background: #fff;
-            width: ${config.paper_width}mm;
-            max-width: ${config.paper_width}mm;
+            font-size: 12px;
+            line-height: 1.2;
             margin: 0;
-            padding: 3mm;
+            padding: 5px;
+            width: 80mm;
+            background: white;
         }
-        
-        .receipt {
-            width: 100%;
-        }
-        
-        .cafe-name {
-            font-size: ${config.print_density + 5}px;
-            font-weight: bold;
+        .header {
             text-align: center;
-            margin-bottom: 8px;
+            font-weight: bold;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+        }
+        .title {
+            font-size: 16px;
+            margin-bottom: 3px;
+        }
+        .subtitle {
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+        .info {
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+        .items {
+            margin: 5px 0;
+        }
+        .item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+            font-size: 11px;
+        }
+        .item-name {
+            flex: 1;
             text-transform: uppercase;
         }
-        
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 6px;
-            font-size: ${config.print_density + 1}px;
+        .item-qty {
+            font-weight: bold;
         }
-        
-        .items-table th {
-            text-align: left;
-            border-bottom: 1px solid #000;
-            padding: 1px 0;
-            font-weight: normal;
-        }
-        
-        .items-table td {
-            padding: 1px 0;
-        }
-        
         .footer {
             text-align: center;
-            margin-top: 8px;
-            font-size: ${config.print_density + 2}px;
+            margin-top: 10px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+        }
+        .cafe-name {
             font-weight: bold;
+            font-size: 14px;
+        }
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
         }
     </style>
 </head>
 <body>
-    <div class="receipt">
-        <div class="cafe-name">KOT - ${data.order_number.slice(-2)}</div>
-        <div class="cafe-name"><strong>${isChatkara ? 'DELIVERY' : 'PICK UP'}</strong></div>
-        <div class="info">${dateStr} ${timeStr}</div>
-        <hr>
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th>ITEM</th>
-                    <th>QTY</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${data.items.map(item => `
-                    <tr>
-                        <td>${item.name.toUpperCase()}</td>
-                        <td>${item.quantity}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-        <hr>
-        <div class="footer">THANKS FOR VISIT!!</div>
-        <div class="footer">${data.cafe_name?.toUpperCase() || 'MUJFOODCLUB'}</div>
+    <div class="header">
+        <div class="title">KOT - ${data.order_number.slice(-2)}</div>
+        <div class="subtitle">${isChatkara ? 'DELIVERY' : 'PICK UP'}</div>
+    </div>
+    
+    <div class="info">
+        Date: ${dateStr} ${timeStr}
+    </div>
+    
+    <div class="items">
+        <div style="font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 3px;">
+            ITEM                    QTY
+        </div>
+        ${data.items.map(item => `
+            <div class="item">
+                <span class="item-name">${item.name.toUpperCase().substring(0, 20)}</span>
+                <span class="item-qty">${item.quantity}</span>
+            </div>
+        `).join('')}
+    </div>
+    
+    <div class="footer">
+        <div style="font-weight: bold; margin-bottom: 5px;">${data.cafe_name?.toLowerCase().includes('chatkara') ? 'Thanks' : 'THANKS FOR VISIT!!'}</div>
+        <div class="cafe-name">${data.cafe_name?.toUpperCase() || 'MUJFOODCLUB'}</div>
+    </div>
+    
+    <div class="no-print" style="margin-top: 20px; text-align: center; color: #666;">
+        <p>This is a thermal printer optimized receipt</p>
+        <p>Make sure your Xprinter is set as default printer</p>
     </div>
 </body>
 </html>`;
@@ -476,258 +253,121 @@ class EnhancedBrowserPrintService {
   /**
    * Generate Receipt HTML optimized for thermal printing
    */
-  private generateReceiptHTML(data: ReceiptData, config: CafePrinterConfig): string {
-    const isChatkara = data.cafe_name?.toLowerCase().includes('chatkara');
-    const isFoodCourt = data.cafe_name?.toLowerCase().includes('food court');
-    
+  private generateReceiptHTML(data: ReceiptData): string {
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-GB');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    return `<!DOCTYPE html>
+    return `
+<!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Receipt - ${data.order_number}</title>
     <style>
         @page {
-            size: ${config.paper_width}mm auto;
+            size: 80mm auto;
             margin: 0;
         }
-        
-        @media print {
-            * {
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-            
-            body { 
-                width: ${config.paper_width}mm !important;
-                max-width: ${config.paper_width}mm !important;
-                margin: 0 !important; 
-                padding: 3mm !important;
-                font-family: 'Courier New', monospace !important;
-                font-size: ${config.print_density + 3}px !important;
-                line-height: 1.1 !important;
-                color: #000 !important;
-                background: #fff !important;
-            }
-            .no-print { display: none !important; }
-        }
-        
         body {
             font-family: 'Courier New', monospace;
-            font-size: ${config.print_density + 3}px;
-            line-height: 1.1;
-            color: #000;
-            background: #fff;
-            width: ${config.paper_width}mm;
-            max-width: ${config.paper_width}mm;
+            font-size: 11px;
+            line-height: 1.2;
             margin: 0;
-            padding: 3mm;
+            padding: 5px;
+            width: 80mm;
+            background: white;
         }
-        
-        .receipt {
-            width: 100%;
-        }
-        
-        .cafe-name {
-            font-size: ${config.print_density + 5}px;
-            font-weight: bold;
+        .header {
             text-align: center;
-            margin-bottom: 8px;
+            font-weight: bold;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+        }
+        .cafe-name {
+            font-size: 16px;
+            margin-bottom: 3px;
+        }
+        .customer-info {
+            font-size: 10px;
+            margin-bottom: 5px;
+            line-height: 1.3;
+        }
+        .items {
+            margin: 5px 0;
+        }
+        .item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+            font-size: 10px;
+        }
+        .item-name {
+            flex: 1;
             text-transform: uppercase;
         }
-        
-        .customer-info {
-            margin-bottom: 6px;
-            font-size: ${config.print_density + 1}px;
+        .item-details {
+            text-align: right;
+            white-space: nowrap;
         }
-        
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 6px;
-            font-size: ${config.print_density + 1}px;
+        .total {
+            border-top: 1px solid #000;
+            padding-top: 5px;
+            margin-top: 5px;
+            font-weight: bold;
         }
-        
-        .items-table th {
-            text-align: left;
-            border-bottom: 1px solid #000;
-            padding: 1px 0;
-            font-weight: normal;
-        }
-        
-        .items-table td {
-            padding: 1px 0;
-        }
-        
-        .summary {
-            margin-top: 6px;
-            font-size: ${config.print_density + 1}px;
-        }
-        
         .footer {
             text-align: center;
-            margin-top: 8px;
-            font-size: ${config.print_density + 2}px;
-            font-weight: bold;
+            margin-top: 10px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+        }
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
         }
     </style>
 </head>
 <body>
-    <div class="receipt">
+    <div class="header">
         <div class="cafe-name">${data.cafe_name?.toUpperCase() || 'MUJ FOOD CLUB'}</div>
-        
-        <div class="customer-info">
-            <div>Name: ${data.customer_name} (M: ${data.customer_phone})</div>
-            <div>Block: ${data.delivery_block}</div>
+    </div>
+    
+    <div class="customer-info">
+        Name: ${data.customer_name} (M: ${data.customer_phone})<br>
+        Block: ${data.delivery_block}<br>
+        Date: ${dateStr} ${timeStr}<br>
+        Order: ${data.order_number}
+    </div>
+    
+    <div class="items">
+        <div style="font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 3px;">
+            Item                Qty. Price Amount
         </div>
-        
-        <div class="order-details">
-            <div>Date: ${dateStr}</div>
-            <div>Time: ${timeStr}</div>
-            <div>Order: ${data.order_number}</div>
-        </div>
-        
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Qty.</th>
-                    <th>Price</th>
-                    <th>Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${data.items.map(item => `
-                    <tr>
-                        <td>${item.name}</td>
-                        <td>${item.quantity}</td>
-                        <td>${item.unit_price.toFixed(2)}</td>
-                        <td>${item.total_price.toFixed(2)}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-        
-        <div class="summary">
-            <div>Total: ₹${data.final_amount.toFixed(2)}</div>
-            <div>Payment: ${data.payment_method.toUpperCase()}</div>
-        </div>
-        
-        <div class="footer">Thank you for your order!</div>
+        ${data.items.map(item => `
+            <div class="item">
+                <span class="item-name">${item.name.toUpperCase().substring(0, 18)}</span>
+                <span class="item-details">${item.quantity}    ${data.cafe_name?.toLowerCase().includes('chatkara') ? 'rs' + item.unit_price.toFixed(2) : item.unit_price.toFixed(0)}    ${data.cafe_name?.toLowerCase().includes('chatkara') ? 'rs' + item.total_price.toFixed(2) : item.total_price.toFixed(0)}</span>
+            </div>
+        `).join('')}
+    </div>
+    
+    <div class="total">
+        Total: ${data.cafe_name?.toLowerCase().includes('chatkara') ? 'rs' + data.final_amount.toFixed(2) : '₹' + data.final_amount.toFixed(2)}<br>
+        Payment: ${data.payment_method.toUpperCase()}
+    </div>
+    
+    <div class="footer">
+        <div>${data.cafe_name?.toLowerCase().includes('chatkara') ? 'Thanks' : 'Thank you for your order!'}</div>
+    </div>
+    
+    <div class="no-print" style="margin-top: 20px; text-align: center; color: #666;">
+        <p>This is a thermal printer optimized receipt</p>
+        <p>Make sure your Xprinter is set as default printer</p>
     </div>
 </body>
 </html>`;
-  }
-
-  /**
-   * Format KOT for thermal printing (raw format)
-   */
-  private formatKOTForThermal(data: ReceiptData): string {
-    const isChatkara = data.cafe_name?.toLowerCase().includes('chatkara');
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('en-GB');
-    const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
-    
-    let kot = `----------------------------------------
-${dateStr} ${timeStr}
-KOT - ${data.order_number.slice(-2)}
-${isChatkara ? 'DELIVERY' : 'PICK UP'}
-----------------------------------------
-ITEM            QTY
-----------------------------------------`;
-
-    data.items.forEach(item => {
-      const itemName = item.name.toUpperCase().substring(0, 18).padEnd(18);
-      const qty = item.quantity.toString().padStart(2);
-      kot += `\n${itemName} ${qty}`;
-    });
-
-    kot += `\n----------------------------------------
-THANKS FOR VISIT!!
-${data.cafe_name?.toUpperCase() || 'MUJFOODCLUB'}
-----------------------------------------`;
-
-    return kot;
-  }
-
-  /**
-   * Format Receipt for thermal printing (raw format)
-   */
-  private formatReceiptForThermal(data: ReceiptData): string {
-    const isChatkara = data.cafe_name?.toLowerCase().includes('chatkara');
-    const isFoodCourt = data.cafe_name?.toLowerCase().includes('food court');
-    
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('en-GB');
-    const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
-    
-    let receipt = `        ${data.cafe_name?.toUpperCase() || 'MUJ FOOD CLUB'}
-    ----------------------------------------
-    Name: ${data.customer_name} (M: ${data.customer_phone})
-    Block: ${data.delivery_block}
-    Date: ${dateStr} ${timeStr}
-    Order: ${data.order_number}
-    ----------------------------------------
-    Item                    Qty. Price Amount
-    ----------------------------------------`;
-
-    data.items.forEach(item => {
-      const itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
-      const qty = item.quantity.toString().padStart(2);
-      const price = item.unit_price.toFixed(0).padStart(4);
-      const amount = item.total_price.toFixed(0).padStart(5);
-      receipt += `\n    ${itemName} ${qty}    ${price}    ${amount}`;
-    });
-
-    receipt += `\n    ----------------------------------------
-    Total: ₹${data.final_amount.toFixed(2)}
-    Payment: ${data.payment_method.toUpperCase()}
-    ----------------------------------------
-    Thank you for your order!
-    ----------------------------------------`;
-
-    return receipt;
-  }
-
-  /**
-   * Test print for a specific cafe
-   */
-  async testPrint(cafeId: string): Promise<PrintResult> {
-    const testData: ReceiptData = {
-      order_id: 'test',
-      order_number: 'TEST-001',
-      cafe_name: 'Test Cafe',
-      customer_name: 'Test Customer',
-      customer_phone: '9999999999',
-      delivery_block: 'B1',
-      items: [{
-        id: '1',
-        name: 'Test Item',
-        quantity: 1,
-        unit_price: 100,
-        total_price: 100
-      }],
-      subtotal: 100,
-      tax_amount: 5,
-      discount_amount: 0,
-      final_amount: 105,
-      payment_method: 'COD',
-      order_date: new Date().toISOString(),
-      estimated_delivery: '30 min',
-      points_earned: 5,
-      points_redeemed: 0
-    };
-
-    return await this.printKOT(testData, cafeId);
-  }
-
-  /**
-   * Clear cached configurations (useful for testing)
-   */
-  clearCache(): void {
-    this.cafeConfigs.clear();
   }
 }
 

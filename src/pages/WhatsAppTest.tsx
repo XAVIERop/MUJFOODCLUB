@@ -8,6 +8,7 @@ import { whatsappService } from '@/services/whatsappService';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
+import WhatsAppDebug from '@/components/WhatsAppDebug';
 
 const WhatsAppTest = () => {
   const [cafeId, setCafeId] = useState('');
@@ -262,6 +263,9 @@ const WhatsAppTest = () => {
               </div>
             </CardContent>
           </Card>
+          
+          {/* WhatsApp Debug Component */}
+          <WhatsAppDebug />
         </div>
       </div>
     </div>

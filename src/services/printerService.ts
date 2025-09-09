@@ -138,29 +138,33 @@ class PrinterService {
   // Generate receipt HTML for browser printing
   private generateReceiptHTML(job: PrintJob): string {
     const { orderData, orderItems } = job;
-    const isFoodCourt = orderData.cafe_id === '3e5955ba-9b90-48ce-9d07-cc686678a10e';
+    const cafeName = orderData.cafe?.name || orderData.cafe_name || '';
+    const isFoodCourt = cafeName.toLowerCase().includes('food court');
+    const isChatkara = cafeName.toLowerCase().includes('chatkara');
     
     if (job.type === 'kot') {
-      return this.generateKOTHTML(orderData, orderItems, isFoodCourt);
+      return this.generateKOTHTML(orderData, orderItems, isFoodCourt, isChatkara);
     } else {
-      return this.generateCustomerReceiptHTML(orderData, orderItems, isFoodCourt);
+      return this.generateCustomerReceiptHTML(orderData, orderItems, isFoodCourt, isChatkara);
     }
   }
 
   // Generate receipt text for network printing
   private generateReceiptText(job: PrintJob): string {
     const { orderData, orderItems } = job;
-    const isFoodCourt = orderData.cafe_id === '3e5955ba-9b90-48ce-9d07-cc686678a10e';
+    const cafeName = orderData.cafe?.name || orderData.cafe_name || '';
+    const isFoodCourt = cafeName.toLowerCase().includes('food court');
+    const isChatkara = cafeName.toLowerCase().includes('chatkara');
     
     if (job.type === 'kot') {
-      return this.generateKOTText(orderData, orderItems, isFoodCourt);
+      return this.generateKOTText(orderData, orderItems, isFoodCourt, isChatkara);
     } else {
-      return this.generateCustomerReceiptText(orderData, orderItems, isFoodCourt);
+      return this.generateCustomerReceiptText(orderData, orderItems, isFoodCourt, isChatkara);
     }
   }
 
   // Generate KOT HTML
-  private generateKOTHTML(orderData: any, orderItems: any[], isFoodCourt: boolean): string {
+  private generateKOTHTML(orderData: any, orderItems: any[], isFoodCourt: boolean, isChatkara: boolean): string {
     const date = new Date(orderData.created_at);
     const dateStr = date.toLocaleDateString();
     const timeStr = date.toLocaleTimeString();
@@ -194,13 +198,13 @@ class PrinterService {
         </head>
         <body>
           <div class="header">
-            <div class="logo">${isFoodCourt ? 'THE FOOD COURT CO' : 'MUJ FOOD CLUB'}</div>
+            <div class="logo">${isFoodCourt ? 'THE FOOD COURT CO' : isChatkara ? 'CHATKARA' : 'MUJ FOOD CLUB'}</div>
             <div class="subtitle">KITCHEN ORDER TICKET</div>
           </div>
           
           <div class="order-info">
             <div class="info-row">
-              <span>Order #:</span>
+              <span>KOT #:</span>
               <span>${orderData.order_number}</span>
             </div>
             <div class="info-row">
@@ -222,17 +226,21 @@ class PrinterService {
               <span>Item</span>
               <span>Qty</span>
             </div>
-            ${orderItems.map(item => `
-              <div class="item-row">
-                <div class="item-name">${item.menu_item.name}</div>
-                <div class="item-details">${item.quantity}</div>
+            ${orderItems.map(item => {
+              const itemName = item.menu_item.name.length > 25 ? item.menu_item.name.substring(0, 25) + '...' : item.menu_item.name;
+              return `
+              <div class="item-row" style="display: flex; align-items: flex-start;">
+                <div class="item-name" style="font-size: 17.5px; font-weight: bold; flex: 1; word-wrap: break-word; line-height: 1.2;">${itemName}</div>
+                <div class="item-details" style="font-size: 16px; font-weight: bold; margin-left: 10px; min-width: 30px; text-align: right;">${item.quantity}</div>
               </div>
-            `).join('')}
+            `;
+            }).join('')}
           </div>
           
           <div class="footer">
             <div>Total Items: ${orderItems.reduce((sum, item) => sum + item.quantity, 0)}</div>
-            <div>Total Amount: ₹${orderData.total_amount}</div>
+            <div>Total Amount: ${isChatkara ? 'rs' + orderData.total_amount.toFixed(2) : '₹' + orderData.total_amount}</div>
+            ${isChatkara ? '<div style="margin-top: 5px; font-weight: bold;">Thanks</div>' : ''}
           </div>
         </body>
       </html>
@@ -240,7 +248,7 @@ class PrinterService {
   }
 
   // Generate Customer Receipt HTML
-  private generateCustomerReceiptHTML(orderData: any, orderItems: any[], isFoodCourt: boolean): string {
+  private generateCustomerReceiptHTML(orderData: any, orderItems: any[], isFoodCourt: boolean, isChatkara: boolean): string {
     const date = new Date(orderData.created_at);
     const dateStr = date.toLocaleDateString();
     const timeStr = date.toLocaleTimeString();
@@ -362,6 +370,112 @@ class PrinterService {
           </body>
         </html>
       `;
+    } else if (isChatkara) {
+      return `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Customer Receipt</title>
+            <style>
+              @page { margin: 0; size: 80mm auto; }
+              body { 
+                font-family: 'Courier New', monospace; 
+                font-size: 12px; 
+                margin: 0; 
+                padding: 10px; 
+                font-weight: bold !important;
+              }
+              .header { text-align: center; margin-bottom: 10px; }
+              .logo { font-size: 16px; font-weight: bold; }
+              .subtitle { font-size: 10px; }
+              .order-info { margin-bottom: 10px; }
+              .info-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+              .items-section { margin-bottom: 10px; }
+              .item-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+              .item-name { flex: 2; font-size: 14px; font-weight: bold; }
+              .item-details { flex: 1; text-align: right; }
+              .total-section { border-top: 1px solid #000; padding-top: 5px; }
+              .footer { text-align: center; margin-top: 10px; font-size: 10px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="logo">CHATKARA</div>
+            </div>
+            
+            <div class="order-info">
+              <div class="info-row">
+                <span style="font-size: 16px; font-weight: bold;">${orderData.user?.phone || orderData.phone_number || 'N/A'} ${orderData.user?.block || orderData.delivery_block || 'N/A'}</span>
+              </div>
+              <div class="info-row">
+                <span>Name:</span>
+                <span>${orderData.user?.full_name || 'WALK-IN'}</span>
+              </div>
+              <div class="info-row">
+                <span>Date:</span>
+                <span>${dateStr} ${timeStr}</span>
+              </div>
+              <div class="info-row">
+                <span>Delivery</span>
+                <span>Cashier: biller</span>
+              </div>
+              <div class="info-row">
+                <span>Bill No.:</span>
+                <span>${orderData.order_number.replace(/[^\d]/g, '')}</span>
+              </div>
+              <div class="info-row">
+                <span>Token No.:</span>
+                <span>${orderData.order_number.replace(/[^\d]/g, '')}</span>
+              </div>
+            </div>
+            
+            <div class="items-section">
+              <div class="info-row" style="font-weight: bold; margin-bottom: 8px;">
+                <span>Item</span>
+                <span>Qty.</span>
+                <span>Price</span>
+                <span>Amount</span>
+              </div>
+              ${orderItems.map(item => `
+                <div class="item-row">
+                  <div class="item-name" style="font-weight: bold; font-size: 16px;">${item.menu_item.name}</div>
+                  <div class="item-details" style="font-weight: bold;">${item.quantity}</div>
+                  <div class="item-details" style="font-weight: bold;">${item.unit_price.toFixed(0)}</div>
+                  <div class="item-details" style="font-weight: bold;">${item.total_price.toFixed(0)}</div>
+                </div>
+              `).join('')}
+            </div>
+            
+            <div class="total-section">
+              <div class="info-row" style="font-weight: bold;">
+                <span>Total Qty:</span>
+                <span>${orderItems.reduce((sum, item) => sum + item.quantity, 0)}</span>
+              </div>
+              <div class="info-row" style="font-weight: bold;">
+                <span>Sub Total:</span>
+                <span>${orderData.subtotal.toFixed(0)}</span>
+              </div>
+              <div class="info-row" style="font-weight: bold;">
+                <span>Delivery Charge:</span>
+                <span>+10</span>
+              </div>
+              <div class="info-row" style="font-weight: bold;">
+                <span>MUJ Food Club Discount:</span>
+                <span>-${(orderData.subtotal * 0.05).toFixed(0)}</span>
+              </div>
+              <div class="info-row" style="font-size: 16px; margin-top: 8px; font-weight: bold;">
+                <span>Grand Total:</span>
+                <span>${(orderData.subtotal + 10 - orderData.subtotal * 0.05).toFixed(0)}rs</span>
+              </div>
+            </div>
+            
+            <div class="footer">
+              <div style="font-weight: bold;">Thanks Order Again</div>
+              <div style="font-weight: bold;">mujfoodclub.in</div>
+            </div>
+          </body>
+        </html>
+      `;
     } else {
       return `
         <!DOCTYPE html>
@@ -466,12 +580,12 @@ class PrinterService {
   }
 
   // Generate KOT Text (for network printing)
-  private generateKOTText(orderData: any, orderItems: any[], isFoodCourt: boolean): string {
+  private generateKOTText(orderData: any, orderItems: any[], isFoodCourt: boolean, isChatkara: boolean): string {
     const date = new Date(orderData.created_at);
     const dateStr = date.toLocaleDateString();
     const timeStr = date.toLocaleTimeString();
 
-    let text = `${isFoodCourt ? 'THE FOOD COURT CO' : 'MUJ FOOD CLUB'}\n`;
+    let text = `${isFoodCourt ? 'THE FOOD COURT CO' : isChatkara ? 'CHATKARA' : 'MUJ FOOD CLUB'}\n`;
     text += `KITCHEN ORDER TICKET\n`;
     text += `========================\n`;
     text += `Order #: ${orderData.order_number}\n`;
@@ -488,13 +602,15 @@ class PrinterService {
     
     text += `------------------------\n`;
     text += `Total Items: ${orderItems.reduce((sum, item) => sum + item.quantity, 0)}\n`;
-    text += `Total Amount: ₹${orderData.total_amount}\n`;
+    text += `Total Amount: ${isChatkara ? 'rs' + orderData.total_amount.toFixed(2) : '₹' + orderData.total_amount}\n`;
+    text += `========================\n`;
+    text += `${isChatkara ? 'Thanks' : 'Thank you for your order!'}\n`;
     
     return text;
   }
 
   // Generate Customer Receipt Text (for network printing)
-  private generateCustomerReceiptText(orderData: any, orderItems: any[], isFoodCourt: boolean): string {
+  private generateCustomerReceiptText(orderData: any, orderItems: any[], isFoodCourt: boolean, isChatkara: boolean): string {
     const date = new Date(orderData.created_at);
     const dateStr = date.toLocaleDateString();
     const timeStr = date.toLocaleTimeString();
@@ -529,6 +645,39 @@ class PrinterService {
       text += `========================\n`;
       text += `Paid via: Other [UPI]\n`;
       text += `Thanks For Visit!!\n`;
+      
+      return text;
+    } else if (isChatkara) {
+      const deliveryCharge = 10;
+      const discountAmount = orderData.subtotal * 0.05; // 5% discount
+      const finalTotal = orderData.subtotal + deliveryCharge - discountAmount;
+      
+      let text = `CHATKARA\n`;
+      text += `========================\n`;
+      text += `Name: (M: ${orderData.user?.phone || orderData.phone_number || 'N/A'})\n`;
+      text += `Adr: ${orderData.user?.block || orderData.delivery_block || 'N/A'}\n`;
+      text += `Date: ${dateStr}\n`;
+      text += `${timeStr} Delivery\n`;
+      text += `Cashier: biller\n`;
+      text += `Bill No.: ${orderData.order_number.replace(/[^\d]/g, '')}\n`;
+      text += `Token No.: ${Math.floor(Math.random() * 1000) + 1}\n`;
+      text += `========================\n`;
+      text += `Item\t\tQty\tPrice\tAmount\n`;
+      text += `------------------------\n`;
+      
+      orderItems.forEach(item => {
+        text += `${item.menu_item.name}\t\t${item.quantity}\t${item.unit_price.toFixed(0)}\t${item.total_price.toFixed(0)}\n`;
+      });
+      
+      text += `------------------------\n`;
+      text += `Total Qty: ${orderItems.reduce((sum, item) => sum + item.quantity, 0)}\n`;
+      text += `Sub Total: ${orderData.subtotal.toFixed(0)}\n`;
+      text += `Delivery Charge: +${deliveryCharge}\n`;
+      text += `MUJ Food Club Discount: -${discountAmount.toFixed(0)}\n`;
+      text += `Grand Total: ${finalTotal.toFixed(0)}rs\n`;
+      text += `========================\n`;
+      text += `Thanks Order Again\n`;
+      text += `mujfoodclub.in\n`;
       
       return text;
     } else {
