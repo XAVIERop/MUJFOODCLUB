@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useFavorites } from '../hooks/useFavorites';
-import InlinePdfViewer from './InlinePdfViewer';
+import DirectPdfViewer from './DirectPdfViewer';
 
 interface Cafe {
   id: string;
@@ -248,7 +248,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
           {/* Primary Actions */}
           <div className="grid grid-cols-2 gap-2">
             {(cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('havmor')) ? (
-              <InlinePdfViewer 
+              <DirectPdfViewer 
                 cafeName={cafe.name} 
                 menuPdfUrl={
                   cafe.name.toLowerCase().includes('chatkara') ? "/chatkaramenu.pdf" : 
@@ -263,7 +263,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
                 >
                   View Menu
                 </Button>
-              </InlinePdfViewer>
+              </DirectPdfViewer>
             ) : (
               <Button
                 variant="outline"
@@ -296,7 +296,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               Call
             </Button>
             {cafe.name.toLowerCase().includes('havmor') ? (
-              <InlinePdfViewer 
+              <DirectPdfViewer 
                 cafeName={cafe.name} 
                 menuPdfUrl="/havmormenu.pdf"
               >
@@ -308,7 +308,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
                   <MessageCircle className="w-3 h-3 mr-1" />
                   View Menu
                 </Button>
-              </InlinePdfViewer>
+              </DirectPdfViewer>
             ) : (
               <Button
                 variant="ghost"
