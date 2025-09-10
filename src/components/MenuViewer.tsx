@@ -61,6 +61,7 @@ const MenuViewer = ({ cafeName, menuPdfUrl, children }: MenuViewerProps) => {
         return `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(fullUrl)}`;
       case 'direct':
       default:
+        // For direct viewing, we'll use a data URL approach or open in new tab
         return fullUrl;
     }
   };
@@ -80,6 +81,12 @@ const MenuViewer = ({ cafeName, menuPdfUrl, children }: MenuViewerProps) => {
     setViewMode(mode);
     setHasError(false);
     setIsLoading(true);
+    
+    // For direct mode, don't show loading since we're not using iframe
+    if (mode === 'direct') {
+      setIsLoading(false);
+      return;
+    }
     
     // Set a timeout to detect if iframe fails to load
     setTimeout(() => {
@@ -172,18 +179,28 @@ const MenuViewer = ({ cafeName, menuPdfUrl, children }: MenuViewerProps) => {
             {hasError ? (
               <div className="flex flex-col items-center justify-center h-full bg-muted/50">
                 <div className="text-center">
-                  <div className="text-6xl font-bold text-muted-foreground mb-4">404</div>
-                  <h3 className="text-xl font-semibold mb-2">Oops! Page not found</h3>
+                  <div className="text-6xl font-bold text-muted-foreground mb-4">⚠️</div>
+                  <h3 className="text-xl font-semibold mb-2">Unable to load PDF viewer</h3>
                   <p className="text-muted-foreground mb-4">
-                    Unable to load the PDF menu. This might be due to browser restrictions.
+                    The PDF menu couldn't be displayed in the viewer. This might be due to browser restrictions or network issues.
                   </p>
-                  <Button
-                    onClick={handleDownload}
-                    className="flex items-center gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download PDF Instead
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      onClick={() => window.open(getViewerUrl(), '_blank')}
+                      className="flex items-center gap-2 w-full"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Open PDF in New Tab
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleDownload}
+                      className="flex items-center gap-2 w-full"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download PDF
+                    </Button>
+                  </div>
                 </div>
               </div>
             ) : isLoading ? (
@@ -200,22 +217,52 @@ const MenuViewer = ({ cafeName, menuPdfUrl, children }: MenuViewerProps) => {
                 </div>
               </div>
             ) : (
-              <iframe
-                src={getViewerUrl()}
-                className="w-full h-full border-0"
-                title={`${cafeName} Menu`}
-                onError={() => {
-                  console.error('Iframe failed to load:', getViewerUrl());
-                  setHasError(true);
-                }}
-                onLoad={() => {
-                  console.log('Iframe loaded successfully:', getViewerUrl());
-                  setHasError(false);
-                  setIsLoading(false);
-                }}
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                allow="fullscreen"
-              />
+              <div className="w-full h-full">
+                {viewMode === 'direct' ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-muted/50">
+                    <div className="text-center mb-4">
+                      <h3 className="text-lg font-semibold mb-2">PDF Menu ({getFileSize()})</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Click below to open the PDF in a new tab for best viewing experience
+                      </p>
+                      <div className="space-y-2">
+                        <Button 
+                          onClick={() => window.open(getViewerUrl(), '_blank')}
+                          className="w-full"
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Open PDF in New Tab
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={handleDownload}
+                          className="w-full"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download PDF
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <iframe
+                    src={getViewerUrl()}
+                    className="w-full h-full border-0"
+                    title={`${cafeName} Menu`}
+                    onError={() => {
+                      console.error('Iframe failed to load:', getViewerUrl());
+                      setHasError(true);
+                    }}
+                    onLoad={() => {
+                      console.log('Iframe loaded successfully:', getViewerUrl());
+                      setHasError(false);
+                      setIsLoading(false);
+                    }}
+                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                    allow="fullscreen"
+                  />
+                )}
+              </div>
             )}
           </div>
         </div>
