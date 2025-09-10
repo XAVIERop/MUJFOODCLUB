@@ -189,7 +189,7 @@ const Header = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`relative hidden sm:flex ${
+                  className={`relative hidden sm:inline-flex ${
                     isHomePage 
                       ? 'text-white/90 hover:text-white hover:bg-black/30' 
                       : ''
@@ -351,63 +351,47 @@ const Header = () => {
                     </button>
                   )}
                   
-                  {navItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <a
-                        key={item.label}
-                        href={item.href}
-                        onClick={() => setIsMenuOpen(false)}
-                        className="flex items-center space-x-3 text-muted-foreground hover:text-primary transition-smooth p-2 rounded-lg hover:bg-muted/50"
-                      >
-                        <Icon className="w-5 h-5" />
-                        <span className="text-base">{item.label}</span>
-                      </a>
-                    );
-                  })}
+                  {/* Navigation Links - Simplified */}
+                  <a
+                    href="/"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center space-x-3 text-muted-foreground hover:text-primary transition-smooth p-2 rounded-lg hover:bg-muted/50"
+                  >
+                    <Home className="w-5 h-5" />
+                    <span className="text-base">Home</span>
+                  </a>
                   
+                  <a
+                    href="/cafes"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center space-x-3 text-muted-foreground hover:text-primary transition-smooth p-2 rounded-lg hover:bg-muted/50"
+                  >
+                    <Coffee className="w-5 h-5" />
+                    <span className="text-base">Cafes</span>
+                  </a>
+                  
+                  <a
+                    href="/rewards"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center space-x-3 text-muted-foreground hover:text-primary transition-smooth p-2 rounded-lg hover:bg-muted/50"
+                  >
+                    <Gift className="w-5 h-5" />
+                    <span className="text-base">Rewards</span>
+                  </a>
+                  
+                  {/* User Actions - Simplified */}
                   {user ? (
-                    <>
-                      {/* Cafe Dashboard for cafe owners */}
-                      {isCafeOwner && (
-                        <>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => {
-                              navigate('/cafe-dashboard');
-                              setIsMenuOpen(false);
-                            }}
-                            className="mt-4"
-                          >
-                            <Store className="w-4 h-4 mr-2" />
-                            Cafe Dashboard
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => {
-                              navigate('/pos-dashboard');
-                              setIsMenuOpen(false);
-                            }}
-                            className="mt-4"
-                          >
-                            <Receipt className="w-4 h-4 mr-2" />
-                            POS Dashboard
-                          </Button>
-                        </>
-                      )}
-                      
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          signOut();
-                          setIsMenuOpen(false);
-                        }}
-                        className="mt-4"
-                      >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Sign Out
-                      </Button>
-                    </>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        signOut();
+                        setIsMenuOpen(false);
+                      }}
+                      className="mt-4"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </Button>
                   ) : (
                     <Button variant="hero" onClick={() => {
                       navigate('/auth');
