@@ -6,6 +6,14 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// Enhanced error logging for mobile debugging
+console.log('Environment check:', {
+  hasUrl: !!SUPABASE_URL,
+  hasKey: !!SUPABASE_PUBLISHABLE_KEY,
+  userAgent: navigator.userAgent,
+  isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+});
+
 // Validate required environment variables
 if (!SUPABASE_URL) {
   console.error('Missing VITE_SUPABASE_URL environment variable');
@@ -20,16 +28,26 @@ if (!SUPABASE_PUBLISHABLE_KEY) {
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'muj-food-club@1.0.0',
+let supabase;
+
+try {
+  supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
     },
-  },
-});
+    global: {
+      headers: {
+        'X-Client-Info': 'muj-food-club@1.0.0',
+      },
+    },
+  });
+  console.log('Supabase client initialized successfully');
+} catch (error) {
+  console.error('Failed to initialize Supabase client:', error);
+  throw error;
+}
+
+export { supabase };
