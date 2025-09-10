@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import SimpleHeader from '@/components/SimpleHeader';
-import SimplePdfViewer from '@/components/SimplePdfViewer';
+import InlinePdfViewer from '@/components/InlinePdfViewer';
 import SwiggyStyleHero from '@/components/SwiggyStyleHero';
 import BrandSelector from '@/components/BrandSelector';
 import ItemCustomizationModal from '@/components/ItemCustomizationModal';
@@ -558,7 +558,7 @@ const Menu = () => {
                   )}
                 </div>
                 {(cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('havmor') || cafe.name.toLowerCase().includes('food court')) && (
-                  <SimplePdfViewer 
+                  <InlinePdfViewer 
                     cafeName={cafe.name} 
                     menuPdfUrl={
                       cafe.name.toLowerCase().includes('chatkara') ? "/chatkaramenu.pdf" : 
@@ -575,7 +575,7 @@ const Menu = () => {
                       <FileText className="w-4 h-4" />
                       PDF Menu
                     </Button>
-                  </SimplePdfViewer>
+                  </InlinePdfViewer>
                 )}
               </div>
             </div>
