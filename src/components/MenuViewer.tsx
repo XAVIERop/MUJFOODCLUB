@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Download, Share2, X, FileText, Eye } from 'lucide-react';
@@ -13,9 +13,17 @@ interface MenuViewerProps {
 const MenuViewer = ({ cafeName, menuPdfUrl, children }: MenuViewerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [viewMode, setViewMode] = useState<'google' | 'direct' | 'mozilla'>('google');
+  const [viewMode, setViewMode] = useState<'google' | 'direct' | 'mozilla'>('direct'); // Start with direct mode
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  // Initialize state based on view mode
+  useEffect(() => {
+    if (viewMode === 'direct') {
+      setIsLoading(false);
+      setHasError(false);
+    }
+  }, [viewMode]);
 
   const handleDownload = () => {
     const link = document.createElement('a');
@@ -102,8 +110,13 @@ const MenuViewer = ({ cafeName, menuPdfUrl, children }: MenuViewerProps) => {
     <Dialog open={isOpen} onOpenChange={(open) => {
       setIsOpen(open);
       if (open) {
-        setIsLoading(true);
         setHasError(false);
+        // For direct mode, don't show loading
+        if (viewMode === 'direct') {
+          setIsLoading(false);
+        } else {
+          setIsLoading(true);
+        }
       }
     }}>
       <DialogTrigger asChild>
