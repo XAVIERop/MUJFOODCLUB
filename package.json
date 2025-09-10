@@ -7,8 +7,18 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "build:prod": "node scripts/build-production.js",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "lint:fix": "eslint . --fix",
+    "preview": "vite preview",
+    "preview:prod": "vite preview --mode production",
+    "setup:prod": "node scripts/production-setup.js",
+    "security:audit": "npm audit --audit-level moderate",
+    "security:fix": "npm audit fix",
+    "test:build": "npm run build && npm run preview",
+    "validate:env": "node -e \"console.log('Environment validation:', Object.keys(process.env).filter(k => k.startsWith('VITE_')).length, 'variables found')\"",
+    "clean": "rm -rf dist node_modules/.vite",
+    "postinstall": "echo 'Skipping security audit for deployment'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -89,7 +99,6 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
     "vite": "^5.4.19",
-    "vite-plugin-imagemin": "^0.6.1",
     "vite-plugin-pwa": "^1.0.3"
   }
 }
