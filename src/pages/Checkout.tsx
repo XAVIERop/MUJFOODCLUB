@@ -335,6 +335,19 @@ const Checkout = () => {
       return;
     }
 
+    // Validate table number for dine-in orders
+    if (deliveryDetails.orderType === 'dine_in') {
+      if (!deliveryDetails.tableNumber || deliveryDetails.tableNumber.trim() === '') {
+        setError('Table number is required for dine-in orders');
+        toast({
+          title: "Missing Table Selection",
+          description: "Please select a table number for your dine-in order",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     setIsLoading(true);
     setError('');
 
@@ -349,21 +362,30 @@ const Checkout = () => {
       // This ensures users get points based on what they spent, not what they paid after discounts
 
       // Create order
+      const orderData = {
+        user_id: user.id,
+        cafe_id: cafe.id,
+        order_number: orderNumber,
+        total_amount: finalAmount,
+        delivery_block: deliveryDetails.orderType === 'delivery' ? deliveryDetails.block : deliveryDetails.orderType === 'takeaway' ? 'TAKEAWAY' : 'DINE_IN',
+        table_number: deliveryDetails.orderType === 'dine_in' ? deliveryDetails.tableNumber : null,
+        delivery_notes: deliveryDetails.deliveryNotes,
+        payment_method: deliveryDetails.paymentMethod,
+        points_earned: pointsToEarn,
+        estimated_delivery: new Date(Date.now() + (deliveryDetails.orderType === 'delivery' ? 30 : deliveryDetails.orderType === 'takeaway' ? 15 : 20) * 60 * 1000).toISOString(), // 30 min delivery, 15 min takeaway, 20 min dine-in
+        phone_number: deliveryDetails.phoneNumber
+      };
+
+      console.log('🍽️ DINE-IN DEBUG: Order data being saved:', {
+        orderType: deliveryDetails.orderType,
+        tableNumber: deliveryDetails.tableNumber,
+        deliveryBlock: orderData.delivery_block,
+        tableNumberInOrder: orderData.table_number
+      });
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
-        .insert({
-          user_id: user.id,
-          cafe_id: cafe.id,
-          order_number: orderNumber,
-          total_amount: finalAmount,
-          delivery_block: deliveryDetails.orderType === 'delivery' ? deliveryDetails.block : deliveryDetails.orderType === 'takeaway' ? 'TAKEAWAY' : 'DINE_IN',
-          table_number: deliveryDetails.orderType === 'dine_in' ? deliveryDetails.tableNumber : null,
-          delivery_notes: deliveryDetails.deliveryNotes,
-          payment_method: deliveryDetails.paymentMethod,
-          points_earned: pointsToEarn,
-          estimated_delivery: new Date(Date.now() + (deliveryDetails.orderType === 'delivery' ? 30 : deliveryDetails.orderType === 'takeaway' ? 15 : 20) * 60 * 1000).toISOString(), // 30 min delivery, 15 min takeaway, 20 min dine-in
-          phone_number: deliveryDetails.phoneNumber
-        } as any)
+        .insert(orderData as any)
         .select()
         .single();
 
@@ -906,9 +928,9 @@ const Checkout = () => {
                                 Block {block}
                               </SelectItem>
                             ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="deliveryNotes">Delivery Notes (Optional)</Label>
@@ -944,9 +966,12 @@ const Checkout = () => {
                       </Label>
                       <Select 
                         value={deliveryDetails.tableNumber || ''} 
-                        onValueChange={(value) => setDeliveryDetails(prev => ({...prev, tableNumber: value}))}
+                        onValueChange={(value) => {
+                          console.log('🍽️ Table selected:', value);
+                          setDeliveryDetails(prev => ({...prev, tableNumber: value}));
+                        }}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className={!deliveryDetails.tableNumber || deliveryDetails.tableNumber.trim() === '' ? 'border-red-300 focus:border-red-500' : ''}>
                           <SelectValue placeholder="Choose your table" />
                         </SelectTrigger>
                         <SelectContent>
@@ -958,7 +983,7 @@ const Checkout = () => {
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground">
-                        Choose the table where you're sitting
+                        Required - Choose the table where you're sitting
                       </p>
                     </div>
                   )}
