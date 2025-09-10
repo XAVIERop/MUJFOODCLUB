@@ -235,7 +235,7 @@ export interface Database {
           has_rating?: boolean
           rating_submitted_at?: string | null
           phone_number?: string | null
-          table_id?: string | null
+          table_number?: string | null
         }
         Insert: {
           id?: string
@@ -254,7 +254,7 @@ export interface Database {
           has_rating?: boolean
           rating_submitted_at?: string | null
           phone_number?: string | null
-          table_id?: string | null
+          table_number?: string | null
         }
         Update: {
           id?: string
@@ -273,7 +273,7 @@ export interface Database {
           has_rating?: boolean
           rating_submitted_at?: string | null
           phone_number?: string | null
-          table_id?: string | null
+          table_number?: string | null
         }
         Relationships: [
           {

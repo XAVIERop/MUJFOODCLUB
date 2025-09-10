@@ -17,13 +17,13 @@ CREATE TABLE public.cafe_tables (
   UNIQUE(cafe_id, table_number)
 );
 
--- Step 3: Add table_id to orders table for dine-in orders
-ALTER TABLE public.orders ADD COLUMN table_id UUID REFERENCES public.cafe_tables(id);
+-- Step 3: Add table_number to orders table for dine-in orders
+ALTER TABLE public.orders ADD COLUMN table_number TEXT;
 
 -- Step 4: Create indexes for performance
 CREATE INDEX idx_cafe_tables_cafe_id ON public.cafe_tables(cafe_id);
 CREATE INDEX idx_cafe_tables_qr_code ON public.cafe_tables(qr_code);
-CREATE INDEX idx_orders_table_id ON public.orders(table_id);
+CREATE INDEX idx_orders_table_number ON public.orders(table_number);
 
 -- Step 5: Enable RLS for cafe_tables
 ALTER TABLE public.cafe_tables ENABLE ROW LEVEL SECURITY;
@@ -80,7 +80,7 @@ CREATE TRIGGER update_cafe_tables_updated_at_trigger
 INSERT INTO public.cafe_tables (cafe_id, table_number) 
 SELECT 
   c.id as cafe_id,
-  'Table ' || generate_series(1, 12) as table_number
+  generate_series(1, 12)::text as table_number
 FROM public.cafes c
 WHERE c.is_active = true AND LOWER(c.name) LIKE '%cook house%';
 
@@ -88,7 +88,7 @@ WHERE c.is_active = true AND LOWER(c.name) LIKE '%cook house%';
 INSERT INTO public.cafe_tables (cafe_id, table_number) 
 SELECT 
   c.id as cafe_id,
-  'Table ' || generate_series(1, 8) as table_number
+  generate_series(1, 8)::text as table_number
 FROM public.cafes c
 WHERE c.is_active = true AND LOWER(c.name) LIKE '%food court%';
 
@@ -96,7 +96,7 @@ WHERE c.is_active = true AND LOWER(c.name) LIKE '%food court%';
 INSERT INTO public.cafe_tables (cafe_id, table_number) 
 SELECT 
   c.id as cafe_id,
-  'Table ' || generate_series(1, 5) as table_number
+  generate_series(1, 5)::text as table_number
 FROM public.cafes c
 WHERE c.is_active = true 
   AND LOWER(c.name) NOT LIKE '%cook house%' 

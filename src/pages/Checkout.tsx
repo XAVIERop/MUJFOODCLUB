@@ -74,11 +74,9 @@ const Checkout = () => {
     deliveryNotes: '',
     paymentMethod: 'cod',
     phoneNumber: profile?.phone || '',
-    selectedTableId: ''
+    tableNumber: ''
   });
 
-  // Cafe tables state for dine-in
-  const [cafeTables, setCafeTables] = useState<any[]>([]);
 
   // Points redemption state
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
@@ -119,33 +117,6 @@ const Checkout = () => {
     console.log('✅ Cart validation passed - proceeding with checkout');
   }, [cart, cafe, totalAmount, navigate, toast]);
 
-  // Fetch cafe tables for dine-in option
-  useEffect(() => {
-    const fetchCafeTables = async () => {
-      if (!cafe) return;
-      
-      try {
-        const { data: tables, error } = await supabase
-          .from('cafe_tables')
-          .select('*')
-          .eq('cafe_id', cafe.id)
-          .eq('is_available', true)
-          .order('table_number');
-
-        if (error) {
-          console.error('Error fetching cafe tables:', error);
-          return;
-        }
-
-        setCafeTables(tables || []);
-        console.log('🍽️ Fetched cafe tables:', tables);
-      } catch (error) {
-        console.error('Error fetching cafe tables:', error);
-      }
-    };
-
-    fetchCafeTables();
-  }, [cafe]);
 
   // Update delivery details when selectedBlock changes
   useEffect(() => {
@@ -371,7 +342,7 @@ const Checkout = () => {
           order_number: orderNumber,
           total_amount: finalAmount,
           delivery_block: deliveryDetails.orderType === 'delivery' ? deliveryDetails.block : deliveryDetails.orderType === 'takeaway' ? 'TAKEAWAY' : 'DINE_IN',
-          table_id: deliveryDetails.orderType === 'dine_in' ? deliveryDetails.selectedTableId : null,
+          table_number: deliveryDetails.orderType === 'dine_in' ? deliveryDetails.tableNumber : null,
           delivery_notes: deliveryDetails.deliveryNotes,
           payment_method: deliveryDetails.paymentMethod,
           points_earned: pointsToEarn,
@@ -519,7 +490,7 @@ const Checkout = () => {
             customer_name: profile?.full_name || 'Customer',
             phone_number: deliveryDetails.phoneNumber,
             delivery_block: deliveryDetails.orderType === 'delivery' ? deliveryDetails.block : deliveryDetails.orderType === 'takeaway' ? 'TAKEAWAY' : 'DINE_IN',
-          table_id: deliveryDetails.orderType === 'dine_in' ? deliveryDetails.selectedTableId : null,
+          table_number: deliveryDetails.orderType === 'dine_in' ? deliveryDetails.tableNumber : null,
             total_amount: finalAmount,
             created_at: order.created_at,
             delivery_notes: deliveryDetails.deliveryNotes,
@@ -952,24 +923,21 @@ const Checkout = () => {
 
                   {deliveryDetails.orderType === 'dine_in' && (
                     <div className="space-y-2">
-                      <Label htmlFor="tableSelection">Select Table</Label>
-                      <Select 
-                        value={deliveryDetails.selectedTableId || ''} 
-                        onValueChange={(value) => setDeliveryDetails(prev => ({...prev, selectedTableId: value}))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose your table" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {cafeTables.map((table) => (
-                            <SelectItem key={table.id} value={table.id}>
-                              {table.table_number} {!table.is_available && '(Occupied)'}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="tableNumber" className="flex items-center">
+                        Table Number
+                        <span className="text-red-500 ml-1">*</span>
+                      </Label>
+                      <Input
+                        id="tableNumber"
+                        type="text"
+                        placeholder="Enter your table number (e.g., 5, 12, A3)"
+                        value={deliveryDetails.tableNumber || ''}
+                        onChange={(e) => setDeliveryDetails(prev => ({...prev, tableNumber: e.target.value}))}
+                        required
+                        className={!deliveryDetails.tableNumber || deliveryDetails.tableNumber.trim() === '' ? 'border-red-300 focus:border-red-500' : ''}
+                      />
                       <p className="text-xs text-muted-foreground">
-                        Choose the table where you're sitting
+                        Enter the table number where you're sitting
                       </p>
                     </div>
                   )}
