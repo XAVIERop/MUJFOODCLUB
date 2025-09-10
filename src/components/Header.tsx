@@ -130,26 +130,26 @@ const Header = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Left Section - Logo and Location */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Logo */}
             <Link 
               to="/" 
-              className="flex items-center space-x-2 hover:scale-105 transition-transform cursor-pointer"
+              className="flex items-center space-x-1 sm:space-x-2 hover:scale-105 transition-transform cursor-pointer"
               onClick={() => navigate('/')}
             >
               <img 
                 src="/foc.png" 
                 alt="FoodClub Logo" 
-                className="w-32 sm:w-40 h-auto object-contain"
+                className="w-24 sm:w-32 md:w-40 h-auto object-contain"
               />
               {/* BETA Badge - Golden, positioned to the right, very small */}
-              <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-yellow-300">
+              <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-[8px] sm:text-[10px] font-bold px-1 sm:px-1.5 py-0.5 rounded-full shadow-sm border border-yellow-300">
                 BETA
               </Badge>
             </Link>
 
-            {/* Location Selector */}
-            <div className="hidden sm:flex items-center space-x-2">
+            {/* Location Selector - Desktop Only */}
+            <div className="hidden lg:flex items-center space-x-2">
               <MapPin className={`w-4 h-4 ${isHomePage ? 'text-white/80' : 'text-muted-foreground'}`} />
               <span className={`text-sm font-medium ${isHomePage ? 'text-white/90' : 'text-foreground'}`}>
                 Delivery to: {selectedBlock}
@@ -180,16 +180,16 @@ const Header = () => {
           </nav>
 
           {/* Right Section - User Actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {user && profile ? (
               <>
                 {/* Cafe-specific rewards - removed unified points display */}
 
-                {/* Notifications */}
+                {/* Notifications - Hidden on mobile to reduce clutter */}
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`relative ${
+                  className={`relative hidden sm:flex ${
                     isHomePage 
                       ? 'text-white/90 hover:text-white hover:bg-black/30' 
                       : ''
@@ -272,10 +272,11 @@ const Header = () => {
               <Button 
                 variant={isHomePage ? "outline" : "hero"} 
                 onClick={handleAuthAction}
-                className={isHomePage ? "border-white/40 text-white hover:bg-black/30 hover:border-white/60 bg-black/20" : ""}
+                className={`${isHomePage ? "border-white/40 text-white hover:bg-black/30 hover:border-white/60 bg-black/20" : ""} text-xs sm:text-sm`}
               >
-                <User className="w-4 h-4 mr-2" />
-                Sign In
+                <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Sign In</span>
+                <span className="sm:hidden">Sign In</span>
               </Button>
             )}
 
@@ -319,14 +320,37 @@ const Header = () => {
                 </SheetHeader>
                 
                 {/* Mobile Location Selector */}
-                <div className="flex items-center space-x-2 mt-4 p-3 bg-muted/50 rounded-lg">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">
-                    Delivery to: {selectedBlock}
-                  </span>
+                <div className="flex items-center justify-between mt-4 p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">
+                      Delivery to: {selectedBlock}
+                    </span>
+                  </div>
                   <ChevronDown className="w-3 h-3 text-muted-foreground" />
                 </div>
                 <div className="flex flex-col space-y-4 mt-6">
+                  {/* Mobile Notifications */}
+                  {user && (
+                    <button
+                      onClick={() => {
+                        setIsNotificationOpen(true);
+                        setIsMenuOpen(false);
+                      }}
+                      className="flex items-center space-x-3 text-muted-foreground hover:text-primary transition-smooth p-2 rounded-lg hover:bg-muted/50"
+                    >
+                      <div className="relative">
+                        <Bell className="w-5 h-5" />
+                        {unreadNotifications > 0 && (
+                          <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 flex items-center justify-center text-xs bg-red-500">
+                            {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-base">Notifications</span>
+                    </button>
+                  )}
+                  
                   {navItems.map((item) => {
                     const Icon = item.icon;
                     return (
