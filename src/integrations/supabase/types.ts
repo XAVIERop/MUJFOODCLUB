@@ -729,6 +729,7 @@ export interface Database {
         | "G5"
         | "G6"
         | "G7"
+        | "TAKEAWAY"
       loyalty_tier: "foodie" | "gourmet" | "connoisseur"
       order_status:
         | "received"
