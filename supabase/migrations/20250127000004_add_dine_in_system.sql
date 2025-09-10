@@ -75,18 +75,32 @@ CREATE TRIGGER update_cafe_tables_updated_at_trigger
 
 -- Step 11: Insert sample tables for all cafes with specific counts
 -- Cook House: 12 tables, Food Court: 8 tables, Others: 5 tables
+
+-- Insert tables for Cook House (12 tables)
 INSERT INTO public.cafe_tables (cafe_id, table_number) 
 SELECT 
   c.id as cafe_id,
-  'Table ' || generate_series(1, 
-    CASE 
-      WHEN LOWER(c.name) LIKE '%cook house%' THEN 12
-      WHEN LOWER(c.name) LIKE '%food court%' THEN 8
-      ELSE 5
-    END
-  ) as table_number
+  'Table ' || generate_series(1, 12) as table_number
 FROM public.cafes c
-WHERE c.is_active = true;
+WHERE c.is_active = true AND LOWER(c.name) LIKE '%cook house%';
+
+-- Insert tables for Food Court (8 tables)
+INSERT INTO public.cafe_tables (cafe_id, table_number) 
+SELECT 
+  c.id as cafe_id,
+  'Table ' || generate_series(1, 8) as table_number
+FROM public.cafes c
+WHERE c.is_active = true AND LOWER(c.name) LIKE '%food court%';
+
+-- Insert tables for all other cafes (5 tables each)
+INSERT INTO public.cafe_tables (cafe_id, table_number) 
+SELECT 
+  c.id as cafe_id,
+  'Table ' || generate_series(1, 5) as table_number
+FROM public.cafes c
+WHERE c.is_active = true 
+  AND LOWER(c.name) NOT LIKE '%cook house%' 
+  AND LOWER(c.name) NOT LIKE '%food court%';
 
 -- Step 12: Verify the setup
 SELECT 
