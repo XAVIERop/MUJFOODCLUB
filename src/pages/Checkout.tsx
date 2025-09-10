@@ -786,23 +786,44 @@ const Checkout = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <Label htmlFor="orderType">Order Type</Label>
-                    <Select 
-                      value={deliveryDetails.orderType} 
-                      onValueChange={(value) => setDeliveryDetails(prev => ({...prev, orderType: value}))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select order type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="delivery">🚚 Delivery</SelectItem>
-                        <SelectItem value="takeaway">📦 Takeaway</SelectItem>
-                      </SelectContent>
-                    </Select>
                     
-                    {/* Order Type Badge */}
-                    <div className="flex justify-center mt-2">
+                    {/* Visible Order Type Options */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        type="button"
+                        variant={deliveryDetails.orderType === 'delivery' ? 'default' : 'outline'}
+                        onClick={() => setDeliveryDetails(prev => ({...prev, orderType: 'delivery'}))}
+                        className={`flex flex-col items-center p-4 h-auto ${
+                          deliveryDetails.orderType === 'delivery' 
+                            ? 'bg-blue-600 text-white border-blue-600' 
+                            : 'hover:bg-blue-50 hover:border-blue-200'
+                        }`}
+                      >
+                        <MapPin className="w-6 h-6 mb-2" />
+                        <span className="font-medium">🚚 Delivery</span>
+                        <span className="text-xs opacity-80">To your block</span>
+                      </Button>
+                      
+                      <Button
+                        type="button"
+                        variant={deliveryDetails.orderType === 'takeaway' ? 'default' : 'outline'}
+                        onClick={() => setDeliveryDetails(prev => ({...prev, orderType: 'takeaway'}))}
+                        className={`flex flex-col items-center p-4 h-auto ${
+                          deliveryDetails.orderType === 'takeaway' 
+                            ? 'bg-green-600 text-white border-green-600' 
+                            : 'hover:bg-green-50 hover:border-green-200'
+                        }`}
+                      >
+                        <Clock className="w-6 h-6 mb-2" />
+                        <span className="font-medium">📦 Takeaway</span>
+                        <span className="text-xs opacity-80">From cafe</span>
+                      </Button>
+                    </div>
+                    
+                    {/* Order Type Status */}
+                    <div className="flex justify-center">
                       <Badge 
                         variant={deliveryDetails.orderType === 'delivery' ? 'default' : 'secondary'}
                         className={`px-4 py-2 text-sm font-medium ${
