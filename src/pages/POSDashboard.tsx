@@ -2005,7 +2005,9 @@ const POSDashboard = () => {
                 })),
                 total_amount: selectedOrder.total_amount,
                 order_time: selectedOrder.created_at,
-                status: selectedOrder.status
+                status: selectedOrder.status,
+                table_number: selectedOrder.table_number,
+                delivery_block: selectedOrder.delivery_block
               } : null}
               onClose={() => setSelectedOrder(null)}
             />

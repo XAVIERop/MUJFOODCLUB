@@ -24,6 +24,8 @@ interface Order {
   total_amount: number;
   order_time: string;
   status: string;
+  table_number?: string;
+  delivery_block?: string;
 }
 
 interface ThermalPrinterProps {
@@ -173,6 +175,12 @@ const ThermalPrinter: React.FC<ThermalPrinterProps> = ({ order, onClose }) => {
                 <span>Phone:</span>
                 <span>${orderData.customer_phone}</span>
               </div>
+              ${orderData.delivery_block === 'DINE_IN' && orderData.table_number ? `
+              <div class="info-row">
+                <span>Table:</span>
+                <span>${orderData.table_number}</span>
+              </div>
+              ` : ''}
             </div>
             
             <div class="items-section">
@@ -380,6 +388,12 @@ const ThermalPrinter: React.FC<ThermalPrinterProps> = ({ order, onClose }) => {
               <span className="font-medium">Customer:</span>
               <span>{order.customer_name}</span>
             </div>
+            {order.delivery_block === 'DINE_IN' && order.table_number && (
+              <div className="flex justify-between">
+                <span className="font-medium">Table:</span>
+                <span>{order.table_number}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="font-medium">Items:</span>
               <span>{order.items.length}</span>
