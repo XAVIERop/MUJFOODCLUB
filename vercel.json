@@ -52,6 +52,19 @@
       ]
     },
     {
+      "source": "/(.*)\\.pdf",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, s-maxage=31536000"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/pdf"
+        }
+      ]
+    },
+    {
       "source": "/(.*\\.pdf)$",
       "headers": [
         {

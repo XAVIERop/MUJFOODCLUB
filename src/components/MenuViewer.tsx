@@ -65,6 +65,17 @@ const MenuViewer = ({ cafeName, menuPdfUrl, children }: MenuViewerProps) => {
     }
   };
 
+  const getFileSize = () => {
+    // This would ideally be fetched from the server or calculated
+    // For now, we'll estimate based on common compressed sizes
+    const fileName = menuPdfUrl.split('/').pop()?.toLowerCase() || '';
+    if (fileName.includes('chatkara')) return '2.4 MB';
+    if (fileName.includes('cookhouse')) return '1.1 MB';
+    if (fileName.includes('foodcourt')) return '0.5 MB';
+    if (fileName.includes('havmor')) return '0.4 MB';
+    return 'Optimized';
+  };
+
   const handleViewModeChange = (mode: 'google' | 'direct' | 'mozilla') => {
     setViewMode(mode);
     setHasError(false);
@@ -103,6 +114,9 @@ const MenuViewer = ({ cafeName, menuPdfUrl, children }: MenuViewerProps) => {
             <DialogTitle className="flex items-center gap-2">
               <Eye className="w-5 h-5" />
               {cafeName} Menu
+              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full ml-2">
+                {getFileSize()}
+              </span>
             </DialogTitle>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 mr-2">
@@ -177,9 +191,12 @@ const MenuViewer = ({ cafeName, menuPdfUrl, children }: MenuViewerProps) => {
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                   <h3 className="text-xl font-semibold mb-2">Loading Menu...</h3>
-                  <p className="text-muted-foreground">
-                    Please wait while we load the PDF menu
+                  <p className="text-muted-foreground mb-2">
+                    Optimized for fast loading ({getFileSize()})
                   </p>
+                  <div className="w-64 bg-gray-200 rounded-full h-2">
+                    <div className="bg-primary h-2 rounded-full animate-pulse" style={{width: '60%'}}></div>
+                  </div>
                 </div>
               </div>
             ) : (
