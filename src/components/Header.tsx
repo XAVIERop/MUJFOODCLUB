@@ -5,10 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { QrCode, User, LogOut, Settings, Menu, Home, Coffee, Gift, Utensils, Bell, Receipt, Store, Package, Heart } from 'lucide-react';
+import { QrCode, User, LogOut, Settings, Menu, Home, Coffee, Gift, Utensils, Bell, Receipt, Store, Package, Heart, MapPin, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationSubscriptions } from '@/hooks/useSubscriptionManager';
+import { useLocation as useLocationContext } from '@/contexts/LocationContext';
 import NotificationCenter from './NotificationCenter';
 
 const Header = () => {
@@ -19,6 +20,7 @@ const Header = () => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { selectedBlock, setSelectedBlock } = useLocationContext();
 
   // Check if we're on the home page (hero section)
   const isHomePage = location.pathname === '/';
@@ -127,20 +129,32 @@ const Header = () => {
     } m-0`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 hover:scale-105 transition-transform">
-            <img 
-              src="/foc.png" 
-              alt="FoodClub Logo" 
-              className="w-40 sm:w-48 h-auto object-contain"
-            />
-            {/* BETA Badge - Golden, positioned to the right, very small */}
-            <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-yellow-300">
-              BETA
-            </Badge>
-          </Link>
+          {/* Left Section - Logo and Location */}
+          <div className="flex items-center space-x-4">
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-2 hover:scale-105 transition-transform">
+              <img 
+                src="/foc.png" 
+                alt="FoodClub Logo" 
+                className="w-32 sm:w-40 h-auto object-contain"
+              />
+              {/* BETA Badge - Golden, positioned to the right, very small */}
+              <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-yellow-300">
+                BETA
+              </Badge>
+            </Link>
 
-          {/* Desktop Navigation */}
+            {/* Location Selector */}
+            <div className="hidden sm:flex items-center space-x-2">
+              <MapPin className={`w-4 h-4 ${isHomePage ? 'text-white/80' : 'text-muted-foreground'}`} />
+              <span className={`text-sm font-medium ${isHomePage ? 'text-white/90' : 'text-foreground'}`}>
+                Delivery to: {selectedBlock}
+              </span>
+              <ChevronDown className={`w-3 h-3 ${isHomePage ? 'text-white/60' : 'text-muted-foreground'}`} />
+            </div>
+          </div>
+
+          {/* Center Section - Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -161,7 +175,7 @@ const Header = () => {
             })}
           </nav>
 
-          {/* User Actions */}
+          {/* Right Section - User Actions */}
           <div className="flex items-center space-x-4">
             {user && profile ? (
               <>
@@ -281,15 +295,24 @@ const Header = () => {
                       alt="FoodClub Logo" 
                       className="w-32 h-auto mr-2"
                     />
-                                         {/* BETA Badge - Golden, positioned to the right, very small */}
-                     <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-yellow-300">
-                       BETA
-                     </Badge>
+                    {/* BETA Badge - Golden, positioned to the right, very small */}
+                    <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-yellow-300">
+                      BETA
+                    </Badge>
                   </SheetTitle>
                   <SheetDescription>
                     Your campus food companion
                   </SheetDescription>
                 </SheetHeader>
+                
+                {/* Mobile Location Selector */}
+                <div className="flex items-center space-x-2 mt-4 p-3 bg-muted/50 rounded-lg">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">
+                    Delivery to: {selectedBlock}
+                  </span>
+                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                </div>
                 <div className="flex flex-col space-y-4 mt-6">
                   {navItems.map((item) => {
                     const Icon = item.icon;
