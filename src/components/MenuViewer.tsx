@@ -14,6 +14,7 @@ const MenuViewer = ({ cafeName, menuPdfUrl, children }: MenuViewerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [viewMode, setViewMode] = useState<'google' | 'direct' | 'mozilla'>('google');
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleDownload = () => {
@@ -67,10 +68,26 @@ const MenuViewer = ({ cafeName, menuPdfUrl, children }: MenuViewerProps) => {
   const handleViewModeChange = (mode: 'google' | 'direct' | 'mozilla') => {
     setViewMode(mode);
     setHasError(false);
+    setIsLoading(true);
+    
+    // Set a timeout to detect if iframe fails to load
+    setTimeout(() => {
+      if (isLoading) {
+        console.warn('Iframe loading timeout, showing error');
+        setHasError(true);
+        setIsLoading(false);
+      }
+    }, 10000); // 10 second timeout
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      setIsOpen(open);
+      if (open) {
+        setIsLoading(true);
+        setHasError(false);
+      }
+    }}>
       <DialogTrigger asChild>
         {children || (
           <Button variant="outline" size="sm" className="flex items-center gap-2">
@@ -155,13 +172,32 @@ const MenuViewer = ({ cafeName, menuPdfUrl, children }: MenuViewerProps) => {
                   </Button>
                 </div>
               </div>
+            ) : isLoading ? (
+              <div className="flex flex-col items-center justify-center h-full bg-muted/50">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                  <h3 className="text-xl font-semibold mb-2">Loading Menu...</h3>
+                  <p className="text-muted-foreground">
+                    Please wait while we load the PDF menu
+                  </p>
+                </div>
+              </div>
             ) : (
               <iframe
                 src={getViewerUrl()}
                 className="w-full h-full border-0"
                 title={`${cafeName} Menu`}
-                onError={() => setHasError(true)}
-                onLoad={() => setHasError(false)}
+                onError={() => {
+                  console.error('Iframe failed to load:', getViewerUrl());
+                  setHasError(true);
+                }}
+                onLoad={() => {
+                  console.log('Iframe loaded successfully:', getViewerUrl());
+                  setHasError(false);
+                  setIsLoading(false);
+                }}
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                allow="fullscreen"
               />
             )}
           </div>
