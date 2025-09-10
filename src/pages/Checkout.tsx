@@ -69,12 +69,16 @@ const Checkout = () => {
 
   // Form states
   const [deliveryDetails, setDeliveryDetails] = useState({
-    orderType: 'delivery', // 'delivery' or 'takeaway'
+    orderType: 'delivery', // 'delivery', 'takeaway', or 'dine_in'
     block: selectedBlock,
     deliveryNotes: '',
     paymentMethod: 'cod',
-    phoneNumber: profile?.phone || ''
+    phoneNumber: profile?.phone || '',
+    selectedTableId: ''
   });
+
+  // Cafe tables state for dine-in
+  const [cafeTables, setCafeTables] = useState<any[]>([]);
 
   // Points redemption state
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
@@ -114,6 +118,34 @@ const Checkout = () => {
     
     console.log('✅ Cart validation passed - proceeding with checkout');
   }, [cart, cafe, totalAmount, navigate, toast]);
+
+  // Fetch cafe tables for dine-in option
+  useEffect(() => {
+    const fetchCafeTables = async () => {
+      if (!cafe) return;
+      
+      try {
+        const { data: tables, error } = await supabase
+          .from('cafe_tables')
+          .select('*')
+          .eq('cafe_id', cafe.id)
+          .eq('is_available', true)
+          .order('table_number');
+
+        if (error) {
+          console.error('Error fetching cafe tables:', error);
+          return;
+        }
+
+        setCafeTables(tables || []);
+        console.log('🍽️ Fetched cafe tables:', tables);
+      } catch (error) {
+        console.error('Error fetching cafe tables:', error);
+      }
+    };
+
+    fetchCafeTables();
+  }, [cafe]);
 
   // Update delivery details when selectedBlock changes
   useEffect(() => {
@@ -338,11 +370,12 @@ const Checkout = () => {
           cafe_id: cafe.id,
           order_number: orderNumber,
           total_amount: finalAmount,
-          delivery_block: deliveryDetails.orderType === 'delivery' ? deliveryDetails.block : 'TAKEAWAY',
+          delivery_block: deliveryDetails.orderType === 'delivery' ? deliveryDetails.block : deliveryDetails.orderType === 'takeaway' ? 'TAKEAWAY' : 'DINE_IN',
+          table_id: deliveryDetails.orderType === 'dine_in' ? deliveryDetails.selectedTableId : null,
           delivery_notes: deliveryDetails.deliveryNotes,
           payment_method: deliveryDetails.paymentMethod,
           points_earned: pointsToEarn,
-          estimated_delivery: new Date(Date.now() + (deliveryDetails.orderType === 'delivery' ? 30 : 15) * 60 * 1000).toISOString(), // 30 min delivery, 15 min takeaway
+          estimated_delivery: new Date(Date.now() + (deliveryDetails.orderType === 'delivery' ? 30 : deliveryDetails.orderType === 'takeaway' ? 15 : 20) * 60 * 1000).toISOString(), // 30 min delivery, 15 min takeaway, 20 min dine-in
           phone_number: deliveryDetails.phoneNumber
         } as any)
         .select()
@@ -485,7 +518,8 @@ const Checkout = () => {
             order_number: order.order_number,
             customer_name: profile?.full_name || 'Customer',
             phone_number: deliveryDetails.phoneNumber,
-            delivery_block: deliveryDetails.orderType === 'delivery' ? deliveryDetails.block : 'TAKEAWAY',
+            delivery_block: deliveryDetails.orderType === 'delivery' ? deliveryDetails.block : deliveryDetails.orderType === 'takeaway' ? 'TAKEAWAY' : 'DINE_IN',
+          table_id: deliveryDetails.orderType === 'dine_in' ? deliveryDetails.selectedTableId : null,
             total_amount: finalAmount,
             created_at: order.created_at,
             delivery_notes: deliveryDetails.deliveryNotes,
@@ -790,7 +824,7 @@ const Checkout = () => {
                     <Label htmlFor="orderType">Order Type</Label>
                     
                     {/* Visible Order Type Options */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
                       <Button
                         type="button"
                         variant={deliveryDetails.orderType === 'delivery' ? 'default' : 'outline'}
@@ -820,16 +854,33 @@ const Checkout = () => {
                         <span className="font-medium">📦 Takeaway</span>
                         <span className="text-xs opacity-80">From cafe</span>
                       </Button>
+
+                      <Button
+                        type="button"
+                        variant={deliveryDetails.orderType === 'dine_in' ? 'default' : 'outline'}
+                        onClick={() => setDeliveryDetails(prev => ({...prev, orderType: 'dine_in'}))}
+                        className={`flex flex-col items-center p-4 h-auto ${
+                          deliveryDetails.orderType === 'dine_in' 
+                            ? 'bg-purple-600 text-white border-purple-600' 
+                            : 'hover:bg-purple-50 hover:border-purple-200'
+                        }`}
+                      >
+                        <Clock className="w-6 h-6 mb-2" />
+                        <span className="font-medium">🍽️ Dine In</span>
+                        <span className="text-xs opacity-80">At the cafe</span>
+                      </Button>
                     </div>
                     
                     {/* Order Type Status */}
                     <div className="flex justify-center">
                       <Badge 
-                        variant={deliveryDetails.orderType === 'delivery' ? 'default' : 'secondary'}
+                        variant={deliveryDetails.orderType === 'delivery' ? 'default' : deliveryDetails.orderType === 'takeaway' ? 'secondary' : 'outline'}
                         className={`px-4 py-2 text-sm font-medium ${
                           deliveryDetails.orderType === 'delivery' 
                             ? 'bg-blue-100 text-blue-800 border-blue-200' 
-                            : 'bg-green-100 text-green-800 border-green-200'
+                            : deliveryDetails.orderType === 'takeaway'
+                            ? 'bg-green-100 text-green-800 border-green-200'
+                            : 'bg-purple-100 text-purple-800 border-purple-200'
                         }`}
                       >
                         {deliveryDetails.orderType === 'delivery' ? (
@@ -837,10 +888,15 @@ const Checkout = () => {
                             <MapPin className="w-4 h-4 mr-2" />
                             Delivery to Block {deliveryDetails.block}
                           </>
-                        ) : (
+                        ) : deliveryDetails.orderType === 'takeaway' ? (
                           <>
                             <Clock className="w-4 h-4 mr-2" />
                             Takeaway from Cafe
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-4 h-4 mr-2" />
+                            Dine In at Cafe
                           </>
                         )}
                       </Badge>
@@ -891,6 +947,30 @@ const Checkout = () => {
                         onChange={(e) => setDeliveryDetails(prev => ({...prev, deliveryNotes: e.target.value}))}
                         rows={3}
                       />
+                    </div>
+                  )}
+
+                  {deliveryDetails.orderType === 'dine_in' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="tableSelection">Select Table</Label>
+                      <Select 
+                        value={deliveryDetails.selectedTableId || ''} 
+                        onValueChange={(value) => setDeliveryDetails(prev => ({...prev, selectedTableId: value}))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose your table" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cafeTables.map((table) => (
+                            <SelectItem key={table.id} value={table.id}>
+                              {table.table_number} {!table.is_available && '(Occupied)'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Choose the table where you're sitting
+                      </p>
                     </div>
                   )}
 

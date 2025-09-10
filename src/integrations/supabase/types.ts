@@ -235,6 +235,7 @@ export interface Database {
           has_rating?: boolean
           rating_submitted_at?: string | null
           phone_number?: string | null
+          table_id?: string | null
         }
         Insert: {
           id?: string
@@ -253,6 +254,7 @@ export interface Database {
           has_rating?: boolean
           rating_submitted_at?: string | null
           phone_number?: string | null
+          table_id?: string | null
         }
         Update: {
           id?: string
@@ -271,6 +273,7 @@ export interface Database {
           has_rating?: boolean
           rating_submitted_at?: string | null
           phone_number?: string | null
+          table_id?: string | null
         }
         Relationships: [
           {
@@ -285,6 +288,44 @@ export interface Database {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cafe_tables: {
+        Row: {
+          id: string
+          cafe_id: string
+          table_number: string
+          qr_code: string
+          is_available: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          cafe_id: string
+          table_number: string
+          qr_code?: string
+          is_available?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          cafe_id?: string
+          table_number?: string
+          qr_code?: string
+          is_available?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cafe_tables_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes"
             referencedColumns: ["id"]
           },
         ]
@@ -730,6 +771,7 @@ export interface Database {
         | "G6"
         | "G7"
         | "TAKEAWAY"
+        | "DINE_IN"
       loyalty_tier: "foodie" | "gourmet" | "connoisseur"
       order_status:
         | "received"
