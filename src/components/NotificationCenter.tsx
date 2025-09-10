@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, CheckCircle, AlertCircle, Clock, X, Receipt, Truck, ChefHat } from "lucide-react";
+import { Bell, CheckCircle, AlertCircle, Clock, X, Receipt, Truck, ChefHat, Trash2 } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +36,7 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const fetchNotifications = async () => {
     try {
@@ -124,6 +125,36 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
       toast({
         title: "Error",
         description: "Failed to mark notifications as read",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      if (notifications.length === 0) return;
+
+      const { error } = await supabase
+        .from('order_notifications')
+        .delete()
+        .in('id', notifications.map(n => n.id));
+
+      if (error) throw error;
+
+      // Update local state
+      setNotifications([]);
+      setUnreadCount(0);
+      setShowClearConfirm(false);
+
+      toast({
+        title: "Notifications Cleared",
+        description: "All notifications have been cleared",
+      });
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+      toast({
+        title: "Error",
+        description: "Failed to clear notifications",
         variant: "destructive"
       });
     }
@@ -246,6 +277,18 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
                 Mark all read
               </Button>
             )}
+            {notifications.length > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowClearConfirm(true)}
+                className="hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                title="Clear all notifications"
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                Clear all
+              </Button>
+            )}
             <Button 
               variant="ghost" 
               size="sm" 
@@ -325,6 +368,40 @@ const NotificationCenter = ({ isOpen, onClose, userType = 'user', cafeId }: Noti
           </div>
         </CardContent>
       </Card>
+
+      {/* Clear All Confirmation Dialog */}
+      {showClearConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-60 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center text-red-600">
+                <Trash2 className="w-5 h-5 mr-2" />
+                Clear All Notifications
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                Are you sure you want to clear all {notifications.length} notifications? This action cannot be undone.
+              </p>
+              <div className="flex justify-end space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowClearConfirm(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={clearAllNotifications}
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Clear All
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
