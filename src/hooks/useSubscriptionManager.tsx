@@ -174,8 +174,12 @@ export const useNotificationSubscriptions = (userId: string | null, cafeId: stri
         event: 'INSERT',
         filter,
         callback: (payload) => {
-          console.log('🔔 New notification received:', payload.new);
-          onNewNotification(payload.new);
+          try {
+            console.log('🔔 New notification received:', payload.new);
+            onNewNotification(payload.new);
+          } catch (error) {
+            console.error('Error handling notification:', error);
+          }
         }
       });
     }

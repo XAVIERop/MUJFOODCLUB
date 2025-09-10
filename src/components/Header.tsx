@@ -96,9 +96,15 @@ const Header = () => {
 
         if (!error && count !== null) {
           setUnreadNotifications(count);
+        } else if (error) {
+          console.warn('Failed to fetch notifications count:', error.message);
+          // Don't crash the app, just set to 0
+          setUnreadNotifications(0);
         }
       } catch (error) {
         console.error('Error fetching unread notifications:', error);
+        // Don't crash the app, just set to 0
+        setUnreadNotifications(0);
       }
     };
 

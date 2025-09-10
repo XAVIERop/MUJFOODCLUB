@@ -88,16 +88,22 @@ const SimpleHeader = () => {
     const fetchUnreadNotifications = async () => {
       try {
         const { count, error } = await supabase
-          .from('notifications')
+          .from('order_notifications')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
           .eq('is_read', false);
 
         if (!error && count !== null) {
           setUnreadNotifications(count);
+        } else if (error) {
+          console.warn('Failed to fetch notifications count:', error.message);
+          // Don't crash the app, just set to 0
+          setUnreadNotifications(0);
         }
       } catch (error) {
         console.error('Error fetching notifications:', error);
+        // Don't crash the app, just set to 0
+        setUnreadNotifications(0);
       }
     };
 
