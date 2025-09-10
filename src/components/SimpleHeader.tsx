@@ -134,42 +134,6 @@ const SimpleHeader = () => {
                   BETA
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <MapPin className="h-5 w-5 text-orange-500" />
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-gray-900">{selectedBlock}</span>
-                  <div className="flex items-center space-x-1">
-                    <span className="text-xs text-gray-500">Delivery to:</span>
-                    <Select value={selectedBlock} onValueChange={setSelectedBlock}>
-                      <SelectTrigger className="w-12 h-6 text-xs border-none p-0 bg-transparent">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="B1">B1</SelectItem>
-                        <SelectItem value="B2">B2</SelectItem>
-                        <SelectItem value="B3">B3</SelectItem>
-                        <SelectItem value="B4">B4</SelectItem>
-                        <SelectItem value="B5">B5</SelectItem>
-                        <SelectItem value="B6">B6</SelectItem>
-                        <SelectItem value="B7">B7</SelectItem>
-                        <SelectItem value="B8">B8</SelectItem>
-                        <SelectItem value="B9">B9</SelectItem>
-                        <SelectItem value="B10">B10</SelectItem>
-                        <SelectItem value="B11">B11</SelectItem>
-                        <SelectItem value="B12">B12</SelectItem>
-                        <SelectItem value="G1">G1</SelectItem>
-                        <SelectItem value="G2">G2</SelectItem>
-                        <SelectItem value="G3">G3</SelectItem>
-                        <SelectItem value="G4">G4</SelectItem>
-                        <SelectItem value="G5">G5</SelectItem>
-                        <SelectItem value="G6">G6</SelectItem>
-                        <SelectItem value="G7">G7</SelectItem>
-                        <SelectItem value="G8">G8</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Navigation Links (Center) */}
