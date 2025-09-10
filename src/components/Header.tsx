@@ -132,7 +132,11 @@ const Header = () => {
           {/* Left Section - Logo and Location */}
           <div className="flex items-center space-x-4">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2 hover:scale-105 transition-transform">
+            <Link 
+              to="/" 
+              className="flex items-center space-x-2 hover:scale-105 transition-transform cursor-pointer"
+              onClick={() => navigate('/')}
+            >
               <img 
                 src="/foc.png" 
                 alt="FoodClub Logo" 
@@ -290,15 +294,24 @@ const Header = () => {
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                 <SheetHeader>
                   <SheetTitle className="flex items-center">
-                    <img 
-                      src="/foc.png" 
-                      alt="FoodClub Logo" 
-                      className="w-32 h-auto mr-2"
-                    />
-                    {/* BETA Badge - Golden, positioned to the right, very small */}
-                    <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-yellow-300">
-                      BETA
-                    </Badge>
+                    <Link 
+                      to="/" 
+                      className="flex items-center cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => {
+                        navigate('/');
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      <img 
+                        src="/foc.png" 
+                        alt="FoodClub Logo" 
+                        className="w-32 h-auto mr-2"
+                      />
+                      {/* BETA Badge - Golden, positioned to the right, very small */}
+                      <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-yellow-300">
+                        BETA
+                      </Badge>
+                    </Link>
                   </SheetTitle>
                   <SheetDescription>
                     Your campus food companion
