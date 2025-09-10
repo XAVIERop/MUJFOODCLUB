@@ -28,7 +28,7 @@ BEGIN
             'Authentic Chinese and Asian cuisine featuring a wide variety of soups, appetizers, noodles, rice dishes, and main courses. From classic hot and sour soups to flavorful schezwan preparations, our menu offers both vegetarian and non-vegetarian options. Specializing in dimsum, spring rolls, and combo meals that bring the best of Asian flavors to your table!',
             'Ground Floor, GHS',
             '+91-XXXXXXXXXX',
-            '11:00 AM - 11:00 PM',
+            '11:00 AM - 2:00 AM',
             true,
             NOW(),
             NOW()

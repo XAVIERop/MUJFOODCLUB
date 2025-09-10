@@ -275,3 +275,5 @@ const config = {
 **Total savings: $119.88+ per year per printer**
 
 **Your cafes will have better, faster, and more reliable printing at zero cost!** 🎉
+
+

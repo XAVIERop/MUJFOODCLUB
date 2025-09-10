@@ -16,9 +16,9 @@ INSERT INTO public.cafes (
     'COOK HOUSE',
     'Multi-Cuisine',
     'A culinary haven offering diverse flavors from Chinese specialties to authentic Indian cuisine. From sizzling starters to hearty main courses, we bring you the best of multiple cuisines under one roof. Perfect for every craving!',
-    'Ground Floor, GHS',
+    'G1 First Floor',
     '+91-98765 43210',
-    '11:00 AM - 11:00 PM',
+    '11:00 AM - 2:00 AM',
     true,
     NOW(),
     NOW()

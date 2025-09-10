@@ -200,9 +200,9 @@ CREATE TRIGGER on_auth_user_created
 
 -- Insert sample cafes data
 INSERT INTO public.cafes (name, type, description, location, phone, hours, rating, total_reviews) VALUES
-('Mini Meals', 'Quick Bites', 'Fresh breakfast, sandwiches and coffee to fuel your day', 'Ground Floor, GHS', '+91 98765 43210', '7:00 AM - 11:00 PM', 4.8, 234),
-('Punjabi Tadka', 'North Indian', 'Authentic North Indian cuisine with rich flavors', 'First Floor, GHS', '+91 98765 43211', '11:00 AM - 10:00 PM', 4.6, 189),
-('Munch Box', 'Snacks & Sweets', 'Delicious snacks, sweets and fresh juices', 'Ground Floor, GHS', '+91 98765 43212', '9:00 AM - 12:00 AM', 4.7, 156);
+('Mini Meals', 'Quick Bites', 'Fresh breakfast, sandwiches and coffee to fuel your day', 'B1 Ground Floor, GHS', '+91 98765 43210', '7:00 AM - 11:00 PM', 4.8, 234),
+('Punjabi Tadka', 'North Indian', 'Authentic North Indian cuisine with rich flavors', 'G1 Ground Floor, GHS', '+91 98765 43211', '11:00 AM - 10:00 PM', 4.6, 189),
+('Munch Box', 'Snacks & Sweets', 'Delicious snacks, sweets and fresh juices', 'G1 Ground Floor, GHS', '+91 98765 43212', '9:00 AM - 12:00 AM', 4.7, 156);
 
 -- Insert sample menu items
 INSERT INTO public.menu_items (cafe_id, name, description, price, category) VALUES

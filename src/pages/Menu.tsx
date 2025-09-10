@@ -13,6 +13,7 @@ import SimpleHeader from '@/components/SimpleHeader';
 import MenuViewer from '@/components/MenuViewer';
 import SwiggyStyleHero from '@/components/SwiggyStyleHero';
 import BrandSelector from '@/components/BrandSelector';
+import ItemCustomizationModal from '@/components/ItemCustomizationModal';
 // Brand counting utility for Food Court
 const getBrandItemCounts = (items: MenuItem[]): Record<string, number> => {
   const counts: Record<string, number> = {
@@ -118,6 +119,8 @@ const Menu = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [customizationModalOpen, setCustomizationModalOpen] = useState(false);
+  const [selectedItemForCustomization, setSelectedItemForCustomization] = useState<GroupedMenuItem | null>(null);
 
   useEffect(() => {
     if (cafeId) {
@@ -364,6 +367,33 @@ const Menu = () => {
         cafe, 
         totalAmount: getTotalAmount() 
       } 
+    });
+  };
+
+  const handleOpenCustomization = (item: GroupedMenuItem) => {
+    setSelectedItemForCustomization(item);
+    setCustomizationModalOpen(true);
+  };
+
+  const handleAddToCartFromModal = (item: GroupedMenuItem, selectedPortion: string, selectedAddOns: string[], quantity: number, notes: string) => {
+    // For now, we'll just use the selected portion (add-ons can be added later)
+    addToCart(item, selectedPortion);
+    
+    // Update quantity if more than 1
+    if (quantity > 1) {
+      for (let i = 1; i < quantity; i++) {
+        addToCart(item, selectedPortion);
+      }
+    }
+    
+    // Update notes
+    if (notes) {
+      updateNotes(selectedPortion, notes);
+    }
+    
+    toast({
+      title: "Added to Cart",
+      description: `${item.baseName} has been added to your cart`,
     });
   };
 
@@ -733,34 +763,6 @@ const Menu = () => {
                             {item.description}
                           </p>
                           
-                          {/* Portion Selection */}
-                          {item.portions.length > 1 && (
-                            <div className="space-y-2">
-                              <span className="text-xs font-medium text-foreground">Portion:</span>
-                              {item.portions.map((portion) => (
-                                <Button
-                                  key={portion.id}
-                                  variant={cart[portion.id]?.selectedPortion === portion.id ? 'default' : 'outline'}
-                                  size="sm"
-                                  onClick={() => {
-                                    if (cart[portion.id]) {
-                                      setCart(prev => ({
-                                        ...prev,
-                                        [portion.id]: {
-                                          ...prev[portion.id],
-                                          selectedPortion: portion.id
-                                        }
-                                      }));
-                                    }
-                                  }}
-                                  disabled={portion.out_of_stock}
-                                  className="w-full text-xs h-8"
-                                >
-                                  {portion.name} - ₹{portion.price}
-                                </Button>
-                              ))}
-                            </div>
-                          )}
                           
                           {/* Price and Time */}
                           <div className="flex items-center justify-between text-sm">
@@ -768,11 +770,12 @@ const Menu = () => {
                               <Clock className="w-4 h-4 mr-1" />
                               {item.preparation_time} min
                             </div>
-                            {item.portions.length === 1 && (
-                              <div className="text-lg font-bold text-primary">
-                                ₹{item.portions[0].price}
-                              </div>
-                            )}
+                            <div className="text-lg font-bold text-primary">
+                              {item.portions.length === 1 
+                                ? `₹${item.portions[0].price}`
+                                : `₹${Math.min(...item.portions.map(p => p.price))} - ₹${Math.max(...item.portions.map(p => p.price))}`
+                              }
+                            </div>
                           </div>
                           
                           {/* Add to Cart Button */}
@@ -786,107 +789,20 @@ const Menu = () => {
                               >
                                 Out of Stock
                               </Button>
-                            ) : item.portions.length === 1 ? (
-                              // Single portion - show simple add to cart
-                              <div className="flex items-center space-x-2">
-                                {cart[item.portions[0].id] ? (
-                                  <>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => removeFromCart(item.portions[0].id)}
-                                      className="flex-1"
-                                    >
-                                      <Minus className="w-4 h-4" />
-                                    </Button>
-                                    <span className="w-8 text-center font-semibold">
-                                      {cart[item.portions[0].id].quantity}
-                                    </span>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => addToCart(item, item.portions[0].id)}
-                                      className="flex-1"
-                                    >
-                                      <Plus className="w-4 h-4" />
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <Button
-                                    variant="order"
-                                    size="sm"
-                                    onClick={() => addToCart(item, item.portions[0].id)}
-                                    disabled={item.portions[0].out_of_stock}
-                                    className="w-full"
-                                  >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Add to Cart
-                                  </Button>
-                                )}
-                              </div>
                             ) : (
-                              // Multiple portions - show portion selection first
-                              <div className="space-y-2">
-                                {item.portions.map((portion) => (
-                                  <div key={portion.id} className="flex items-center space-x-2">
-                                    {cart[portion.id] ? (
-                                      <>
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => removeFromCart(portion.id)}
-                                          className="flex-1"
-                                        >
-                                          <Minus className="w-4 h-4" />
-                                        </Button>
-                                        <span className="w-8 text-center font-semibold">
-                                          {cart[portion.id].quantity}
-                                        </span>
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => addToCart(item, portion.id)}
-                                          className="flex-1"
-                                        >
-                                          <Plus className="w-4 h-4" />
-                                        </Button>
-                                      </>
-                                    ) : (
-                                      <Button
-                                        variant="order"
-                                        size="sm"
-                                        onClick={() => addToCart(item, portion.id)}
-                                        disabled={portion.out_of_stock}
-                                        className="w-full"
-                                      >
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Add to Cart
-                                      </Button>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
+                              <Button
+                                variant="order"
+                                size="sm"
+                                onClick={() => handleOpenCustomization(item)}
+                                className="w-full"
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add to Cart
+                              </Button>
                             )}
                           </div>
                         </div>
                         
-                        {/* Show notes for any portion in cart */}
-                        {item.portions.some(portion => cart[portion.id]) && (
-                          <div className="mt-3 pt-3 border-t border-border">
-                            <Textarea
-                              placeholder="Special instructions (optional)"
-                              value={cart[item.portions.find(p => cart[p.id])?.id || '']?.notes || ''}
-                              onChange={(e) => {
-                                const portionInCart = item.portions.find(p => cart[p.id]);
-                                if (portionInCart) {
-                                  updateNotes(portionInCart.id, e.target.value);
-                                }
-                              }}
-                              className="text-sm"
-                              rows={2}
-                            />
-                          </div>
-                        )}
                       </CardContent>
                     </Card>
                   ))}
@@ -1022,6 +938,14 @@ const Menu = () => {
             </div>
           </div>
         )}
+
+        {/* Item Customization Modal */}
+        <ItemCustomizationModal
+          isOpen={customizationModalOpen}
+          onClose={() => setCustomizationModalOpen(false)}
+          item={selectedItemForCustomization}
+          onAddToCart={handleAddToCartFromModal}
+        />
       </div>
     </div>
   );

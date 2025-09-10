@@ -16,9 +16,9 @@ INSERT INTO public.cafes (
     'ZAIKA',
     'Multi-Cuisine',
     'ZAIKA - Where every dish tells a story of authentic flavors! A vibrant restaurant offering an extensive menu featuring starters, rice dishes, noodles, and more. From sizzling starters to aromatic rice preparations, we bring you the perfect blend of taste and tradition with both vegetarian and non-vegetarian delights!',
-    'Ground Floor, GHS',
+    'B1 First Floor',
     '+91-98765 43210',
-    '11:00 AM - 11:00 PM',
+    '11:00 AM - 2:00 AM',
     true,
     NOW(),
     NOW()

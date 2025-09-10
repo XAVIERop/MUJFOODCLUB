@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Use service role key to bypass RLS
-const supabaseUrl = 'https://kblazvxfducwviyyiwde.supabase.co';
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+if (!supabaseUrl) {
+  console.error('❌ Missing VITE_SUPABASE_URL or SUPABASE_URL environment variable');
+  process.exit(1);
+}
 const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibGF6dnhmZHVjd3ZpeXlpd2RlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjEzMjQ2OCwiZXhwIjoyMDcxNzA4NDY4fQ.YourServiceRoleKeyHere'; // You'll need to get the actual service role key
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);

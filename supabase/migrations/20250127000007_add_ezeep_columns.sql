@@ -47,3 +47,5 @@ BEGIN
     RAISE NOTICE '  - ezeep_printer_id: TEXT (nullable)';
     RAISE NOTICE 'Ready to configure Ezeep for Cook House!';
 END $$;
+
+

@@ -26,9 +26,9 @@ BEGIN
             'Soya Chaap Corner',
             'Chaap & Multi-Cuisine',
             'Relish The Taste of India! Specializing in authentic soya chaap preparations, from traditional Malai and Achari to innovative Afghani and Special varieties. Our menu features chaap in multiple styles - grilled, tawa-fried, in rolls, and as part of combo meals. Experience the perfect blend of spices and flavors in every bite!',
-            'Ground Floor, GHS',
+            'G1 First Floor, GHS',
             '+91-8306512244',
-            '11:00 AM - 11:00 PM',
+            '11:00 AM - 2:00 AM',
             true,
             NOW(),
             NOW()

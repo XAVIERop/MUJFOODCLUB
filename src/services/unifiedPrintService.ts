@@ -71,7 +71,7 @@ class UnifiedPrintService {
   private async initializePrintNode(cafeId?: string) {
     if (!cafeId) {
       // Use the main PrintNode API key as fallback
-      const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+      const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY;
       
       if (apiKey) {
         this.printNodeService = new PrintNodeService({
@@ -80,7 +80,7 @@ class UnifiedPrintService {
         });
         console.log('✅ Unified Print Service: PrintNode initialized with main API key');
       } else {
-        console.log('⚠️ Unified Print Service: No PrintNode API key found');
+        console.error('❌ Unified Print Service: VITE_PRINTNODE_API_KEY environment variable is not set');
       }
       return;
     }
@@ -103,12 +103,24 @@ class UnifiedPrintService {
       let apiKey: string;
       if (cafe.name.toLowerCase().includes('chatkara')) {
         apiKey = import.meta.env.VITE_CHATKARA_PRINTNODE_API_KEY || '';
+        if (!apiKey) {
+          console.error('❌ Unified Print Service: VITE_CHATKARA_PRINTNODE_API_KEY environment variable is not set');
+          return;
+        }
         console.log('✅ Unified Print Service: Using Chatkara API key');
       } else if (cafe.name.toLowerCase().includes('food court')) {
         apiKey = import.meta.env.VITE_FOODCOURT_PRINTNODE_API_KEY || '';
+        if (!apiKey) {
+          console.error('❌ Unified Print Service: VITE_FOODCOURT_PRINTNODE_API_KEY environment variable is not set');
+          return;
+        }
         console.log('✅ Unified Print Service: Using Food Court API key');
       } else {
         apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+        if (!apiKey) {
+          console.error('❌ Unified Print Service: VITE_PRINTNODE_API_KEY environment variable is not set');
+          return;
+        }
         console.log('✅ Unified Print Service: Using main API key');
       }
 

@@ -25,9 +25,9 @@ BEGIN
             'Dialog',
             'Café & Multi-Cuisine',
             'Make It A Habit To Eat! A vibrant café offering specialty coffee, hand-toasted pizzas, burgers, subs, crispy toasties, and delicious desserts. From classic beverages to innovative food creations, we bring you the perfect blend of taste and comfort!',
-            'Ground Floor, GHS',
+            'B1 Ground Floor, GHS',
             '+91-98765 43210',
-            '11:00 AM - 11:00 PM',
+            '11:00 AM - 2:00 AM',
             true,
             NOW(),
             NOW()

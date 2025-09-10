@@ -26,9 +26,9 @@ BEGIN
             'Punjabi Tadka',
             'North Indian',
             'Authentic Punjabi cuisine with a modern twist. From crispy starters to rich curries, tandoori specialties to wholesome combos - we bring you the authentic taste of Punjab. Specializing in chaap, tandoori items, and traditional Punjabi delicacies.',
-            'G-1, Ground Floor, GHS',
+            'G1 Ground Floor',
             '+91-9001282566',
-            '11:00 AM - 11:00 PM',
+            '11:00 AM - 2:00 AM',
             true,
             NOW(),
             NOW()

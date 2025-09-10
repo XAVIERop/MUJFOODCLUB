@@ -26,9 +26,9 @@ BEGIN
             'Munch Box',
             'Multi-Cuisine & Fast Food',
             'Your ultimate destination for chaat, Chinese cuisine, momos, pizzas, and more! From traditional Delhi chaat to modern Chinese dishes, crispy momos to cheesy pizzas - we bring you the perfect blend of street food and restaurant quality. Experience the taste of India and beyond in every bite!',
-            'Ground Floor, GHS',
+            'G1 Ground Floor',
             '+91-9571688579',
-            '11:00 AM - 11:00 PM',
+            '11:00 AM - 2:00 AM',
             true,
             NOW(),
             NOW()

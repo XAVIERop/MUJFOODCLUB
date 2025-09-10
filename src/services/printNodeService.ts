@@ -564,21 +564,22 @@ MUJFOODCLUB!`;
     \x1B\x21\x30KOT - ${order_number}\x1B\x21\x00
     \x1B\x21\x08${isChatkara ? 'DELIVERY' : 'PICK UP'}\x1B\x21\x00
     ----------------------------------------
-    \x1B\x21\x08ITEM            QTY\x1B\x21\x00
+    \x1B\x21\x08ITEM                              QTY\x1B\x21\x00
     ----------------------------------------`;
 
     // Add items with proper two-column layout
     items.forEach(item => {
-      const itemName = item.name.toUpperCase(); // Don't cut the item name
+      const itemName = item.name.toUpperCase();
       const qty = item.quantity.toString();
       
       if (isChatkara) {
-        // Create proper two-column layout with word wrapping for item names
-        const maxItemWidth = 20; // Maximum characters for item name column
-        const qtyWidth = 3; // Width for quantity column
+        // Create proper two-column layout: item name (left) and quantity (right)
+        const totalWidth = 40; // Total width of the line
+        const qtyWidth = 4; // Width for quantity column
+        const itemWidth = totalWidth - qtyWidth - 1; // Width for item name column (minus 1 for space)
         
         // Truncate very long item names to prevent excessive wrapping
-        const truncatedName = itemName.length > 25 ? itemName.substring(0, 25) + '...' : itemName;
+        const truncatedName = itemName.length > itemWidth ? itemName.substring(0, itemWidth - 3) + '...' : itemName;
         
         // Split long item names into multiple lines
         const words = truncatedName.split(' ');
@@ -586,7 +587,7 @@ MUJFOODCLUB!`;
         let lines = [];
         
         for (const word of words) {
-          if ((currentLine + ' ' + word).length <= maxItemWidth) {
+          if ((currentLine + ' ' + word).length <= itemWidth) {
             currentLine = currentLine ? currentLine + ' ' + word : word;
           } else {
             if (currentLine) lines.push(currentLine);
@@ -597,13 +598,15 @@ MUJFOODCLUB!`;
         
         // Print each line with proper column alignment
         lines.forEach((line, index) => {
-          const paddedLine = line.padEnd(maxItemWidth);
           if (index === 0) {
-            // First line: show quantity (item name large size, quantity large size)
-            kot += `\n    \x1B\x21\x30${paddedLine}\x1B\x21\x00 \x1B\x21\x30${qty.padStart(qtyWidth)}\x1B\x21\x00`;
+            // First line: item name (left) and quantity (right)
+            const paddedItemName = line.padEnd(itemWidth);
+            const paddedQty = qty.padStart(qtyWidth);
+            kot += `\n    \x1B\x21\x30${paddedItemName} ${paddedQty}\x1B\x21\x00`;
           } else {
-            // Subsequent lines: no quantity, just item name (large size)
-            kot += `\n    \x1B\x21\x30${paddedLine}\x1B\x21\x00`;
+            // Subsequent lines: just item name (left aligned)
+            const paddedItemName = line.padEnd(itemWidth);
+            kot += `\n    \x1B\x21\x30${paddedItemName}\x1B\x21\x00`;
           }
         });
       } else {

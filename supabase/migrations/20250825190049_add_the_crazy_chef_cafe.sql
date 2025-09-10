@@ -16,9 +16,9 @@ INSERT INTO public.cafes (
     'The Crazy Chef',
     'Multi-Cuisine',
     'A culinary adventure with THE CRAZY CHEF! Offering an extensive menu of pizzas, pasta, sandwiches, burgers, and international meals. From classic favorites to innovative creations, we bring you the perfect blend of taste and excitement!',
-    'Ground Floor, GHS',
+    'B1 First Floor',
     '+91-9521099336',
-    '11:00 AM - 11:00 PM',
+    '11:00 AM - 2:00 AM',
     true,
     NOW(),
     NOW()

@@ -536,3 +536,5 @@ class DirectThermalPrintService {
 // Export singleton instance
 export const directThermalPrintService = new DirectThermalPrintService();
 export default directThermalPrintService;
+
+

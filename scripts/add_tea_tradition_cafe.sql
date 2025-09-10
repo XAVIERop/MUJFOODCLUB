@@ -26,9 +26,9 @@ BEGIN
             'Tea Tradition',
             'Tea House & Multi-Cuisine',
             'Experience the perfect blend of traditional tea culture and modern cuisine! From hand-beaten coffee to exotic shakes, classic sandwiches to gourmet pizzas - we bring you the authentic taste of India with a contemporary twist. Your perfect destination for tea, coffee, and delicious food!',
-            'Ground Floor, GHS',
+            'B4 Ground Floor, GHS',
             '+91-7737723632, +91-8690779004',
-            '11:00 AM - 11:00 PM',
+            '11:00 AM - 2:00 AM',
             true,
             NOW(),
             NOW()

@@ -12,6 +12,32 @@ dist
 dist-ssr
 *.local
 
+# Environment variables and secrets
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.backup
+.env.*.local
+.env.*.backup
+server/.env
+server/.env.*
+*.env
+*.key
+*.secret
+*.token
+*.pem
+*.p12
+*.pfx
+
+# Configuration files with secrets
+config/secrets.json
+config/credentials.json
+config/api-keys.json
+secrets/
+credentials/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -23,3 +49,10 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Backup files
+*.backup
+*.bak
+*.old
+backup/
+backups/

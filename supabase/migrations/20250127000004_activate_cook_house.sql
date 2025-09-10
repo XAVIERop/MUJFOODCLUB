@@ -53,3 +53,5 @@ BEGIN
     RAISE NOTICE 'Cafe is now active and accepting orders';
     RAISE NOTICE 'Next step: Create cafe staff account for Cook House';
 END $$;
+
+

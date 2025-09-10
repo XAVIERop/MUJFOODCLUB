@@ -26,9 +26,9 @@ BEGIN
             'Let''s Go Live',
             'Multi-Cuisine & Live Kitchen',
             'Experience the ultimate food adventure with our extensive menu featuring customizable pastas, gourmet sandwiches, Mexican delights, and much more! From "Make Your Own Pasta" to specialty naanzas, we bring you fresh, flavorful dishes made to order. Our live kitchen ensures every meal is prepared with passion and precision!',
-            'Ground Floor, GHS',
+            'G2 Ground Floor',
             '+91-7340588261, +91-9166992102',
-            '11:00 AM - 11:00 PM',
+            '11:00 AM - 2:00 AM',
             true,
             NOW(),
             NOW()

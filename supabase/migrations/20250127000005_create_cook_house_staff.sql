@@ -126,3 +126,5 @@ BEGIN
     RAISE NOTICE '1. Set up Ezeep integration for Xprinter';
     RAISE NOTICE '2. Test the complete system';
 END $$;
+
+

@@ -16,9 +16,9 @@ INSERT INTO public.cafes (
     'FOOD COURT',
     'Multi-Brand',
     'A culinary destination featuring 4 amazing brands under one roof: KRISPP for crispy delights, GOBBLERS for wholesome bowls and wraps, Momo Street for authentic momos, and WAFFLES & MORE for sweet treats. From savory to sweet, we have everything you crave!',
-    'Ground Floor, GHS',
+    'G1 Ground Floor',
     '+91-98765 43210',
-    '11:00 AM - 11:00 PM',
+    '11:00 AM - 2:00 AM',
     true,
     NOW(),
     NOW()

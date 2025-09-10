@@ -180,3 +180,5 @@ const isFoodCourt = data.cafe_name?.toLowerCase().includes('food court');
 ---
 
 **Status**: ✅ **COMPLETE** - Printing system is now properly architected with cafe-specific isolation and reliable fallbacks.
+
+

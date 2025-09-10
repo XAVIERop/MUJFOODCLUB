@@ -18,7 +18,7 @@ INSERT INTO public.cafes (
     'ZERO DEGREE CAFE ESTD 2018 - SIP & EAT! A vibrant café offering hot beverages, cold drinks, Chinese cuisine, wings, kebabs, sandwiches, shakes, pizza, pasta, and more. From refreshing beverages to delicious comfort food, we bring you the perfect blend of taste and ambiance!',
     'Ground Floor, GHS',
     '+91-82336 73311',
-    '11:00 AM - 11:00 PM',
+    '11:00 AM - 2:00 AM',
     true,
     NOW(),
     NOW()

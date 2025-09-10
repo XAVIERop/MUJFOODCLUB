@@ -16,7 +16,7 @@ INSERT INTO public.cafes (
     'The Kitchen & Curry',
     'North Indian',
     'Authentic North Indian cuisine featuring delicious parathas, rich curries, aromatic biryanis, and tandoori specialties. From traditional favorites to modern twists, we bring the authentic taste of Indian kitchens to your plate. Night delivery available!',
-    'Ground Floor, GHS',
+    'Indya Mess First Floor, GHS',
     '+91-7073991323',
     '11:00 AM - 11:00 PM (Night Delivery Available)',
     true,

@@ -593,11 +593,15 @@ class PrinterService {
     text += `Time: ${timeStr}\n`;
     text += `Customer: ${orderData.user?.full_name || 'Walk-in'}\n`;
     text += `========================\n`;
-    text += `Item\t\tQty\n`;
-    text += `------------------------\n`;
+    text += `Item                              Qty\n`;
+    text += `----------------------------------------\n`;
     
     orderItems.forEach(item => {
-      text += `${item.menu_item.name}\t\t${item.quantity}\n`;
+      const itemName = item.menu_item.name.toUpperCase();
+      const qty = item.quantity.toString();
+      const paddedItemName = itemName.padEnd(35);
+      const paddedQty = qty.padStart(4);
+      text += `${paddedItemName} ${paddedQty}\n`;
     });
     
     text += `------------------------\n`;

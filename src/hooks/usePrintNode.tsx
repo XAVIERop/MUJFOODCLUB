@@ -32,7 +32,12 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
   const getCafeApiKey = useCallback(async (cafeId?: string): Promise<string> => {
     if (!cafeId) {
       // Fallback to general API key
-      return import.meta.env.VITE_PRINTNODE_API_KEY || 'TYqkDtkjFvRAfg5_zcR1nUE00Ou2zenJHG-9LpGqkkg';
+      const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY;
+      if (!apiKey) {
+        console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+        return '';
+      }
+      return apiKey;
     }
 
     try {
@@ -45,23 +50,48 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
 
       if (!cafe) {
         console.warn('Cafe not found, using fallback API key');
-        return import.meta.env.VITE_PRINTNODE_API_KEY || 'TYqkDtkjFvRAfg5_zcR1nUE00Ou2zenJHG-9LpGqkkg';
+        const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY;
+        if (!apiKey) {
+          console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+          return '';
+        }
+        return apiKey;
       }
 
       // Return cafe-specific API key
       if (cafe.name.toLowerCase().includes('chatkara')) {
         console.log('Using Chatkara API key');
-        return import.meta.env.VITE_CHATKARA_PRINTNODE_API_KEY || '';
+        const apiKey = import.meta.env.VITE_CHATKARA_PRINTNODE_API_KEY;
+        if (!apiKey) {
+          console.error('VITE_CHATKARA_PRINTNODE_API_KEY environment variable is not set');
+          return '';
+        }
+        return apiKey;
       } else if (cafe.name.toLowerCase().includes('food court')) {
         console.log('Using Food Court API key');
-        return import.meta.env.VITE_FOODCOURT_PRINTNODE_API_KEY || '';
+        const apiKey = import.meta.env.VITE_FOODCOURT_PRINTNODE_API_KEY;
+        if (!apiKey) {
+          console.error('VITE_FOODCOURT_PRINTNODE_API_KEY environment variable is not set');
+          return '';
+        }
+        return apiKey;
       }
 
       // Fallback to general API key
-      return import.meta.env.VITE_PRINTNODE_API_KEY || 'TYqkDtkjFvRAfg5_zcR1nUE00Ou2zenJHG-9LpGqkkg';
+      const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY;
+      if (!apiKey) {
+        console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+        return '';
+      }
+      return apiKey;
     } catch (error) {
       console.error('Error fetching cafe info:', error);
-      return import.meta.env.VITE_PRINTNODE_API_KEY || 'TYqkDtkjFvRAfg5_zcR1nUE00Ou2zenJHG-9LpGqkkg';
+      const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY;
+      if (!apiKey) {
+        console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+        return '';
+      }
+      return apiKey;
     }
   }, []);
 

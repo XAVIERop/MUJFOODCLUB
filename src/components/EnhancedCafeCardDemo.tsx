@@ -7,9 +7,9 @@ const sampleDialogCafe = {
   name: 'Dialog',
   type: 'Multi Cuisine',
   description: 'A modern cafe offering a variety of cuisines with a cozy atmosphere.',
-  location: 'GHS Hostel',
+  location: 'B1 Ground Floor',
   phone: '+91-9876543210',
-  hours: '8:00 AM - 10:00 PM',
+  hours: '11:00 AM - 2:00 AM',
   accepting_orders: true,
   average_rating: 4.2,
   total_ratings: 156,
@@ -56,7 +56,7 @@ export const EnhancedCafeCardDemo: React.FC = () => {
               <h3 className="font-semibold text-gray-900 mb-2">📱 Enhanced Information</h3>
               <ul className="text-sm text-gray-600 space-y-1">
                 <li>• Cost for two prominently displayed</li>
-                <li>• Location (GHS Hostel) clearly shown</li>
+                <li>• Location (B1 Ground Floor) clearly shown</li>
                 <li>• Timing information with icon</li>
                 <li>• Open/Closed status badge</li>
               </ul>

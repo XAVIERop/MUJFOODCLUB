@@ -16,9 +16,9 @@ INSERT INTO public.cafes (
     'Waffle Fit N Fresh',
     'Waffle & Beverages',
     'A delightful waffle and beverage destination offering fresh waffles, mini pancakes, premium milkshakes, and refreshing drinks. From classic Belgian waffles to innovative bubble style waffles, we bring you the perfect blend of taste and freshness!',
-    'Ground Floor, GHS',
+    'G1 First Floor',
     '+91-7597538430',
-    '11:00 AM - 11:00 PM',
+    '11:00 AM - 2:00 AM',
     true,
     NOW(),
     NOW()

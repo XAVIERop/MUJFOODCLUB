@@ -16,9 +16,9 @@ INSERT INTO public.cafes (
     'CHATKARA',
     'Multi-Cuisine',
     'Specializing in Chaap, Chinese, Momos and more. From authentic soya chaap to delicious momos, tandoori items to Indian curries - we bring you the perfect blend of flavors. Pure vegetarian menu with the taste of non-veg in veg!',
-    'Ground Floor, GHS',
+    'B1 Ground Floor, GHS',
     '+91-890 596 2406',
-    '11:00 AM - 11:00 PM',
+    '11:00 AM - 2:00 AM',
     true,
     NOW(),
     NOW()

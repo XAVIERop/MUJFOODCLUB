@@ -26,9 +26,9 @@ BEGIN
             'Dev Sweets & Snacks',
             'Sweets & Multi-Cuisine',
             'A delightful destination for sweets, snacks, and beverages. From traditional Indian sweets to modern shakes, sandwiches to hot beverages - we bring you the perfect blend of taste and comfort. Specializing in fresh sweets, innovative shakes, and delicious quick bites!',
-            'Ground Floor, GHS',
+            'B4 Ground Floor, GHS',
             '+91-9358387779',
-            '11:00 AM - 11:00 PM',
+            '11:00 AM - 2:00 AM',
             true,
             NOW(),
             NOW()

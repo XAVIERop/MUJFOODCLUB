@@ -10,6 +10,30 @@ export const WHATSAPP_CONFIG = {
   SANDBOX_MODE: import.meta.env.VITE_WHATSAPP_SANDBOX_MODE === 'true',
 };
 
+// Validate WhatsApp configuration
+export const validateWhatsAppConfig = () => {
+  const errors: string[] = [];
+  
+  if (!WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID) {
+    errors.push('VITE_TWILIO_ACCOUNT_SID environment variable is not set');
+  }
+  
+  if (!WHATSAPP_CONFIG.TWILIO_AUTH_TOKEN) {
+    errors.push('VITE_TWILIO_AUTH_TOKEN environment variable is not set');
+  }
+  
+  if (!WHATSAPP_CONFIG.TWILIO_WHATSAPP_FROM) {
+    errors.push('VITE_TWILIO_WHATSAPP_FROM environment variable is not set');
+  }
+  
+  if (errors.length > 0) {
+    console.error('WhatsApp configuration errors:', errors);
+    return false;
+  }
+  
+  return true;
+};
+
 // Debug: Log environment variables on load
 console.log('🔍 WhatsApp Config Debug:');
 console.log('TWILIO_ACCOUNT_SID:', WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID ? '✅ Set' : '❌ Missing');

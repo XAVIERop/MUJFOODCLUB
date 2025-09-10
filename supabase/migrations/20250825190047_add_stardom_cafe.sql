@@ -16,9 +16,9 @@ INSERT INTO public.cafes (
     'STARDOM Café & Lounge',
     'Café & Lounge',
     'A premium café and lounge experience offering specialty coffee, gourmet sandwiches, international cuisine, and refreshing beverages. From artisanal coffee to delicious comfort food, we bring you the perfect blend of taste and ambiance!',
-    'Ground Floor, GHS',
+    'G2 Ground Floor',
     '+91-9928884373',
-    '11:00 AM - 11:00 PM',
+    '11:00 AM - 2:00 AM',
     true,
     NOW(),
     NOW()

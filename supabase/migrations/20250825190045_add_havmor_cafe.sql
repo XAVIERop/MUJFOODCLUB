@@ -16,9 +16,9 @@ INSERT INTO public.cafes (
     'Havmor',
     'Ice Cream & Desserts',
     'Premium ice cream and dessert destination featuring a wide variety of candies, scoops, sundaes, ice cream cakes, and traditional Indian treats. From classic flavors to innovative combinations, we bring joy through every scoop!',
-    'Ground Floor, GHS',
+    'G1 First Floor',
     '+91-98765 43210',
-    '11:00 AM - 11:00 PM',
+    '11:00 AM - 2:00 AM',
     true,
     NOW(),
     NOW()

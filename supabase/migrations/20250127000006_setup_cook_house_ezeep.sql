@@ -86,3 +86,5 @@ BEGIN
     RAISE NOTICE '3. Update the configuration with real values';
     RAISE NOTICE '4. Test printing with sample receipts';
 END $$;
+
+

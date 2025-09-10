@@ -16,9 +16,9 @@ INSERT INTO public.cafes (
     'ITALIAN OVEN',
     'Italian',
     'Authentic Italian cuisine with a modern twist. From classic pizzas to gourmet pasta, thick shakes to jumbo sandwiches - we bring you the finest Italian flavors. Specializing in wood-fired pizzas, creamy pasta, and delicious Italian-inspired dishes.',
-    'G-1, First Floor, GHS',
+    'G1 First Floor',
     '+91-8905464595',
-    '11:00 AM - 11:00 PM',
+    '11:00 AM - 2:00 AM',
     true,
     NOW(),
     NOW()
