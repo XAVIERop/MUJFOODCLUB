@@ -154,14 +154,6 @@ const Header = () => {
               </Badge>
             </Link>
 
-            {/* Location Selector - Desktop Only */}
-            <div className="hidden lg:flex items-center space-x-2">
-              <MapPin className={`w-4 h-4 ${isHomePage ? 'text-white/80' : 'text-muted-foreground'}`} />
-              <span className={`text-sm font-medium ${isHomePage ? 'text-white/90' : 'text-foreground'}`}>
-                Delivery to: {selectedBlock}
-              </span>
-              <ChevronDown className={`w-3 h-3 ${isHomePage ? 'text-white/60' : 'text-muted-foreground'}`} />
-            </div>
           </div>
 
           {/* Center Section - Navigation */}
