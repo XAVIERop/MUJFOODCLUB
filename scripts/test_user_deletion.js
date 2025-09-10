@@ -5,7 +5,11 @@ if (!supabaseUrl) {
   console.error('❌ Missing VITE_SUPABASE_URL or SUPABASE_URL environment variable');
   process.exit(1);
 }
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibGF6dnhmZHVjd3ZpeXlpd2RlIiwicnNlIjoiYW5vbiIsImlhdCI6MTc1NjEzMjQ2OCwiZXhwIjoyMDcxNzA4NDY4fQ.bMtHsQy5cdkF-7ClprpF7HgMKUJpBUuZPaAPNz_LRSA';
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+if (!supabaseKey) {
+  console.error('❌ Missing VITE_SUPABASE_ANON_KEY or SUPABASE_ANON_KEY environment variable');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 

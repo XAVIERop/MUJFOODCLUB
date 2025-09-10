@@ -3,7 +3,11 @@ import fs from 'fs';
 
 // Supabase configuration
 const supabaseUrl = 'https://mghheqvtuqjqjqjqjqjq.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1naGhlcXZ0dXFqcWpxanFqcWpxaiIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzM3NzQ4MDAwLCJleHAiOjIwNTMzMjQwMDB9.example';
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+if (!supabaseKey) {
+  console.error('❌ Missing VITE_SUPABASE_ANON_KEY or SUPABASE_ANON_KEY environment variable');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
