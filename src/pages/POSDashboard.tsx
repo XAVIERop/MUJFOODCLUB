@@ -71,6 +71,7 @@ interface Order {
   customer_name?: string;
   subtotal?: number;
   tax_amount?: number;
+  table_number?: string;
   cafe?: {
     id: string;
     name: string;
@@ -245,7 +246,8 @@ const POSDashboard = () => {
         (order.user?.email && order.user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (order.user?.block && order.user.block.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (order.customer_name && order.customer_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        order.delivery_block.toLowerCase().includes(searchTerm.toLowerCase())
+        order.delivery_block.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.table_number && order.table_number.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -735,8 +737,8 @@ const POSDashboard = () => {
                   <span>${orderData.user?.phone || orderData.phone_number || 'N/A'}</span>
                 </div>
                 <div class="info-row">
-                  <span>Block:</span>
-                  <span>${orderData.user?.block || orderData.delivery_block || 'N/A'}</span>
+                  <span>Type:</span>
+                  <span>${formatReceiptOrderType(orderData)}</span>
                 </div>
               </div>
               
@@ -883,7 +885,7 @@ const POSDashboard = () => {
                 <div class="cafe-name">${orderData.cafe?.name || 'Chatkara'}</div>
                 
                 <div class="customer-info">
-                  <div>${orderData.user?.phone || orderData.phone_number || 'N/A'} ${orderData.user?.block || orderData.delivery_block || 'N/A'}</div>
+                  <div>${orderData.user?.phone || orderData.phone_number || 'N/A'} - ${formatReceiptOrderType(orderData)}</div>
                   <div>Name: ${orderData.user?.full_name || 'WALK-IN'}</div>
                 </div>
                 
@@ -1056,8 +1058,8 @@ const POSDashboard = () => {
                   <span>${orderData.user?.full_name || 'Walk-in Customer'}</span>
                 </div>
                 <div class="info-row">
-                  <span>Adr:</span>
-                  <span>${orderData.user?.block || orderData.delivery_block || 'N/A'}</span>
+                  <span>Type:</span>
+                  <span>${formatReceiptOrderType(orderData)}</span>
                 </div>
                 <div class="info-row">
                   <span>Date:</span>
@@ -1220,6 +1222,26 @@ const POSDashboard = () => {
       minute: '2-digit',
       second: '2-digit'
     });
+  };
+
+  const formatOrderType = (order: Order) => {
+    if (order.delivery_block === 'DINE_IN') {
+      return `🍽️ Dine In • Table ${order.table_number || 'N/A'}`;
+    } else if (order.delivery_block === 'TAKEAWAY') {
+      return '📦 Takeaway';
+    } else {
+      return `🚚 Delivery • Block ${order.delivery_block}`;
+    }
+  };
+
+  const formatReceiptOrderType = (order: Order) => {
+    if (order.delivery_block === 'DINE_IN') {
+      return `Dine In - Table ${order.table_number || 'N/A'}`;
+    } else if (order.delivery_block === 'TAKEAWAY') {
+      return 'Takeaway';
+    } else {
+      return `Delivery - Block ${order.delivery_block}`;
+    }
   };
 
   useEffect(() => {
@@ -1719,7 +1741,7 @@ const POSDashboard = () => {
                                     </Badge>
                                   </CardTitle>
                                   <p className="text-sm text-muted-foreground">
-                                    {formatTime(order.created_at)} • Block {order.delivery_block}
+                                    {formatTime(order.created_at)} • {formatOrderType(order)}
                                     {order.phone_number && (
                                       <span className="ml-2">• 📞 {order.phone_number}</span>
                                     )}
