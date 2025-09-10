@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Star, Clock, Phone, MessageCircle, MapPin, FileText, Images } from 'lucide-react';
-import MenuViewer from './MenuViewer';
+import SimplePdfViewer from './SimplePdfViewer';
 
 interface Cafe {
   id: string;
@@ -177,7 +177,7 @@ const SwiggyStyleHero: React.FC<SwiggyStyleHeroProps> = ({
                 </Button>
                 
                 {(cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('havmor')) ? (
-                  <MenuViewer 
+                  <SimplePdfViewer 
                     cafeName={cafe.name} 
                     menuPdfUrl={
                       cafe.name.toLowerCase().includes('chatkara') ? "/chatkaramenu.pdf" : 
@@ -193,7 +193,7 @@ const SwiggyStyleHero: React.FC<SwiggyStyleHeroProps> = ({
                       <FileText className="w-4 h-4 mr-2" />
                       View Menu
                     </Button>
-                  </MenuViewer>
+                  </SimplePdfViewer>
                 ) : (
                   <Button
                     onClick={onMenuClick}

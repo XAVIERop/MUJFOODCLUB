@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import SimpleHeader from '@/components/SimpleHeader';
-import MenuViewer from '@/components/MenuViewer';
+import SimplePdfViewer from '@/components/SimplePdfViewer';
 import SwiggyStyleHero from '@/components/SwiggyStyleHero';
 import BrandSelector from '@/components/BrandSelector';
 import ItemCustomizationModal from '@/components/ItemCustomizationModal';
@@ -557,13 +557,14 @@ const Menu = () => {
                     </button>
                   )}
                 </div>
-                {(cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('havmor')) && (
-                  <MenuViewer 
+                {(cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('havmor') || cafe.name.toLowerCase().includes('food court')) && (
+                  <SimplePdfViewer 
                     cafeName={cafe.name} 
                     menuPdfUrl={
                       cafe.name.toLowerCase().includes('chatkara') ? "/chatkaramenu.pdf" : 
                       cafe.name.toLowerCase().includes('cook house') ? "/cookhousemenu.pdf" :
-                      cafe.name.toLowerCase().includes('havmor') ? "/havmormenu.pdf" : ""
+                      cafe.name.toLowerCase().includes('havmor') ? "/havmormenu.pdf" :
+                      cafe.name.toLowerCase().includes('food court') ? "/foodcourtmenu.pdf" : ""
                     }
                   >
                     <Button
@@ -574,7 +575,7 @@ const Menu = () => {
                       <FileText className="w-4 h-4" />
                       PDF Menu
                     </Button>
-                  </MenuViewer>
+                  </SimplePdfViewer>
                 )}
               </div>
             </div>
