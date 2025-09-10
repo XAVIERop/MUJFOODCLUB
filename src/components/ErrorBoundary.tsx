@@ -33,7 +33,9 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       },
       error: error.message,
       stack: error.stack,
-      componentStack: errorInfo.componentStack
+      componentStack: errorInfo.componentStack,
+      isCSPError: error.message.includes('Content Security Policy') || error.message.includes('CSP'),
+      isNetworkError: error.message.includes('fetch') || error.message.includes('network') || error.message.includes('connection')
     });
   }
 

@@ -11,17 +11,20 @@ console.log('Environment check:', {
   hasUrl: !!SUPABASE_URL,
   hasKey: !!SUPABASE_PUBLISHABLE_KEY,
   userAgent: navigator.userAgent,
-  isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+  env: import.meta.env.MODE
 });
 
 // Validate required environment variables
 if (!SUPABASE_URL) {
   console.error('Missing VITE_SUPABASE_URL environment variable');
+  console.error('Available env vars:', Object.keys(import.meta.env));
   throw new Error('Missing VITE_SUPABASE_URL environment variable');
 }
 
 if (!SUPABASE_PUBLISHABLE_KEY) {
   console.error('Missing VITE_SUPABASE_ANON_KEY environment variable');
+  console.error('Available env vars:', Object.keys(import.meta.env));
   throw new Error('Missing VITE_SUPABASE_ANON_KEY environment variable');
 }
 
