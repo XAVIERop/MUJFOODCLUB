@@ -620,12 +620,6 @@ const Checkout = () => {
                   {/* Cafe Info */}
                   <div className="mb-6 p-4 bg-muted/50 rounded-lg">
                     <h3 className="font-semibold text-lg mb-2">{cafe.name}</h3>
-                    <p className="text-muted-foreground mb-2">
-                      {cafe.name === 'FOOD COURT' 
-                        ? 'Quick bites, wholesome bowls, and sweet treats—all in one place.'
-                        : cafe.description
-                      }
-                    </p>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <MapPin className="w-4 h-4 mr-1" />
                       {cafe.location}
