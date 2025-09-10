@@ -49,6 +49,18 @@ async function generateQRCodes() {
     }
 
     console.log(`📊 Found ${tables.length} tables across ${new Set(tables.map(t => t.cafes.name)).size} cafes`);
+    
+    // Show table count per cafe
+    const tableCounts = tables.reduce((acc, table) => {
+      const cafeName = table.cafes.name;
+      acc[cafeName] = (acc[cafeName] || 0) + 1;
+      return acc;
+    }, {});
+    
+    console.log('📋 Table distribution:');
+    Object.entries(tableCounts).forEach(([cafe, count]) => {
+      console.log(`   ${cafe}: ${count} tables`);
+    });
 
     // Create output directory
     const outputDir = path.join(process.cwd(), 'qr-codes');
@@ -108,6 +120,13 @@ async function generateQRCodes() {
 function generateSummaryHTML(tables) {
   const cafes = [...new Set(tables.map(t => t.cafes.name))];
   
+  // Calculate table counts
+  const tableCounts = tables.reduce((acc, table) => {
+    const cafeName = table.cafes.name;
+    acc[cafeName] = (acc[cafeName] || 0) + 1;
+    return acc;
+  }, {});
+  
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -127,6 +146,10 @@ function generateSummaryHTML(tables) {
     <h1>🍽️ MUJ Food Club - Table QR Codes</h1>
     <p>Generated on: ${new Date().toLocaleString()}</p>
     <p>Total Tables: ${tables.length} | Total Cafes: ${cafes.length}</p>
+    <div style="background: #f0f0f0; padding: 10px; border-radius: 5px; margin: 10px 0;">
+      <strong>Table Distribution:</strong><br>
+      ${Object.entries(tableCounts).map(([cafe, count]) => `${cafe}: ${count} tables`).join('<br>')}
+    </div>
     
     ${cafes.map(cafeName => {
       const cafeTables = tables.filter(t => t.cafes.name === cafeName);

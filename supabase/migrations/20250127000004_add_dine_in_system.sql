@@ -73,11 +73,18 @@ CREATE TRIGGER update_cafe_tables_updated_at_trigger
   FOR EACH ROW
   EXECUTE FUNCTION public.update_cafe_tables_updated_at();
 
--- Step 11: Insert sample tables for all cafes (5 tables each)
+-- Step 11: Insert sample tables for all cafes with specific counts
+-- Cook House: 12 tables, Food Court: 8 tables, Others: 5 tables
 INSERT INTO public.cafe_tables (cafe_id, table_number) 
 SELECT 
   c.id as cafe_id,
-  'Table ' || generate_series(1, 5) as table_number
+  'Table ' || generate_series(1, 
+    CASE 
+      WHEN LOWER(c.name) LIKE '%cook house%' THEN 12
+      WHEN LOWER(c.name) LIKE '%food court%' THEN 8
+      ELSE 5
+    END
+  ) as table_number
 FROM public.cafes c
 WHERE c.is_active = true;
 
