@@ -209,6 +209,21 @@ const Checkout = () => {
     return calculateMaxRedeemablePoints(totalAmount);
   };
 
+  const getTableNumbers = (cafeName: string): string[] => {
+    const name = cafeName.toLowerCase();
+    
+    if (name.includes('chatkara')) {
+      return Array.from({ length: 15 }, (_, i) => (i + 1).toString());
+    } else if (name.includes('food court')) {
+      return Array.from({ length: 8 }, (_, i) => (i + 1).toString());
+    } else if (name.includes('cook house')) {
+      return Array.from({ length: 12 }, (_, i) => (i + 1).toString());
+    } else {
+      // All other cafes get 8 tables
+      return Array.from({ length: 8 }, (_, i) => (i + 1).toString());
+    }
+  };
+
   const handlePointsRedeem = (points: number) => {
     const maxRedeemable = calculateMaxRedeemablePointsForOrder();
     const actualPointsToRedeem = Math.min(points, maxRedeemable);
@@ -923,21 +938,27 @@ const Checkout = () => {
 
                   {deliveryDetails.orderType === 'dine_in' && (
                     <div className="space-y-2">
-                      <Label htmlFor="tableNumber" className="flex items-center">
-                        Table Number
+                      <Label htmlFor="tableSelection" className="flex items-center">
+                        Select Table
                         <span className="text-red-500 ml-1">*</span>
                       </Label>
-                      <Input
-                        id="tableNumber"
-                        type="text"
-                        placeholder="Enter your table number (e.g., 5, 12, A3)"
-                        value={deliveryDetails.tableNumber || ''}
-                        onChange={(e) => setDeliveryDetails(prev => ({...prev, tableNumber: e.target.value}))}
-                        required
-                        className={!deliveryDetails.tableNumber || deliveryDetails.tableNumber.trim() === '' ? 'border-red-300 focus:border-red-500' : ''}
-                      />
+                      <Select 
+                        value={deliveryDetails.tableNumber || ''} 
+                        onValueChange={(value) => setDeliveryDetails(prev => ({...prev, tableNumber: value}))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose your table" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getTableNumbers(cafe?.name || '').map((tableNum) => (
+                            <SelectItem key={tableNum} value={tableNum}>
+                              Table {tableNum}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <p className="text-xs text-muted-foreground">
-                        Enter the table number where you're sitting
+                        Choose the table where you're sitting
                       </p>
                     </div>
                   )}
