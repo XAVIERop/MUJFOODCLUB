@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, User, LogOut, Settings, Coffee, Gift, Utensils, Bell, Receipt, Store, Package, Heart, Home } from 'lucide-react';
+import { User, LogOut, Settings, Coffee, Gift, Utensils, Bell, Receipt, Store, Package, Heart, Home } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from '@/contexts/LocationContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +15,7 @@ const SimpleHeader = () => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useRouterLocation();
-  const { selectedBlock, setSelectedBlock } = useLocation();
+  const { selectedBlock } = useLocation();
   const [isCafeOwner, setIsCafeOwner] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
