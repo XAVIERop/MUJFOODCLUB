@@ -91,8 +91,8 @@ const App = () => (
           </TooltipProvider>
           </LocationProvider>
         </AuthProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
     </MobileErrorHandler>
   </ErrorBoundary>
 );
