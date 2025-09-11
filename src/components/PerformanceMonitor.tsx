@@ -39,7 +39,26 @@ export const PerformanceMonitor: React.FC = () => {
       );
 
       if (systemError) {
+        console.error('System metrics error:', systemError);
         throw new Error(`Failed to fetch system metrics: ${systemError.message}`);
+      }
+
+      // Handle both table and JSON response formats
+      let metricsData;
+      if (Array.isArray(systemMetrics) && systemMetrics.length > 0) {
+        // Table format response
+        metricsData = systemMetrics[0];
+      } else if (systemMetrics && typeof systemMetrics === 'object') {
+        // JSON format response
+        metricsData = systemMetrics;
+      } else {
+        // Fallback to default values
+        metricsData = {
+          total_orders_today: 0,
+          active_cafes: 0,
+          avg_order_value: 0,
+          peak_hour: 0
+        };
       }
 
       // Get connection pool status
@@ -55,10 +74,10 @@ export const PerformanceMonitor: React.FC = () => {
       }
 
       setMetrics({
-        totalOrdersToday: systemMetrics?.[0]?.total_orders_today || 0,
-        activeCafes: systemMetrics?.[0]?.active_cafes || 0,
-        avgOrderValue: systemMetrics?.[0]?.avg_order_value || 0,
-        peakHour: systemMetrics?.[0]?.peak_hour || 0,
+        totalOrdersToday: metricsData?.total_orders_today || 0,
+        activeCafes: metricsData?.active_cafes || 0,
+        avgOrderValue: metricsData?.avg_order_value || 0,
+        peakHour: metricsData?.peak_hour || 0,
         connectionPoolStatus,
         systemHealth,
       });
