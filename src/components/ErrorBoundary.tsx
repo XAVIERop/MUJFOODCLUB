@@ -62,6 +62,12 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
             <p className="text-gray-600 mb-4">
               We're sorry, but something unexpected happened. Please try refreshing the page or go back to the home page.
             </p>
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+              <p className="text-sm text-yellow-800">
+                <strong>Debug Info:</strong> Check if environment variables are properly set in Vercel.
+                Visit <a href="/env-check" className="text-blue-600 underline">/env-check</a> to see environment status.
+              </p>
+            </div>
             <div className="space-y-2">
               <button
                 onClick={() => window.location.reload()}

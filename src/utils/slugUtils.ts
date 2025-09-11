@@ -1,7 +1,7 @@
 // Utility functions for generating URL-friendly slugs
 
 /**
- * Generate a URL-friendly slug from a string
+ * Generate a URL-friendly slug from a string (combining words without hyphens)
  * @param text - The text to convert to a slug
  * @returns URL-friendly slug
  */
@@ -9,10 +9,8 @@ export function generateSlug(text: string): string {
   return text
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+    .replace(/[^a-z0-9\s]/g, '') // Remove special characters except spaces
+    .replace(/\s+/g, ''); // Remove all spaces (combine words)
 }
 
 /**
@@ -47,6 +45,6 @@ export function slugToName(slug: string): string {
 
 // Example usage:
 // generateCafeSlug("CHATKARA") -> "chatkara"
-// generateCafeSlug("FOOD COURT") -> "food-court"
-// generateCafeSlug("COOK HOUSE") -> "cook-house"
-// generateCafeSlug("STARDOM Café & Lounge") -> "stardom-cafe-lounge"
+// generateCafeSlug("FOOD COURT") -> "foodcourt"
+// generateCafeSlug("COOK HOUSE") -> "cookhouse"
+// generateCafeSlug("STARDOM Café & Lounge") -> "stardomcafelounge"

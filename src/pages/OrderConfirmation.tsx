@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useOrderByNumberQuery } from '@/hooks/useOrdersQuery';
+import { useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import OrderRating from '@/components/OrderRating';
 
@@ -15,6 +16,7 @@ const OrderConfirmation = () => {
   const location = useLocation();
   const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
@@ -27,11 +29,11 @@ const OrderConfirmation = () => {
   console.log('🔍 OrderConfirmation: Final orderNumber:', orderNumber);
 
   const statusSteps = [
-    { key: 'received', label: 'Order Received', icon: Receipt, color: 'bg-blue-500' },
-    { key: 'confirmed', label: 'Order Confirmed', icon: CheckCircle, color: 'bg-green-500' },
-    { key: 'preparing', label: 'Preparing', icon: ChefHat, color: 'bg-yellow-500' },
-    { key: 'on_the_way', label: 'Out for Delivery', icon: Truck, color: 'bg-purple-500' },
-    { key: 'completed', label: 'Delivered', icon: CheckCircle, color: 'bg-green-600' }
+    { key: 'received', label: 'Order Received', icon: Receipt, color: 'bg-green-500' },
+    { key: 'confirmed', label: 'Order Confirmed', icon: CheckCircle, color: 'bg-green-600' },
+    { key: 'preparing', label: 'Preparing', icon: ChefHat, color: 'bg-green-700' },
+    { key: 'on_the_way', label: 'Out for Delivery', icon: Truck, color: 'bg-green-800' },
+    { key: 'completed', label: 'Delivered', icon: CheckCircle, color: 'bg-green-900' }
   ];
 
   // Use React Query to fetch order data by order number
@@ -143,6 +145,47 @@ const OrderConfirmation = () => {
     }
   }, [orderNumber, user?.id, navigate, toast]);
 
+  // Real-time subscription for order updates
+  useEffect(() => {
+    if (!order?.id || !user?.id) return;
+
+    console.log('🔄 Setting up real-time subscription for order:', order.id);
+
+    const channel = supabase
+      .channel(`order-updates-${order.id}`)
+      .on('postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'orders',
+          filter: `id=eq.${order.id}`
+        }, 
+        (payload) => {
+          console.log('🔄 OrderConfirmation: Real-time update received:', payload);
+          
+          // Invalidate and refetch the order data
+          queryClient.invalidateQueries({
+            queryKey: ['orders', 'number', orderNumber]
+          });
+          
+          // Show notification for status changes
+          if (payload.new.status !== payload.old.status) {
+            toast({
+              title: "Order Status Updated!",
+              description: `Your order is now: ${payload.new.status.replace('_', ' ').toUpperCase()}`,
+              variant: "default",
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔄 Cleaning up real-time subscription for order:', order.id);
+      supabase.removeChannel(channel);
+    };
+  }, [order?.id, orderNumber, user?.id, queryClient, toast]);
+
   const getCurrentStepIndex = () => {
     if (!order) return -1;
     const currentIndex = statusSteps.findIndex(step => step.key === order.status);
@@ -152,11 +195,11 @@ const OrderConfirmation = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'received': return 'bg-blue-500';
-      case 'confirmed': return 'bg-green-500';
-      case 'preparing': return 'bg-yellow-500';
-      case 'on_the_way': return 'bg-purple-500';
-      case 'completed': return 'bg-green-600';
+      case 'received': return 'bg-green-500';
+      case 'confirmed': return 'bg-green-600';
+      case 'preparing': return 'bg-green-700';
+      case 'on_the_way': return 'bg-green-800';
+      case 'completed': return 'bg-green-900';
       case 'cancelled': return 'bg-red-500';
       default: return 'bg-gray-500';
     }

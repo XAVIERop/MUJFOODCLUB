@@ -113,7 +113,6 @@ const POSDashboard = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState('orders');
   const [cafeId, setCafeId] = useState<string | null>(null);
-  
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');

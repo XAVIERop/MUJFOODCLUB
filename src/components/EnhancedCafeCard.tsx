@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useFavorites } from '../hooks/useFavorites';
+import { useToast } from '../hooks/use-toast';
 import DirectPdfViewer from './DirectPdfViewer';
 
 interface Cafe {
@@ -102,8 +103,18 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
   };
 
   const handleOrderNow = (cafeId: string) => {
-    const identifier = cafe.slug || cafeId;
-    navigate(`/menu/${identifier}`);
+    // Only allow orders for Chatkara during soft launch
+    if (cafe.name.toLowerCase().includes('chatkara')) {
+      const identifier = cafe.slug || cafeId;
+      navigate(`/menu/${identifier}`);
+    } else {
+      // Show coming soon message for other cafes
+      toast({
+        title: "Coming Soon!",
+        description: `${cafe.name} will be available for ordering soon. Currently only Chatkara is accepting orders.`,
+        variant: "default",
+      });
+    }
   };
 
   const handleCall = (phone: string) => {
@@ -280,10 +291,10 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
             <Button
               size="sm"
               onClick={() => handleOrderNow(cafe.id)}
-              disabled={!cafe.accepting_orders || !isExclusive}
+              disabled={!cafe.accepting_orders || !isExclusive || !cafe.name.toLowerCase().includes('chatkara')}
               className="text-xs font-medium bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
-              {cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('chatkara') ? "Order Now" : "Coming Soon"}
+              {cafe.name.toLowerCase().includes('chatkara') ? "Order Now" : "Coming Soon"}
             </Button>
           </div>
 

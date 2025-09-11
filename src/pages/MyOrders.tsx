@@ -80,7 +80,6 @@ const MyOrders = () => {
   const [dateFilter, setDateFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('newest');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
-
   // Use React Query for data fetching
   const { 
     data: orders = [], 

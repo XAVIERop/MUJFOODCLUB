@@ -6,39 +6,20 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Enhanced error logging for mobile debugging
-console.log('Environment check:', {
-  hasUrl: !!SUPABASE_URL,
-  hasKey: !!SUPABASE_PUBLISHABLE_KEY,
-  userAgent: navigator.userAgent,
-  isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-  env: import.meta.env.MODE,
-  url: window.location.href,
-  protocol: window.location.protocol,
-  host: window.location.host
-});
-
-// Validate required environment variables
-if (!SUPABASE_URL) {
-  console.error('Missing VITE_SUPABASE_URL environment variable');
-  console.error('Available env vars:', Object.keys(import.meta.env));
-  console.error('All env values:', import.meta.env);
-  throw new Error('Missing VITE_SUPABASE_URL environment variable');
-}
-
-if (!SUPABASE_PUBLISHABLE_KEY) {
-  console.error('Missing VITE_SUPABASE_ANON_KEY environment variable');
-  console.error('Available env vars:', Object.keys(import.meta.env));
-  console.error('All env values:', import.meta.env);
-  throw new Error('Missing VITE_SUPABASE_ANON_KEY environment variable');
-}
-
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 let supabase;
 
+// Create Supabase client with error handling
 try {
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    console.error('Missing required Supabase environment variables');
+    console.error('SUPABASE_URL:', !!SUPABASE_URL);
+    console.error('SUPABASE_PUBLISHABLE_KEY:', !!SUPABASE_PUBLISHABLE_KEY);
+    throw new Error('Missing required Supabase environment variables');
+  }
+
   supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
       storage: localStorage,
@@ -52,10 +33,28 @@ try {
       },
     },
   });
-  console.log('Supabase client initialized successfully');
 } catch (error) {
   console.error('Failed to initialize Supabase client:', error);
-  throw error;
+  // Create a mock client that will show errors when used
+  supabase = {
+    auth: {
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+      getSession: () => Promise.resolve({ data: { session: null } }),
+      signInWithPassword: () => Promise.resolve({ data: { user: null }, error: { message: 'Supabase not initialized - check environment variables' } }),
+      signUp: () => Promise.resolve({ data: { user: null }, error: { message: 'Supabase not initialized - check environment variables' } }),
+      signOut: () => Promise.resolve({ error: null }),
+    },
+    from: () => ({
+      select: () => ({ eq: () => ({ order: () => Promise.resolve({ data: [], error: { message: 'Supabase not initialized - check environment variables' } }) }) }),
+      insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: { message: 'Supabase not initialized - check environment variables' } }) }) }),
+      update: () => ({ eq: () => Promise.resolve({ data: null, error: { message: 'Supabase not initialized - check environment variables' } }) }),
+      delete: () => ({ eq: () => Promise.resolve({ data: null, error: { message: 'Supabase not initialized - check environment variables' } }) }),
+    }),
+    channel: () => ({
+      on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
+    }),
+    removeChannel: () => {},
+  } as any;
 }
 
 export { supabase };

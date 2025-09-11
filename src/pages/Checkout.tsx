@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CAFE_REWARDS, calculatePointsEarned, calculateMaxRedeemablePoints, getTierDiscount } from '@/lib/constants';
 import { useCafeRewards } from '@/hooks/useCafeRewards';
 import { whatsappService } from '@/services/whatsappService';
+import { isDineInTakeawayAllowed, isDeliveryAllowed, getDineInTakeawayMessage } from '@/utils/timeRestrictions';
 import Header from '@/components/Header';
 
 interface MenuItem {
@@ -125,6 +126,16 @@ const Checkout = () => {
       block: selectedBlock
     }));
   }, [selectedBlock]);
+
+  // Auto-switch to delivery if dine-in/takeaway is not available
+  useEffect(() => {
+    if ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed()) {
+      setDeliveryDetails(prev => ({
+        ...prev,
+        orderType: 'delivery'
+      }));
+    }
+  }, [deliveryDetails.orderType]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -302,6 +313,26 @@ const Checkout = () => {
       return;
     }
 
+    // Block orders for non-Chatkara cafes during soft launch
+    if (!cafe.name.toLowerCase().includes('chatkara')) {
+      toast({
+        title: "Coming Soon!",
+        description: `${cafe.name} is not accepting orders yet. Currently only Chatkara is accepting orders.`,
+        variant: "default",
+      });
+      return;
+    }
+
+    // Block dine-in and takeaway orders outside allowed hours
+    if ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed()) {
+      toast({
+        title: "Service Unavailable",
+        description: getDineInTakeawayMessage(),
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Check if cafe is accepting orders
     if (!cafe.accepting_orders) {
       toast({
@@ -363,17 +394,17 @@ const Checkout = () => {
 
       // Create order
       const orderData = {
-        user_id: user.id,
-        cafe_id: cafe.id,
-        order_number: orderNumber,
-        total_amount: finalAmount,
+          user_id: user.id,
+          cafe_id: cafe.id,
+          order_number: orderNumber,
+          total_amount: finalAmount,
         delivery_block: deliveryDetails.orderType === 'delivery' ? deliveryDetails.block : deliveryDetails.orderType === 'takeaway' ? 'TAKEAWAY' : 'DINE_IN',
         table_number: deliveryDetails.orderType === 'dine_in' ? deliveryDetails.tableNumber : null,
-        delivery_notes: deliveryDetails.deliveryNotes,
-        payment_method: deliveryDetails.paymentMethod,
-        points_earned: pointsToEarn,
+          delivery_notes: deliveryDetails.deliveryNotes,
+          payment_method: deliveryDetails.paymentMethod,
+          points_earned: pointsToEarn,
         estimated_delivery: new Date(Date.now() + (deliveryDetails.orderType === 'delivery' ? 30 : deliveryDetails.orderType === 'takeaway' ? 15 : 20) * 60 * 1000).toISOString(), // 30 min delivery, 15 min takeaway, 20 min dine-in
-        phone_number: deliveryDetails.phoneNumber
+          phone_number: deliveryDetails.phoneNumber
       };
 
       console.log('🍽️ DINE-IN DEBUG: Order data being saved:', {
@@ -846,32 +877,52 @@ const Checkout = () => {
                         type="button"
                         variant={deliveryDetails.orderType === 'takeaway' ? 'default' : 'outline'}
                         onClick={() => setDeliveryDetails(prev => ({...prev, orderType: 'takeaway'}))}
+                        disabled={!isDineInTakeawayAllowed()}
                         className={`flex flex-col items-center p-4 h-auto ${
                           deliveryDetails.orderType === 'takeaway' 
                             ? 'bg-green-600 text-white border-green-600' 
-                            : 'hover:bg-green-50 hover:border-green-200'
+                            : isDineInTakeawayAllowed()
+                            ? 'hover:bg-green-50 hover:border-green-200'
+                            : 'opacity-50 cursor-not-allowed'
                         }`}
                       >
                         <Clock className="w-6 h-6 mb-2" />
                         <span className="font-medium">📦 Takeaway</span>
-                        <span className="text-xs opacity-80">From cafe</span>
+                        <span className="text-xs opacity-80">
+                          {isDineInTakeawayAllowed() ? 'From cafe' : 'Closed'}
+                        </span>
                       </Button>
 
                       <Button
                         type="button"
                         variant={deliveryDetails.orderType === 'dine_in' ? 'default' : 'outline'}
                         onClick={() => setDeliveryDetails(prev => ({...prev, orderType: 'dine_in'}))}
+                        disabled={!isDineInTakeawayAllowed()}
                         className={`flex flex-col items-center p-4 h-auto ${
                           deliveryDetails.orderType === 'dine_in' 
                             ? 'bg-purple-600 text-white border-purple-600' 
-                            : 'hover:bg-purple-50 hover:border-purple-200'
+                            : isDineInTakeawayAllowed()
+                            ? 'hover:bg-purple-50 hover:border-purple-200'
+                            : 'opacity-50 cursor-not-allowed'
                         }`}
                       >
                         <Clock className="w-6 h-6 mb-2" />
                         <span className="font-medium">🍽️ Dine In</span>
-                        <span className="text-xs opacity-80">At the cafe</span>
+                        <span className="text-xs opacity-80">
+                          {isDineInTakeawayAllowed() ? 'At the cafe' : 'Closed'}
+                        </span>
                       </Button>
                     </div>
+                    
+                    {/* Time Restriction Message */}
+                    {!isDineInTakeawayAllowed() && (
+                      <Alert className="border-orange-200 bg-orange-50">
+                        <AlertCircle className="h-4 w-4 text-orange-600" />
+                        <AlertDescription className="text-orange-800">
+                          {getDineInTakeawayMessage()}
+                        </AlertDescription>
+                      </Alert>
+                    )}
                     
                     {/* Order Type Status */}
                     <div className="flex justify-center">
@@ -922,9 +973,9 @@ const Checkout = () => {
                                 Block {block}
                               </SelectItem>
                             ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="deliveryNotes">Delivery Notes (Optional)</Label>

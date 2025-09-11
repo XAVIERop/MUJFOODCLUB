@@ -122,21 +122,28 @@ const Menu = () => {
   const getCafeId = async (): Promise<string | null> => {
     if (!cafeIdentifier) return null;
     
+    console.log('Looking up cafe with identifier:', cafeIdentifier);
+    
     if (isUUID(cafeIdentifier)) {
+      console.log('Identifier is UUID, using directly');
       return cafeIdentifier;
     } else {
+      console.log('Identifier is slug, looking up in database');
       // It's a slug, look up the cafe by slug
       const { data, error } = await supabase
         .from('cafes')
-        .select('id')
+        .select('id, name, slug')
         .eq('slug', cafeIdentifier)
         .single();
       
+      console.log('Slug lookup result:', { data, error });
+      
       if (error || !data) {
-        console.error('Cafe not found for slug:', cafeIdentifier);
+        console.error('Cafe not found for slug:', cafeIdentifier, error);
         return null;
       }
       
+      console.log('Found cafe:', data.name, 'with ID:', data.id);
       return data.id;
     }
   };
@@ -196,6 +203,64 @@ const Menu = () => {
     setupSubscription();
   }, [cafeIdentifier]);
 
+  // Real-time subscription for menu items availability updates
+  useEffect(() => {
+    if (!cafeIdentifier) return;
+
+    const setupMenuSubscription = async () => {
+      const cafeId = await getCafeId();
+      if (!cafeId) return;
+
+      const channel = supabase
+        .channel(`menu-items-${cafeId}`)
+        .on('postgres_changes', 
+          { 
+            event: '*', // Listen to all changes (INSERT, UPDATE, DELETE)
+            schema: 'public', 
+            table: 'menu_items',
+            filter: `cafe_id=eq.${cafeId}`
+          }, 
+          (payload) => {
+            console.log('Menu item updated:', payload);
+            // Refresh menu items when any menu item changes
+            fetchMenuItems(cafeId);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    setupMenuSubscription();
+  }, [cafeIdentifier]);
+
+  // Separate function to fetch menu items (can be called independently)
+  const fetchMenuItems = async (cafeId: string) => {
+    try {
+      const { data: menuData, error: menuError } = await supabase
+        .from('menu_items')
+        .select('*')
+        .eq('cafe_id', cafeId)
+        .eq('is_available', true)
+        .order('category', { ascending: true });
+
+      if (menuError) {
+        console.error('Error fetching menu items:', menuError);
+        return;
+      }
+      
+      setMenuItems(menuData || []);
+      
+      // Group menu items by name and portion
+      const grouped = groupMenuItems(menuData || []);
+      setGroupedMenuItems(grouped);
+    } catch (error) {
+      console.error('Error fetching menu items:', error);
+    }
+  };
+
   const fetchCafeData = async () => {
     try {
       setLoading(true);
@@ -236,28 +301,8 @@ const Menu = () => {
       
       setCafe(cafeData);
 
-      // Fetch menu items
-      const { data: menuData, error: menuError } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('cafe_id', cafeId)
-        .eq('is_available', true)
-        .order('category', { ascending: true });
-
-      if (menuError) {
-        console.error('Error fetching menu items:', menuError);
-        toast({
-          title: "Menu Error",
-          description: "Failed to load menu items",
-          variant: "destructive"
-        });
-      }
-      
-      setMenuItems(menuData || []);
-      
-      // Group menu items by name and portion
-      const grouped = groupMenuItems(menuData || []);
-      setGroupedMenuItems(grouped);
+      // Fetch menu items using the separate function
+      await fetchMenuItems(cafeId);
     } catch (error) {
       console.error('Error fetching cafe data:', error);
       toast({
@@ -385,6 +430,11 @@ const Menu = () => {
     return Object.values(cart).reduce((total, {quantity}) => total + quantity, 0);
   };
 
+  // Helper function to get cart quantity for a specific item portion
+  const getCartQuantity = (portionId: string) => {
+    return cart[portionId]?.quantity || 0;
+  };
+
   const handleCheckout = () => {
     if (!user) {
       navigate('/auth');
@@ -433,11 +483,6 @@ const Menu = () => {
     if (notes) {
       updateNotes(selectedPortion, notes);
     }
-    
-    toast({
-      title: "Added to Cart",
-      description: `${item.baseName} has been added to your cart`,
-    });
   };
 
   const groupedItems = menuItems.reduce((groups, item) => {
@@ -822,7 +867,7 @@ const Menu = () => {
                             </div>
                           </div>
                           
-                          {/* Add to Cart Button */}
+                          {/* Add to Cart Button or Quantity Selector */}
                           <div className="pt-2">
                             {item.portions.every(p => p.out_of_stock) ? (
                               <Button
@@ -833,6 +878,29 @@ const Menu = () => {
                               >
                                 Out of Stock
                               </Button>
+                            ) : item.portions.length === 1 && getCartQuantity(item.portions[0].id) > 0 ? (
+                              // Show quantity selector for single-portion items in cart
+                              <div className="flex items-center justify-between bg-orange-50 rounded-lg p-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => removeFromCart(item.portions[0].id)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </Button>
+                                <span className="text-sm font-medium px-2">
+                                  {getCartQuantity(item.portions[0].id)}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => addToCart(item, item.portions[0].id)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </Button>
+                              </div>
                             ) : (
                               <Button
                                 variant="order"

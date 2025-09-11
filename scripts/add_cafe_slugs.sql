@@ -4,17 +4,14 @@
 -- 1. Add slug column to cafes table
 ALTER TABLE public.cafes ADD COLUMN IF NOT EXISTS slug TEXT;
 
--- 2. Create function to generate URL-friendly slugs
+-- 2. Create function to generate URL-friendly slugs (combining words without hyphens)
 CREATE OR REPLACE FUNCTION generate_slug(input_text TEXT)
 RETURNS TEXT AS $$
 BEGIN
     RETURN LOWER(
         REGEXP_REPLACE(
-            REGEXP_REPLACE(
-                REGEXP_REPLACE(input_text, '[^a-zA-Z0-9\s]', '', 'g'),
-                '\s+', '-', 'g'
-            ),
-            '^-+|-+$', '', 'g'
+            REGEXP_REPLACE(input_text, '[^a-zA-Z0-9\s]', '', 'g'),
+            '\s+', '', 'g'
         )
     );
 END;
