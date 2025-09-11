@@ -2,7 +2,9 @@ import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { queryClient } from "@/lib/queryClient";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LocationProvider } from "@/contexts/LocationContext";
@@ -37,29 +39,7 @@ const POSDashboard = lazy(() => import("./pages/POSDashboard"));
 const WhatsAppTest = lazy(() => import("./pages/WhatsAppTest"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // Cache data for 5 minutes
-      staleTime: 5 * 60 * 1000,
-      // Keep data in cache for 10 minutes
-      gcTime: 10 * 60 * 1000,
-      // Retry failed requests 2 times
-      retry: 2,
-      // Refetch on window focus for real-time updates
-      refetchOnWindowFocus: true,
-      // Don't refetch on reconnect (we have real-time subscriptions)
-      refetchOnReconnect: false,
-      // Background refetch every 30 seconds for critical data
-      refetchInterval: 30 * 1000,
-      refetchIntervalInBackground: false,
-    },
-    mutations: {
-      // Retry failed mutations once
-      retry: 1,
-    },
-  },
-});
+// Using optimized query client from lib/queryClient.ts
 
 const App = () => (
   <ErrorBoundary>
@@ -112,6 +92,7 @@ const App = () => (
           </LocationProvider>
         </AuthProvider>
       </QueryClientProvider>
+      <ReactQueryDevtools initialIsOpen={false} />
     </MobileErrorHandler>
   </ErrorBoundary>
 );

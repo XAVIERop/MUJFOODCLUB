@@ -1,155 +1,268 @@
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { usePerformance } from '@/hooks/usePerformance';
+import { Button } from '@/components/ui/button';
+import { Activity, Database, Users, Clock, AlertTriangle } from 'lucide-react';
+import { withSupabaseClient } from '@/lib/supabasePool';
+import { supabasePool } from '@/lib/supabasePool';
 
-export const PerformanceMonitor = () => {
-  const metrics = usePerformance();
-  const [isVisible, setIsVisible] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+interface PerformanceMetrics {
+  totalOrdersToday: number;
+  activeCafes: number;
+  avgOrderValue: number;
+  peakHour: number;
+  connectionPoolStatus: {
+    totalClients: number;
+    availableClients: number;
+    inUseClients: number;
+    waitingRequests: number;
+  };
+  systemHealth: 'healthy' | 'warning' | 'critical';
+}
+
+export const PerformanceMonitor: React.FC = () => {
+  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchMetrics = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Get system performance metrics
+      const { data: systemMetrics, error: systemError } = await withSupabaseClient(
+        async (client) => {
+          const { data, error } = await client.rpc('get_system_performance_metrics');
+          return { data, error };
+        }
+      );
+
+      if (systemError) {
+        throw new Error(`Failed to fetch system metrics: ${systemError.message}`);
+      }
+
+      // Get connection pool status
+      const connectionPoolStatus = supabasePool.getPoolStatus();
+
+      // Determine system health
+      let systemHealth: 'healthy' | 'warning' | 'critical' = 'healthy';
+      
+      if (connectionPoolStatus.waitingRequests > 5) {
+        systemHealth = 'critical';
+      } else if (connectionPoolStatus.waitingRequests > 2 || connectionPoolStatus.availableClients < 2) {
+        systemHealth = 'warning';
+      }
+
+      setMetrics({
+        totalOrdersToday: systemMetrics?.[0]?.total_orders_today || 0,
+        activeCafes: systemMetrics?.[0]?.active_cafes || 0,
+        avgOrderValue: systemMetrics?.[0]?.avg_order_value || 0,
+        peakHour: systemMetrics?.[0]?.peak_hour || 0,
+        connectionPoolStatus,
+        systemHealth,
+      });
+    } catch (err) {
+      console.error('Error fetching performance metrics:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Only show in development
-    if (process.env.NODE_ENV === 'development') {
-      setIsVisible(true);
-      // Set initial position to top-left to avoid blocking checkout buttons
-      setPosition({ x: 20, y: 20 });
-    }
+    fetchMetrics();
+    
+    // Refresh metrics every 30 seconds
+    const interval = setInterval(fetchMetrics, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
-    });
-  };
+  if (isLoading) {
+    return (
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="w-5 h-5" />
+            Performance Monitor
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4">Loading performance metrics...</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging) return;
-    
-    const newX = e.clientX - dragStart.x;
-    const newY = e.clientY - dragStart.y;
-    
-    // Keep within viewport bounds
-    const maxX = window.innerWidth - 300; // Card width
-    const maxY = window.innerHeight - 200; // Card height
-    
-    setPosition({
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY))
-    });
-  };
+  if (error) {
+    return (
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="w-5 h-5" />
+            Performance Monitor
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4 text-red-500">
+            Error loading metrics: {error}
+          </div>
+          <Button onClick={fetchMetrics} className="mt-2">
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+  if (!metrics) return null;
 
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
+  const getHealthColor = (health: string) => {
+    switch (health) {
+      case 'healthy': return 'bg-green-500';
+      case 'warning': return 'bg-yellow-500';
+      case 'critical': return 'bg-red-500';
+      default: return 'bg-gray-500';
     }
-  }, [isDragging, dragStart]);
-
-  if (!isVisible) return null;
-
-  const getPerformanceColor = (value: number, thresholds: { good: number; warning: number }) => {
-    if (value <= thresholds.good) return 'bg-green-500';
-    if (value <= thresholds.warning) return 'bg-yellow-500';
-    return 'bg-red-500';
   };
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  const getHealthIcon = (health: string) => {
+    switch (health) {
+      case 'healthy': return '✅';
+      case 'warning': return '⚠️';
+      case 'critical': return '🚨';
+      default: return '❓';
+    }
   };
 
   return (
-    <div 
-      className="fixed z-50 max-w-sm select-none"
-      style={{
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-        cursor: isDragging ? 'grabbing' : 'grab'
-      }}
-    >
-      <Card className="bg-black/90 text-white border-gray-700 shadow-lg">
-        <CardHeader 
-          className="pb-2 cursor-grab active:cursor-grabbing"
-          onMouseDown={handleMouseDown}
-        >
-          <CardTitle className="text-sm flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              🚀 Performance Monitor
-              <Badge variant="outline" className="text-xs">
-                DEV
-              </Badge>
-            </div>
-            <button
-              onClick={() => setIsMinimized(!isMinimized)}
-              className="text-gray-400 hover:text-white transition-colors"
-              title={isMinimized ? "Expand" : "Minimize"}
+    <Card className="w-full max-w-4xl mx-auto">
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Activity className="w-5 h-5" />
+            Performance Monitor
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge 
+              className={`${getHealthColor(metrics.systemHealth)} text-white`}
             >
-              {isMinimized ? '▲' : '▼'}
-            </button>
-          </CardTitle>
-        </CardHeader>
-        
-        {!isMinimized && (
-          <CardContent className="space-y-2 text-xs">
-            <div className="flex justify-between items-center">
-              <span>Load Time:</span>
-              <div className="flex items-center gap-2">
-                <div 
-                  className={`w-2 h-2 rounded-full ${getPerformanceColor(metrics.loadTime, { good: 2000, warning: 4000 })}`}
-                />
-                <span>{metrics.loadTime}ms</span>
+              {getHealthIcon(metrics.systemHealth)} {metrics.systemHealth.toUpperCase()}
+            </Badge>
+            <Button 
+              onClick={fetchMetrics} 
+              size="sm" 
+              variant="outline"
+            >
+              Refresh
+            </Button>
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* System Metrics */}
+          <div className="space-y-2">
+            <h3 className="font-semibold text-sm text-muted-foreground">System Metrics</h3>
+            <div className="space-y-1">
+              <div className="flex justify-between">
+                <span className="text-sm">Orders Today:</span>
+                <span className="font-mono text-sm">{metrics.totalOrdersToday}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">Active Cafes:</span>
+                <span className="font-mono text-sm">{metrics.activeCafes}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">Avg Order Value:</span>
+                <span className="font-mono text-sm">₹{metrics.avgOrderValue.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">Peak Hour:</span>
+                <span className="font-mono text-sm">{metrics.peakHour}:00</span>
               </div>
             </div>
-            
-            <div className="flex justify-between items-center">
-              <span>Memory:</span>
-              <div className="flex items-center gap-2">
-                <div 
-                  className={`w-2 h-2 rounded-full ${getPerformanceColor(metrics.memoryUsage, { good: 50, warning: 100 })}`}
-                />
-                <span>{metrics.memoryUsage.toFixed(1)}MB</span>
+          </div>
+
+          {/* Connection Pool Status */}
+          <div className="space-y-2">
+            <h3 className="font-semibold text-sm text-muted-foreground">Connection Pool</h3>
+            <div className="space-y-1">
+              <div className="flex justify-between">
+                <span className="text-sm">Total Clients:</span>
+                <span className="font-mono text-sm">{metrics.connectionPoolStatus.totalClients}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">Available:</span>
+                <span className="font-mono text-sm text-green-600">
+                  {metrics.connectionPoolStatus.availableClients}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">In Use:</span>
+                <span className="font-mono text-sm text-blue-600">
+                  {metrics.connectionPoolStatus.inUseClients}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">Waiting:</span>
+                <span className={`font-mono text-sm ${
+                  metrics.connectionPoolStatus.waitingRequests > 0 ? 'text-red-600' : 'text-gray-600'
+                }`}>
+                  {metrics.connectionPoolStatus.waitingRequests}
+                </span>
               </div>
             </div>
-            
-            <div className="flex justify-between items-center">
-              <span>Connection:</span>
-              <Badge 
-                variant={metrics.isSlowConnection ? "destructive" : "default"}
-                className="text-xs"
-              >
-                {metrics.isSlowConnection ? 'Slow' : 'Fast'}
-              </Badge>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span>Render Time:</span>
-              <div className="flex items-center gap-2">
-                <div 
-                  className={`w-2 h-2 rounded-full ${getPerformanceColor(metrics.renderTime, { good: 16, warning: 32 })}`}
-                />
-                <span>{metrics.renderTime.toFixed(1)}ms</span>
+          </div>
+
+          {/* Performance Indicators */}
+          <div className="space-y-2">
+            <h3 className="font-semibold text-sm text-muted-foreground">Performance</h3>
+            <div className="space-y-1">
+              <div className="flex justify-between">
+                <span className="text-sm">Pool Utilization:</span>
+                <span className="font-mono text-sm">
+                  {Math.round((metrics.connectionPoolStatus.inUseClients / metrics.connectionPoolStatus.totalClients) * 100)}%
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm">Queue Status:</span>
+                <span className={`text-sm ${
+                  metrics.connectionPoolStatus.waitingRequests === 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {metrics.connectionPoolStatus.waitingRequests === 0 ? 'Clear' : 'Backed Up'}
+                </span>
               </div>
             </div>
-          </CardContent>
-        )}
-      </Card>
-    </div>
+          </div>
+
+          {/* Alerts */}
+          <div className="space-y-2">
+            <h3 className="font-semibold text-sm text-muted-foreground">Alerts</h3>
+            <div className="space-y-1">
+              {metrics.systemHealth === 'critical' && (
+                <div className="flex items-center gap-1 text-red-600 text-xs">
+                  <AlertTriangle className="w-3 h-3" />
+                  <span>High load detected</span>
+                </div>
+              )}
+              {metrics.connectionPoolStatus.waitingRequests > 0 && (
+                <div className="flex items-center gap-1 text-yellow-600 text-xs">
+                  <Clock className="w-3 h-3" />
+                  <span>Connection queue active</span>
+                </div>
+              )}
+              {metrics.systemHealth === 'healthy' && (
+                <div className="flex items-center gap-1 text-green-600 text-xs">
+                  <Database className="w-3 h-3" />
+                  <span>All systems normal</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
