@@ -21,6 +21,30 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeAssets: ['fav.png', 'chatkara_logo.jpg'],
+      manifest: {
+        name: 'FOOD CLUB',
+        short_name: 'FOOD CLUB',
+        description: 'Order food from your favorite cafes at MUJ GHS Hostel. Earn rewards with our QR-based loyalty program.',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
+        display: 'standalone',
+        orientation: 'portrait',
+        scope: '/',
+        start_url: '/',
+        icons: [
+          {
+            src: 'fav.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'fav.png',
+            sizes: '512x512',
+            type: 'image/png'
+          }
+        ]
+      },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,svg,webp}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
