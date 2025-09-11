@@ -6,8 +6,8 @@ The WhatsApp integration is now **fully configured** to send order notifications
 ## ✅ What's Configured
 
 ### 1. API Credentials
-- **Twilio Account SID**: `AC76248d54645e7159a660b9c48a354e9c`
-- **Twilio Auth Token**: `43d432ffdcfff2b16158b471e38748c5`
+- **Twilio Account SID**: `ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+- **Twilio Auth Token**: `xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
 - **WhatsApp From Number**: `+18507906019`
 - **Environment File**: `.env.local` created with credentials
 
