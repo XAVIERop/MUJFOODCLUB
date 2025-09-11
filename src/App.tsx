@@ -37,6 +37,7 @@ const POSTest = lazy(() => import("./pages/POSTest"));
 const CompactOrdersTest = lazy(() => import("./pages/CompactOrdersTest"));
 const POSDashboard = lazy(() => import("./pages/POSDashboard"));
 const WhatsAppTest = lazy(() => import("./pages/WhatsAppTest"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Using optimized query client from lib/queryClient.ts
@@ -73,6 +74,7 @@ const App = () => (
                       <Route path="/compact-orders-test" element={<CompactOrdersTest />} />
                       <Route path="/pos-dashboard" element={<POSDashboard />} />
                       <Route path="/whatsapp-test" element={<WhatsAppTest />} />
+                      <Route path="/admin" element={<AdminDashboard />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
