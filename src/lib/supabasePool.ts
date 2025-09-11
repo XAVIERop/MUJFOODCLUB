@@ -1,10 +1,12 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
 
-// Connection pool configuration
-const POOL_SIZE = 10;
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
+// Connection pool configuration - Optimized for 500+ concurrent users
+const POOL_SIZE = 50; // Increased from 10 to 50 for high concurrency
+const MAX_RETRIES = 5; // Increased retries for better reliability
+const RETRY_DELAY = 500; // Reduced delay for faster recovery
+const CONNECTION_TIMEOUT = 10000; // 10 second timeout
+const MAX_WAITING_QUEUE = 100; // Allow up to 100 waiting requests
 
 class SupabaseConnectionPool {
   private clients: SupabaseClient<Database>[] = [];
@@ -61,6 +63,12 @@ class SupabaseConnectionPool {
         return;
       }
 
+      // Check if waiting queue is full
+      if (this.waitingQueue.length >= MAX_WAITING_QUEUE) {
+        reject(new Error('Connection pool overloaded - too many waiting requests'));
+        return;
+      }
+
       // If no clients available, add to waiting queue
       this.waitingQueue.push({ resolve, reject });
 
@@ -71,7 +79,7 @@ class SupabaseConnectionPool {
           this.waitingQueue.splice(index, 1);
           reject(new Error('Connection pool timeout - no available clients'));
         }
-      }, 5000); // 5 second timeout
+      }, CONNECTION_TIMEOUT);
     });
   }
 
@@ -103,12 +111,25 @@ class SupabaseConnectionPool {
   }
 
   getPoolStatus() {
+    const utilization = this.clients.length > 0 ? (this.inUseClients.size / this.clients.length) * 100 : 0;
+    const queueUtilization = (this.waitingQueue.length / MAX_WAITING_QUEUE) * 100;
+    
     return {
       totalClients: this.clients.length,
       availableClients: this.availableClients.length,
       inUseClients: this.inUseClients.size,
       waitingRequests: this.waitingQueue.length,
+      maxWaitingQueue: MAX_WAITING_QUEUE,
+      utilizationPercentage: Math.round(utilization),
+      queueUtilizationPercentage: Math.round(queueUtilization),
+      healthStatus: this.getHealthStatus(utilization, queueUtilization),
     };
+  }
+
+  private getHealthStatus(utilization: number, queueUtilization: number): 'healthy' | 'warning' | 'critical' {
+    if (utilization > 90 || queueUtilization > 80) return 'critical';
+    if (utilization > 70 || queueUtilization > 50) return 'warning';
+    return 'healthy';
   }
 }
 

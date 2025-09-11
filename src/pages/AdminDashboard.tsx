@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { supabasePool } from '@/lib/supabasePool';
+import { advancedConnectionManager } from '@/lib/advancedConnectionManager';
 import AdminAccessControl from '@/components/AdminAccessControl';
 import { 
   Activity, 
@@ -89,12 +90,13 @@ const AdminDashboard: React.FC = () => {
 
       // Get connection pool status
       const connectionPoolStatus = supabasePool.getPoolStatus();
+      const advancedMetrics = advancedConnectionManager.getDetailedStatus();
 
-      // Determine system health
+      // Determine system health using advanced metrics
       let systemHealth: 'healthy' | 'warning' | 'critical' = 'healthy';
-      if (connectionPoolStatus.waitingRequests > 5 || connectionPoolStatus.availableClients < 1) {
+      if (advancedMetrics.healthStatus === 'critical' || connectionPoolStatus.waitingRequests > 10) {
         systemHealth = 'critical';
-      } else if (connectionPoolStatus.waitingRequests > 2 || connectionPoolStatus.availableClients < 2) {
+      } else if (advancedMetrics.healthStatus === 'warning' || connectionPoolStatus.waitingRequests > 5) {
         systemHealth = 'warning';
       }
 
@@ -317,10 +319,11 @@ const AdminDashboard: React.FC = () => {
         )}
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="connections">Connections</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
           </TabsList>
 
@@ -525,6 +528,149 @@ const AdminDashboard: React.FC = () => {
                 </Card>
               </div>
             )}
+          </TabsContent>
+
+          {/* Connections Tab */}
+          <TabsContent value="connections" className="space-y-6">
+            {systemMetrics && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Basic Connection Pool */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Basic Connection Pool</CardTitle>
+                    <CardDescription>Standard connection management</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between">
+                      <span>Total Connections</span>
+                      <span className="font-mono">{systemMetrics.connectionPoolStatus.totalClients}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Available</span>
+                      <span className="font-mono text-green-600">{systemMetrics.connectionPoolStatus.availableClients}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>In Use</span>
+                      <span className="font-mono text-blue-600">{systemMetrics.connectionPoolStatus.inUseClients}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Waiting</span>
+                      <span className={`font-mono ${systemMetrics.connectionPoolStatus.waitingRequests > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                        {systemMetrics.connectionPoolStatus.waitingRequests}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Utilization</span>
+                      <span className="font-mono">{systemMetrics.connectionPoolStatus.utilizationPercentage || 0}%</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Advanced Connection Manager */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Advanced Pool</CardTitle>
+                    <CardDescription>High-scale connection management</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between">
+                      <span>Total Connections</span>
+                      <span className="font-mono">{advancedMetrics.totalConnections}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Active</span>
+                      <span className="font-mono text-blue-600">{advancedMetrics.activeConnections}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Available</span>
+                      <span className="font-mono text-green-600">{advancedMetrics.availableConnections}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Waiting</span>
+                      <span className={`font-mono ${advancedMetrics.waitingRequests > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                        {advancedMetrics.waitingRequests}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Peak Concurrency</span>
+                      <span className="font-mono text-purple-600">{advancedMetrics.peakConcurrency}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Avg Response Time</span>
+                      <span className="font-mono">{Math.round(advancedMetrics.avgResponseTime || 0)}ms</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Connection Health */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Connection Health</CardTitle>
+                    <CardDescription>System performance metrics</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <span>Status:</span>
+                      <Badge variant={advancedMetrics.healthStatus === 'healthy' ? 'default' : 'destructive'}>
+                        {advancedMetrics.healthStatus}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Utilization</span>
+                      <span className="font-mono">{advancedMetrics.utilizationPercentage || 0}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Queue Utilization</span>
+                      <span className="font-mono">{advancedMetrics.queueUtilizationPercentage || 0}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Connection Errors</span>
+                      <span className="font-mono text-red-600">{advancedMetrics.connectionErrors || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Is Scaling</span>
+                      <span className="font-mono">{advancedMetrics.isScaling ? 'Yes' : 'No'}</span>
+                    </div>
+                    {advancedMetrics.queueAge > 0 && (
+                      <div className="flex justify-between">
+                        <span>Oldest Queue Item</span>
+                        <span className="font-mono text-orange-600">{Math.round(advancedMetrics.queueAge / 1000)}s</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Connection Capacity Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Connection Capacity</CardTitle>
+                <CardDescription>Current system limits and recommendations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-semibold mb-3">Current Limits</h4>
+                    <ul className="space-y-2 text-sm">
+                      <li>• <strong>Supabase Pro:</strong> 500 max connections</li>
+                      <li>• <strong>Basic Pool:</strong> 10 connections</li>
+                      <li>• <strong>Advanced Pool:</strong> 20-100 connections (auto-scaling)</li>
+                      <li>• <strong>Waiting Queue:</strong> 100 max requests</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-3">Performance Targets</h4>
+                    <ul className="space-y-2 text-sm">
+                      <li>• <strong>Target:</strong> 500 concurrent users</li>
+                      <li>• <strong>Response Time:</strong> &lt; 500ms average</li>
+                      <li>• <strong>Utilization:</strong> &lt; 80% for healthy operation</li>
+                      <li>• <strong>Queue Time:</strong> &lt; 5 seconds wait time</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* System Tab */}

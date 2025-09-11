@@ -48,10 +48,12 @@ class RateLimiter {
   }
 }
 
-// Create rate limiters for different operations
-export const orderRateLimiter = new RateLimiter(5, 60000); // 5 orders per minute per user
-export const apiRateLimiter = new RateLimiter(20, 60000); // 20 API calls per minute per user
-export const menuRateLimiter = new RateLimiter(10, 30000); // 10 menu requests per 30 seconds
+// Create rate limiters for different operations - Optimized for 500+ concurrent users
+export const orderRateLimiter = new RateLimiter(10, 60000); // 10 orders per minute per user (increased)
+export const apiRateLimiter = new RateLimiter(50, 60000); // 50 API calls per minute per user (increased)
+export const menuRateLimiter = new RateLimiter(20, 30000); // 20 menu requests per 30 seconds (increased)
+export const adminRateLimiter = new RateLimiter(100, 60000); // 100 admin requests per minute
+export const realtimeRateLimiter = new RateLimiter(200, 60000); // 200 realtime updates per minute
 
 // Rate limiting hook
 export const useRateLimit = (limiter: RateLimiter, key: string) => {
