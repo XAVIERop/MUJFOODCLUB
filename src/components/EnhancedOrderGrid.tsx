@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -198,10 +198,22 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
   // Handle card click for popup
   const handleCardClick = (order: Order, event: React.MouseEvent) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    setPopupPosition({
-      x: rect.left + rect.width + 10,
-      y: rect.top
-    });
+    const popupWidth = 400; // Approximate popup width
+    const popupHeight = 300; // Approximate popup height
+    
+    let x = rect.left + rect.width + 10;
+    let y = rect.top;
+    
+    // Adjust position if popup would go off-screen
+    if (x + popupWidth > window.innerWidth) {
+      x = rect.left - popupWidth - 10; // Show to the left instead
+    }
+    
+    if (y + popupHeight > window.innerHeight) {
+      y = window.innerHeight - popupHeight - 10; // Adjust to fit in viewport
+    }
+    
+    setPopupPosition({ x, y });
     setHoveredOrder(order);
   };
 
@@ -209,6 +221,20 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
   const closePopup = () => {
     setHoveredOrder(null);
   };
+
+  // Close popup when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (hoveredOrder && !(event.target as Element).closest('.order-popup')) {
+        closePopup();
+      }
+    };
+
+    if (hoveredOrder) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [hoveredOrder]);
 
   // Helper function to create receipt data
   const createReceiptData = (order: Order) => {
@@ -600,7 +626,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
       {/* Order Details Popup */}
       {hoveredOrder && (
         <div
-          className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-4 max-w-sm"
+          className="order-popup fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-4 max-w-sm"
           style={{
             left: `${popupPosition.x}px`,
             top: `${popupPosition.y}px`,

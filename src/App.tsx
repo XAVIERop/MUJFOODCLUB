@@ -38,6 +38,7 @@ const CompactOrdersTest = lazy(() => import("./pages/CompactOrdersTest"));
 const POSDashboard = lazy(() => import("./pages/POSDashboard"));
 const WhatsAppTest = lazy(() => import("./pages/WhatsAppTest"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const EnvCheck = lazy(() => import("./pages/EnvCheck"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Using optimized query client from lib/queryClient.ts
@@ -75,6 +76,7 @@ const App = () => (
                       <Route path="/pos-dashboard" element={<POSDashboard />} />
                       <Route path="/whatsapp-test" element={<WhatsAppTest />} />
                       <Route path="/admin" element={<AdminDashboard />} />
+                      <Route path="/env-check" element={<EnvCheck />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
@@ -85,10 +87,12 @@ const App = () => (
               <BottomNavigation />
               
               {/* Performance Monitor - Development Only */}
-              <PerformanceMonitor />
-              
-              {/* Performance Dashboard - Development Only */}
-              <PerformanceDashboard />
+              {import.meta.env.DEV && (
+                <>
+                  <PerformanceMonitor />
+                  <PerformanceDashboard />
+                </>
+              )}
             </BrowserRouter>
           </TooltipProvider>
           </LocationProvider>

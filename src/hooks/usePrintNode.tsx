@@ -62,17 +62,27 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
       if (cafe.name.toLowerCase().includes('chatkara')) {
         console.log('Using Chatkara API key');
         const apiKey = import.meta.env.VITE_CHATKARA_PRINTNODE_API_KEY;
-        if (!apiKey) {
-          console.error('VITE_CHATKARA_PRINTNODE_API_KEY environment variable is not set');
-          return '';
+        if (!apiKey || apiKey === 'your-chatkara-printnode-api-key') {
+          console.warn('VITE_CHATKARA_PRINTNODE_API_KEY not set, using main API key');
+          const fallbackKey = import.meta.env.VITE_PRINTNODE_API_KEY;
+          if (!fallbackKey) {
+            console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+            return '';
+          }
+          return fallbackKey;
         }
         return apiKey;
       } else if (cafe.name.toLowerCase().includes('food court')) {
         console.log('Using Food Court API key');
         const apiKey = import.meta.env.VITE_FOODCOURT_PRINTNODE_API_KEY;
-        if (!apiKey) {
-          console.error('VITE_FOODCOURT_PRINTNODE_API_KEY environment variable is not set');
-          return '';
+        if (!apiKey || apiKey === 'your-foodcourt-printnode-api-key') {
+          console.warn('VITE_FOODCOURT_PRINTNODE_API_KEY not set, using main API key');
+          const fallbackKey = import.meta.env.VITE_PRINTNODE_API_KEY;
+          if (!fallbackKey) {
+            console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+            return '';
+          }
+          return fallbackKey;
         }
         return apiKey;
       }

@@ -103,18 +103,20 @@ class UnifiedPrintService {
       let apiKey: string;
       if (cafe.name.toLowerCase().includes('chatkara')) {
         apiKey = import.meta.env.VITE_CHATKARA_PRINTNODE_API_KEY || '';
-        if (!apiKey) {
-          console.error('❌ Unified Print Service: VITE_CHATKARA_PRINTNODE_API_KEY environment variable is not set');
-          return;
+        if (!apiKey || apiKey === 'your-chatkara-printnode-api-key') {
+          console.warn('⚠️ Unified Print Service: VITE_CHATKARA_PRINTNODE_API_KEY not set, using main API key');
+          apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+        } else {
+          console.log('✅ Unified Print Service: Using Chatkara API key');
         }
-        console.log('✅ Unified Print Service: Using Chatkara API key');
       } else if (cafe.name.toLowerCase().includes('food court')) {
         apiKey = import.meta.env.VITE_FOODCOURT_PRINTNODE_API_KEY || '';
-        if (!apiKey) {
-          console.error('❌ Unified Print Service: VITE_FOODCOURT_PRINTNODE_API_KEY environment variable is not set');
-          return;
+        if (!apiKey || apiKey === 'your-foodcourt-printnode-api-key') {
+          console.warn('⚠️ Unified Print Service: VITE_FOODCOURT_PRINTNODE_API_KEY not set, using main API key');
+          apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+        } else {
+          console.log('✅ Unified Print Service: Using Food Court API key');
         }
-        console.log('✅ Unified Print Service: Using Food Court API key');
       } else {
         apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
         if (!apiKey) {
