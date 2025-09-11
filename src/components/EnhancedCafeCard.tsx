@@ -9,6 +9,7 @@ import DirectPdfViewer from './DirectPdfViewer';
 interface Cafe {
   id: string;
   name: string;
+  slug?: string;
   type: string;
   description: string;
   location: string;
@@ -96,11 +97,13 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
   };
 
   const handleViewMenu = (cafeId: string) => {
-    navigate(`/menu/${cafeId}`);
+    const identifier = cafe.slug || cafeId;
+    navigate(`/menu/${identifier}`);
   };
 
   const handleOrderNow = (cafeId: string) => {
-    navigate(`/menu/${cafeId}`);
+    const identifier = cafe.slug || cafeId;
+    navigate(`/menu/${identifier}`);
   };
 
   const handleCall = (phone: string) => {

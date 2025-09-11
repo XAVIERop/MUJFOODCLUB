@@ -57,7 +57,7 @@ const App = () => (
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
-                      <Route path="/menu/:cafeId" element={<Menu />} />
+                      <Route path="/menu/:cafeIdentifier" element={<Menu />} />
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
                       <Route path="/orders" element={<MyOrders />} />

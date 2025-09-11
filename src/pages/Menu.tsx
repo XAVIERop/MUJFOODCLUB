@@ -14,6 +14,7 @@ import DirectPdfViewer from '@/components/DirectPdfViewer';
 import SwiggyStyleHero from '@/components/SwiggyStyleHero';
 import BrandSelector from '@/components/BrandSelector';
 import ItemCustomizationModal from '@/components/ItemCustomizationModal';
+import { isValidSlug } from '@/utils/slugUtils';
 // Brand counting utility for Food Court
 const getBrandItemCounts = (items: MenuItem[]): Record<string, number> => {
   const counts: Record<string, number> = {
@@ -104,12 +105,41 @@ interface Cafe {
 }
 
 const Menu = () => {
-  const { cafeId } = useParams();
+  const { cafeIdentifier } = useParams();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { toast } = useToast();
   
   const [cafe, setCafe] = useState<Cafe | null>(null);
+
+  // Helper function to determine if identifier is UUID or slug
+  const isUUID = (str: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  };
+
+  // Get the actual cafe ID (either from UUID or by looking up slug)
+  const getCafeId = async (): Promise<string | null> => {
+    if (!cafeIdentifier) return null;
+    
+    if (isUUID(cafeIdentifier)) {
+      return cafeIdentifier;
+    } else {
+      // It's a slug, look up the cafe by slug
+      const { data, error } = await supabase
+        .from('cafes')
+        .select('id')
+        .eq('slug', cafeIdentifier)
+        .single();
+      
+      if (error || !data) {
+        console.error('Cafe not found for slug:', cafeIdentifier);
+        return null;
+      }
+      
+      return data.id;
+    }
+  };
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [groupedMenuItems, setGroupedMenuItems] = useState<GroupedMenuItem[]>([]);
   const [cart, setCart] = useState<{[key: string]: CartItem}>({});
@@ -123,45 +153,58 @@ const Menu = () => {
   const [selectedItemForCustomization, setSelectedItemForCustomization] = useState<GroupedMenuItem | null>(null);
 
   useEffect(() => {
-    if (cafeId) {
+    if (cafeIdentifier) {
       fetchCafeData();
     } else {
-      // If no cafeId, redirect to cafes page
+      // If no cafeIdentifier, redirect to cafes page
       navigate('/cafes');
     }
-  }, [cafeId, navigate]);
+  }, [cafeIdentifier, navigate]);
 
   // Real-time subscription for cafe rating updates
   useEffect(() => {
-    if (!cafeId) return;
+    if (!cafeIdentifier) return;
 
-    const channel = supabase
-      .channel(`cafe-${cafeId}`)
-      .on('postgres_changes', 
-        { 
-          event: 'UPDATE', 
-          schema: 'public', 
-          table: 'cafes',
-          filter: `id=eq.${cafeId}`
-        }, 
-        (payload) => {
-          console.log('Cafe updated:', payload.new);
-          // Update cafe data when ratings change
-          if (payload.new) {
-            setCafe(prev => prev ? { ...prev, ...payload.new as Partial<Cafe> } : prev);
+    const setupSubscription = async () => {
+      const cafeId = await getCafeId();
+      if (!cafeId) return;
+
+      const channel = supabase
+        .channel(`cafe-${cafeId}`)
+        .on('postgres_changes', 
+          { 
+            event: 'UPDATE', 
+            schema: 'public', 
+            table: 'cafes',
+            filter: `id=eq.${cafeId}`
+          }, 
+          (payload) => {
+            console.log('Cafe updated:', payload.new);
+            // Update cafe data when ratings change
+            if (payload.new) {
+              setCafe(prev => prev ? { ...prev, ...payload.new as Partial<Cafe> } : prev);
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
+      return () => {
+        supabase.removeChannel(channel);
+      };
     };
-  }, [cafeId]);
+
+    setupSubscription();
+  }, [cafeIdentifier]);
 
   const fetchCafeData = async () => {
     try {
       setLoading(true);
+      
+      const cafeId = await getCafeId();
+      if (!cafeId) {
+        navigate('/cafes');
+        return;
+      }
       
       // Fetch cafe details
       const { data: cafeData, error: cafeError } = await supabase
@@ -275,7 +318,7 @@ const Menu = () => {
 
   // Function to manually refresh cafe data (useful for testing)
   const refreshCafeData = () => {
-    if (cafeId) {
+    if (cafeIdentifier) {
       fetchCafeData();
     }
   };
@@ -467,8 +510,8 @@ const Menu = () => {
     return groups;
   }, {} as {[key: string]: GroupedMenuItem[]});
 
-  // Early return if no cafeId
-  if (!cafeId) {
+  // Early return if no cafeIdentifier
+  if (!cafeIdentifier) {
     return (
       <div className="min-h-screen bg-background">
         <SimpleHeader />
