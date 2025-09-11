@@ -23,8 +23,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['fav.png', 'chatkara_logo.jpg'],
       manifest: {
-        name: 'FOOD CLUB',
-        short_name: 'FOOD CLUB',
+        name: 'Food Club',
+        short_name: 'Food Club',
         description: 'Order food from your favorite cafes at MUJ GHS Hostel. Earn rewards with our QR-based loyalty program.',
         theme_color: '#ffffff',
         background_color: '#ffffff',
