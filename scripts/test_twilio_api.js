@@ -2,8 +2,8 @@
 // This script tests the Twilio API with the provided credentials
 
 const TWILIO_CONFIG = {
-  accountSid: 'AC76248d54645e7159a660b9c48a354e9c',
-  authToken: '43d432ffdcfff2b16158b471e38748c5',
+  accountSid: 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+  authToken: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
   whatsappFrom: 'whatsapp:+18507906019'
 };
 
