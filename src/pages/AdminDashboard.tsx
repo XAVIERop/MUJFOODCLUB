@@ -34,8 +34,25 @@ interface SystemMetrics {
     availableClients: number;
     inUseClients: number;
     waitingRequests: number;
+    utilizationPercentage?: number;
+    queueUtilizationPercentage?: number;
+    healthStatus?: 'healthy' | 'warning' | 'critical';
   };
   systemHealth: 'healthy' | 'warning' | 'critical';
+  advancedMetrics?: {
+    totalConnections: number;
+    activeConnections: number;
+    availableConnections: number;
+    waitingRequests: number;
+    peakConcurrency: number;
+    avgResponseTime: number;
+    connectionErrors: number;
+    healthStatus: 'healthy' | 'warning' | 'critical';
+    utilizationPercentage: number;
+    queueUtilizationPercentage: number;
+    isScaling: boolean;
+    queueAge: number;
+  };
 }
 
 interface OrderStats {
@@ -90,7 +107,28 @@ const AdminDashboard: React.FC = () => {
 
       // Get connection pool status
       const connectionPoolStatus = supabasePool.getPoolStatus();
-      const advancedMetrics = advancedConnectionManager.getDetailedStatus();
+      
+      // Get advanced metrics with error handling
+      let advancedMetrics;
+      try {
+        advancedMetrics = advancedConnectionManager.getDetailedStatus();
+      } catch (err) {
+        console.warn('Advanced connection manager not available:', err);
+        advancedMetrics = {
+          totalConnections: 0,
+          activeConnections: 0,
+          availableConnections: 0,
+          waitingRequests: 0,
+          peakConcurrency: 0,
+          avgResponseTime: 0,
+          connectionErrors: 0,
+          healthStatus: 'healthy' as const,
+          utilizationPercentage: 0,
+          queueUtilizationPercentage: 0,
+          isScaling: false,
+          queueAge: 0,
+        };
+      }
 
       // Determine system health using advanced metrics
       let systemHealth: 'healthy' | 'warning' | 'critical' = 'healthy';
@@ -107,6 +145,7 @@ const AdminDashboard: React.FC = () => {
         peakHour: metricsData?.peak_hour || 0,
         connectionPoolStatus,
         systemHealth,
+        advancedMetrics,
       });
     } catch (err) {
       console.error('Error fetching system metrics:', err);
@@ -575,29 +614,29 @@ const AdminDashboard: React.FC = () => {
                   <CardContent className="space-y-4">
                     <div className="flex justify-between">
                       <span>Total Connections</span>
-                      <span className="font-mono">{advancedMetrics.totalConnections}</span>
+                      <span className="font-mono">{systemMetrics?.advancedMetrics?.totalConnections || 0}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Active</span>
-                      <span className="font-mono text-blue-600">{advancedMetrics.activeConnections}</span>
+                      <span className="font-mono text-blue-600">{systemMetrics?.advancedMetrics?.activeConnections || 0}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Available</span>
-                      <span className="font-mono text-green-600">{advancedMetrics.availableConnections}</span>
+                      <span className="font-mono text-green-600">{systemMetrics?.advancedMetrics?.availableConnections || 0}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Waiting</span>
-                      <span className={`font-mono ${advancedMetrics.waitingRequests > 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                        {advancedMetrics.waitingRequests}
+                      <span className={`font-mono ${(systemMetrics?.advancedMetrics?.waitingRequests || 0) > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                        {systemMetrics?.advancedMetrics?.waitingRequests || 0}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Peak Concurrency</span>
-                      <span className="font-mono text-purple-600">{advancedMetrics.peakConcurrency}</span>
+                      <span className="font-mono text-purple-600">{systemMetrics?.advancedMetrics?.peakConcurrency || 0}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Avg Response Time</span>
-                      <span className="font-mono">{Math.round(advancedMetrics.avgResponseTime || 0)}ms</span>
+                      <span className="font-mono">{Math.round(systemMetrics?.advancedMetrics?.avgResponseTime || 0)}ms</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -611,30 +650,30 @@ const AdminDashboard: React.FC = () => {
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-2">
                       <span>Status:</span>
-                      <Badge variant={advancedMetrics.healthStatus === 'healthy' ? 'default' : 'destructive'}>
-                        {advancedMetrics.healthStatus}
+                      <Badge variant={systemMetrics?.advancedMetrics?.healthStatus === 'healthy' ? 'default' : 'destructive'}>
+                        {systemMetrics?.advancedMetrics?.healthStatus || 'unknown'}
                       </Badge>
                     </div>
                     <div className="flex justify-between">
                       <span>Utilization</span>
-                      <span className="font-mono">{advancedMetrics.utilizationPercentage || 0}%</span>
+                      <span className="font-mono">{systemMetrics?.advancedMetrics?.utilizationPercentage || 0}%</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Queue Utilization</span>
-                      <span className="font-mono">{advancedMetrics.queueUtilizationPercentage || 0}%</span>
+                      <span className="font-mono">{systemMetrics?.advancedMetrics?.queueUtilizationPercentage || 0}%</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Connection Errors</span>
-                      <span className="font-mono text-red-600">{advancedMetrics.connectionErrors || 0}</span>
+                      <span className="font-mono text-red-600">{systemMetrics?.advancedMetrics?.connectionErrors || 0}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Is Scaling</span>
-                      <span className="font-mono">{advancedMetrics.isScaling ? 'Yes' : 'No'}</span>
+                      <span className="font-mono">{systemMetrics?.advancedMetrics?.isScaling ? 'Yes' : 'No'}</span>
                     </div>
-                    {advancedMetrics.queueAge > 0 && (
+                    {(systemMetrics?.advancedMetrics?.queueAge || 0) > 0 && (
                       <div className="flex justify-between">
                         <span>Oldest Queue Item</span>
-                        <span className="font-mono text-orange-600">{Math.round(advancedMetrics.queueAge / 1000)}s</span>
+                        <span className="font-mono text-orange-600">{Math.round((systemMetrics?.advancedMetrics?.queueAge || 0) / 1000)}s</span>
                       </div>
                     )}
                   </CardContent>
