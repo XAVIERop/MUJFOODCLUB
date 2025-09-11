@@ -24,15 +24,28 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,svg,webp}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
+        // Disable aggressive caching for HTML files
+        navigateFallback: null,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'CacheFirst',
+            handler: 'NetworkFirst', // Changed from CacheFirst to NetworkFirst
             options: {
               cacheName: 'supabase-cache',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+                maxAgeSeconds: 60 * 60 * 24, // Reduced from 7 days to 1 day
+              },
+            },
+          },
+          {
+            urlPattern: /\.(?:html)$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'html-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60, // 1 hour for HTML files
               },
             },
           },
@@ -48,6 +61,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        // Add cache busting with timestamps
+        entryFileNames: `assets/[name]-[hash].js`,
+        chunkFileNames: `assets/[name]-[hash].js`,
+        assetFileNames: `assets/[name]-[hash].[ext]`,
         manualChunks: {
           // Core React libraries
           vendor: ['react', 'react-dom'],
