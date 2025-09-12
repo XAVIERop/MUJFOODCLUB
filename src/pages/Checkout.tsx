@@ -298,6 +298,16 @@ const Checkout = () => {
 
   // Calculate tier discount and final amount (cafe-specific)
   useEffect(() => {
+    // Skip loyalty discounts for ELICIT orders
+    if (isElicitOrder) {
+      setLoyaltyDiscount(0);
+      // Calculate final amount without loyalty discounts for ELICIT
+      const subtotal = effectiveTotalAmount - pointsDiscount;
+      const finalAmountWithTaxes = subtotal + cgst + sgst + deliveryFee;
+      setFinalAmount(Math.max(0, finalAmountWithTaxes));
+      return;
+    }
+    
     // Use cafe-specific tier, default to Foodie if no data
     const tier = cafeRewardData?.tier || 'foodie';
     const tierDiscount = Math.floor((effectiveTotalAmount * CAFE_REWARDS.TIER_DISCOUNTS[tier.toUpperCase() as keyof typeof CAFE_REWARDS.TIER_DISCOUNTS]) / 100);
@@ -312,11 +322,9 @@ const Checkout = () => {
   // Calculate points to earn when component loads or total amount changes
   useEffect(() => {
     if (effectiveTotalAmount > 0 && (cafe || isElicitOrder)) {
-      // Points are calculated on the original order amount (before taxes and delivery fees)
+      // Skip points calculation for ELICIT orders
       if (isElicitOrder) {
-        // For ELICIT orders, calculate points based on total amount
-        const points = Math.floor(effectiveTotalAmount * 0.1); // 10% points
-        setPointsToEarn(points);
+        setPointsToEarn(0); // No points for ELICIT orders
       } else if (cafe) {
         calculatePointsToEarn(effectiveTotalAmount, cafe.id).then(points => {
         setPointsToEarn(points);
@@ -425,7 +433,7 @@ const Checkout = () => {
           table_number: deliveryDetails.orderType === 'dine_in' ? deliveryDetails.tableNumber : null,
           delivery_notes: `ELICIT Event Order - ${deliveryDetails.deliveryNotes}`,
           payment_method: deliveryDetails.paymentMethod,
-          points_earned: Math.floor(cafeOrder.total * 0.1), // 10% points
+          points_earned: 0, // No points for ELICIT orders
           estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
           phone_number: deliveryDetails.phoneNumber,
           utr_id: deliveryDetails.utrId
@@ -742,8 +750,8 @@ const Checkout = () => {
       
       console.log('✅ Order items created successfully:', insertedItems);
 
-      // Handle points redemption transaction if points were redeemed
-      if (pointsToRedeem > 0) {
+      // Handle points redemption transaction if points were redeemed (skip for ELICIT orders)
+      if (!isElicitOrder && pointsToRedeem > 0) {
         
         const { error: redemptionError } = await supabase
           .from('loyalty_transactions')
@@ -951,8 +959,8 @@ const Checkout = () => {
                     ))}
                   </div>
 
-                  {/* Points Redemption */}
-                  {availablePoints > 0 && (
+                  {/* Points Redemption - Disabled for ELICIT orders */}
+                  {!isElicitOrder && availablePoints > 0 && (
                     <div className="border-t border-border pt-4 mt-4">
                       <div className="mb-4">
                         <h4 className="font-semibold mb-2 flex items-center">
@@ -1023,8 +1031,8 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  {/* No Points Message */}
-                  {availablePoints === 0 && (
+                  {/* No Points Message - Disabled for ELICIT orders */}
+                  {!isElicitOrder && availablePoints === 0 && (
                     <div className="border-t border-border pt-4 mt-4">
                       <div className="text-center p-4 bg-muted/50 rounded-lg">
                         <Trophy className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
@@ -1044,13 +1052,13 @@ const Checkout = () => {
                         <span>Subtotal</span>
                         <span>₹{totalAmount}</span>
                       </div>
-                      {loyaltyDiscount > 0 && (
+                      {!isElicitOrder && loyaltyDiscount > 0 && (
                         <div className="flex justify-between items-center text-blue-600">
                           <span>Loyalty Discount ({cafeRewardData?.tier || 'foodie'})</span>
                           <span>-₹{loyaltyDiscount}</span>
                         </div>
                       )}
-                      {pointsDiscount > 0 && (
+                      {!isElicitOrder && pointsDiscount > 0 && (
                         <div className="flex justify-between items-center text-green-600">
                           <span>Points Discount</span>
                           <span>-₹{pointsDiscount}</span>
