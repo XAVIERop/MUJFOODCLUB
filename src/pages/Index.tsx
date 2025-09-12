@@ -172,6 +172,7 @@ const RewardsSection = () => {
 };
 
 const Index = () => {
+  const navigate = useNavigate();
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(true);
 
