@@ -294,7 +294,7 @@ const Checkout = () => {
     }
   }, [totalAmount, loyaltyDiscount, pointsDiscount, cafe]);
 
-    // Calculate tier discount and final amount (cafe-specific)
+  // Calculate tier discount and final amount (cafe-specific)
   useEffect(() => {
     // Use cafe-specific tier, default to Foodie if no data
     const tier = cafeRewardData?.tier || 'foodie';
@@ -317,9 +317,9 @@ const Checkout = () => {
         setPointsToEarn(points);
       } else if (cafe) {
         calculatePointsToEarn(effectiveTotalAmount, cafe.id).then(points => {
-          setPointsToEarn(points);
-        });
-      }
+        setPointsToEarn(points);
+      });
+    }
     }
   }, [effectiveTotalAmount, cafe, isElicitOrder]);
 
@@ -879,11 +879,11 @@ const Checkout = () => {
                       </>
                     ) : (
                       <>
-                        <h3 className="font-semibold text-lg mb-2">{cafe.name}</h3>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          {cafe.location}
-                        </div>
+                    <h3 className="font-semibold text-lg mb-2">{cafe.name}</h3>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <MapPin className="w-4 h-4 mr-1" />
+                      {cafe.location}
+                    </div>
                       </>
                     )}
                     {cafe && cafe.name === 'FOOD COURT' && (
@@ -1317,6 +1317,76 @@ const Checkout = () => {
                   </p>
                 </CardContent>
               </Card>
+
+              {/* ELICIT Payment QR Section */}
+              {isElicitOrder && (
+                <Card className="food-card border-purple-200 bg-purple-50">
+                  <CardHeader>
+                    <CardTitle className="text-purple-700">ELICIT Payment</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* QR Code */}
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600 mb-3">Scan QR code to pay ₹{finalAmount}</p>
+                        <div className="inline-block p-4 bg-white rounded-lg shadow-sm border">
+                          <img 
+                            src="/elicit_qr.jpeg" 
+                            alt="ELICIT Payment QR Code" 
+                            className="w-48 h-48 object-contain"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Payment Fields */}
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Upload Payment Screenshot
+                          </label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Upload screenshot of your payment confirmation</p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            UTR Number
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Enter UTR number from payment confirmation"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Enter the UTR number from your payment confirmation</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div className="flex items-start">
+                          <div className="flex-shrink-0">
+                            <CheckCircle className="h-5 w-5 text-blue-400" />
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm text-blue-700">
+                              <strong>Payment Instructions:</strong>
+                            </p>
+                            <ul className="text-xs text-blue-600 mt-1 space-y-1">
+                              <li>• Scan the QR code above to make payment</li>
+                              <li>• Upload screenshot of payment confirmation</li>
+                              <li>• Enter the UTR number from your bank</li>
+                              <li>• Your order will be processed after payment verification</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {error && (
                 <Alert variant="destructive">
