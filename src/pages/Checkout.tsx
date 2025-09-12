@@ -59,11 +59,9 @@ const Checkout = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // Get cart data from navigation state or ELICIT cart from localStorage
-  const isElicitOrder = new URLSearchParams(location.search).get('elicit') === 'true';
-  const elicitCart = isElicitOrder ? JSON.parse(localStorage.getItem('elicit_cart') || '{}') : {};
-  
-  const cart: {[key: string]: CartItem} = isElicitOrder ? elicitCart : (location.state?.cart || {});
+  // Get cart data from navigation state
+  const isElicitOrder = location.state?.isElicitOrder || false;
+  const cart: {[key: string]: CartItem} = location.state?.cart || {};
   const cafe: Cafe = isElicitOrder ? null : location.state?.cafe;
   const totalAmount: number = location.state?.totalAmount || 0;
   

@@ -127,9 +127,37 @@ const Elicit = () => {
       return;
     }
 
-    // Store cart in localStorage and navigate to checkout
-    localStorage.setItem('elicit_cart', JSON.stringify(cart));
-    navigate('/checkout?elicit=true');
+    // Convert ELICIT cart to regular cart format and navigate to checkout
+    const regularCart = Object.values(cart).reduce((acc, cartItem) => {
+      acc[cartItem.item.id] = {
+        item: {
+          id: cartItem.item.id,
+          name: cartItem.item.name,
+          description: cartItem.item.description || '',
+          price: cartItem.item.price,
+          category: cartItem.item.category,
+          preparation_time: 15,
+          is_available: true
+        },
+        quantity: cartItem.quantity,
+        notes: ''
+      };
+      return acc;
+    }, {} as {[key: string]: any});
+
+    // Calculate total amount
+    const totalAmount = Object.values(regularCart).reduce((total, item) => {
+      return total + (item.item.price * item.quantity);
+    }, 0);
+
+    // Navigate to checkout with cart data
+    navigate('/checkout', {
+      state: {
+        cart: regularCart,
+        totalAmount: totalAmount,
+        isElicitOrder: true
+      }
+    });
   };
 
   const handleCall = (phone: string) => {
