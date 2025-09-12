@@ -290,7 +290,7 @@ const Index = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                   <div className="absolute bottom-4 right-4">
                     <Button 
-                      onClick={() => navigate('/elicit')}
+                      onClick={() => navigate('/menu/dcb52fed-7b3c-4bb0-a6f5-2928f03af568')}
                       className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg"
                       size="lg"
                     >
