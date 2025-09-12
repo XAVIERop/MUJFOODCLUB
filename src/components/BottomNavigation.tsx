@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Store, ShoppingCart, Calendar } from 'lucide-react';
+import { Home, Store, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const BottomNavigation = () => {
@@ -50,18 +50,6 @@ const BottomNavigation = () => {
           <span className="text-[10px] font-medium">Cafes</span>
         </button>
 
-        {/* ELICIT Tab */}
-        <button
-          onClick={() => navigate('/elicit')}
-          className={`flex flex-col items-center py-1 px-2 rounded-lg transition-all duration-200 ${
-            isActive('/elicit') 
-              ? 'text-primary bg-primary/10' 
-              : 'text-gray-600 hover:text-primary hover:bg-gray-50'
-          }`}
-        >
-          <Calendar className={`w-4 h-4 mb-0.5 ${isActive('/elicit') ? 'text-primary' : ''}`} />
-          <span className="text-[10px] font-medium">ELICIT</span>
-        </button>
 
         {/* Cart Tab */}
         <button

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, Phone, MessageCircle, MapPin, Clock, Heart, ShoppingCart } from 'lucide-react';
+import { Star, Phone, MessageCircle, MapPin, Clock, Heart, ShoppingCart, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,87 +9,95 @@ import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
-interface ElicitMenuItem {
+interface MenuItem {
   id: string;
   name: string;
+  description: string;
   price: number;
   category: string;
-  description?: string;
+  preparation_time: number;
+  is_available: boolean;
+  image_url?: string;
 }
 
-interface ElicitCafe {
+interface Cafe {
   id: string;
   name: string;
   description: string;
   location: string;
   phone: string;
   hours: string;
-  image: string;
-  menu: ElicitMenuItem[];
+  accepting_orders: boolean;
+  average_rating: number | null;
+  total_ratings: number | null;
+}
+
+interface CartItem {
+  item: MenuItem;
+  quantity: number;
+  notes: string;
 }
 
 const Elicit = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [cafes, setCafes] = useState<ElicitCafe[]>([]);
-  const [cart, setCart] = useState<{[key: string]: {item: ElicitMenuItem, quantity: number}}>({});
-
-  // ELICIT Event Cafes with specific menus
-  const elicitCafes: ElicitCafe[] = [
-    {
-      id: 'zero-degree-elicit',
-      name: 'Zero Degree Cafe',
-      description: 'ELICIT Event Special - Sip & Eat!',
-      location: 'Ground Floor, GHS',
-      phone: '+91-82336 73311',
-      hours: '11:00 AM - 2:00 AM',
-      image: '/zerodegreecafe_logo.jpg',
-      menu: [
-        { id: 'zd-1', name: 'Classic margherita', price: 255, category: 'Pizza' },
-        { id: 'zd-2', name: 'Veggie lover', price: 305, category: 'Pizza' },
-        { id: 'zd-3', name: 'Paneer makhani', price: 335, category: 'Main Course' },
-        { id: 'zd-4', name: 'Peri peri fries', price: 110, category: 'Sides' },
-        { id: 'zd-5', name: 'Salted fries', price: 100, category: 'Sides' },
-        { id: 'zd-6', name: 'Ice tea', price: 60, category: 'Beverages' },
-        { id: 'zd-7', name: 'Cold coffee', price: 80, category: 'Beverages' }
-      ]
-    },
-    {
-      id: 'dialog-elicit',
-      name: 'Dialog',
-      description: 'ELICIT Event Special - Premium Experience',
-      location: 'G1 First Floor',
-      phone: '+91-9928884373',
-      hours: '11:00 AM - 2:00 AM',
-      image: '/dialog_card.jpg',
-      menu: [
-        { id: 'dl-1', name: 'C4', price: 390, category: 'Pizza' },
-        { id: 'dl-2', name: 'Paneer makhani', price: 455, category: 'Main Course' },
-        { id: 'dl-3', name: 'High five', price: 400, category: 'Pizza' },
-        { id: 'dl-4', name: 'Cold coffee', price: 125, category: 'Beverages' },
-        { id: 'dl-5', name: 'Oreo shake', price: 145, category: 'Beverages' },
-        { id: 'dl-6', name: 'Coke', price: 40, category: 'Beverages' }
-      ]
-    }
-  ];
+  const [cafe, setCafe] = useState<Cafe | null>(null);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [cart, setCart] = useState<{[key: string]: CartItem}>({});
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setCafes(elicitCafes);
-      setLoading(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
+    fetchElicitCafe();
   }, []);
 
-  const addToCart = (item: ElicitMenuItem) => {
+  const fetchElicitCafe = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch ELICIT cafe
+      const { data: cafeData, error: cafeError } = await supabase
+        .from('cafes')
+        .select('*')
+        .eq('slug', 'elicit-2024')
+        .single();
+
+      if (cafeError) {
+        console.error('Error fetching ELICIT cafe:', cafeError);
+        return;
+      }
+
+      setCafe(cafeData);
+
+      // Fetch menu items for ELICIT cafe
+      const { data: menuData, error: menuError } = await supabase
+        .from('menu_items')
+        .select('*')
+        .eq('cafe_id', cafeData.id)
+        .eq('is_available', true)
+        .order('category', { ascending: true });
+
+      if (menuError) {
+        console.error('Error fetching menu items:', menuError);
+        return;
+      }
+
+      setMenuItems(menuData || []);
+    } catch (error) {
+      console.error('Error fetching ELICIT data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addToCart = (item: MenuItem) => {
+    const itemId = item.id;
     setCart(prev => ({
       ...prev,
-      [item.id]: {
+      [itemId]: {
         item,
-        quantity: (prev[item.id]?.quantity || 0) + 1
+        quantity: (prev[itemId]?.quantity || 0) + 1,
+        notes: prev[itemId]?.notes || ''
       }
     }));
   };
@@ -107,12 +115,12 @@ const Elicit = () => {
     });
   };
 
-  const getCartItemCount = () => {
-    return Object.values(cart).reduce((total, item) => total + item.quantity, 0);
-  };
-
   const getCartTotal = () => {
     return Object.values(cart).reduce((total, item) => total + (item.item.price * item.quantity), 0);
+  };
+
+  const getCartItemCount = () => {
+    return Object.values(cart).reduce((total, item) => total + item.quantity, 0);
   };
 
   const handleCheckout = () => {
@@ -127,212 +135,232 @@ const Elicit = () => {
       return;
     }
 
-    // Convert ELICIT cart to regular cart format and navigate to checkout
+    // Convert cart to regular format and navigate to checkout
     const regularCart = Object.values(cart).reduce((acc, cartItem) => {
       acc[cartItem.item.id] = {
-        item: {
-          id: cartItem.item.id,
-          name: cartItem.item.name,
-          description: cartItem.item.description || '',
-          price: cartItem.item.price,
-          category: cartItem.item.category,
-          preparation_time: 15,
-          is_available: true
-        },
+        item: cartItem.item,
         quantity: cartItem.quantity,
-        notes: ''
+        notes: cartItem.notes
       };
       return acc;
     }, {} as {[key: string]: any});
 
-    // Calculate total amount
-    const totalAmount = Object.values(regularCart).reduce((total, item) => {
-      return total + (item.item.price * item.quantity);
-    }, 0);
+    const totalAmount = getCartTotal();
 
-    // Navigate to checkout with cart data
     navigate('/checkout', {
       state: {
         cart: regularCart,
-        totalAmount: totalAmount,
-        isElicitOrder: true
+        cafe: cafe,
+        totalAmount: totalAmount
       }
     });
   };
 
-  const handleCall = (phone: string) => {
-    window.open(`tel:${phone}`, '_blank');
+  const getCategories = () => {
+    const categories = ['All', ...new Set(menuItems.map(item => item.category))];
+    return categories;
   };
 
-  const handleWhatsApp = (phone: string, cafeName: string) => {
-    const message = `Hi! I'd like to place an ELICIT order from ${cafeName}. Can you help me?`;
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+  const getFilteredMenuItems = () => {
+    if (selectedCategory === 'All') {
+      return menuItems;
+    }
+    return menuItems.filter(item => item.category === selectedCategory);
+  };
+
+  const getCategoryItems = (category: string) => {
+    return menuItems.filter(item => item.category === category);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner size="lg" text="Loading ELICIT Event..." />
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!cafe) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8 text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">ELICIT Cafe Not Found</h1>
+          <p className="text-gray-600">The ELICIT cafe is not available at the moment.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+    <div className="min-h-screen bg-background">
       <Header />
       
-      {/* Simple Header */}
+      {/* Cafe Header */}
       <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-8">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">ELICIT 2024</h1>
-          <p className="text-lg opacity-90">ACM Event - Special Menu</p>
-        </div>
-      </div>
-      
-      {/* Cafes Section */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-2 gap-8">
-          {cafes.map((cafe) => (
-            <Card key={cafe.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
-              <div className="relative">
-                <img
-                  src={cafe.image}
-                  alt={cafe.name}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-4 left-4">
-                  <Badge className="bg-purple-600 text-white font-bold">
-                    ELICIT Special
-                  </Badge>
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">{cafe.name}</h1>
+              <p className="text-lg opacity-90">{cafe.description}</p>
+              <div className="flex items-center mt-2 space-x-4 text-sm">
+                <div className="flex items-center">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  {cafe.location}
                 </div>
-              </div>
-              
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold text-purple-800">
-                  {cafe.name}
-                </CardTitle>
-                <p className="text-gray-600">{cafe.description}</p>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    {cafe.location}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    {cafe.hours}
-                  </div>
+                <div className="flex items-center">
+                  <Clock className="w-4 h-4 mr-1" />
+                  {cafe.hours}
                 </div>
-              </CardHeader>
-
-              <CardContent>
-                {/* Menu Items */}
-                <div className="space-y-3 mb-6">
-                  <h3 className="font-semibold text-lg text-gray-800">ELICIT Menu</h3>
-                  {cafe.menu.map((item) => {
-                    const cartItem = cart[item.id];
-                    const quantity = cartItem?.quantity || 0;
-                    
-                    return (
-                      <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-800">{item.name}</h4>
-                          <p className="text-sm text-gray-500">{item.category}</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-purple-600">₹{item.price}</span>
-                          {quantity > 0 ? (
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => removeFromCart(item.id)}
-                                className="w-8 h-8 p-0 rounded-full"
-                              >
-                                -
-                              </Button>
-                              <span className="font-medium text-purple-600 min-w-[20px] text-center">
-                                {quantity}
-                              </span>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => addToCart(item)}
-                                className="w-8 h-8 p-0 rounded-full"
-                              >
-                                +
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button
-                              size="sm"
-                              onClick={() => addToCart(item)}
-                              className="bg-purple-600 hover:bg-purple-700"
-                            >
-                              Add
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="flex items-center">
+                  <Phone className="w-4 h-4 mr-1" />
+                  {cafe.phone}
                 </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleCall(cafe.phone)}
-                    className="flex-1"
-                  >
-                    <Phone className="w-4 h-4 mr-2" />
-                    Call
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleWhatsApp(cafe.phone, cafe.name)}
-                    className="flex-1"
-                  >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    WhatsApp
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Cart Summary - Fixed Bottom */}
-      {getCartItemCount() > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
-          <div className="container mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-purple-600" />
-                <span className="font-semibold">{getCartItemCount()} items</span>
-              </div>
-              <div className="text-lg font-bold text-purple-600">
-                ₹{getCartTotal()}
               </div>
             </div>
-            <Button
-              onClick={handleCheckout}
-              className="bg-purple-600 hover:bg-purple-700 px-8"
-            >
-              Checkout ELICIT Order
-            </Button>
+            <Badge className="bg-white text-purple-600 px-4 py-2 text-lg">
+              ELICIT Special
+            </Badge>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Add bottom padding when cart is visible */}
-      {getCartItemCount() > 0 && <div className="h-20" />}
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Menu Section */}
+          <div className="lg:col-span-2">
+            {/* Category Filter */}
+            <div className="mb-6">
+              <div className="flex flex-wrap gap-2">
+                {getCategories().map((category) => (
+                  <Button
+                    key={category}
+                    variant={selectedCategory === category ? "default" : "outline"}
+                    onClick={() => setSelectedCategory(category)}
+                    className="text-sm"
+                  >
+                    {category}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Menu Items by Category */}
+            {getCategories().filter(cat => cat !== 'All').map((category) => {
+              const categoryItems = getCategoryItems(category);
+              if (categoryItems.length === 0) return null;
+
+              return (
+                <div key={category} className="mb-8">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">
+                    {category}
+                  </h3>
+                  <div className="grid gap-4">
+                    {categoryItems.map((item) => {
+                      const quantity = cart[item.id]?.quantity || 0;
+                      return (
+                        <Card key={item.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900">{item.name}</h4>
+                                <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                <div className="flex items-center mt-2">
+                                  <span className="text-lg font-bold text-purple-600">₹{item.price}</span>
+                                  <span className="text-sm text-gray-500 ml-2">
+                                    {item.preparation_time} min
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="ml-4">
+                                {quantity > 0 ? (
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => removeFromCart(item.id)}
+                                      className="w-8 h-8 p-0 rounded-full"
+                                    >
+                                      -
+                                    </Button>
+                                    <span className="font-medium text-purple-600 min-w-[20px] text-center">
+                                      {quantity}
+                                    </span>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => addToCart(item)}
+                                      className="w-8 h-8 p-0 rounded-full"
+                                    >
+                                      +
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => addToCart(item)}
+                                    className="bg-purple-600 hover:bg-purple-700"
+                                  >
+                                    Add
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Cart Summary */}
+          <div className="lg:col-span-1">
+            <Card className="sticky top-4">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Cart ({getCartItemCount()})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {Object.keys(cart).length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">Your cart is empty</p>
+                ) : (
+                  <>
+                    <div className="space-y-3 mb-4">
+                      {Object.values(cart).map((cartItem) => (
+                        <div key={cartItem.item.id} className="flex justify-between items-center">
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">{cartItem.item.name}</p>
+                            <p className="text-xs text-gray-500">Qty: {cartItem.quantity}</p>
+                          </div>
+                          <p className="font-medium">₹{cartItem.item.price * cartItem.quantity}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between items-center text-lg font-bold">
+                        <span>Total</span>
+                        <span>₹{getCartTotal()}</span>
+                      </div>
+                      <Button 
+                        onClick={handleCheckout}
+                        className="w-full mt-4 bg-purple-600 hover:bg-purple-700"
+                      >
+                        Checkout ELICIT Order
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
