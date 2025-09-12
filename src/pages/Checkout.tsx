@@ -64,7 +64,7 @@ const Checkout = () => {
   const elicitCart = isElicitOrder ? JSON.parse(localStorage.getItem('elicit_cart') || '{}') : {};
   
   const cart: {[key: string]: CartItem} = isElicitOrder ? elicitCart : (location.state?.cart || {});
-  const cafe: Cafe = location.state?.cafe;
+  const cafe: Cafe = isElicitOrder ? null : location.state?.cafe;
   const totalAmount: number = location.state?.totalAmount || 0;
   
   // Get cafe-specific points for redemption
@@ -316,8 +316,8 @@ const Checkout = () => {
         // For ELICIT orders, calculate points based on total amount
         const points = Math.floor(effectiveTotalAmount * 0.1); // 10% points
         setPointsToEarn(points);
-      } else {
-        calculatePointsToEarn(effectiveTotalAmount, cafe!.id).then(points => {
+      } else if (cafe) {
+        calculatePointsToEarn(effectiveTotalAmount, cafe.id).then(points => {
           setPointsToEarn(points);
         });
       }
@@ -465,7 +465,7 @@ const Checkout = () => {
     }
 
     // Block orders for non-Chatkara cafes during soft launch (except ELICIT orders)
-    if (!isElicitOrder && !cafe.name.toLowerCase().includes('chatkara')) {
+    if (!isElicitOrder && cafe && !cafe.name.toLowerCase().includes('chatkara')) {
       toast({
         title: "Coming Soon!",
         description: `${cafe.name} is not accepting orders yet. Currently only Chatkara is accepting orders.`,
@@ -836,7 +836,7 @@ const Checkout = () => {
                         </div>
                       </>
                     )}
-                    {cafe.name === 'FOOD COURT' && (
+                    {cafe && cafe.name === 'FOOD COURT' && (
                       <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
                         <strong>Note:</strong> CGST @ 2.5%, SGST @ 2.5%, and ₹10 delivery fee will be added to your order.
                       </div>
@@ -874,7 +874,7 @@ const Checkout = () => {
                           Redeem Loyalty Points
                         </h4>
                         <p className="text-sm text-muted-foreground mb-3">
-                          You have {availablePoints} points available at {cafe?.name}
+                          You have {availablePoints} points available{isElicitOrder ? ' for ELICIT order' : ` at ${cafe?.name}`}
                           <br />
                           <span className="text-blue-600 font-medium">
                             Max redeemable: {calculateMaxRedeemablePointsForOrder()} points (10% of order)
