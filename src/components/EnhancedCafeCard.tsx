@@ -77,7 +77,8 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
       'Tea Tradition': '/teatradition_card.jpeg',
       'China Town': '/china_card.png',
       'Let\'s Go Live': '/letsgolive_card.jpg',
-      'LETS GO LIVE': '/letsgolive_card.jpg'
+      'LETS GO LIVE': '/letsgolive_card.jpg',
+      'ELICIT 2025': '/elicit_cafecard.JPG'
     };
 
     // Try to find exact match first
