@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCafeRewards } from '@/hooks/useCafeRewards';
-import { Trophy, Star, Gift, Crown, Coffee, Award, ArrowRight } from "lucide-react";
+import { Trophy, Star, Gift, Crown, Coffee, Award, ArrowRight, Calendar, MapPin, Clock } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 interface Cafe {
