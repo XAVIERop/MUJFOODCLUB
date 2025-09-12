@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -32,7 +31,6 @@ interface ElicitCafe {
 const Elicit = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [cafes, setCafes] = useState<ElicitCafe[]>([]);
   const [cart, setCart] = useState<{[key: string]: {item: ElicitMenuItem, quantity: number}}>({});
@@ -94,11 +92,6 @@ const Elicit = () => {
         quantity: (prev[item.id]?.quantity || 0) + 1
       }
     }));
-    
-    toast({
-      title: "Added to Cart",
-      description: `${item.name} added to your ELICIT order`,
-    });
   };
 
   const removeFromCart = (itemId: string) => {
@@ -124,20 +117,12 @@ const Elicit = () => {
 
   const handleCheckout = () => {
     if (Object.keys(cart).length === 0) {
-      toast({
-        title: "Empty Cart",
-        description: "Please add items to your cart before checkout",
-        variant: "destructive"
-      });
+      alert("Please add items to your cart before checkout");
       return;
     }
 
     if (!user) {
-      toast({
-        title: "Sign In Required",
-        description: "Please sign in to place an order",
-        variant: "destructive"
-      });
+      alert("Please sign in to place an order");
       navigate('/auth');
       return;
     }
@@ -225,24 +210,53 @@ const Elicit = () => {
                 {/* Menu Items */}
                 <div className="space-y-3 mb-6">
                   <h3 className="font-semibold text-lg text-gray-800">ELICIT Menu</h3>
-                  {cafe.menu.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-800">{item.name}</h4>
-                        <p className="text-sm text-gray-500">{item.category}</p>
+                  {cafe.menu.map((item) => {
+                    const cartItem = cart[item.id];
+                    const quantity = cartItem?.quantity || 0;
+                    
+                    return (
+                      <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-800">{item.name}</h4>
+                          <p className="text-sm text-gray-500">{item.category}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-purple-600">₹{item.price}</span>
+                          {quantity > 0 ? (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => removeFromCart(item.id)}
+                                className="w-8 h-8 p-0 rounded-full"
+                              >
+                                -
+                              </Button>
+                              <span className="font-medium text-purple-600 min-w-[20px] text-center">
+                                {quantity}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => addToCart(item)}
+                                className="w-8 h-8 p-0 rounded-full"
+                              >
+                                +
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={() => addToCart(item)}
+                              className="bg-purple-600 hover:bg-purple-700"
+                            >
+                              Add
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold text-purple-600">₹{item.price}</span>
-                        <Button
-                          size="sm"
-                          onClick={() => addToCart(item)}
-                          className="bg-purple-600 hover:bg-purple-700"
-                        >
-                          Add
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Action Buttons */}
