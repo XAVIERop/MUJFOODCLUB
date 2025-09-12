@@ -12,12 +12,13 @@ INSERT INTO cafes (
   total_ratings,
   cuisine_categories,
   priority,
-  slug
+  slug,
+  image_url
 ) VALUES (
   gen_random_uuid(),
-  'ELICIT 2024',
+  'ELICIT 2025',
   'Event Cafe',
-  'ACM ELICIT 2024 Event - Special Menu with Zero Degree Cafe and Dialog',
+  'ACM ELICIT 2025 Event - Special Menu with Zero Degree Cafe and Dialog',
   'MUJ Campus',
   '+91-9876543210',
   '24/7',
@@ -26,7 +27,8 @@ INSERT INTO cafes (
   0,
   ARRAY['Event', 'Special Menu'],
   1,
-  'elicit-2024'
+  'elicit-2025',
+  '/elicit_cafecard.JPG'
 ) ON CONFLICT (slug) DO NOTHING;
 
 -- Get the ELICIT cafe ID
@@ -35,11 +37,13 @@ DECLARE
     elicit_cafe_id UUID;
 BEGIN
     -- Get ELICIT cafe ID
-    SELECT id INTO elicit_cafe_id FROM cafes WHERE slug = 'elicit-2024';
+    SELECT id INTO elicit_cafe_id FROM cafes WHERE slug = 'elicit-2025';
     
     IF elicit_cafe_id IS NOT NULL THEN
-        -- Insert Zero Degree Cafe category items
-        INSERT INTO menu_items (
+        -- Check if menu items already exist
+        IF NOT EXISTS (SELECT 1 FROM menu_items WHERE cafe_id = elicit_cafe_id) THEN
+            -- Insert Zero Degree Cafe category items
+            INSERT INTO menu_items (
             id,
             cafe_id,
             name,
@@ -64,10 +68,12 @@ BEGIN
         (gen_random_uuid(), elicit_cafe_id, 'High Five', 'Special High Five drink', 400, 'Dialog', 10, true, 'https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=400'),
         (gen_random_uuid(), elicit_cafe_id, 'Cold Coffee', 'Rich and creamy cold coffee', 125, 'Dialog', 5, true, 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400'),
         (gen_random_uuid(), elicit_cafe_id, 'Oreo Shake', 'Creamy Oreo milkshake', 145, 'Dialog', 10, true, 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400'),
-        (gen_random_uuid(), elicit_cafe_id, 'Coke', 'Classic Coca Cola', 40, 'Dialog', 2, true, 'https://images.unsplash.com/photo-1581636625402-29d2a6f2c0a0?w=400')
-        ON CONFLICT (cafe_id, name) DO NOTHING;
-        
-        RAISE NOTICE 'ELICIT cafe and menu items created successfully with ID: %', elicit_cafe_id;
+        (gen_random_uuid(), elicit_cafe_id, 'Coke', 'Classic Coca Cola', 40, 'Dialog', 2, true, 'https://images.unsplash.com/photo-1581636625402-29d2a6f2c0a0?w=400');
+            
+            RAISE NOTICE 'ELICIT cafe and menu items created successfully with ID: %', elicit_cafe_id;
+        ELSE
+            RAISE NOTICE 'ELICIT menu items already exist, skipping insertion';
+        END IF;
     ELSE
         RAISE NOTICE 'ELICIT cafe not found, please check the cafe creation';
     END IF;

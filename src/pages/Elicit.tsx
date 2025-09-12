@@ -59,7 +59,7 @@ const Elicit = () => {
       const { data: cafeData, error: cafeError } = await supabase
         .from('cafes')
         .select('*')
-        .eq('slug', 'elicit-2024')
+        .eq('slug', 'elicit-2025')
         .single();
 
       if (cafeError) {
