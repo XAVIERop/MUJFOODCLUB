@@ -150,7 +150,7 @@ const Elicit = () => {
     navigate('/checkout', {
       state: {
         cart: regularCart,
-        cafe: cafe,
+        cafe: null, // Don't pass cafe for ELICIT orders
         totalAmount: totalAmount,
         isElicitOrder: true
       }

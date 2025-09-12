@@ -515,13 +515,20 @@ const Checkout = () => {
     }
 
     // Block orders for non-Chatkara cafes during soft launch (except ELICIT orders)
+    console.log('🔍 Checkout debug:', { isElicitOrder, cafe: cafe?.name, chatkaraCheck: cafe?.name?.toLowerCase().includes('chatkara') });
+    
     if (!isElicitOrder && cafe && !cafe.name.toLowerCase().includes('chatkara')) {
+      console.log('❌ Blocking order for non-Chatkara cafe:', cafe.name);
       toast({
         title: "Coming Soon!",
         description: `${cafe.name} is not accepting orders yet. Currently only Chatkara is accepting orders.`,
         variant: "default",
       });
       return;
+    }
+    
+    if (isElicitOrder) {
+      console.log('✅ ELICIT order detected - bypassing restrictions');
     }
 
     // Block dine-in and takeaway orders outside allowed hours
