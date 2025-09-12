@@ -32,10 +32,10 @@ interface EnhancedCafeCardProps {
 export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, showAll = false }) => {
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
+  const { toast } = useToast();
 
   // Check if this cafe is exclusive (Top 6 cafes by priority)
-  const isExclusive = cafe.name.toLowerCase().includes('elicit') ||
-                     cafe.name.toLowerCase().includes('chatkara') || 
+  const isExclusive = cafe.name.toLowerCase().includes('chatkara') || 
                      cafe.name.toLowerCase().includes('food court') ||
                      cafe.name.toLowerCase().includes('punjabi tadka') ||
                      cafe.name.toLowerCase().includes('munch box') ||
@@ -79,7 +79,6 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
       'China Town': '/china_card.png',
       'Let\'s Go Live': '/letsgolive_card.jpg',
       'LETS GO LIVE': '/letsgolive_card.jpg',
-      'ELICIT 2025': '/elicit_cafecard.JPG'
     };
 
     // Try to find exact match first
@@ -105,15 +104,15 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
   };
 
   const handleOrderNow = (cafeId: string) => {
-    // Allow orders for Chatkara and ELICIT during soft launch
-    if (cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('elicit')) {
+    // Allow orders for Chatkara during soft launch
+    if (cafe.name.toLowerCase().includes('chatkara')) {
       const identifier = cafe.slug || cafeId;
       navigate(`/menu/${identifier}`);
     } else {
       // Show coming soon message for other cafes
       toast({
         title: "Coming Soon!",
-        description: `${cafe.name} will be available for ordering soon. Currently only Chatkara and ELICIT are accepting orders.`,
+        description: `${cafe.name} will be available for ordering soon. Currently only Chatkara is accepting orders.`,
         variant: "default",
       });
     }

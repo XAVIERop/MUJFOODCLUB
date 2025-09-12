@@ -13,7 +13,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/hooks/use-toast';
-import * as XLSX from 'xlsx';
 import { CAFE_REWARDS, calculatePointsEarned, calculateMaxRedeemablePoints, getTierDiscount } from '@/lib/constants';
 import { useCafeRewards } from '@/hooks/useCafeRewards';
 import { whatsappService } from '@/services/whatsappService';
@@ -61,9 +60,8 @@ const Checkout = () => {
   const [error, setError] = useState('');
   
   // Get cart data from navigation state
-  const isElicitOrder = location.state?.isElicitOrder || false;
   const cart: {[key: string]: CartItem} = location.state?.cart || {};
-  const cafe: Cafe = isElicitOrder ? null : location.state?.cafe;
+  const cafe: Cafe = location.state?.cafe;
   const totalAmount: number = location.state?.totalAmount || 0;
   
   // Get cafe-specific points for redemption
@@ -77,9 +75,7 @@ const Checkout = () => {
     deliveryNotes: '',
     paymentMethod: 'cod',
     phoneNumber: profile?.phone || '',
-    tableNumber: '',
-    utrId: '',
-    hackxRoom: ''
+    tableNumber: ''
   });
 
 
@@ -96,23 +92,13 @@ const Checkout = () => {
   const [sgst, setSgst] = useState(0);
   const [deliveryFee, setDeliveryFee] = useState(0);
 
-  // Calculate total for ELICIT orders
-  const calculateElicitTotal = () => {
-    if (!isElicitOrder) return totalAmount;
-    
-    return Object.values(cart).reduce((total, item) => {
-      return total + (item.item.price * item.quantity);
-    }, 0);
-  };
-
-  const effectiveTotalAmount = isElicitOrder ? calculateElicitTotal() : totalAmount;
+  const effectiveTotalAmount = totalAmount;
 
   // Redirect if no cart data
   useEffect(() => {
     console.log('🛒 Checkout cart data:', cart);
     console.log('🏪 Cafe data:', cafe);
     console.log('💰 Total amount:', effectiveTotalAmount);
-    console.log('🎉 Is ELICIT order:', isElicitOrder);
     
     if (!cart || Object.keys(cart).length === 0) {
       console.error('❌ No cart data found - redirecting to home');
@@ -298,16 +284,6 @@ const Checkout = () => {
 
   // Calculate tier discount and final amount (cafe-specific)
   useEffect(() => {
-    // Skip loyalty discounts for ELICIT orders
-    if (isElicitOrder) {
-      setLoyaltyDiscount(0);
-      // Calculate final amount without loyalty discounts for ELICIT
-      const subtotal = effectiveTotalAmount - pointsDiscount;
-      const finalAmountWithTaxes = subtotal + cgst + sgst + deliveryFee;
-      setFinalAmount(Math.max(0, finalAmountWithTaxes));
-      return;
-    }
-    
     // Use cafe-specific tier, default to Foodie if no data
     const tier = cafeRewardData?.tier || 'foodie';
     const tierDiscount = Math.floor((effectiveTotalAmount * CAFE_REWARDS.TIER_DISCOUNTS[tier.toUpperCase() as keyof typeof CAFE_REWARDS.TIER_DISCOUNTS]) / 100);
@@ -321,199 +297,14 @@ const Checkout = () => {
 
   // Calculate points to earn when component loads or total amount changes
   useEffect(() => {
-    if (effectiveTotalAmount > 0 && (cafe || isElicitOrder)) {
-      // Skip points calculation for ELICIT orders
-      if (isElicitOrder) {
-        setPointsToEarn(0); // No points for ELICIT orders
-      } else if (cafe) {
-        calculatePointsToEarn(effectiveTotalAmount, cafe.id).then(points => {
+    if (effectiveTotalAmount > 0 && cafe) {
+      calculatePointsToEarn(effectiveTotalAmount, cafe.id).then(points => {
         setPointsToEarn(points);
       });
     }
-    }
-  }, [effectiveTotalAmount, cafe, isElicitOrder]);
+  }, [effectiveTotalAmount, cafe]);
 
-  const exportElicitOrdersToExcel = (orders: any[]) => {
-    // Prepare data for Excel export
-    const excelData = orders.map(order => ({
-      'Order Number': order.order_number,
-      'Cafe Name': order.cafe_name,
-      'Customer Name': order.customer_name,
-      'Phone Number': order.phone_number,
-      'Total Amount': order.total_amount,
-      'Delivery Block': order.delivery_block,
-      'Order Type': order.order_type,
-      'Payment Method': order.payment_method,
-      'Order Date': new Date(order.created_at).toLocaleString(),
-      'Status': order.status,
-      'Items': order.items.map((item: any) => `${item.name} x${item.quantity}`).join(', ')
-    }));
 
-    // Create workbook and worksheet
-    const ws = XLSX.utils.json_to_sheet(excelData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'ELICIT Orders');
-
-    // Generate filename with timestamp
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-    const filename = `ELICIT_Orders_${timestamp}.xlsx`;
-
-    // Download the file
-    XLSX.writeFile(wb, filename);
-  };
-
-  const handleElicitOrderPlacement = async (baseOrderNumber: string) => {
-    try {
-      // Group cart items by cafe
-      const cafeOrders: {[cafeId: string]: {cafe: Cafe, items: any[], total: number}} = {};
-      
-      for (const [itemId, cartItem] of Object.entries(cart)) {
-        // Determine cafe based on item ID prefix
-        let cafeId: string;
-        let cafeName: string;
-        
-        if (itemId.startsWith('zd-')) {
-          // Zero Degree Cafe items
-          const { data: zeroDegreeCafe } = await supabase
-            .from('cafes')
-            .select('*')
-            .eq('name', 'ZERO DEGREE CAFE')
-            .single();
-          
-          if (!zeroDegreeCafe) {
-            throw new Error('Zero Degree Cafe not found');
-          }
-          
-          cafeId = zeroDegreeCafe.id;
-          cafeName = zeroDegreeCafe.name;
-        } else if (itemId.startsWith('dl-')) {
-          // Dialog items
-          const { data: dialogCafe } = await supabase
-            .from('cafes')
-            .select('*')
-            .eq('name', 'Dialog')
-            .single();
-          
-          if (!dialogCafe) {
-            throw new Error('Dialog cafe not found');
-          }
-          
-          cafeId = dialogCafe.id;
-          cafeName = dialogCafe.name;
-        } else {
-          continue; // Skip unknown items
-        }
-        
-        if (!cafeOrders[cafeId]) {
-          cafeOrders[cafeId] = {
-            cafe: { id: cafeId, name: cafeName } as Cafe,
-            items: [],
-            total: 0
-          };
-        }
-        
-        cafeOrders[cafeId].items.push(cartItem);
-        cafeOrders[cafeId].total += cartItem.item.price * cartItem.quantity;
-      }
-      
-      // Create orders for each cafe
-      const orderIds: string[] = [];
-      const ordersForExcel: any[] = [];
-      
-      for (const [cafeId, cafeOrder] of Object.entries(cafeOrders)) {
-        const orderNumber = `${baseOrderNumber}-${cafeId.substring(0, 8).toUpperCase()}`;
-        
-        // Create order for this cafe
-        const orderData = {
-          user_id: user!.id,
-          cafe_id: cafeId,
-          order_number: orderNumber,
-          total_amount: cafeOrder.total,
-          delivery_block: deliveryDetails.orderType === 'delivery' ? `HACKX Room ${deliveryDetails.hackxRoom}` : deliveryDetails.orderType === 'takeaway' ? 'TAKEAWAY' : 'DINE_IN',
-          table_number: deliveryDetails.orderType === 'dine_in' ? deliveryDetails.tableNumber : null,
-          delivery_notes: `ELICIT Event Order - ${deliveryDetails.deliveryNotes}`,
-          payment_method: deliveryDetails.paymentMethod,
-          points_earned: 0, // No points for ELICIT orders
-          estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-          phone_number: deliveryDetails.phoneNumber,
-          utr_id: deliveryDetails.utrId
-        };
-        
-        const { data: order, error: orderError } = await supabase
-          .from('orders')
-          .insert(orderData as any)
-          .select()
-          .single();
-        
-        if (orderError) {
-          throw orderError;
-        }
-        
-        orderIds.push(order.id);
-        
-        // Create order items for this cafe
-        const orderItems = cafeOrder.items.map(({item, quantity, notes}) => ({
-          order_id: order.id,
-          menu_item_id: item.id,
-          quantity,
-          unit_price: item.price,
-          total_price: item.price * quantity,
-          special_instructions: `ELICIT Event - ${notes || ''}`
-        }));
-        
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .insert(orderItems);
-        
-        if (itemsError) {
-          throw itemsError;
-        }
-
-        // Prepare data for Excel export
-        ordersForExcel.push({
-          order_number: orderNumber,
-          cafe_name: cafeOrder.cafe.name,
-          customer_name: profile?.full_name || 'Unknown',
-          phone_number: deliveryDetails.phoneNumber,
-          total_amount: cafeOrder.total,
-          delivery_block: orderData.delivery_block,
-          order_type: deliveryDetails.orderType,
-          payment_method: deliveryDetails.paymentMethod,
-          created_at: order.created_at,
-          status: 'received',
-          items: cafeOrder.items.map(({item, quantity}) => ({
-            name: item.name,
-            quantity: quantity
-          }))
-        });
-      }
-      
-      // Export to Excel
-      exportElicitOrdersToExcel(ordersForExcel);
-      
-      // Clear ELICIT cart
-      localStorage.removeItem('elicit_cart');
-      
-      // Show success message
-      toast({
-        title: "ELICIT Order Placed!",
-        description: `Your ELICIT order has been placed successfully. Excel file downloaded. Order numbers: ${Object.values(cafeOrders).map(o => o.cafe.name).join(', ')}`,
-      });
-      
-      // Navigate to order confirmation
-      navigate(`/order-confirmation/${orderIds[0]}?elicit=true`);
-      
-    } catch (error) {
-      console.error('ELICIT order placement error:', error);
-      toast({
-        title: "Order Failed",
-        description: "Failed to place ELICIT order. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handlePlaceOrder = async () => {
     if (!user || !profile) {
@@ -525,11 +316,11 @@ const Checkout = () => {
       return;
     }
 
-    // Block orders for non-Chatkara cafes during soft launch (except ELICIT orders)
-    console.log('🔍 Checkout debug:', { isElicitOrder, cafe: cafe?.name, chatkaraCheck: cafe?.name?.toLowerCase().includes('chatkara') });
+    // Block orders for non-Chatkara cafes during soft launch
+    console.log('🔍 Checkout debug:', { cafe: cafe?.name, chatkaraCheck: cafe?.name?.toLowerCase().includes('chatkara') });
     
     // TEMPORARILY DISABLED FOR DEBUGGING - Remove this block to re-enable restrictions
-    if (false && !isElicitOrder && cafe && !cafe.name.toLowerCase().includes('chatkara')) {
+    if (false && cafe && !cafe.name.toLowerCase().includes('chatkara')) {
       console.log('❌ Blocking order for non-Chatkara cafe:', cafe.name);
       toast({
         title: "Coming Soon!",
@@ -537,10 +328,6 @@ const Checkout = () => {
         variant: "default",
       });
       return;
-    }
-    
-    if (isElicitOrder) {
-      console.log('✅ ELICIT order detected - bypassing restrictions');
     }
 
     // Block dine-in and takeaway orders outside allowed hours
@@ -586,29 +373,7 @@ const Checkout = () => {
       return;
     }
 
-    // Validate UTR ID
-    if (!deliveryDetails.utrId || deliveryDetails.utrId.trim() === '') {
-      setError('UTR ID is required');
-      toast({
-        title: "Missing UTR ID",
-        description: "Please enter your UTR ID from the payment confirmation",
-        variant: "destructive"
-      });
-      return;
-    }
 
-    // Validate HACKX Room Number for ELICIT orders
-    if (isElicitOrder && deliveryDetails.orderType === 'delivery') {
-      if (!deliveryDetails.hackxRoom || deliveryDetails.hackxRoom.trim() === '') {
-        setError('HACKX Room Number is required');
-        toast({
-          title: "Missing HACKX Room Number",
-          description: "Please enter your HACKX room number for delivery",
-          variant: "destructive"
-        });
-        return;
-      }
-    }
 
     // Validate table number for dine-in orders
     if (deliveryDetails.orderType === 'dine_in') {
@@ -631,16 +396,11 @@ const Checkout = () => {
       const timestamp = Date.now();
       const random = Math.random().toString(36).substr(2, 8).toUpperCase();
       const userSuffix = user.id.substr(-4).toUpperCase();
-      const orderNumber = isElicitOrder ? `ELICIT-${timestamp}-${random}-${userSuffix}` : `ORD-${timestamp}-${random}-${userSuffix}`;
+      const orderNumber = `ORD-${timestamp}-${random}-${userSuffix}`;
       
       // Use the pre-calculated points (based on original total amount, not final amount after discount)
       // This ensures users get points based on what they spent, not what they paid after discounts
 
-      // For ELICIT orders, we need to create separate orders for each cafe
-      if (isElicitOrder) {
-        await handleElicitOrderPlacement(orderNumber);
-        return;
-      }
 
       // Create regular order
       const orderData = {
@@ -654,8 +414,7 @@ const Checkout = () => {
           payment_method: deliveryDetails.paymentMethod,
           points_earned: pointsToEarn,
         estimated_delivery: new Date(Date.now() + (deliveryDetails.orderType === 'delivery' ? 30 : deliveryDetails.orderType === 'takeaway' ? 15 : 20) * 60 * 1000).toISOString(), // 30 min delivery, 15 min takeaway, 20 min dine-in
-          phone_number: deliveryDetails.phoneNumber,
-          utr_id: deliveryDetails.utrId
+          phone_number: deliveryDetails.phoneNumber
       };
 
       console.log('🍽️ DINE-IN DEBUG: Order data being saved:', {
@@ -750,8 +509,8 @@ const Checkout = () => {
       
       console.log('✅ Order items created successfully:', insertedItems);
 
-      // Handle points redemption transaction if points were redeemed (skip for ELICIT orders)
-      if (!isElicitOrder && pointsToRedeem > 0) {
+      // Handle points redemption transaction if points were redeemed
+      if (pointsToRedeem > 0) {
         
         const { error: redemptionError } = await supabase
           .from('loyalty_transactions')
@@ -886,13 +645,8 @@ const Checkout = () => {
               Back to Menu
             </Button>
             <h1 className="text-3xl font-bold">
-              {isElicitOrder ? 'ELICIT Event Checkout' : 'Checkout'}
+              Checkout
             </h1>
-            {isElicitOrder && (
-              <Badge className="ml-4 bg-purple-600 text-white">
-                ELICIT Special
-              </Badge>
-            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -908,28 +662,11 @@ const Checkout = () => {
                 <CardContent>
                   {/* Cafe Info */}
                   <div className="mb-6 p-4 bg-muted/50 rounded-lg">
-                    {isElicitOrder ? (
-                      <>
-                        <h3 className="font-semibold text-lg mb-2 text-purple-600">ELICIT Event Order</h3>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Special pricing for ACM ELICIT 2024 event
-                        </p>
-                        <div className="text-sm text-muted-foreground">
-                          <div className="flex items-center mb-1">
-                            <MapPin className="w-4 h-4 mr-1" />
-                            Multiple cafes (Zero Degree & Dialog)
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
                     <h3 className="font-semibold text-lg mb-2">{cafe.name}</h3>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <MapPin className="w-4 h-4 mr-1" />
                       {cafe.location}
                     </div>
-                      </>
-                    )}
                     {cafe && cafe.name === 'FOOD COURT' && (
                       <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
                         <strong>Note:</strong> CGST @ 2.5%, SGST @ 2.5%, and ₹10 delivery fee will be added to your order.
@@ -959,8 +696,8 @@ const Checkout = () => {
                     ))}
                   </div>
 
-                  {/* Points Redemption - Disabled for ELICIT orders */}
-                  {!isElicitOrder && availablePoints > 0 && (
+                  {/* Points Redemption */}
+                  {availablePoints > 0 && (
                     <div className="border-t border-border pt-4 mt-4">
                       <div className="mb-4">
                         <h4 className="font-semibold mb-2 flex items-center">
@@ -968,7 +705,7 @@ const Checkout = () => {
                           Redeem Loyalty Points
                         </h4>
                         <p className="text-sm text-muted-foreground mb-3">
-                          You have {availablePoints} points available{isElicitOrder ? ' for ELICIT order' : ` at ${cafe?.name}`}
+                          You have {availablePoints} points available at {cafe?.name}
                           <br />
                           <span className="text-blue-600 font-medium">
                             Max redeemable: {calculateMaxRedeemablePointsForOrder()} points (10% of order)
@@ -1031,8 +768,8 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  {/* No Points Message - Disabled for ELICIT orders */}
-                  {!isElicitOrder && availablePoints === 0 && (
+                  {/* No Points Message */}
+                  {availablePoints === 0 && (
                     <div className="border-t border-border pt-4 mt-4">
                       <div className="text-center p-4 bg-muted/50 rounded-lg">
                         <Trophy className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
@@ -1052,13 +789,13 @@ const Checkout = () => {
                         <span>Subtotal</span>
                         <span>₹{totalAmount}</span>
                       </div>
-                      {!isElicitOrder && loyaltyDiscount > 0 && (
+                      {loyaltyDiscount > 0 && (
                         <div className="flex justify-between items-center text-blue-600">
                           <span>Loyalty Discount ({cafeRewardData?.tier || 'foodie'})</span>
                           <span>-₹{loyaltyDiscount}</span>
                         </div>
                       )}
-                      {!isElicitOrder && pointsDiscount > 0 && (
+                      {pointsDiscount > 0 && (
                         <div className="flex justify-between items-center text-green-600">
                           <span>Points Discount</span>
                           <span>-₹{pointsDiscount}</span>
@@ -1093,11 +830,6 @@ const Checkout = () => {
                         <span>Final Amount</span>
                         <span className="text-primary">₹{finalAmount}</span>
                       </div>
-                      {isElicitOrder && (
-                        <div className="text-sm text-purple-600 mt-2 text-center">
-                          * ELICIT Event Special Pricing
-                        </div>
-                      )}
                     </div>
                     <div className="flex justify-between items-center text-sm text-muted-foreground mt-2">
                       <span>Points to Earn</span>
@@ -1238,27 +970,6 @@ const Checkout = () => {
 
                   {deliveryDetails.orderType === 'delivery' && (
                     <>
-                      {isElicitOrder ? (
-                        // ELICIT: HACKX Room Number field
-                        <div className="space-y-2">
-                          <Label htmlFor="hackxRoom" className="flex items-center">
-                            HACKX Room Number
-                            <span className="text-red-500 ml-1">*</span>
-                          </Label>
-                          <Input
-                            id="hackxRoom"
-                            type="text"
-                            placeholder="Enter your HACKX room number"
-                            value={deliveryDetails.hackxRoom || ''}
-                            onChange={(e) => setDeliveryDetails(prev => ({...prev, hackxRoom: e.target.value}))}
-                            className={!deliveryDetails.hackxRoom || deliveryDetails.hackxRoom.trim() === '' ? 'border-red-300 focus:border-red-500' : ''}
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Required - Enter your HACKX room number for delivery
-                          </p>
-                        </div>
-                      ) : (
-                        // Regular: Delivery Block dropdown
                       <div className="space-y-2">
                         <Label htmlFor="block">Delivery Block</Label>
                         <Select 
@@ -1277,7 +988,6 @@ const Checkout = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      )}
 
                       <div className="space-y-2">
                         <Label htmlFor="deliveryNotes">Delivery Notes (Optional)</Label>
@@ -1291,35 +1001,6 @@ const Checkout = () => {
                       </div>
 
                       {/* UTR ID Field */}
-                      <div className="space-y-2">
-                        <Label htmlFor="utrId" className="flex items-center">
-                          UTR ID
-                          <span className="text-red-500 ml-1">*</span>
-                        </Label>
-                        <Input
-                          id="utrId"
-                          type="text"
-                          placeholder="Enter your UTR ID"
-                          value={deliveryDetails.utrId || ''}
-                          onChange={(e) => setDeliveryDetails(prev => ({...prev, utrId: e.target.value}))}
-                          className={!deliveryDetails.utrId || deliveryDetails.utrId.trim() === '' ? 'border-red-300 focus:border-red-500' : ''}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Required - Enter the UTR ID from your payment confirmation
-                        </p>
-                        
-                        {/* Google Drive Link */}
-                        <div className="mt-2">
-                          <a 
-                            href="https://drive.google.com/drive/folders/1ZGqAnt8v4ljHwaEskuafPz5voDWrcdK9?usp=sharing"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 text-sm underline"
-                          >
-                            📁 Upload Payment Screenshot Here
-                          </a>
-                        </div>
-                      </div>
                     </>
                   )}
 
@@ -1415,75 +1096,6 @@ const Checkout = () => {
                 </CardContent>
               </Card>
 
-              {/* ELICIT Payment QR Section */}
-              {isElicitOrder && (
-                <Card className="food-card border-purple-200 bg-purple-50">
-                  <CardHeader>
-                    <CardTitle className="text-purple-700">ELICIT Payment</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {/* QR Code */}
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600 mb-3">Scan QR code to pay ₹{finalAmount}</p>
-                        <div className="inline-block p-4 bg-white rounded-lg shadow-sm border">
-                          <img 
-                            src="/elicit_qr.jpeg" 
-                            alt="ELICIT Payment QR Code" 
-                            className="w-48 h-48 object-contain"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Payment Fields */}
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Upload Payment Screenshot
-                          </label>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">Upload screenshot of your payment confirmation</p>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            UTR Number
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="Enter UTR number from payment confirmation"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">Enter the UTR number from your payment confirmation</p>
-                        </div>
-                      </div>
-
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <div className="flex items-start">
-                          <div className="flex-shrink-0">
-                            <CheckCircle className="h-5 w-5 text-blue-400" />
-                          </div>
-                          <div className="ml-3">
-                            <p className="text-sm text-blue-700">
-                              <strong>Payment Instructions:</strong>
-                            </p>
-                            <ul className="text-xs text-blue-600 mt-1 space-y-1">
-                              <li>• Scan the QR code above to make payment</li>
-                              <li>• Upload screenshot of payment confirmation</li>
-                              <li>• Enter the UTR number from your bank</li>
-                              <li>• Your order will be processed after payment verification</li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
               {error && (
                 <Alert variant="destructive">
@@ -1499,7 +1111,7 @@ const Checkout = () => {
                 size="lg"
                 variant="hero"
               >
-                {isLoading ? 'Placing Order...' : (isElicitOrder ? `Place ELICIT Order - ₹${finalAmount}` : `Place Order - ₹${finalAmount}`)}
+                {isLoading ? 'Placing Order...' : `Place Order - ₹${finalAmount}`}
               </Button>
 
               <div className="text-center text-sm text-muted-foreground">
