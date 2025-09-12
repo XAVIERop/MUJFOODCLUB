@@ -77,7 +77,8 @@ const Checkout = () => {
     deliveryNotes: '',
     paymentMethod: 'cod',
     phoneNumber: profile?.phone || '',
-    tableNumber: ''
+    tableNumber: '',
+    utrId: ''
   });
 
 
@@ -425,7 +426,8 @@ const Checkout = () => {
           payment_method: deliveryDetails.paymentMethod,
           points_earned: Math.floor(cafeOrder.total * 0.1), // 10% points
           estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-          phone_number: deliveryDetails.phoneNumber
+          phone_number: deliveryDetails.phoneNumber,
+          utr_id: deliveryDetails.utrId
         };
         
         const { data: order, error: orderError } = await supabase
@@ -575,6 +577,17 @@ const Checkout = () => {
       return;
     }
 
+    // Validate UTR ID
+    if (!deliveryDetails.utrId || deliveryDetails.utrId.trim() === '') {
+      setError('UTR ID is required');
+      toast({
+        title: "Missing UTR ID",
+        description: "Please enter your UTR ID from the payment confirmation",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Validate table number for dine-in orders
     if (deliveryDetails.orderType === 'dine_in') {
       if (!deliveryDetails.tableNumber || deliveryDetails.tableNumber.trim() === '') {
@@ -619,7 +632,8 @@ const Checkout = () => {
           payment_method: deliveryDetails.paymentMethod,
           points_earned: pointsToEarn,
         estimated_delivery: new Date(Date.now() + (deliveryDetails.orderType === 'delivery' ? 30 : deliveryDetails.orderType === 'takeaway' ? 15 : 20) * 60 * 1000).toISOString(), // 30 min delivery, 15 min takeaway, 20 min dine-in
-          phone_number: deliveryDetails.phoneNumber
+          phone_number: deliveryDetails.phoneNumber,
+          utr_id: deliveryDetails.utrId
       };
 
       console.log('🍽️ DINE-IN DEBUG: Order data being saved:', {
@@ -1230,6 +1244,37 @@ const Checkout = () => {
                           onChange={(e) => setDeliveryDetails(prev => ({...prev, deliveryNotes: e.target.value}))}
                           rows={3}
                         />
+                      </div>
+
+                      {/* UTR ID Field */}
+                      <div className="space-y-2">
+                        <Label htmlFor="utrId" className="flex items-center">
+                          UTR ID
+                          <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <Input
+                          id="utrId"
+                          type="text"
+                          placeholder="Enter your UTR ID"
+                          value={deliveryDetails.utrId || ''}
+                          onChange={(e) => setDeliveryDetails(prev => ({...prev, utrId: e.target.value}))}
+                          className={!deliveryDetails.utrId || deliveryDetails.utrId.trim() === '' ? 'border-red-300 focus:border-red-500' : ''}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Required - Enter the UTR ID from your payment confirmation
+                        </p>
+                        
+                        {/* Google Drive Link */}
+                        <div className="mt-2">
+                          <a 
+                            href="https://drive.google.com/drive/folders/1ZGqAnt8v4ljHwaEskuafPz5voDWrcdK9?usp=sharing"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-sm underline"
+                          >
+                            📁 Upload Payment Screenshot Here
+                          </a>
+                        </div>
                       </div>
                     </>
                   )}
