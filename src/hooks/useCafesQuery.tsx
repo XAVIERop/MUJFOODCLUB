@@ -32,10 +32,17 @@ export const useCafesQuery = (options?: {
   return useQuery({
     queryKey: cafeKeys.lists(),
     queryFn: async (): Promise<Cafe[]> => {
-      console.log('🔄 Fetching cafes with priority ordering...');
+      console.log('🔄 Fetching cafes directly from table...');
       
+      // Temporarily bypass the function and query directly
       const { data, error } = await supabase
-        .rpc('get_cafes_ordered');
+        .from('cafes')
+        .select('*')
+        .eq('is_active', true)
+        .order('priority', { ascending: true })
+        .order('average_rating', { ascending: false, nullsLast: true })
+        .order('total_ratings', { ascending: false, nullsLast: true })
+        .order('name', { ascending: true });
 
       if (error) {
         console.error('Error fetching cafes:', error);
@@ -43,7 +50,7 @@ export const useCafesQuery = (options?: {
       }
 
       const cafes = Array.isArray(data) ? data : [];
-      console.log(`✅ Fetched ${cafes.length} cafes`);
+      console.log(`✅ Fetched ${cafes.length} cafes directly from table`);
       
       return cafes;
     },
@@ -96,7 +103,13 @@ export const usePrefetchCafes = () => {
       queryKey: cafeKeys.lists(),
       queryFn: async (): Promise<Cafe[]> => {
         const { data, error } = await supabase
-          .rpc('get_cafes_ordered');
+          .from('cafes')
+          .select('*')
+          .eq('is_active', true)
+          .order('priority', { ascending: true })
+          .order('average_rating', { ascending: false, nullsLast: true })
+          .order('total_ratings', { ascending: false, nullsLast: true })
+          .order('name', { ascending: true });
 
         if (error) {
           throw new Error(`Failed to prefetch cafes: ${error.message}`);
