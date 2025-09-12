@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCafeRewards } from '@/hooks/useCafeRewards';
+import { useCafesQuery } from '@/hooks/useCafesQuery';
 import { Trophy, Star, Gift, Crown, Coffee, Award, ArrowRight, Calendar, MapPin, Clock } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
@@ -173,12 +174,7 @@ const RewardsSection = () => {
 
 const Index = () => {
   const navigate = useNavigate();
-  const [cafes, setCafes] = useState<Cafe[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchCafes();
-  }, []);
+  const { data: cafes = [], isLoading: loading, error } = useCafesQuery();
 
   // Real-time subscription for cafe updates (ratings, etc.)
   useEffect(() => {
@@ -192,15 +188,7 @@ const Index = () => {
         }, 
         (payload) => {
           console.log('🏪 Index: Cafe updated via real-time:', payload.new);
-          
-          // Update the specific cafe in the state
-          setCafes(prevCafes => 
-            prevCafes.map(cafe => 
-              cafe.id === payload.new.id 
-                ? { ...cafe, ...payload.new }
-                : cafe
-            )
-          );
+          // React Query will handle the cache invalidation automatically
         }
       )
       .subscribe((status) => {
@@ -212,33 +200,6 @@ const Index = () => {
     };
   }, []);
 
-  const fetchCafes = async () => {
-    try {
-      console.log('🚀 Index.tsx: Fetching cafes using get_cafes_ordered...', new Date().toISOString());
-      
-      // Use the priority-based ordering function
-      const { data, error } = await supabase
-        .rpc('get_cafes_ordered');
-
-      if (error) {
-        console.error('❌ Index.tsx: Error fetching cafes:', error);
-        console.error('❌ Error details:', error.message, error.details, error.hint);
-        return;
-      }
-
-      const cafesData = Array.isArray(data) ? data : [];
-      console.log('✅ Index.tsx: Cafes fetched successfully:', cafesData.length, 'cafes');
-      if (cafesData.length > 0) {
-        console.log('✅ Index.tsx: First 5 cafes with priorities:', cafesData.slice(0, 5).map(c => `${c.name} (Priority: ${c.priority}, Rating: ${c.average_rating})`));
-      }
-
-      setCafes(cafesData);
-    } catch (error) {
-      console.error('❌ Index.tsx: Exception fetching cafes:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">

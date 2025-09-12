@@ -3,6 +3,7 @@ import { Search, Filter, X, Heart } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 
 import { useFavorites } from '../hooks/useFavorites';
+import { useCafesQuery } from '../hooks/useCafesQuery';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
@@ -27,13 +28,11 @@ interface Cafe {
 }
 
 const Cafes = () => {
-  const [cafes, setCafes] = useState<Cafe[]>([]);
+  const { data: cafes = [], isLoading: loading, error } = useCafesQuery();
   const [filteredCafes, setFilteredCafes] = useState<Cafe[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-
 
   const { toggleFavorite, isFavorite, getFavoriteCafes } = useFavorites();
 
@@ -56,8 +55,6 @@ const Cafes = () => {
   ];
 
   useEffect(() => {
-    fetchCafes();
-    
     // Check URL parameters for favorites, search, and category
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('favorites') === 'true') {
@@ -83,15 +80,7 @@ const Cafes = () => {
         }, 
         (payload) => {
           console.log('🏪 Cafes page: Cafe updated via real-time:', payload.new);
-          
-          // Update the specific cafe in the state
-          setCafes(prevCafes => 
-            prevCafes.map(cafe => 
-              cafe.id === payload.new.id 
-                ? { ...cafe, ...payload.new }
-                : cafe
-            )
-          );
+          // React Query will handle the cache invalidation automatically
         }
       )
       .subscribe((status) => {
@@ -107,64 +96,6 @@ const Cafes = () => {
     filterCafes();
   }, [cafes, searchQuery, selectedCategory, showFavoritesOnly]);
 
-  const fetchCafes = async () => {
-    try {
-      console.log('Cafes page: Fetching cafes...');
-      
-      // Use the priority-based ordering function
-      let { data, error } = await supabase
-        .rpc('get_cafes_ordered');
-
-      if (error) {
-        console.error('Cafes page: Error fetching cafes:', error);
-        throw error;
-      }
-
-      // Ensure data is an array
-      const cafesData = Array.isArray(data) ? data : [];
-      
-      console.log('Cafes page: Raw cafes data:', cafesData);
-      console.log('Cafes page: Total cafes found:', cafesData.length);
-      
-      // Log each cafe name to see what's available
-      cafesData.forEach((cafe: any, index) => {
-        console.log(`Cafes page: Cafe ${index + 1}:`, {
-          name: cafe.name,
-          priority: cafe.priority,
-          accepting_orders: cafe.accepting_orders,
-          average_rating: cafe.average_rating,
-          total_ratings: cafe.total_ratings,
-          cuisine_categories: cafe.cuisine_categories
-        });
-      });
-
-      // Filter cafes that are accepting orders (if the column exists)
-      let filteredCafes = cafesData;
-      
-      // Check if accepting_orders column exists and filter accordingly
-      if (cafesData.length > 0 && 'accepting_orders' in cafesData[0]) {
-        console.log('Cafes page: accepting_orders column exists, showing all cafes...');
-        filteredCafes = cafesData; // Show all cafes, don't filter out closed ones
-        console.log('Cafes page: Showing all cafes:', filteredCafes.length, 'cafes');
-      } else {
-        console.log('Cafes page: accepting_orders column does not exist, skipping filter');
-        filteredCafes = cafesData;
-      }
-
-      // Cafes are already ordered by priority, rating, and name from the database function
-      console.log('Cafes page: Cafes already ordered by priority:', filteredCafes);
-      console.log('Cafes page: Final cafe names:', filteredCafes.map(c => c.name));
-      
-      setCafes(filteredCafes || []);
-      
-    } catch (error) {
-      console.error('Cafes page: Error fetching cafes:', error);
-      // Set empty array on error to prevent infinite loading
-      setCafes([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filterCafes = async () => {
     let filtered = [...cafes];
