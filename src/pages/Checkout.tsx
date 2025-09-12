@@ -517,7 +517,8 @@ const Checkout = () => {
     // Block orders for non-Chatkara cafes during soft launch (except ELICIT orders)
     console.log('🔍 Checkout debug:', { isElicitOrder, cafe: cafe?.name, chatkaraCheck: cafe?.name?.toLowerCase().includes('chatkara') });
     
-    if (!isElicitOrder && cafe && !cafe.name.toLowerCase().includes('chatkara')) {
+    // TEMPORARILY DISABLED FOR DEBUGGING - Remove this block to re-enable restrictions
+    if (false && !isElicitOrder && cafe && !cafe.name.toLowerCase().includes('chatkara')) {
       console.log('❌ Blocking order for non-Chatkara cafe:', cafe.name);
       toast({
         title: "Coming Soon!",

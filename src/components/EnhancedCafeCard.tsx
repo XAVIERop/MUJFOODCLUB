@@ -105,15 +105,15 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
   };
 
   const handleOrderNow = (cafeId: string) => {
-    // Only allow orders for Chatkara during soft launch
-    if (cafe.name.toLowerCase().includes('chatkara')) {
+    // Allow orders for Chatkara and ELICIT during soft launch
+    if (cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('elicit')) {
       const identifier = cafe.slug || cafeId;
       navigate(`/menu/${identifier}`);
     } else {
       // Show coming soon message for other cafes
       toast({
         title: "Coming Soon!",
-        description: `${cafe.name} will be available for ordering soon. Currently only Chatkara is accepting orders.`,
+        description: `${cafe.name} will be available for ordering soon. Currently only Chatkara and ELICIT are accepting orders.`,
         variant: "default",
       });
     }
