@@ -10,24 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCafeRewards } from '@/hooks/useCafeRewards';
-import { useCafesQuery } from '@/hooks/useCafesQuery';
+import { useCafesQuery, type Cafe } from '@/hooks/useCafesQuery';
 import { Trophy, Star, Gift, Crown, Coffee, Award, ArrowRight } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
-interface Cafe {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  location: string;
-  phone: string;
-  hours: string;
-  accepting_orders: boolean;
-  average_rating: number | null;
-  total_ratings: number | null;
-  cuisine_categories: string[] | null;
-  priority: number | null;
-}
 
 // New Rewards Section Component
 const RewardsSection = () => {

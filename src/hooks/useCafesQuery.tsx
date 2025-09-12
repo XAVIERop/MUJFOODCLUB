@@ -1,18 +1,23 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-interface Cafe {
+export interface Cafe {
   id: string;
   name: string;
   description: string;
   image_url: string;
-  average_rating: number;
-  total_ratings: number;
-  priority: number;
+  average_rating: number | null;
+  total_ratings: number | null;
+  priority: number | null;
   accepting_orders: boolean;
   is_exclusive: boolean;
   created_at: string;
   updated_at: string;
+  type: string;
+  location: string;
+  phone: string;
+  hours: string;
+  cuisine_categories: string[] | null;
 }
 
 // Query key factory for cafes
@@ -32,16 +37,12 @@ export const useCafesQuery = (options?: {
   return useQuery({
     queryKey: cafeKeys.lists(),
     queryFn: async (): Promise<Cafe[]> => {
-      console.log('🔄 Fetching cafes directly from table...');
-      
-      // Temporarily bypass the function and query directly
+      // Query cafes directly with proper ordering
       const { data, error } = await supabase
         .from('cafes')
         .select('*')
         .eq('is_active', true)
-        .order('priority', { ascending: true })
-        .order('average_rating', { ascending: false, nullsLast: true })
-        .order('total_ratings', { ascending: false, nullsLast: true })
+        .order('priority', { ascending: true, nullsLast: false })
         .order('name', { ascending: true });
 
       if (error) {
@@ -49,13 +50,9 @@ export const useCafesQuery = (options?: {
         throw new Error(`Failed to fetch cafes: ${error.message}`);
       }
 
-      const cafes = Array.isArray(data) ? data : [];
-      console.log(`✅ Fetched ${cafes.length} cafes directly from table`);
-      
-      return cafes;
+      return Array.isArray(data) ? data : [];
     },
-    staleTime: options?.staleTime || 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: options?.enabled !== false,
     retry: 2,
   });

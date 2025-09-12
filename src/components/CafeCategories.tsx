@@ -2,21 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-interface Cafe {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  location: string;
-  phone: string;
-  hours: string;
-  accepting_orders: boolean;
-  average_rating: number | null;
-  total_ratings: number | null;
-  cuisine_categories: string[] | null;
-  priority: number | null;
-}
+import { type Cafe } from '@/hooks/useCafesQuery';
 
 interface CafeCategoriesProps {
   cafes: Cafe[];

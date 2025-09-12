@@ -3,21 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFavorites } from '../hooks/useFavorites';
 import { Button } from './ui/button';
 import { EnhancedCafeCard } from './EnhancedCafeCard';
-
-interface Cafe {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  location: string;
-  phone: string;
-  hours: string;
-  accepting_orders: boolean;
-  average_rating: number | null;
-  total_ratings: number | null;
-  cuisine_categories: string[] | null;
-  priority: number | null;
-}
+import { type Cafe } from '@/hooks/useCafesQuery';
 
 interface FeaturedCafeGridProps {
   showAll?: boolean;
@@ -29,15 +15,8 @@ export const FeaturedCafeGrid: React.FC<FeaturedCafeGridProps> = ({ showAll = fa
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
 
-  // Debug logging with unique identifier
-  console.log('🎯 FeaturedCafeGrid: Received cafes prop:', cafes.length, 'cafes');
-  if (cafes.length > 0) {
-    console.log('🎯 FeaturedCafeGrid: First 5 cafes from props:', cafes.slice(0, 5).map(c => `${c.name} (Priority: ${c.priority})`));
-  }
-
   // Limit cafes if not showing all
   const limitedCafes = showAll ? cafes : cafes.slice(0, maxCafes);
-  console.log('🎯 FeaturedCafeGrid: Limited cafes for display:', limitedCafes.map(c => `${c.name} (Priority: ${c.priority})`));
 
   if (cafes.length === 0) {
     return (
