@@ -39,6 +39,7 @@ const POSDashboard = lazy(() => import("./pages/POSDashboard"));
 const WhatsAppTest = lazy(() => import("./pages/WhatsAppTest"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const EnvCheck = lazy(() => import("./pages/EnvCheck"));
+const Elicit = lazy(() => import("./pages/Elicit"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Using optimized query client from lib/queryClient.ts
@@ -65,6 +66,7 @@ const App = () => (
                       <Route path="/order-analytics" element={<OrderAnalyticsPage />} />
                       <Route path="/cafes" element={<Cafes />} />
                       <Route path="/rewards" element={<CafeRewards />} />
+                      <Route path="/elicit" element={<Elicit />} />
                       <Route path="/qr-code" element={<QRCodePage />} />
                       <Route path="/profile" element={<Profile />} />
 

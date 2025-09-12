@@ -59,8 +59,11 @@ const Checkout = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // Get cart data from navigation state
-  const cart: {[key: string]: CartItem} = location.state?.cart || {};
+  // Get cart data from navigation state or ELICIT cart from localStorage
+  const isElicitOrder = new URLSearchParams(location.search).get('elicit') === 'true';
+  const elicitCart = isElicitOrder ? JSON.parse(localStorage.getItem('elicit_cart') || '{}') : {};
+  
+  const cart: {[key: string]: CartItem} = isElicitOrder ? elicitCart : (location.state?.cart || {});
   const cafe: Cafe = location.state?.cafe;
   const totalAmount: number = location.state?.totalAmount || 0;
   
@@ -92,11 +95,23 @@ const Checkout = () => {
   const [sgst, setSgst] = useState(0);
   const [deliveryFee, setDeliveryFee] = useState(0);
 
+  // Calculate total for ELICIT orders
+  const calculateElicitTotal = () => {
+    if (!isElicitOrder) return totalAmount;
+    
+    return Object.values(cart).reduce((total, item) => {
+      return total + (item.item.price * item.quantity);
+    }, 0);
+  };
+
+  const effectiveTotalAmount = isElicitOrder ? calculateElicitTotal() : totalAmount;
+
   // Redirect if no cart data
   useEffect(() => {
     console.log('🛒 Checkout cart data:', cart);
     console.log('🏪 Cafe data:', cafe);
-    console.log('💰 Total amount:', totalAmount);
+    console.log('💰 Total amount:', effectiveTotalAmount);
+    console.log('🎉 Is ELICIT order:', isElicitOrder);
     
     if (!cart || Object.keys(cart).length === 0) {
       console.error('❌ No cart data found - redirecting to home');
@@ -280,28 +295,164 @@ const Checkout = () => {
     }
   }, [totalAmount, loyaltyDiscount, pointsDiscount, cafe]);
 
-  // Calculate tier discount and final amount (cafe-specific)
+    // Calculate tier discount and final amount (cafe-specific)
   useEffect(() => {
     // Use cafe-specific tier, default to Foodie if no data
     const tier = cafeRewardData?.tier || 'foodie';
-    const tierDiscount = Math.floor((totalAmount * CAFE_REWARDS.TIER_DISCOUNTS[tier.toUpperCase() as keyof typeof CAFE_REWARDS.TIER_DISCOUNTS]) / 100);
+    const tierDiscount = Math.floor((effectiveTotalAmount * CAFE_REWARDS.TIER_DISCOUNTS[tier.toUpperCase() as keyof typeof CAFE_REWARDS.TIER_DISCOUNTS]) / 100);
     setLoyaltyDiscount(tierDiscount);
     
     // Calculate final amount including taxes and delivery fees
-    const subtotal = totalAmount - tierDiscount - pointsDiscount;
+    const subtotal = effectiveTotalAmount - tierDiscount - pointsDiscount;
     const finalAmountWithTaxes = subtotal + cgst + sgst + deliveryFee;
     setFinalAmount(Math.max(0, finalAmountWithTaxes));
-  }, [totalAmount, pointsDiscount, cgst, sgst, deliveryFee]);
+  }, [effectiveTotalAmount, pointsDiscount, cgst, sgst, deliveryFee]);
 
   // Calculate points to earn when component loads or total amount changes
   useEffect(() => {
-    if (totalAmount > 0 && cafe) {
+    if (effectiveTotalAmount > 0 && (cafe || isElicitOrder)) {
       // Points are calculated on the original order amount (before taxes and delivery fees)
-      calculatePointsToEarn(totalAmount, cafe.id).then(points => {
+      if (isElicitOrder) {
+        // For ELICIT orders, calculate points based on total amount
+        const points = Math.floor(effectiveTotalAmount * 0.1); // 10% points
         setPointsToEarn(points);
-      });
+      } else {
+        calculatePointsToEarn(effectiveTotalAmount, cafe!.id).then(points => {
+          setPointsToEarn(points);
+        });
+      }
     }
-  }, [totalAmount, cafe]);
+  }, [effectiveTotalAmount, cafe, isElicitOrder]);
+
+  const handleElicitOrderPlacement = async (baseOrderNumber: string) => {
+    try {
+      // Group cart items by cafe
+      const cafeOrders: {[cafeId: string]: {cafe: Cafe, items: any[], total: number}} = {};
+      
+      for (const [itemId, cartItem] of Object.entries(cart)) {
+        // Determine cafe based on item ID prefix
+        let cafeId: string;
+        let cafeName: string;
+        
+        if (itemId.startsWith('zd-')) {
+          // Zero Degree Cafe items
+          const { data: zeroDegreeCafe } = await supabase
+            .from('cafes')
+            .select('*')
+            .eq('name', 'ZERO DEGREE CAFE')
+            .single();
+          
+          if (!zeroDegreeCafe) {
+            throw new Error('Zero Degree Cafe not found');
+          }
+          
+          cafeId = zeroDegreeCafe.id;
+          cafeName = zeroDegreeCafe.name;
+        } else if (itemId.startsWith('dl-')) {
+          // Dialog items
+          const { data: dialogCafe } = await supabase
+            .from('cafes')
+            .select('*')
+            .eq('name', 'Dialog')
+            .single();
+          
+          if (!dialogCafe) {
+            throw new Error('Dialog cafe not found');
+          }
+          
+          cafeId = dialogCafe.id;
+          cafeName = dialogCafe.name;
+        } else {
+          continue; // Skip unknown items
+        }
+        
+        if (!cafeOrders[cafeId]) {
+          cafeOrders[cafeId] = {
+            cafe: { id: cafeId, name: cafeName } as Cafe,
+            items: [],
+            total: 0
+          };
+        }
+        
+        cafeOrders[cafeId].items.push(cartItem);
+        cafeOrders[cafeId].total += cartItem.item.price * cartItem.quantity;
+      }
+      
+      // Create orders for each cafe
+      const orderIds: string[] = [];
+      
+      for (const [cafeId, cafeOrder] of Object.entries(cafeOrders)) {
+        const orderNumber = `${baseOrderNumber}-${cafeId.substring(0, 8).toUpperCase()}`;
+        
+        // Create order for this cafe
+        const orderData = {
+          user_id: user!.id,
+          cafe_id: cafeId,
+          order_number: orderNumber,
+          total_amount: cafeOrder.total,
+          delivery_block: deliveryDetails.orderType === 'delivery' ? deliveryDetails.block : deliveryDetails.orderType === 'takeaway' ? 'TAKEAWAY' : 'DINE_IN',
+          table_number: deliveryDetails.orderType === 'dine_in' ? deliveryDetails.tableNumber : null,
+          delivery_notes: `ELICIT Event Order - ${deliveryDetails.deliveryNotes}`,
+          payment_method: deliveryDetails.paymentMethod,
+          points_earned: Math.floor(cafeOrder.total * 0.1), // 10% points
+          estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+          phone_number: deliveryDetails.phoneNumber
+        };
+        
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .insert(orderData as any)
+          .select()
+          .single();
+        
+        if (orderError) {
+          throw orderError;
+        }
+        
+        orderIds.push(order.id);
+        
+        // Create order items for this cafe
+        const orderItems = cafeOrder.items.map(({item, quantity, notes}) => ({
+          order_id: order.id,
+          menu_item_id: item.id,
+          quantity,
+          unit_price: item.price,
+          total_price: item.price * quantity,
+          special_instructions: `ELICIT Event - ${notes || ''}`
+        }));
+        
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(orderItems);
+        
+        if (itemsError) {
+          throw itemsError;
+        }
+      }
+      
+      // Clear ELICIT cart
+      localStorage.removeItem('elicit_cart');
+      
+      // Show success message
+      toast({
+        title: "ELICIT Order Placed!",
+        description: `Your ELICIT order has been placed successfully. Order numbers: ${Object.values(cafeOrders).map(o => o.cafe.name).join(', ')}`,
+      });
+      
+      // Navigate to order confirmation
+      navigate(`/order-confirmation/${orderIds[0]}?elicit=true`);
+      
+    } catch (error) {
+      console.error('ELICIT order placement error:', error);
+      toast({
+        title: "Order Failed",
+        description: "Failed to place ELICIT order. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handlePlaceOrder = async () => {
     if (!user || !profile) {
@@ -313,8 +464,8 @@ const Checkout = () => {
       return;
     }
 
-    // Block orders for non-Chatkara cafes during soft launch
-    if (!cafe.name.toLowerCase().includes('chatkara')) {
+    // Block orders for non-Chatkara cafes during soft launch (except ELICIT orders)
+    if (!isElicitOrder && !cafe.name.toLowerCase().includes('chatkara')) {
       toast({
         title: "Coming Soon!",
         description: `${cafe.name} is not accepting orders yet. Currently only Chatkara is accepting orders.`,
@@ -387,12 +538,18 @@ const Checkout = () => {
       const timestamp = Date.now();
       const random = Math.random().toString(36).substr(2, 8).toUpperCase();
       const userSuffix = user.id.substr(-4).toUpperCase();
-      const orderNumber = `ORD-${timestamp}-${random}-${userSuffix}`;
+      const orderNumber = isElicitOrder ? `ELICIT-${timestamp}-${random}-${userSuffix}` : `ORD-${timestamp}-${random}-${userSuffix}`;
       
       // Use the pre-calculated points (based on original total amount, not final amount after discount)
       // This ensures users get points based on what they spent, not what they paid after discounts
 
-      // Create order
+      // For ELICIT orders, we need to create separate orders for each cafe
+      if (isElicitOrder) {
+        await handleElicitOrderPlacement(orderNumber);
+        return;
+      }
+
+      // Create regular order
       const orderData = {
           user_id: user.id,
           cafe_id: cafe.id,
@@ -634,7 +791,14 @@ const Checkout = () => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Menu
             </Button>
-            <h1 className="text-3xl font-bold">Checkout</h1>
+            <h1 className="text-3xl font-bold">
+              {isElicitOrder ? 'ELICIT Event Checkout' : 'Checkout'}
+            </h1>
+            {isElicitOrder && (
+              <Badge className="ml-4 bg-purple-600 text-white">
+                ELICIT Special
+              </Badge>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -650,11 +814,28 @@ const Checkout = () => {
                 <CardContent>
                   {/* Cafe Info */}
                   <div className="mb-6 p-4 bg-muted/50 rounded-lg">
-                    <h3 className="font-semibold text-lg mb-2">{cafe.name}</h3>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      {cafe.location}
-                    </div>
+                    {isElicitOrder ? (
+                      <>
+                        <h3 className="font-semibold text-lg mb-2 text-purple-600">ELICIT Event Order</h3>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Special pricing for ACM ELICIT 2024 event
+                        </p>
+                        <div className="text-sm text-muted-foreground">
+                          <div className="flex items-center mb-1">
+                            <MapPin className="w-4 h-4 mr-1" />
+                            Multiple cafes (Zero Degree & Dialog)
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="font-semibold text-lg mb-2">{cafe.name}</h3>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <MapPin className="w-4 h-4 mr-1" />
+                          {cafe.location}
+                        </div>
+                      </>
+                    )}
                     {cafe.name === 'FOOD COURT' && (
                       <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
                         <strong>Note:</strong> CGST @ 2.5%, SGST @ 2.5%, and ₹10 delivery fee will be added to your order.
@@ -818,6 +999,11 @@ const Checkout = () => {
                         <span>Final Amount</span>
                         <span className="text-primary">₹{finalAmount}</span>
                       </div>
+                      {isElicitOrder && (
+                        <div className="text-sm text-purple-600 mt-2 text-center">
+                          * ELICIT Event Special Pricing
+                        </div>
+                      )}
                     </div>
                     <div className="flex justify-between items-center text-sm text-muted-foreground mt-2">
                       <span>Points to Earn</span>
@@ -1096,7 +1282,7 @@ const Checkout = () => {
                 size="lg"
                 variant="hero"
               >
-                {isLoading ? 'Placing Order...' : `Place Order - ₹${finalAmount}`}
+                {isLoading ? 'Placing Order...' : (isElicitOrder ? `Place ELICIT Order - ₹${finalAmount}` : `Place Order - ₹${finalAmount}`)}
               </Button>
 
               <div className="text-center text-sm text-muted-foreground">

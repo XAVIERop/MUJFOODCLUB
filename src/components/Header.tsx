@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { QrCode, User, LogOut, Settings, Menu, Home, Coffee, Gift, Utensils, Bell, Receipt, Store, Package, Heart, MapPin, ChevronDown } from 'lucide-react';
+import { QrCode, User, LogOut, Settings, Menu, Home, Coffee, Gift, Utensils, Bell, Receipt, Store, Package, Heart, MapPin, ChevronDown, Calendar } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationSubscriptions } from '@/hooks/useSubscriptionManager';
@@ -125,6 +125,7 @@ const Header = () => {
     { href: "/", label: "Home", icon: Home },
     { href: "/cafes", label: "Cafes", icon: Coffee },
     { href: "/rewards", label: "Rewards", icon: Gift },
+    { href: "/elicit", label: "ELICIT", icon: Calendar },
   ];
 
   return (
