@@ -78,7 +78,8 @@ const Checkout = () => {
     paymentMethod: 'cod',
     phoneNumber: profile?.phone || '',
     tableNumber: '',
-    utrId: ''
+    utrId: '',
+    hackxRoom: ''
   });
 
 
@@ -420,7 +421,7 @@ const Checkout = () => {
           cafe_id: cafeId,
           order_number: orderNumber,
           total_amount: cafeOrder.total,
-          delivery_block: deliveryDetails.orderType === 'delivery' ? deliveryDetails.block : deliveryDetails.orderType === 'takeaway' ? 'TAKEAWAY' : 'DINE_IN',
+          delivery_block: deliveryDetails.orderType === 'delivery' ? `HACKX Room ${deliveryDetails.hackxRoom}` : deliveryDetails.orderType === 'takeaway' ? 'TAKEAWAY' : 'DINE_IN',
           table_number: deliveryDetails.orderType === 'dine_in' ? deliveryDetails.tableNumber : null,
           delivery_notes: `ELICIT Event Order - ${deliveryDetails.deliveryNotes}`,
           payment_method: deliveryDetails.paymentMethod,
@@ -586,6 +587,19 @@ const Checkout = () => {
         variant: "destructive"
       });
       return;
+    }
+
+    // Validate HACKX Room Number for ELICIT orders
+    if (isElicitOrder && deliveryDetails.orderType === 'delivery') {
+      if (!deliveryDetails.hackxRoom || deliveryDetails.hackxRoom.trim() === '') {
+        setError('HACKX Room Number is required');
+        toast({
+          title: "Missing HACKX Room Number",
+          description: "Please enter your HACKX room number for delivery",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     // Validate table number for dine-in orders
@@ -1216,6 +1230,27 @@ const Checkout = () => {
 
                   {deliveryDetails.orderType === 'delivery' && (
                     <>
+                      {isElicitOrder ? (
+                        // ELICIT: HACKX Room Number field
+                        <div className="space-y-2">
+                          <Label htmlFor="hackxRoom" className="flex items-center">
+                            HACKX Room Number
+                            <span className="text-red-500 ml-1">*</span>
+                          </Label>
+                          <Input
+                            id="hackxRoom"
+                            type="text"
+                            placeholder="Enter your HACKX room number"
+                            value={deliveryDetails.hackxRoom || ''}
+                            onChange={(e) => setDeliveryDetails(prev => ({...prev, hackxRoom: e.target.value}))}
+                            className={!deliveryDetails.hackxRoom || deliveryDetails.hackxRoom.trim() === '' ? 'border-red-300 focus:border-red-500' : ''}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Required - Enter your HACKX room number for delivery
+                          </p>
+                        </div>
+                      ) : (
+                        // Regular: Delivery Block dropdown
                       <div className="space-y-2">
                         <Label htmlFor="block">Delivery Block</Label>
                         <Select 
@@ -1234,6 +1269,7 @@ const Checkout = () => {
                           </SelectContent>
                         </Select>
                       </div>
+                      )}
 
                       <div className="space-y-2">
                         <Label htmlFor="deliveryNotes">Delivery Notes (Optional)</Label>
