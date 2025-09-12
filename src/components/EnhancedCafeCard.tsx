@@ -34,7 +34,8 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
   const { toggleFavorite, isFavorite } = useFavorites();
 
   // Check if this cafe is exclusive (Top 6 cafes by priority)
-  const isExclusive = cafe.name.toLowerCase().includes('chatkara') || 
+  const isExclusive = cafe.name.toLowerCase().includes('elicit') ||
+                     cafe.name.toLowerCase().includes('chatkara') || 
                      cafe.name.toLowerCase().includes('food court') ||
                      cafe.name.toLowerCase().includes('punjabi tadka') ||
                      cafe.name.toLowerCase().includes('munch box') ||
