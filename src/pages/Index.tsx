@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCafeRewards } from '@/hooks/useCafeRewards';
-import { Trophy, Star, Gift, Crown, Coffee, Award, ArrowRight } from "lucide-react";
+import { Trophy, Star, Gift, Crown, Coffee, Award, ArrowRight, Calendar } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 interface Cafe {
@@ -246,6 +246,35 @@ const Index = () => {
       
       {/* Search Bar */}
       <SearchBar />
+      
+      {/* ELICIT Event Card */}
+      <section className="py-6 bg-gradient-to-r from-purple-600 to-blue-600">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="bg-purple-100 p-3 rounded-full">
+                    <Calendar className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">ELICIT 2024</h3>
+                    <p className="text-gray-600">ACM Event - Special Menu Available</p>
+                    <p className="text-sm text-gray-500">Zero Degree Cafe & Dialog</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => navigate('/elicit')}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3"
+                >
+                  View Special Menu
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
       
       {/* Cafe Categories */}
       {!loading && cafes.length > 0 && (

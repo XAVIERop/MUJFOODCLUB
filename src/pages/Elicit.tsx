@@ -185,6 +185,14 @@ const Elicit = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
       <Header />
       
+      {/* Simple Header */}
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-8">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">ELICIT 2024</h1>
+          <p className="text-lg opacity-90">ACM Event - Special Menu</p>
+        </div>
+      </div>
+      
       {/* Cafes Section */}
       <div className="container mx-auto px-4 py-8">
         <div className="grid md:grid-cols-2 gap-8">

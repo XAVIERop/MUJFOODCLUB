@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/hooks/use-toast';
+import * as XLSX from 'xlsx';
 import { CAFE_REWARDS, calculatePointsEarned, calculateMaxRedeemablePoints, getTierDiscount } from '@/lib/constants';
 import { useCafeRewards } from '@/hooks/useCafeRewards';
 import { whatsappService } from '@/services/whatsappService';
@@ -322,6 +323,35 @@ const Checkout = () => {
     }
   }, [effectiveTotalAmount, cafe, isElicitOrder]);
 
+  const exportElicitOrdersToExcel = (orders: any[]) => {
+    // Prepare data for Excel export
+    const excelData = orders.map(order => ({
+      'Order Number': order.order_number,
+      'Cafe Name': order.cafe_name,
+      'Customer Name': order.customer_name,
+      'Phone Number': order.phone_number,
+      'Total Amount': order.total_amount,
+      'Delivery Block': order.delivery_block,
+      'Order Type': order.order_type,
+      'Payment Method': order.payment_method,
+      'Order Date': new Date(order.created_at).toLocaleString(),
+      'Status': order.status,
+      'Items': order.items.map((item: any) => `${item.name} x${item.quantity}`).join(', ')
+    }));
+
+    // Create workbook and worksheet
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'ELICIT Orders');
+
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const filename = `ELICIT_Orders_${timestamp}.xlsx`;
+
+    // Download the file
+    XLSX.writeFile(wb, filename);
+  };
+
   const handleElicitOrderPlacement = async (baseOrderNumber: string) => {
     try {
       // Group cart items by cafe
@@ -378,6 +408,7 @@ const Checkout = () => {
       
       // Create orders for each cafe
       const orderIds: string[] = [];
+      const ordersForExcel: any[] = [];
       
       for (const [cafeId, cafeOrder] of Object.entries(cafeOrders)) {
         const orderNumber = `${baseOrderNumber}-${cafeId.substring(0, 8).toUpperCase()}`;
@@ -426,7 +457,28 @@ const Checkout = () => {
         if (itemsError) {
           throw itemsError;
         }
+
+        // Prepare data for Excel export
+        ordersForExcel.push({
+          order_number: orderNumber,
+          cafe_name: cafeOrder.cafe.name,
+          customer_name: profile?.full_name || 'Unknown',
+          phone_number: deliveryDetails.phoneNumber,
+          total_amount: cafeOrder.total,
+          delivery_block: orderData.delivery_block,
+          order_type: deliveryDetails.orderType,
+          payment_method: deliveryDetails.paymentMethod,
+          created_at: order.created_at,
+          status: 'received',
+          items: cafeOrder.items.map(({item, quantity}) => ({
+            name: item.name,
+            quantity: quantity
+          }))
+        });
       }
+      
+      // Export to Excel
+      exportElicitOrdersToExcel(ordersForExcel);
       
       // Clear ELICIT cart
       localStorage.removeItem('elicit_cart');
@@ -434,7 +486,7 @@ const Checkout = () => {
       // Show success message
       toast({
         title: "ELICIT Order Placed!",
-        description: `Your ELICIT order has been placed successfully. Order numbers: ${Object.values(cafeOrders).map(o => o.cafe.name).join(', ')}`,
+        description: `Your ELICIT order has been placed successfully. Excel file downloaded. Order numbers: ${Object.values(cafeOrders).map(o => o.cafe.name).join(', ')}`,
       });
       
       // Navigate to order confirmation
