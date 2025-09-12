@@ -151,7 +151,8 @@ const Elicit = () => {
       state: {
         cart: regularCart,
         cafe: cafe,
-        totalAmount: totalAmount
+        totalAmount: totalAmount,
+        isElicitOrder: true
       }
     });
   };
