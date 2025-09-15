@@ -1419,7 +1419,38 @@ const POSDashboard = () => {
   useEffect(() => {
     if (cafeId) {
       console.log('🚀 POS Dashboard: CafeId changed, fetching orders immediately:', cafeId);
-      fetchOrders();
+      // Call fetchOrders directly without dependency to avoid circular issues
+      const fetchOrdersDirectly = async () => {
+        try {
+          console.log('🔍 POS Dashboard: Direct fetchOrders call for cafeId:', cafeId);
+          
+          // First, try a simple query without joins
+          const { data: simpleData, error: simpleError } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('cafe_id', cafeId)
+            .order('created_at', { ascending: false });
+
+          if (simpleError) {
+            console.error('❌ Direct simple query failed:', simpleError);
+            return;
+          }
+
+          console.log('✅ Direct simple query successful, found orders:', simpleData?.length || 0);
+          
+          if (simpleData && simpleData.length > 0) {
+            console.log('🎉 Direct fetch found orders:', simpleData.length);
+            setOrders(simpleData as Order[]);
+          } else {
+            console.log('⚠️ Direct fetch found no orders');
+            setOrders([]);
+          }
+        } catch (error) {
+          console.error('❌ Direct fetchOrders error:', error);
+        }
+      };
+      
+      fetchOrdersDirectly();
     }
   }, [cafeId]);
 
@@ -2169,15 +2200,44 @@ const POSDashboard = () => {
           <div className="fixed top-4 right-4 z-50 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
             <p className="font-bold">No Orders Found</p>
             <p className="text-sm">Cafe ID: {cafeId}</p>
-            <button 
-              onClick={() => {
-                console.log('🔧 Manual fetch: Triggering fetchOrders manually');
-                fetchOrders(true);
-              }}
-              className="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
-            >
-              Force Fetch Orders
-            </button>
+            <div className="flex gap-2 mt-2">
+              <button 
+                onClick={() => {
+                  console.log('🔧 Manual fetch: Triggering fetchOrders manually');
+                  fetchOrders(true);
+                }}
+                className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+              >
+                Force Fetch Orders
+              </button>
+              <button 
+                onClick={async () => {
+                  console.log('🔧 Direct test: Querying orders directly');
+                  try {
+                    const { data, error } = await supabase
+                      .from('orders')
+                      .select('*')
+                      .eq('cafe_id', cafeId)
+                      .order('created_at', { ascending: false });
+                    
+                    if (error) {
+                      console.error('❌ Direct test error:', error);
+                    } else {
+                      console.log('✅ Direct test result:', data?.length || 0, 'orders');
+                      if (data && data.length > 0) {
+                        setOrders(data as Order[]);
+                        console.log('🎉 Orders set successfully!');
+                      }
+                    }
+                  } catch (err) {
+                    console.error('❌ Direct test exception:', err);
+                  }
+                }}
+                className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+              >
+                Direct Test
+              </button>
+            </div>
           </div>
         )}
       </div>
