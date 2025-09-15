@@ -70,7 +70,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
       'ZERO DEGREE CAFE': '/zerodegreecafe_logo.jpg',
       'Zaika Restaurant': '/zaika_logo.png',
       'ZAIKA': '/zaika_logo.png',
-      'Italian Oven': '/italainoven_card.jpg', // Note: filename has typo
+      'Italian Oven': '/italianoven_logo.png',
       'Munch Box': '/munchbox_card.png',
       'Punjabi Tadka': '/punjabitadka_card.jpg',
       'The Waffle Co': '/thewaffleco.png',
