@@ -37,6 +37,7 @@ import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { useSoundNotifications } from '@/hooks/useSoundNotifications';
 import { soundNotificationService } from '@/services/soundNotificationService';
 import { useOrderSubscriptions, useNotificationSubscriptions } from '@/hooks/useSubscriptionManager';
+import { usePOSOrderUpdates } from '@/hooks/usePOSOrderUpdates';
 import EnhancedOrderGrid from '@/components/EnhancedOrderGrid';
 import POSAnalytics from '@/components/POSAnalytics';
 import ThermalPrinter from '@/components/ThermalPrinter';
@@ -51,6 +52,7 @@ import SoundDebugger from '@/components/SoundDebugger';
 import { testPrintNodeSetup } from '@/utils/testPrintNodeSetup';
 import Header from '@/components/Header';
 import PasswordProtectedSection from '@/components/PasswordProtectedSection';
+import POSDashboardDebugger from '@/components/POSDashboardDebugger';
 
 interface Order {
   id: string;
@@ -1358,12 +1360,11 @@ const POSDashboard = () => {
     }
   }, [user, profile, cafeId, orders.length, filteredOrders.length]);
 
-  // Set up real-time subscriptions using centralized manager
-  useOrderSubscriptions(
+  // Set up enhanced real-time subscriptions with better error handling
+  const { isConnected, refreshOrders: manualRefreshOrders, testConnection } = usePOSOrderUpdates({
     cafeId,
-    // New order handler
-    async (newOrder) => {
-      console.log('POS Dashboard: New order received via centralized subscription:', newOrder);
+    onNewOrder: async (newOrder) => {
+      console.log('POS Dashboard: New order received via enhanced subscription:', newOrder);
       fetchOrders();
       setUnreadNotifications(prev => prev + 1);
       
@@ -1372,26 +1373,28 @@ const POSDashboard = () => {
         soundNotificationService.updateSettings(soundEnabled, soundVolume);
         await soundNotificationService.playOrderReceivedSound();
       }
-      
-      toast({
-        title: "New Order!",
-        description: `Order #${newOrder.order_number} received`,
-      });
 
       // Auto-generate and print receipt for new orders using cafe-specific print service
       setTimeout(() => {
         autoPrintReceiptWithCafeService(newOrder as Order);
       }, 2000); // Wait 2 seconds for order data to be fetched
     },
-    // Order update handler
-    (updatedOrder) => {
-      console.log('POS Dashboard: Order update received via centralized subscription:', updatedOrder);
+    onOrderUpdate: (updatedOrder) => {
+      console.log('POS Dashboard: Order update received via enhanced subscription:', updatedOrder);
       
       // Always refresh orders for any update to ensure we have the latest data
       console.log('POS Dashboard: Refreshing orders due to real-time update');
       fetchOrders(true); // Show refresh indicator
+    },
+    onError: (error) => {
+      console.error('POS Dashboard: Subscription error:', error);
+      toast({
+        title: "Connection Error",
+        description: "Real-time updates may not work properly. Orders will still be fetched manually.",
+        variant: "destructive"
+      });
     }
-  );
+  });
 
   // Set up polling as backup for real-time updates
   useEffect(() => {
@@ -1409,14 +1412,43 @@ const POSDashboard = () => {
     };
   }, [cafeId]);
 
-  // Manual refresh function
+  // Manual refresh function with enhanced error handling
   const handleManualRefresh = async () => {
     console.log('POS Dashboard: Manual refresh triggered');
-    await fetchOrders(true); // Show refresh indicator
-    toast({
-      title: "Refreshed",
-      description: "Orders list has been refreshed",
-    });
+    try {
+      // Test connection first
+      const connectionOk = await testConnection();
+      if (!connectionOk) {
+        toast({
+          title: "Connection Error",
+          description: "Cannot connect to database. Please check your connection.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Refresh orders
+      await fetchOrders(true); // Show refresh indicator
+      
+      // Also try the manual refresh from the hook
+      try {
+        await manualRefreshOrders();
+      } catch (error) {
+        console.warn('Manual refresh from hook failed:', error);
+      }
+
+      toast({
+        title: "Refreshed",
+        description: "Orders list has been refreshed successfully",
+      });
+    } catch (error) {
+      console.error('Manual refresh error:', error);
+      toast({
+        title: "Refresh Failed",
+        description: "Failed to refresh orders. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   useEffect(() => {
@@ -1445,6 +1477,14 @@ const POSDashboard = () => {
               <p className="text-gray-600 mt-2">Professional Point of Sale System for High-Volume Operations</p>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Connection Status */}
+              <div className="flex items-center text-sm">
+                <div className={`w-2 h-2 rounded-full mr-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className={isConnected ? 'text-green-600' : 'text-red-600'}>
+                  {isConnected ? 'Connected' : 'Disconnected'}
+                </span>
+              </div>
+              
               {/* Refresh Indicator */}
               {isRefreshing && (
                 <div className="flex items-center text-sm text-blue-600">
@@ -2090,6 +2130,9 @@ const POSDashboard = () => {
           userType="cafe_staff"
           cafeId={cafeId}
         />
+
+        {/* POS Dashboard Debugger */}
+        <POSDashboardDebugger cafeId={cafeId} />
       </div>
     </div>
   );
