@@ -25,11 +25,13 @@ const POSDashboardDebugger: React.FC<{ cafeId: string | null }> = ({ cafeId }) =
   });
   const [loading, setLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   const fetchDebugInfo = async () => {
     if (!cafeId) return;
     
     setLoading(true);
+    setHasError(false);
     try {
       console.log('🔍 POS Debugger: Fetching debug info for cafe:', cafeId);
 
@@ -92,6 +94,7 @@ const POSDashboardDebugger: React.FC<{ cafeId: string | null }> = ({ cafeId }) =
 
     } catch (error) {
       console.error('Error fetching debug info:', error);
+      setHasError(true);
     } finally {
       setLoading(false);
     }
@@ -165,6 +168,24 @@ const POSDashboardDebugger: React.FC<{ cafeId: string | null }> = ({ cafeId }) =
       fetchDebugInfo();
     }
   }, [cafeId, isVisible]);
+
+  // Error state
+  if (hasError) {
+    return (
+      <Button
+        onClick={() => {
+          setHasError(false);
+          setIsVisible(true);
+        }}
+        variant="destructive"
+        size="sm"
+        className="fixed bottom-4 right-4 z-50"
+      >
+        <AlertCircle className="w-4 h-4 mr-2" />
+        Debug Error
+      </Button>
+    );
+  }
 
   if (!isVisible) {
     return (

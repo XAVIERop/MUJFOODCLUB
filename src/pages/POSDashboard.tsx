@@ -52,7 +52,7 @@ import SoundDebugger from '@/components/SoundDebugger';
 import { testPrintNodeSetup } from '@/utils/testPrintNodeSetup';
 import Header from '@/components/Header';
 import PasswordProtectedSection from '@/components/PasswordProtectedSection';
-import POSDashboardDebugger from '@/components/POSDashboardDebugger';
+import SimplePOSDebugger from '@/components/SimplePOSDebugger';
 
 interface Order {
   id: string;
@@ -2131,8 +2131,8 @@ const POSDashboard = () => {
           cafeId={cafeId}
         />
 
-        {/* POS Dashboard Debugger */}
-        <POSDashboardDebugger cafeId={cafeId} />
+        {/* Simple POS Debugger */}
+        <SimplePOSDebugger cafeId={cafeId} />
       </div>
     </div>
   );
