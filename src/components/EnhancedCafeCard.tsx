@@ -32,6 +32,7 @@ interface EnhancedCafeCardProps {
 export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, showAll = false }) => {
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
+  const { toast } = useToast();
 
   // Check if this cafe is exclusive (Top 6 cafes by priority)
   const isExclusive = cafe.name.toLowerCase().includes('chatkara') || 
@@ -100,6 +101,11 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
   const handleViewMenu = (cafeId: string) => {
     const identifier = cafe.slug || cafeId;
     navigate(`/menu/${identifier}`);
+  };
+
+  const handleModernMenu = (cafeId: string) => {
+    const identifier = cafe.slug || cafeId;
+    navigate(`/menu-modern/${identifier}`);
   };
 
   const handleOrderNow = (cafeId: string) => {
@@ -297,6 +303,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               {cafe.name.toLowerCase().includes('chatkara') ? "Order Now" : "Coming Soon"}
             </Button>
           </div>
+
 
           {/* Contact Actions */}
           <div className="grid grid-cols-2 gap-2">

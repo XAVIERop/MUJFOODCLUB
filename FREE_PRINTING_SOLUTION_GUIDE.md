@@ -277,3 +277,4 @@ const config = {
 **Your cafes will have better, faster, and more reliable printing at zero cost!** 🎉
 
 
+

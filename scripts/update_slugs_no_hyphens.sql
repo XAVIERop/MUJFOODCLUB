@@ -30,3 +30,5 @@ SELECT
     END as slug_status
 FROM public.cafes 
 ORDER BY name;
+
+

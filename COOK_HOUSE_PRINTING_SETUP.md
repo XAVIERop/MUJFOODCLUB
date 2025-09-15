@@ -120,3 +120,5 @@ If you need help:
 **Ready to set up? Follow the steps above and you'll have perfect thermal printing for Cook House!**
 
 
+
+

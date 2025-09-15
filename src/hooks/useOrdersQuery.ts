@@ -9,12 +9,10 @@ export interface Order {
   order_number: string;
   total_amount: number;
   delivery_block: string;
-  table_number?: string | null;
   delivery_notes?: string | null;
   payment_method: string;
   points_earned: number;
-  estimated_delivery: string;
-  phone_number: string;
+  estimated_delivery?: string | null;
   status: string;
   created_at: string;
   updated_at: string;
@@ -31,7 +29,21 @@ export const useUserOrdersQuery = (userId: string) => {
     queryFn: async (): Promise<Order[]> => {
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          id,
+          user_id,
+          cafe_id,
+          order_number,
+          total_amount,
+          delivery_block,
+          delivery_notes,
+          payment_method,
+          points_earned,
+          estimated_delivery,
+          status,
+          created_at,
+          updated_at
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
@@ -54,7 +66,21 @@ export const useCafeOrdersQuery = (cafeId: string) => {
     queryFn: async (): Promise<Order[]> => {
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          id,
+          user_id,
+          cafe_id,
+          order_number,
+          total_amount,
+          delivery_block,
+          delivery_notes,
+          payment_method,
+          points_earned,
+          estimated_delivery,
+          status,
+          created_at,
+          updated_at
+        `)
         .eq('cafe_id', cafeId)
         .order('created_at', { ascending: false });
 
@@ -77,7 +103,21 @@ export const useOrderQuery = (orderId: string) => {
     queryFn: async (): Promise<Order | null> => {
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          id,
+          user_id,
+          cafe_id,
+          order_number,
+          total_amount,
+          delivery_block,
+          delivery_notes,
+          payment_method,
+          points_earned,
+          estimated_delivery,
+          status,
+          created_at,
+          updated_at
+        `)
         .eq('id', orderId)
         .single();
 
@@ -98,11 +138,57 @@ export const useOrderByNumberQuery = (orderNumber: string) => {
   return useQuery({
     queryKey: ['orders', 'number', orderNumber],
     queryFn: async (): Promise<Order | null> => {
-      const { data, error } = await supabase
+      // Try to fetch by order_number first, then by ID if that fails
+      let { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          id,
+          user_id,
+          cafe_id,
+          order_number,
+          total_amount,
+          delivery_block,
+          delivery_notes,
+          payment_method,
+          points_earned,
+          estimated_delivery,
+          status,
+          created_at,
+          updated_at
+        `)
         .eq('order_number', orderNumber)
         .single();
+
+      // If order_number fails, try by ID (in case orderNumber is actually an ID)
+      if (error && error.code === 'PGRST116') {
+        console.log('Order not found by number, trying by ID...');
+        const { data: idData, error: idError } = await supabase
+          .from('orders')
+          .select(`
+            id,
+            user_id,
+            cafe_id,
+            order_number,
+            total_amount,
+            delivery_block,
+            delivery_notes,
+            payment_method,
+            points_earned,
+            estimated_delivery,
+            status,
+            created_at,
+            updated_at
+          `)
+          .eq('id', orderNumber)
+          .single();
+        
+        if (idError) {
+          console.error('Error fetching order by ID:', idError);
+          throw new Error(`Failed to fetch order: ${idError.message}`);
+        }
+        
+        return idData;
+      }
 
       if (error) {
         console.error('Error fetching order by number:', error);

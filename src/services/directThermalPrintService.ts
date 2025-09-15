@@ -538,3 +538,4 @@ export const directThermalPrintService = new DirectThermalPrintService();
 export default directThermalPrintService;
 
 
+

@@ -51,3 +51,5 @@ export function getDineInTakeawayMessage(): string {
 export function isDeliveryAllowed(): boolean {
   return true;
 }
+
+

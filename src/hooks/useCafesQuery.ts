@@ -25,11 +25,7 @@ export const useCafesQuery = () => {
     queryKey: queryKeys.cafes,
     queryFn: async (): Promise<Cafe[]> => {
       const { data, error } = await supabase
-        .from('cafes')
-        .select('*')
-        .eq('is_active', true)
-        .order('priority', { ascending: false, nullsLast: true })
-        .order('name', { ascending: true });
+        .rpc('get_cafes_ordered');
 
       if (error) {
         console.error('Error fetching cafes:', error);

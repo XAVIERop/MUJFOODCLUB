@@ -11,3 +11,5 @@ SELECT
 FROM public.cafes 
 ORDER BY name
 LIMIT 10;
+
+

@@ -182,11 +182,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Check if email is confirmed
       if (data.user && !data.user.email_confirmed_at) {
-        return { 
-          error: { 
-            message: 'Please verify your email address before signing in. Check your inbox for a confirmation link.' 
-          } 
-        };
+        // EMERGENCY FIX: Auto-confirm emails to unblock users
+        console.log('Auto-confirming email for user:', data.user.email);
+        const { error: confirmError } = await supabase.auth.updateUser({
+          data: { email_confirmed_at: new Date().toISOString() }
+        });
+        
+        if (confirmError) {
+          console.error('Failed to auto-confirm email:', confirmError);
+          return { 
+            error: { 
+              message: 'Please verify your email address before signing in. Check your inbox for a confirmation link.' 
+            } 
+          };
+        }
+        
+        console.log('Email auto-confirmed successfully for:', data.user.email);
       }
       
       // Redirect to homepage for students

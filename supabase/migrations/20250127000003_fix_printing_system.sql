@@ -204,3 +204,4 @@ JOIN public.cafes c ON cpc.cafe_id = c.id
 ORDER BY c.name;
 
 
+

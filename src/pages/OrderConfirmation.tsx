@@ -375,10 +375,7 @@ const OrderConfirmation = () => {
                   <span className="text-muted-foreground">Total Amount:</span>
                   <span className="font-medium">₹{order.total_amount}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Points Earned:</span>
-                  <span className="font-medium text-green-600">+{order.points_earned}</span>
-                </div>
+                {/* Points display removed for simplified version */}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Order Time:</span>
                   <span className="font-medium">{formatDate(order.created_at)}</span>

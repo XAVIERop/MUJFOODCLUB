@@ -7,3 +7,5 @@ WHERE name = 'CHATKARA';
 SELECT name, description 
 FROM public.cafes 
 WHERE name = 'CHATKARA';
+
+

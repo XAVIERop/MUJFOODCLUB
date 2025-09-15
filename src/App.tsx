@@ -8,6 +8,7 @@ import { queryClient } from "@/lib/queryClient";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LocationProvider } from "@/contexts/LocationContext";
+import { SecurityProvider, SecurityIndicator } from "@/components/SecurityProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import BottomNavigation from "./components/BottomNavigation";
 import ScrollToTop from "./components/ScrollToTop";
@@ -21,6 +22,7 @@ import PerformanceDashboard from "./components/PerformanceDashboard";
 const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Menu = lazy(() => import("./pages/Menu"));
+const MenuModern = lazy(() => import("./pages/MenuModern"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
 const OrderTracking = lazy(() => import("./pages/OrderTracking"));
@@ -29,7 +31,7 @@ const OrderAnalyticsPage = lazy(() => import("./pages/OrderAnalyticsPage"));
 const Cafes = lazy(() => import("./pages/Cafes"));
 const QRCodePage = lazy(() => import("./pages/QRCodePage"));
 const Profile = lazy(() => import("./pages/Profile"));
-const CafeRewards = lazy(() => import("./pages/CafeRewards"));
+// const CafeRewards = lazy(() => import("./pages/CafeRewards")); // Disabled for simplified version
 const CafeDashboard = lazy(() => import("./pages/CafeDashboard"));
 const CafeManagement = lazy(() => import("./pages/CafeManagement"));
 const EnhancedCafeCardDemo = lazy(() => import("./components/EnhancedCafeCardDemo"));
@@ -48,23 +50,25 @@ const App = () => (
     <MobileErrorHandler>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <LocationProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
+          <SecurityProvider>
+            <LocationProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
                 <ScrollToTop>
                   <Suspense fallback={<LoadingSpinner size="lg" text="Loading page..." />}>
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
-                      <Route path="/menu/:cafeIdentifier" element={<Menu />} />
+                      <Route path="/menu/:cafeIdentifier" element={<MenuModern />} />
+                      <Route path="/menu-old/:cafeIdentifier" element={<Menu />} />
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
                       <Route path="/orders" element={<MyOrders />} />
                       <Route path="/order-analytics" element={<OrderAnalyticsPage />} />
                       <Route path="/cafes" element={<Cafes />} />
-                      <Route path="/rewards" element={<CafeRewards />} />
+                      {/* <Route path="/rewards" element={<CafeRewards />} /> */} {/* Disabled for simplified version */}
                       <Route path="/qr-code" element={<QRCodePage />} />
                       <Route path="/profile" element={<Profile />} />
 
@@ -93,9 +97,11 @@ const App = () => (
                   <PerformanceDashboard />
                 </>
               )}
+              <SecurityIndicator />
             </BrowserRouter>
           </TooltipProvider>
           </LocationProvider>
+          </SecurityProvider>
         </AuthProvider>
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
