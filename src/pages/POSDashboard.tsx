@@ -52,7 +52,7 @@ import SoundDebugger from '@/components/SoundDebugger';
 import { testPrintNodeSetup } from '@/utils/testPrintNodeSetup';
 import Header from '@/components/Header';
 import PasswordProtectedSection from '@/components/PasswordProtectedSection';
-import SimplePOSDebugger from '@/components/SimplePOSDebugger';
+// import SimplePOSDebugger from '@/components/SimplePOSDebugger'; // Temporarily disabled due to React error
 
 interface Order {
   id: string;
@@ -2165,8 +2165,8 @@ const POSDashboard = () => {
           cafeId={cafeId}
         />
 
-        {/* Simple POS Debugger */}
-        <SimplePOSDebugger cafeId={cafeId} />
+        {/* Simple POS Debugger - Temporarily disabled due to React error */}
+        {/* <SimplePOSDebugger cafeId={cafeId} /> */}
         
         {/* Manual Chatkara Override for Testing */}
         {!cafeId && (
