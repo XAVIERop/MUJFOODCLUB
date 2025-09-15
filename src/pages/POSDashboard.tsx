@@ -1436,6 +1436,8 @@ const POSDashboard = () => {
           } else {
             console.log('✅ Simple query success:', data?.length || 0, 'orders');
             console.log('✅ Sample order with user data:', data?.[0]);
+            console.log('✅ User data in sample order:', data?.[0]?.user);
+            console.log('✅ Full name from user:', data?.[0]?.user?.full_name);
             setOrders(data as Order[] || []);
           }
         });
