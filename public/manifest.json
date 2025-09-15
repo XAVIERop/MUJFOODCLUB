@@ -2,6 +2,7 @@
   "name": "MUJ Food Club",
   "short_name": "Food Club",
   "description": "Campus food delivery platform for MUJ students",
+  "version": "1.2.0",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

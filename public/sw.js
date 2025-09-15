@@ -1,7 +1,8 @@
 // Service Worker for caching and performance optimization
-const CACHE_NAME = 'muj-food-club-v1';
-const STATIC_CACHE = 'static-v1';
-const DYNAMIC_CACHE = 'dynamic-v1';
+const APP_VERSION = '1.2.0'; // Update this with each major deployment
+const CACHE_NAME = `muj-food-club-v${APP_VERSION}`;
+const STATIC_CACHE = `static-v${APP_VERSION}`;
+const DYNAMIC_CACHE = `dynamic-v${APP_VERSION}`;
 
 // Assets to cache immediately
 const STATIC_ASSETS = [
@@ -13,33 +14,56 @@ const STATIC_ASSETS = [
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...');
+  console.log(`Service Worker installing v${APP_VERSION}...`);
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then((cache) => {
         console.log('Caching static assets');
         return cache.addAll(STATIC_ASSETS);
       })
-      .then(() => self.skipWaiting())
+      .then(() => {
+        console.log(`Service Worker v${APP_VERSION} installed successfully`);
+        return self.skipWaiting();
+      })
+      .catch((error) => {
+        console.error('Service Worker installation failed:', error);
+      })
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating...');
+  console.log(`Service Worker activating v${APP_VERSION}...`);
   event.waitUntil(
     caches.keys()
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
+            // Delete all caches that don't match current version
+            if (!cacheName.includes(APP_VERSION)) {
               console.log('Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             }
           })
         );
       })
-      .then(() => self.clients.claim())
+      .then(() => {
+        console.log(`Service Worker v${APP_VERSION} activated successfully`);
+        // Notify all clients about the update
+        return self.clients.claim();
+      })
+      .then(() => {
+        // Send update notification to all clients
+        return self.clients.matchAll().then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({
+              type: 'SW_UPDATE',
+              version: APP_VERSION,
+              message: 'New version available!'
+            });
+          });
+        });
+      })
   );
 });
 
@@ -177,5 +201,20 @@ self.addEventListener('notificationclick', (event) => {
     event.waitUntil(
       clients.openWindow('/orders')
     );
+  }
+});
+
+// Handle messages from the main thread
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('Received SKIP_WAITING message, skipping waiting...');
+    self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'GET_VERSION') {
+    event.ports[0].postMessage({
+      type: 'VERSION_RESPONSE',
+      version: APP_VERSION
+    });
   }
 });

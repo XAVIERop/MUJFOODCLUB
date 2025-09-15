@@ -9,6 +9,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LocationProvider } from "@/contexts/LocationContext";
 import { SecurityProvider, SecurityIndicator } from "@/components/SecurityProvider";
+import PWAUpdateManager from "@/components/PWAUpdateManager";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import BottomNavigation from "./components/BottomNavigation";
 import ScrollToTop from "./components/ScrollToTop";
@@ -98,6 +99,7 @@ const App = () => (
                 </>
               )}
               <SecurityIndicator />
+              <PWAUpdateManager />
             </BrowserRouter>
           </TooltipProvider>
           </LocationProvider>
