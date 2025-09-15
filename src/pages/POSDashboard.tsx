@@ -1415,6 +1415,14 @@ const POSDashboard = () => {
     }
   });
 
+  // CRITICAL: Fetch orders when cafeId changes
+  useEffect(() => {
+    if (cafeId) {
+      console.log('🚀 POS Dashboard: CafeId changed, fetching orders immediately:', cafeId);
+      fetchOrders();
+    }
+  }, [cafeId]);
+
   // Note: Polling is now handled by useSimplePOSUpdates hook
 
   // Manual refresh function with enhanced error handling
@@ -2152,6 +2160,23 @@ const POSDashboard = () => {
               className="mt-2 bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600"
             >
               Use Chatkara (25d0b247-0731-4e52-a0fb-023526adfa34)
+            </button>
+          </div>
+        )}
+
+        {/* Manual Fetch Orders Button for Testing */}
+        {cafeId && orders.length === 0 && (
+          <div className="fixed top-4 right-4 z-50 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
+            <p className="font-bold">No Orders Found</p>
+            <p className="text-sm">Cafe ID: {cafeId}</p>
+            <button 
+              onClick={() => {
+                console.log('🔧 Manual fetch: Triggering fetchOrders manually');
+                fetchOrders(true);
+              }}
+              className="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+            >
+              Force Fetch Orders
             </button>
           </div>
         )}
