@@ -75,24 +75,55 @@ const Index = () => {
     try {
       console.log('🔍 Fetching cafes...');
       
-      // Use RPC function to avoid RLS recursion issues
-      const { data, error } = await supabase
-        .rpc('get_cafes_ordered');
+      // Try RPC function first
+      let data = null;
+      let error = null;
       
-      if (error) {
-        console.error('❌ Error fetching cafes:', error);
-        setCafes([]);
-      } else if (data && data.length > 0) {
+      try {
+        const rpcResult = await supabase.rpc('get_cafes_ordered');
+        data = rpcResult.data;
+        error = rpcResult.error;
+        
+        if (error) {
+          console.warn('⚠️ RPC function failed, trying direct query:', error.message);
+        }
+      } catch (rpcError) {
+        console.warn('⚠️ RPC function exception, trying direct query:', rpcError);
+        error = rpcError;
+      }
+      
+      // Fallback to direct query if RPC fails
+      if (error || !data || data.length === 0) {
+        console.log('🔄 Trying direct table query...');
+        
+        const directResult = await supabase
+          .from('cafes')
+          .select('id, name, type, description, location, slug, priority, accepting_orders, average_rating, total_ratings, image_url')
+          .eq('is_active', true)
+          .order('priority', { ascending: true })
+          .limit(20);
+        
+        if (directResult.error) {
+          console.error('❌ Direct query also failed:', directResult.error);
+          throw directResult.error;
+        }
+        
+        data = directResult.data;
+        console.log('✅ Direct query successful');
+      }
+      
+      if (data && data.length > 0) {
         console.log('✅ Successfully fetched cafes:', data.length);
         console.log('✅ First few cafes:', data.slice(0, 3).map(c => c.name));
         setCafes(data);
       } else {
-        console.log('⚠️ No cafes found - data:', data);
+        console.log('⚠️ No cafes found in database');
         setCafes([]);
       }
       
     } catch (error) {
-      console.error('❌ Exception fetching cafes:', error);
+      console.error('❌ All cafe fetching methods failed:', error);
+      setCafes([]);
     } finally {
       setLoading(false);
     }

@@ -11,52 +11,57 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-let supabase;
+// Singleton pattern to prevent multiple client instances
+let supabase: any = null;
 
-// Create Supabase client with error handling
-try {
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    console.error('Missing required Supabase environment variables');
-    console.error('SUPABASE_URL:', !!SUPABASE_URL);
-    console.error('SUPABASE_PUBLISHABLE_KEY:', !!SUPABASE_PUBLISHABLE_KEY);
-    throw new Error('Missing required Supabase environment variables');
-  }
+// Create Supabase client with error handling (singleton pattern)
+if (!supabase) {
+  try {
+    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+      console.error('Missing required Supabase environment variables');
+      console.error('SUPABASE_URL:', !!SUPABASE_URL);
+      console.error('SUPABASE_PUBLISHABLE_KEY:', !!SUPABASE_PUBLISHABLE_KEY);
+      throw new Error('Missing required Supabase environment variables');
+    }
 
-  supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-    auth: {
-      storage: localStorage,
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-    global: {
-      headers: {
-        'X-Client-Info': 'muj-food-club@1.0.0',
+    supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: {
+        storage: localStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
       },
-    },
-  });
-} catch (error) {
-  console.error('Failed to initialize Supabase client:', error);
-  // Create a mock client that will show errors when used
-  supabase = {
-    auth: {
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-      getSession: () => Promise.resolve({ data: { session: null } }),
-      signInWithPassword: () => Promise.resolve({ data: { user: null }, error: { message: 'Supabase not initialized - check environment variables' } }),
-      signUp: () => Promise.resolve({ data: { user: null }, error: { message: 'Supabase not initialized - check environment variables' } }),
-      signOut: () => Promise.resolve({ error: null }),
-    },
-    from: () => ({
-      select: () => ({ eq: () => ({ order: () => Promise.resolve({ data: [], error: { message: 'Supabase not initialized - check environment variables' } }) }) }),
-      insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: { message: 'Supabase not initialized - check environment variables' } }) }) }),
-      update: () => ({ eq: () => Promise.resolve({ data: null, error: { message: 'Supabase not initialized - check environment variables' } }) }),
-      delete: () => ({ eq: () => Promise.resolve({ data: null, error: { message: 'Supabase not initialized - check environment variables' } }) }),
-    }),
-    channel: () => ({
-      on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
-    }),
-    removeChannel: () => {},
-  } as any;
+      global: {
+        headers: {
+          'X-Client-Info': 'muj-food-club@1.0.0',
+        },
+      },
+    });
+    
+    console.log('✅ Supabase client initialized successfully (singleton)');
+  } catch (error) {
+    console.error('Failed to initialize Supabase client:', error);
+    // Create a mock client that will show errors when used
+    supabase = {
+      auth: {
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+        getSession: () => Promise.resolve({ data: { session: null } }),
+        signInWithPassword: () => Promise.resolve({ data: { user: null }, error: { message: 'Supabase not initialized - check environment variables' } }),
+        signUp: () => Promise.resolve({ data: { user: null }, error: { message: 'Supabase not initialized - check environment variables' } }),
+        signOut: () => Promise.resolve({ error: null }),
+      },
+      from: () => ({
+        select: () => ({ eq: () => ({ order: () => Promise.resolve({ data: [], error: { message: 'Supabase not initialized - check environment variables' } }) }) }),
+        insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: { message: 'Supabase not initialized - check environment variables' } }) }) }),
+        update: () => ({ eq: () => Promise.resolve({ data: null, error: { message: 'Supabase not initialized - check environment variables' } }) }),
+        delete: () => ({ eq: () => Promise.resolve({ data: null, error: { message: 'Supabase not initialized - check environment variables' } }) }),
+      }),
+      channel: () => ({
+        on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
+      }),
+      removeChannel: () => {},
+    } as any;
+  }
 }
 
 export { supabase };
