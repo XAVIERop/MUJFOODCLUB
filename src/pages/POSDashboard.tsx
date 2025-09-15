@@ -1415,42 +1415,30 @@ const POSDashboard = () => {
     }
   });
 
-  // CRITICAL: Fetch orders when cafeId changes
+  // SIMPLE: Fetch orders when cafeId changes
   useEffect(() => {
     if (cafeId) {
-      console.log('🚀 POS Dashboard: CafeId changed, fetching orders immediately:', cafeId);
-      // Call fetchOrders directly without dependency to avoid circular issues
-      const fetchOrdersDirectly = async () => {
-        try {
-          console.log('🔍 POS Dashboard: Direct fetchOrders call for cafeId:', cafeId);
-          
-          // First, try a simple query without joins
-          const { data: simpleData, error: simpleError } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('cafe_id', cafeId)
-            .order('created_at', { ascending: false });
-
-          if (simpleError) {
-            console.error('❌ Direct simple query failed:', simpleError);
-            return;
-          }
-
-          console.log('✅ Direct simple query successful, found orders:', simpleData?.length || 0);
-          
-          if (simpleData && simpleData.length > 0) {
-            console.log('🎉 Direct fetch found orders:', simpleData.length);
-            setOrders(simpleData as Order[]);
-          } else {
-            console.log('⚠️ Direct fetch found no orders');
-            setOrders([]);
-          }
-        } catch (error) {
-          console.error('❌ Direct fetchOrders error:', error);
-        }
-      };
+      console.log('🚀 SIMPLE: Fetching orders for cafeId:', cafeId);
       
-      fetchOrdersDirectly();
+      // Simple query with user information join
+      supabase
+        .from('orders')
+        .select(`
+          *,
+          user:profiles(full_name, phone, block)
+        `)
+        .eq('cafe_id', cafeId)
+        .order('created_at', { ascending: false })
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('❌ Simple query error:', error);
+            setOrders([]);
+          } else {
+            console.log('✅ Simple query success:', data?.length || 0, 'orders');
+            console.log('✅ Sample order with user data:', data?.[0]);
+            setOrders(data as Order[] || []);
+          }
+        });
     }
   }, [cafeId]);
 
@@ -2211,31 +2199,29 @@ const POSDashboard = () => {
                 Force Fetch Orders
               </button>
               <button 
-                onClick={async () => {
-                  console.log('🔧 Direct test: Querying orders directly');
-                  try {
-                    const { data, error } = await supabase
-                      .from('orders')
-                      .select('*')
-                      .eq('cafe_id', cafeId)
-                      .order('created_at', { ascending: false });
-                    
-                    if (error) {
-                      console.error('❌ Direct test error:', error);
-                    } else {
-                      console.log('✅ Direct test result:', data?.length || 0, 'orders');
-                      if (data && data.length > 0) {
-                        setOrders(data as Order[]);
-                        console.log('🎉 Orders set successfully!');
+                onClick={() => {
+                  console.log('🔧 SIMPLE TEST: Querying orders with user data for', cafeId);
+                  supabase
+                    .from('orders')
+                    .select(`
+                      *,
+                      user:profiles(full_name, phone, block)
+                    `)
+                    .eq('cafe_id', cafeId)
+                    .order('created_at', { ascending: false })
+                    .then(({ data, error }) => {
+                      if (error) {
+                        console.error('❌ Test error:', error);
+                      } else {
+                        console.log('✅ Test result:', data?.length || 0, 'orders');
+                        console.log('✅ Sample order with user data:', data?.[0]);
+                        setOrders(data as Order[] || []);
                       }
-                    }
-                  } catch (err) {
-                    console.error('❌ Direct test exception:', err);
-                  }
+                    });
                 }}
                 className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
               >
-                Direct Test
+                Simple Test
               </button>
             </div>
           </div>
