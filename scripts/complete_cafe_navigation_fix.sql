@@ -227,7 +227,7 @@ GRANT EXECUTE ON FUNCTION get_cafes_ordered() TO anon;
 -- 5. FIX SYSTEM PERFORMANCE METRICS FUNCTION
 -- =====================================================
 
--- Drop and recreate the problematic function
+-- Drop and recreate the problematic function with safer approach
 DROP FUNCTION IF EXISTS get_system_performance_metrics();
 
 CREATE OR REPLACE FUNCTION get_system_performance_metrics()
@@ -237,20 +237,45 @@ RETURNS TABLE (
   avg_order_value NUMERIC,
   peak_hour INTEGER
 ) AS $$
+DECLARE
+    has_created_at BOOLEAN;
+    has_total_amount BOOLEAN;
 BEGIN
-  RETURN QUERY
-  SELECT 
-    COALESCE(COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE), 0) as total_orders_today,
-    COALESCE(COUNT(DISTINCT cafe_id) FILTER (WHERE created_at >= CURRENT_DATE), 0) as active_cafes,
-    COALESCE(AVG(total_amount) FILTER (WHERE created_at >= CURRENT_DATE), 0) as avg_order_value,
-    COALESCE(
-      (SELECT EXTRACT(HOUR FROM created_at)::INTEGER
-       FROM public.orders
-       WHERE created_at >= CURRENT_DATE
-       GROUP BY EXTRACT(HOUR FROM created_at)
-       ORDER BY COUNT(*) DESC
-       LIMIT 1), 0
-    ) as peak_hour;
+    -- Check if required columns exist
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'orders' 
+        AND column_name = 'created_at'
+        AND table_schema = 'public'
+    ) INTO has_created_at;
+    
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'orders' 
+        AND column_name = 'total_amount'
+        AND table_schema = 'public'
+    ) INTO has_total_amount;
+    
+    -- If columns don't exist, return zero values
+    IF NOT has_created_at OR NOT has_total_amount THEN
+        RETURN QUERY SELECT 0::BIGINT, 0::BIGINT, 0::NUMERIC, 0::INTEGER;
+        RETURN;
+    END IF;
+    
+    -- If columns exist, run the actual query
+    RETURN QUERY
+    SELECT 
+        COALESCE(COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE), 0) as total_orders_today,
+        COALESCE(COUNT(DISTINCT cafe_id) FILTER (WHERE created_at >= CURRENT_DATE), 0) as active_cafes,
+        COALESCE(AVG(total_amount) FILTER (WHERE created_at >= CURRENT_DATE), 0) as avg_order_value,
+        COALESCE(
+            (SELECT EXTRACT(HOUR FROM created_at)::INTEGER
+             FROM public.orders
+             WHERE created_at >= CURRENT_DATE
+             GROUP BY EXTRACT(HOUR FROM created_at)
+             ORDER BY COUNT(*) DESC
+             LIMIT 1), 0
+        ) as peak_hour;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
