@@ -384,7 +384,7 @@ const POSDashboard = () => {
           break;
       }
 
-      console.log('POS Dashboard: Updating order with data:', { orderId, updateData });
+      console.log('🔧 POS Dashboard: Updating order with data:', { orderId, updateData });
       
       const { data, error } = await (supabase as any)
         .from('orders')
@@ -392,7 +392,13 @@ const POSDashboard = () => {
         .eq('id', orderId)
         .select();
       
-      console.log('POS Dashboard: Update result:', { data, error });
+      console.log('🔧 POS Dashboard: Update result:', { data, error });
+      
+      if (data && data.length > 0) {
+        console.log('✅ POS Dashboard: Order updated successfully:', data[0]);
+      } else {
+        console.log('⚠️ POS Dashboard: No data returned from update');
+      }
 
       if (error) {
         console.error('Supabase update error:', error);
