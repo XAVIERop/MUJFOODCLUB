@@ -37,7 +37,7 @@ import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { useSoundNotifications } from '@/hooks/useSoundNotifications';
 import { soundNotificationService } from '@/services/soundNotificationService';
 import { useOrderSubscriptions, useNotificationSubscriptions } from '@/hooks/useSubscriptionManager';
-import { usePOSOrderUpdates } from '@/hooks/usePOSOrderUpdates';
+import { useSimplePOSUpdates } from '@/hooks/useSimplePOSUpdates';
 import EnhancedOrderGrid from '@/components/EnhancedOrderGrid';
 import POSAnalytics from '@/components/POSAnalytics';
 import ThermalPrinter from '@/components/ThermalPrinter';
@@ -1360,11 +1360,11 @@ const POSDashboard = () => {
     }
   }, [user, profile, cafeId, orders.length, filteredOrders.length]);
 
-  // Set up enhanced real-time subscriptions with better error handling
-  const { isConnected, refreshOrders: manualRefreshOrders, testConnection } = usePOSOrderUpdates({
+  // Set up simple, reliable polling-based updates
+  const { isConnected, refreshOrders: manualRefreshOrders, testConnection } = useSimplePOSUpdates({
     cafeId,
     onNewOrder: async (newOrder) => {
-      console.log('POS Dashboard: New order received via enhanced subscription:', newOrder);
+      console.log('POS Dashboard: New order received via polling:', newOrder);
       fetchOrders();
       setUnreadNotifications(prev => prev + 1);
       
@@ -1380,37 +1380,15 @@ const POSDashboard = () => {
       }, 2000); // Wait 2 seconds for order data to be fetched
     },
     onOrderUpdate: (updatedOrder) => {
-      console.log('POS Dashboard: Order update received via enhanced subscription:', updatedOrder);
+      console.log('POS Dashboard: Order update received via polling:', updatedOrder);
       
       // Always refresh orders for any update to ensure we have the latest data
-      console.log('POS Dashboard: Refreshing orders due to real-time update');
+      console.log('POS Dashboard: Refreshing orders due to polling update');
       fetchOrders(true); // Show refresh indicator
-    },
-    onError: (error) => {
-      console.error('POS Dashboard: Subscription error:', error);
-      toast({
-        title: "Connection Error",
-        description: "Real-time updates may not work properly. Orders will still be fetched manually.",
-        variant: "destructive"
-      });
     }
   });
 
-  // Set up polling as backup for real-time updates
-  useEffect(() => {
-    if (!cafeId) return;
-
-    console.log('POS Dashboard: Setting up polling backup every 10 seconds');
-    const pollInterval = setInterval(() => {
-      console.log('POS Dashboard: Backup polling - refreshing orders');
-      fetchOrders(true); // Show refresh indicator
-    }, 10000); // Poll every 10 seconds
-
-    return () => {
-      console.log('POS Dashboard: Cleaning up polling interval');
-      clearInterval(pollInterval);
-    };
-  }, [cafeId]);
+  // Note: Polling is now handled by useSimplePOSUpdates hook
 
   // Manual refresh function with enhanced error handling
   const handleManualRefresh = async () => {
