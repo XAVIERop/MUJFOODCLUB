@@ -99,15 +99,15 @@ const Checkout = () => {
   // Calculate delivery charges (no taxes for Chatkara)
   useEffect(() => {
     const subtotal = totalAmount;
-    const deliveryCharge = ORDER_CONSTANTS.DELIVERY_CHARGE;
+    const deliveryCharge = deliveryDetails.orderType === 'delivery' ? ORDER_CONSTANTS.DELIVERY_CHARGE : 0;
     // No CGST/SGST for Chatkara orders
     const finalAmountWithDelivery = subtotal + deliveryCharge;
     
-      setCgst(0);
-      setSgst(0);
+    setCgst(0);
+    setSgst(0);
     setDeliveryFee(deliveryCharge);
     setFinalAmount(Math.max(0, finalAmountWithDelivery));
-  }, [totalAmount]);
+  }, [totalAmount, deliveryDetails.orderType]);
 
   const handlePlaceOrder = async () => {
     if (!user || !profile) {
@@ -147,6 +147,7 @@ const Checkout = () => {
           cafe_id: cafe.id,
           order_number: orderNumber,
           total_amount: finalAmount,
+          order_type: deliveryDetails.orderType,
           delivery_block: deliveryDetails.block,
           delivery_notes: deliveryDetails.deliveryNotes,
           payment_method: deliveryDetails.paymentMethod,
@@ -349,7 +350,7 @@ const Checkout = () => {
                           id="dine_in"
                           name="orderType"
                           value="dine_in"
-                          checked={deliveryDetails.orderType === 'takeaway'}
+                          checked={deliveryDetails.orderType === 'dine_in'}
                           onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value }))}
                           disabled={!isDineInTakeawayAllowed()}
                         />
@@ -523,10 +524,12 @@ const Checkout = () => {
                       <span>₹{totalAmount}</span>
                     </div>
                     
-                    <div className="flex justify-between items-center text-orange-600">
-                      <span>Delivery Charge</span>
-                      <span>+₹{ORDER_CONSTANTS.DELIVERY_CHARGE}</span>
-                    </div>
+                    {deliveryDetails.orderType === 'delivery' && (
+                      <div className="flex justify-between items-center text-orange-600">
+                        <span>Delivery Charge</span>
+                        <span>+₹{ORDER_CONSTANTS.DELIVERY_CHARGE}</span>
+                      </div>
+                    )}
                     
                     <div className="border-t pt-2">
                       <div className="flex justify-between text-lg font-bold">
@@ -547,9 +550,25 @@ const Checkout = () => {
               )}
 
                   {/* Delivery Charge Notice */}
-                  <div className="mt-2 p-2 bg-green-50 rounded text-xs text-green-700">
-                    <strong>Delivery:</strong> ₹{ORDER_CONSTANTS.DELIVERY_CHARGE} delivery charge added to all orders
-                  </div>
+                  {deliveryDetails.orderType === 'delivery' && (
+                    <div className="mt-2 p-2 bg-green-50 rounded text-xs text-green-700">
+                      <strong>Delivery:</strong> ₹{ORDER_CONSTANTS.DELIVERY_CHARGE} delivery charge added to all orders
+                    </div>
+                  )}
+                  
+                  {/* Takeaway Notice */}
+                  {deliveryDetails.orderType === 'takeaway' && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
+                      <strong>Takeaway:</strong> No delivery charge for takeaway orders
+                    </div>
+                  )}
+                  
+                  {/* Dine In Notice */}
+                  {deliveryDetails.orderType === 'dine_in' && (
+                    <div className="mt-2 p-2 bg-purple-50 rounded text-xs text-purple-700">
+                      <strong>Dine In:</strong> No delivery charge for dine-in orders
+                    </div>
+                  )}
 
                   {/* Place Order Button */}
               <Button 
