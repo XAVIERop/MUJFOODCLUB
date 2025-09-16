@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Cafe Loading</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Debug Cafe Loading</h1>
+    <div id="status">Testing...</div>
+    <div id="results"></div>
+
+    <script>
+        const supabaseUrl = 'https://kblazvxfducwviyyiwde.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibGF6dnhmZHVjd3ZpeXlpd2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMzI0NjgsImV4cCI6MjA3MTcwODQ2OH0.bMtHsQy5cdkF-7ClprpF7HgMKUJpBUuZPaAPNz_LRSA';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        async function testCafeFetch() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                statusDiv.textContent = 'Testing RPC function...';
+                console.log('🔍 Testing get_cafes_ordered RPC...');
+                
+                const { data, error } = await supabase.rpc('get_cafes_ordered');
+                
+                if (error) {
+                    statusDiv.textContent = 'RPC Error: ' + error.message;
+                    resultsDiv.innerHTML = '<pre>' + JSON.stringify(error, null, 2) + '</pre>';
+                    console.error('RPC Error:', error);
+                } else {
+                    statusDiv.textContent = 'Success! Got ' + data.length + ' cafes';
+                    resultsDiv.innerHTML = '<h3>First 5 cafes:</h3><pre>' + JSON.stringify(data.slice(0, 5), null, 2) + '</pre>';
+                    console.log('✅ RPC Success:', data.length, 'cafes');
+                    console.log('First 5 cafes:', data.slice(0, 5).map(c => c.name));
+                }
+            } catch (err) {
+                statusDiv.textContent = 'Exception: ' + err.message;
+                resultsDiv.innerHTML = '<pre>' + JSON.stringify(err, null, 2) + '</pre>';
+                console.error('Exception:', err);
+            }
+        }
+        
+        // Run test when page loads
+        testCafeFetch();
+    </script>
+</body>
+</html>

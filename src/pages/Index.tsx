@@ -36,7 +36,16 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('🚀 Index: useEffect triggered, calling fetchCafes...');
     fetchCafes();
+    
+    // Add timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      console.log('⏰ Index: Timeout reached, forcing loading to false');
+      setLoading(false);
+    }, 10000); // 10 second timeout
+    
+    return () => clearTimeout(timeout);
   }, []);
 
   // Real-time subscription for cafe updates (ratings, etc.)
@@ -101,7 +110,7 @@ const Index = () => {
         console.log('🔄 Index: Trying direct table query...');
         
         const directResult = await supabase
-          .from('cafes')
+        .from('cafes')
           .select('id, name, type, description, location, slug, priority, accepting_orders, average_rating, total_ratings, image_url')
           .eq('is_active', true)
           .order('priority', { ascending: true })
@@ -173,7 +182,7 @@ const Index = () => {
             {/* Limited Cafe Grid - Show 6 cafes */}
             {!loading && cafes.length > 0 && (
               <div className="cafe-grid">
-                <FeaturedCafeGrid showAll={false} maxCafes={6} cafes={cafes} />
+            <FeaturedCafeGrid showAll={false} maxCafes={6} cafes={cafes} />
               </div>
             )}
             
@@ -185,6 +194,16 @@ const Index = () => {
                 <p className="text-muted-foreground">
                   Please wait while we fetch the latest cafes.
                 </p>
+                <button 
+                  onClick={() => {
+                    console.log('🔄 Manual fetch triggered');
+                    setLoading(true);
+                    fetchCafes();
+                  }}
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Retry Fetch
+                </button>
               </div>
             )}
             
