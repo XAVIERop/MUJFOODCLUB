@@ -73,28 +73,32 @@ const Index = () => {
 
   const fetchCafes = async () => {
     try {
-      console.log('🔍 Fetching cafes...');
+      console.log('🔍 Index: Starting cafe fetch...');
+      setLoading(true);
       
       // Try RPC function first
       let data = null;
       let error = null;
       
       try {
+        console.log('🔍 Index: Trying RPC function get_cafes_ordered...');
         const rpcResult = await supabase.rpc('get_cafes_ordered');
         data = rpcResult.data;
         error = rpcResult.error;
         
         if (error) {
-          console.warn('⚠️ RPC function failed, trying direct query:', error.message);
+          console.warn('⚠️ Index: RPC function failed, trying direct query:', error.message);
+        } else {
+          console.log('✅ Index: RPC function successful, got', data?.length || 0, 'cafes');
         }
       } catch (rpcError) {
-        console.warn('⚠️ RPC function exception, trying direct query:', rpcError);
+        console.warn('⚠️ Index: RPC function exception, trying direct query:', rpcError);
         error = rpcError;
       }
       
       // Fallback to direct query if RPC fails
       if (error || !data || data.length === 0) {
-        console.log('🔄 Trying direct table query...');
+        console.log('🔄 Index: Trying direct table query...');
         
         const directResult = await supabase
           .from('cafes')
@@ -104,27 +108,28 @@ const Index = () => {
           .limit(20);
         
         if (directResult.error) {
-          console.error('❌ Direct query also failed:', directResult.error);
+          console.error('❌ Index: Direct query also failed:', directResult.error);
           throw directResult.error;
         }
         
         data = directResult.data;
-        console.log('✅ Direct query successful');
+        console.log('✅ Index: Direct query successful, got', data?.length || 0, 'cafes');
       }
       
       if (data && data.length > 0) {
-        console.log('✅ Successfully fetched cafes:', data.length);
-        console.log('✅ First few cafes:', data.slice(0, 3).map(c => c.name));
+        console.log('✅ Index: Successfully fetched cafes:', data.length);
+        console.log('✅ Index: First few cafes:', data.slice(0, 3).map(c => c.name));
         setCafes(data);
       } else {
-        console.log('⚠️ No cafes found in database');
+        console.log('⚠️ Index: No cafes found in database');
         setCafes([]);
       }
       
     } catch (error) {
-      console.error('❌ All cafe fetching methods failed:', error);
+      console.error('❌ Index: All cafe fetching methods failed:', error);
       setCafes([]);
     } finally {
+      console.log('🏁 Index: Setting loading to false');
       setLoading(false);
     }
   };
@@ -166,9 +171,33 @@ const Index = () => {
             )}
 
             {/* Limited Cafe Grid - Show 6 cafes */}
-            <div className="cafe-grid">
-              <FeaturedCafeGrid showAll={false} maxCafes={6} cafes={cafes} />
-            </div>
+            {!loading && cafes.length > 0 && (
+              <div className="cafe-grid">
+                <FeaturedCafeGrid showAll={false} maxCafes={6} cafes={cafes} />
+              </div>
+            )}
+            
+            {/* Loading State */}
+            {loading && (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">⏳</div>
+                <h3 className="text-xl font-semibold text-foreground mb-2">Loading cafes...</h3>
+                <p className="text-muted-foreground">
+                  Please wait while we fetch the latest cafes.
+                </p>
+              </div>
+            )}
+            
+            {/* No Cafes State */}
+            {!loading && cafes.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🍽️</div>
+                <h3 className="text-xl font-semibold text-foreground mb-2">No cafes available</h3>
+                <p className="text-muted-foreground">
+                  Please check back later for available cafes.
+                </p>
+              </div>
+            )}
           </div>
         </section>
         
