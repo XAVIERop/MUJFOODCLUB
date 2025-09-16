@@ -20,7 +20,7 @@ import MobileErrorHandler from "./components/MobileErrorHandler";
 import PerformanceDashboard from "./components/PerformanceDashboard";
 
 // Lazy load all pages for better performance
-const Index = lazy(() => import("./pages/IndexSimple"));
+const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Menu = lazy(() => import("./pages/Menu"));
 const MenuModern = lazy(() => import("./pages/MenuModern"));

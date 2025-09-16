@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test RPC Function</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Test RPC Function</h1>
+    <div id="result"></div>
+    <button onclick="testRPC()">Test get_cafes_ordered()</button>
+    <button onclick="testDirectQuery()">Test Direct Query</button>
+    
+    <script>
+        const supabaseUrl = 'https://mujfoodclub.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11amZvb2RjbHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUxMjQwMDAsImV4cCI6MjA1MDY5NjAwMH0.8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        async function testRPC() {
+            console.log('Testing RPC function...');
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing RPC function...';
+            
+            try {
+                const { data, error } = await supabase.rpc('get_cafes_ordered');
+                
+                if (error) {
+                    console.error('RPC Error:', error);
+                    resultDiv.innerHTML = `<h2>RPC Error:</h2><pre>${JSON.stringify(error, null, 2)}</pre>`;
+                } else {
+                    console.log('RPC Success:', data);
+                    resultDiv.innerHTML = `<h2>RPC Success:</h2><p>Found ${data?.length || 0} cafes</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (err) {
+                console.error('RPC Exception:', err);
+                resultDiv.innerHTML = `<h2>RPC Exception:</h2><pre>${JSON.stringify(err, null, 2)}</pre>`;
+            }
+        }
+        
+        async function testDirectQuery() {
+            console.log('Testing direct query...');
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing direct query...';
+            
+            try {
+                const { data, error } = await supabase
+                    .from('cafes')
+                    .select('*')
+                    .eq('accepting_orders', true)
+                    .limit(5);
+                
+                if (error) {
+                    console.error('Direct Query Error:', error);
+                    resultDiv.innerHTML = `<h2>Direct Query Error:</h2><pre>${JSON.stringify(error, null, 2)}</pre>`;
+                } else {
+                    console.log('Direct Query Success:', data);
+                    resultDiv.innerHTML = `<h2>Direct Query Success:</h2><p>Found ${data?.length || 0} cafes</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (err) {
+                console.error('Direct Query Exception:', err);
+                resultDiv.innerHTML = `<h2>Direct Query Exception:</h2><pre>${JSON.stringify(err, null, 2)}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

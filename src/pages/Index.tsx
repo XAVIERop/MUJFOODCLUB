@@ -112,9 +112,10 @@ const Index = () => {
         
         const directResult = await supabase
         .from('cafes')
-          .select('id, name, type, description, location, slug, priority, accepting_orders, average_rating, total_ratings, image_url')
+          .select('id, name, type, description, location, slug, priority, accepting_orders, is_active, average_rating, total_ratings, image_url, phone, hours, cuisine_categories')
+          .eq('accepting_orders', true)
           .eq('is_active', true)
-          .order('priority', { ascending: true })
+          .order('priority', { ascending: false })
           .limit(20);
         
         if (directResult.error) {
