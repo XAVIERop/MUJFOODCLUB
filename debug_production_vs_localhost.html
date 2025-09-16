@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Production vs Localhost</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Debug Production vs Localhost</h1>
+    <div id="result"></div>
+    <button onclick="testBoth()">Test Both Environments</button>
+    
+    <script>
+        const resultDiv = document.getElementById('result');
+        
+        async function testBoth() {
+            resultDiv.innerHTML = 'Testing both environments...';
+            
+            // Test localhost
+            const localhostResult = await testEnvironment('http://localhost:8080', 'Localhost');
+            
+            // Test production
+            const productionResult = await testEnvironment('https://www.mujfoodclub.in', 'Production');
+            
+            resultDiv.innerHTML = `
+                <h2>Localhost Test:</h2>
+                <pre>${JSON.stringify(localhostResult, null, 2)}</pre>
+                
+                <h2>Production Test:</h2>
+                <pre>${JSON.stringify(productionResult, null, 2)}</pre>
+            `;
+        }
+        
+        async function testEnvironment(baseUrl, name) {
+            try {
+                // Test 1: Check if the page loads
+                const pageResponse = await fetch(baseUrl);
+                const pageText = await pageResponse.text();
+                
+                // Test 2: Check if there's a loading state
+                const hasLoading = pageText.includes('Loading cafes...');
+                const hasNoCafes = pageText.includes('No cafes available');
+                
+                // Test 3: Check if there are cafe names in the HTML
+                const cafeNames = [];
+                if (pageText.includes('Chatkara')) cafeNames.push('Chatkara');
+                if (pageText.includes('Food Court')) cafeNames.push('Food Court');
+                if (pageText.includes('Munch Box')) cafeNames.push('Munch Box');
+                
+                return {
+                    name,
+                    status: pageResponse.status,
+                    hasLoading,
+                    hasNoCafes,
+                    cafeNames,
+                    pageLength: pageText.length,
+                    timestamp: new Date().toISOString()
+                };
+            } catch (error) {
+                return {
+                    name,
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                };
+            }
+        }
+    </script>
+</body>
+</html>
