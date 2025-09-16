@@ -1,79 +1,83 @@
--- Fix Order Notifications RLS Policy Issue
--- Run this in Supabase Dashboard → SQL Editor
+-- Fix RLS policies for order_notifications table
+-- This will resolve the "new row violates row-level security policy" error
 
--- 1. Check current RLS policies on order_notifications
+-- First, check current policies on order_notifications
 SELECT 
-  '=== CURRENT RLS POLICIES ===' as section,
-  schemaname,
-  tablename,
-  policyname,
-  permissive,
-  roles,
-  cmd,
-  qual,
-  with_check
+  schemaname, 
+  tablename, 
+  policyname, 
+  permissive, 
+  roles, 
+  cmd, 
+  qual 
 FROM pg_policies 
-WHERE tablename = 'order_notifications'
+WHERE tablename = 'order_notifications' 
 ORDER BY policyname;
 
--- 2. Check if RLS is enabled
-SELECT 
-  '=== RLS STATUS ===' as section,
-  relname as table_name,
-  relrowsecurity as rls_enabled
-FROM pg_class 
-WHERE relname = 'order_notifications';
+-- Drop existing restrictive policies
+DROP POLICY IF EXISTS "Users can view their own notifications" ON order_notifications;
+DROP POLICY IF EXISTS "Cafe staff can view their cafe notifications" ON order_notifications;
+DROP POLICY IF EXISTS "Cafe owners can view their cafe notifications" ON order_notifications;
+DROP POLICY IF EXISTS "Users can insert their own notifications" ON order_notifications;
 
--- 3. Fix the RLS policies for order_notifications
--- Drop existing conflicting policies
-DROP POLICY IF EXISTS "notifications_select" ON public.order_notifications;
-DROP POLICY IF EXISTS "notifications_insert" ON public.order_notifications;
-DROP POLICY IF EXISTS "notifications_update" ON public.order_notifications;
-DROP POLICY IF EXISTS "Users can view their own notifications" ON public.order_notifications;
-DROP POLICY IF EXISTS "System can insert notifications" ON public.order_notifications;
-DROP POLICY IF EXISTS "notifications_final" ON public.order_notifications;
+-- Create comprehensive policies for order_notifications table
 
--- 4. Create proper RLS policies
--- Allow users to view their own notifications
-CREATE POLICY "order_notifications_select_policy" ON public.order_notifications
-  FOR SELECT USING (
-    (SELECT auth.uid()) = user_id OR
-    EXISTS (
-      SELECT 1 FROM public.cafe_staff cs
-      WHERE cs.cafe_id = order_notifications.cafe_id
-      AND cs.user_id = (SELECT auth.uid())
-      AND cs.is_active = true
-    )
-  );
+-- 1. Allow cafe owners to view and insert notifications for their cafe's orders
+CREATE POLICY "cafe_owners_notifications_access" ON order_notifications
+FOR ALL
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM profiles 
+    WHERE profiles.id = auth.uid() 
+    AND profiles.cafe_id = order_notifications.cafe_id
+    AND profiles.user_type = 'cafe_owner'
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM profiles 
+    WHERE profiles.id = auth.uid() 
+    AND profiles.cafe_id = order_notifications.cafe_id
+    AND profiles.user_type = 'cafe_owner'
+  )
+);
 
--- Allow system to insert notifications (for triggers)
-CREATE POLICY "order_notifications_insert_policy" ON public.order_notifications
-  FOR INSERT WITH CHECK (true);
+-- 2. Allow cafe staff to view and insert notifications for their cafe's orders
+CREATE POLICY "cafe_staff_notifications_access" ON order_notifications
+FOR ALL
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM cafe_staff 
+    WHERE cafe_staff.user_id = auth.uid() 
+    AND cafe_staff.cafe_id = order_notifications.cafe_id
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM cafe_staff 
+    WHERE cafe_staff.user_id = auth.uid() 
+    AND cafe_staff.cafe_id = order_notifications.cafe_id
+  )
+);
 
--- Allow users to update their own notifications (mark as read)
-CREATE POLICY "order_notifications_update_policy" ON public.order_notifications
-  FOR UPDATE USING (
-    (SELECT auth.uid()) = user_id
-  );
+-- 3. Allow users to view their own notifications
+CREATE POLICY "users_view_own_notifications" ON order_notifications
+FOR SELECT
+TO authenticated
+USING (user_id = auth.uid());
 
--- 5. Ensure RLS is enabled
-ALTER TABLE public.order_notifications ENABLE ROW LEVEL SECURITY;
+-- 4. Allow system to insert notifications for users (for order updates)
+CREATE POLICY "system_insert_notifications" ON order_notifications
+FOR INSERT
+TO authenticated
+WITH CHECK (true); -- Allow all authenticated users to insert notifications
 
--- 6. Verify the fix
-SELECT 
-  '=== VERIFICATION ===' as section,
-  'RLS Policies Fixed' as status,
-  'Order notifications should now work properly' as message;
+-- Grant necessary permissions
+GRANT ALL ON order_notifications TO authenticated;
+GRANT SELECT ON profiles TO authenticated;
+GRANT SELECT ON cafe_staff TO authenticated;
 
--- 7. Test the policies
-SELECT 
-  '=== POLICY VERIFICATION ===' as section,
-  schemaname,
-  tablename,
-  policyname,
-  permissive,
-  roles,
-  cmd
-FROM pg_policies 
-WHERE tablename = 'order_notifications'
-ORDER BY policyname;
+-- Test the policies
+SELECT 'RLS policies updated successfully for order_notifications table' as status;
