@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from '../integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+// import { useAuth } from '@/hooks/useAuth'; // Not needed for this component
 // import { useCafeRewards } from '@/hooks/useCafeRewards'; // Disabled for simplified version
 import { Star } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
@@ -32,6 +32,7 @@ interface Cafe {
 // Rewards Section removed for simplified version
 
 const Index = () => {
+  console.log('🎬 Index component rendering...');
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(true);
 
