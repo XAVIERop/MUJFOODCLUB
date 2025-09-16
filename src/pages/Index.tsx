@@ -100,6 +100,7 @@ const Index = () => {
           console.warn('⚠️ Index: RPC function failed, trying direct query:', error.message);
         } else {
           console.log('✅ Index: RPC function successful, got', data?.length || 0, 'cafes');
+          console.log('✅ Index: RPC data sample:', data?.slice(0, 2));
         }
       } catch (rpcError) {
         console.warn('⚠️ Index: RPC function exception, trying direct query:', rpcError);
@@ -120,11 +121,12 @@ const Index = () => {
         
         if (directResult.error) {
           console.error('❌ Index: Direct query also failed:', directResult.error);
-          throw directResult.error;
+          // Don't throw error, just use empty array
+          data = [];
+        } else {
+          data = directResult.data;
+          console.log('✅ Index: Direct query successful, got', data?.length || 0, 'cafes');
         }
-        
-        data = directResult.data;
-        console.log('✅ Index: Direct query successful, got', data?.length || 0, 'cafes');
       }
       
       if (data && data.length > 0) {
