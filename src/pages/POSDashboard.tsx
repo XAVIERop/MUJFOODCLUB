@@ -585,7 +585,6 @@ const POSDashboard = () => {
 
       // Fallback to browser-based printing
       const generateThermalHTML = (orderData: Order, orderItems: any[]) => {
-        console.log('🔍 POSDashboard DEBUG:');
         console.log('  - Raw cafe name:', orderData.cafe?.name);
         console.log('  - Cafe name type:', typeof orderData.cafe?.name);
         console.log('  - Cafe name length:', orderData.cafe?.name?.length);
@@ -1242,14 +1241,6 @@ const POSDashboard = () => {
 
   const formatOrderType = (order: Order) => {
     if (order.delivery_block === 'DINE_IN') {
-      // Debug logging for dine-in orders
-      console.log('Dine-in order debug:', {
-        orderId: order.id,
-        orderNumber: order.order_number,
-        delivery_block: order.delivery_block,
-        table_number: order.table_number,
-        hasTableNumber: !!order.table_number
-      });
       return `🍽️ Dine In • Table ${order.table_number || 'N/A'}`;
     } else if (order.delivery_block === 'TAKEAWAY') {
       return '📦 Takeaway';

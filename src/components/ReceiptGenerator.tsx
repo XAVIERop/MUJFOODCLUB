@@ -165,7 +165,6 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
   };
 
   const generateReceiptHTML = () => {
-    console.log('🔍 ReceiptGenerator DEBUG:');
     console.log('  - Raw cafe_name:', orderData.cafe_name);
     console.log('  - Cafe name type:', typeof orderData.cafe_name);
     console.log('  - Cafe name length:', orderData.cafe_name?.length);

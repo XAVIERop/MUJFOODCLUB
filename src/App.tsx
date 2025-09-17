@@ -22,7 +22,6 @@ import PerformanceDashboard from "./components/PerformanceDashboard";
 // Lazy load all pages for better performance
 const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
-const Menu = lazy(() => import("./pages/Menu"));
 const MenuModern = lazy(() => import("./pages/MenuModern"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
@@ -60,7 +59,6 @@ const App = () => (
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/menu/:cafeIdentifier" element={<MenuModern />} />
-                      <Route path="/menu-old/:cafeIdentifier" element={<Menu />} />
                       <Route path="/checkout" element={<Checkout />} />
                       <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
                       <Route path="/orders" element={<MyOrders />} />

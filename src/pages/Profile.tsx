@@ -92,7 +92,6 @@ const Profile = () => {
 
     // Safety check: Only allow reset for test account
     if (profile.email !== 'test@muj.manipal.edu') {
-      console.log('❌ Not test account:', profile.email);
       toast({
         title: "Access Denied",
         description: "This feature is only available for test accounts.",

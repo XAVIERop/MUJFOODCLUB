@@ -26,8 +26,6 @@ export const testPrintNodeSetup = () => {
   };
 
   console.log('\n🧪 Testing Cafe-Specific API Key Selection:');
-  console.log('Chatkara API Key:', testCafeApiKey('Chatkara') ? '✅ Found' : '❌ Missing');
-  console.log('Food Court API Key:', testCafeApiKey('Food Court') ? '✅ Found' : '❌ Missing');
 
   return {
     chatkaraApiKey: testCafeApiKey('Chatkara'),

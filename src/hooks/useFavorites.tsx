@@ -37,7 +37,6 @@ export const useFavorites = () => {
   };
 
   const toggleFavorite = async (cafeId: string): Promise<boolean> => {
-    console.log('=== FAVORITES DEBUG START ===');
     console.log('User:', user);
     console.log('User ID:', user?.id);
     console.log('Cafe ID:', cafeId);

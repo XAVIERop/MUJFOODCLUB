@@ -412,13 +412,6 @@ const Checkout = () => {
           phone_number: deliveryDetails.phoneNumber
       };
 
-      console.log('🍽️ DINE-IN DEBUG: Order data being saved:', {
-        orderType: deliveryDetails.orderType,
-        tableNumber: deliveryDetails.tableNumber,
-        deliveryBlock: orderData.delivery_block,
-        tableNumberInOrder: orderData.table_number
-      });
-
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert(orderData as any)

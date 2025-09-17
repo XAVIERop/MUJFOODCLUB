@@ -222,7 +222,6 @@ export const usePOSOrderUpdates = ({
         return false;
       }
 
-      console.log('✅ POS: Connection test successful');
       return true;
     } catch (error) {
       console.error('❌ POS: Connection test error:', error);

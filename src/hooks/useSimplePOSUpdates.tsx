@@ -57,7 +57,6 @@ export const useSimplePOSUpdates = ({
           const orderTime = latestOrder.created_at;
           
           if (lastOrderTime && orderTime > lastOrderTime) {
-            console.log('🆕 Simple POS: New order detected:', latestOrder);
             setLastOrderTime(orderTime);
             onNewOrder?.(latestOrder);
             
@@ -127,7 +126,6 @@ export const useSimplePOSUpdates = ({
         return false;
       }
 
-      console.log('✅ Simple POS: Connection test successful');
       return true;
     } catch (error) {
       console.error('❌ Simple POS: Connection test error:', error);
