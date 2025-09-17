@@ -48,7 +48,6 @@ import SimplePrinterConfig from '@/components/SimplePrinterConfig';
 import PrintNodeStatus from '@/components/PrintNodeStatus';
 import ManualOrderEntry from '@/components/ManualOrderEntry';
 import OrderNotificationSound from '@/components/OrderNotificationSound';
-import SoundDebugger from '@/components/SoundDebugger';
 import { testPrintNodeSetup } from '@/utils/testPrintNodeSetup';
 import Header from '@/components/Header';
 import PasswordProtectedSection from '@/components/PasswordProtectedSection';
@@ -2113,7 +2112,6 @@ const POSDashboard = () => {
                 {/* Sound Debugger */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Sound Debugger</h3>
-                  <SoundDebugger />
                 </div>
 
                 {/* Print Settings */}

@@ -36,10 +36,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const CafeDashboard = lazy(() => import("./pages/CafeDashboard"));
 const CafeManagement = lazy(() => import("./pages/CafeManagement"));
 const EnhancedCafeCardDemo = lazy(() => import("./components/EnhancedCafeCardDemo"));
-const POSTest = lazy(() => import("./pages/POSTest"));
-const CompactOrdersTest = lazy(() => import("./pages/CompactOrdersTest"));
 const POSDashboard = lazy(() => import("./pages/POSDashboard"));
-const WhatsAppTest = lazy(() => import("./pages/WhatsAppTest"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const EnvCheck = lazy(() => import("./pages/EnvCheck"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -76,10 +73,7 @@ const App = () => (
                       <Route path="/cafe-dashboard" element={<CafeDashboard />} />
                       <Route path="/cafe-management" element={<CafeManagement />} />
                       <Route path="/demo-enhanced-card" element={<EnhancedCafeCardDemo />} />
-                      <Route path="/pos-test" element={<POSTest />} />
-                      <Route path="/compact-orders-test" element={<CompactOrdersTest />} />
                       <Route path="/pos-dashboard" element={<POSDashboard />} />
-                      <Route path="/whatsapp-test" element={<WhatsAppTest />} />
                       <Route path="/admin" element={<AdminDashboard />} />
                       <Route path="/env-check" element={<EnvCheck />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
