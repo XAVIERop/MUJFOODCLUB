@@ -487,10 +487,10 @@ const CafeDashboard = () => {
     try {
       const csvData = filteredOrders.map(order => ({
         'Order Number': order.order_number,
-        'Customer': order.user.full_name,
-        'Email': order.user.email,
-        'Phone': order.user.phone || 'N/A',
-        'Block': order.user.block,
+        'Customer': order.user?.full_name || 'Unknown User',
+        'Email': order.user?.email || 'N/A',
+        'Phone': order.user?.phone || 'N/A',
+        'Block': order.user?.block || 'Unknown',
         'Status': order.status,
         'Total Amount': order.total_amount,
         'Payment Method': order.payment_method,
@@ -634,9 +634,9 @@ const CafeDashboard = () => {
     if (searchTerm) {
       filtered = filtered.filter(order =>
         order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.user.block.toLowerCase().includes(searchTerm.toLowerCase())
+        (order.user?.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.user?.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.user?.block || '').toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -1106,11 +1106,11 @@ const CafeDashboard = () => {
                           <div className="flex items-center space-x-4">
                             <div className="flex items-center space-x-2">
                               <User className="w-4 h-4 text-muted-foreground" />
-                              <span className="font-medium">{order.user.full_name}</span>
+                              <span className="font-medium">{order.user?.full_name || 'Unknown User'}</span>
                             </div>
                             <div className="flex items-center space-x-2">
                               <MapPin className="w-4 h-4 text-muted-foreground" />
-                              <span className="text-sm">Block {order.user.block}</span>
+                              <span className="text-sm">Block {order.user?.block || 'Unknown'}</span>
                             </div>
                             {(order.phone_number || order.user?.phone) && (
                               <div className="flex items-center space-x-2">
