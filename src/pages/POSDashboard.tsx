@@ -126,7 +126,7 @@ const POSDashboard = () => {
   const [isSettingsPrinterOpen, setIsSettingsPrinterOpen] = useState(false);
   
   // Staff management
-  const { staff, loading: staffLoading } = useCafeStaff(cafeId || undefined);
+  const { staff, loading: staffLoading, getStaffDisplayName } = useCafeStaff(cafeId || undefined);
 
   // Scroll to top hook
   const { scrollToTopOnTabChange } = useScrollToTop();
@@ -1957,7 +1957,7 @@ const POSDashboard = () => {
                                       <SelectItem value="">Not Assigned</SelectItem>
                                       {staff.map((member) => (
                                         <SelectItem key={member.id} value={member.id}>
-                                          {member.profile?.full_name || 'Unknown Staff'}
+                                          {getStaffDisplayName(member)}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>

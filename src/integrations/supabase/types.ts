@@ -401,7 +401,8 @@ export interface Database {
         Row: {
           id: string
           cafe_id: string
-          user_id: string
+          user_id: string | null
+          staff_name: string | null
           role: string
           is_active: boolean
           created_at: string
@@ -410,7 +411,8 @@ export interface Database {
         Insert: {
           id?: string
           cafe_id: string
-          user_id: string
+          user_id?: string | null
+          staff_name?: string | null
           role: string
           is_active?: boolean
           created_at?: string
@@ -419,7 +421,8 @@ export interface Database {
         Update: {
           id?: string
           cafe_id?: string
-          user_id?: string
+          user_id?: string | null
+          staff_name?: string | null
           role?: string
           is_active?: boolean
           created_at?: string

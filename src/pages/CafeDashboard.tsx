@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useSoundNotifications } from '@/hooks/useSoundNotifications';
 import { soundNotificationService } from '@/services/soundNotificationService';
+import { useCafeStaff } from '@/hooks/useCafeStaff';
 import NotificationCenter from '../components/NotificationCenter';
 import CafeScanner from '../components/CafeScanner';
 import OrderNotificationSound from '../components/OrderNotificationSound';
@@ -55,6 +56,7 @@ interface Order {
   };
   order_items: OrderItem[];
   phone_number?: string; // Added for phone number display
+  delivered_by_staff_id?: string | null; // Staff assignment
 }
 
 interface Analytics {
@@ -100,6 +102,9 @@ const CafeDashboard = () => {
     console.error('❌ CafeDashboard: useNavigate failed:', error);
     throw error;
   }
+  
+  // Staff management for CSV export
+  const { staff, getStaffDisplayName } = useCafeStaff(profile?.cafe_id || undefined);
     
     const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -483,6 +488,21 @@ const CafeDashboard = () => {
     }
   };
 
+  // Helper function to get staff name for CSV export
+  const getStaffNameForOrder = (order: Order): string => {
+    if (!order.delivered_by_staff_id) {
+      return 'Not Assigned';
+    }
+    
+    // Find the staff member by ID
+    const staffMember = staff.find(s => s.id === order.delivered_by_staff_id);
+    if (staffMember) {
+      return getStaffDisplayName(staffMember);
+    }
+    
+    return 'Unknown Staff';
+  };
+
   const exportOrders = async () => {
     try {
       const csvData = filteredOrders.map(order => ({
@@ -499,7 +519,7 @@ const CafeDashboard = () => {
         ).join(', '),
         'Order Date': new Date(order.created_at).toLocaleString(),
         'Delivery Notes': order.delivery_notes || 'N/A',
-        'Delivered By': 'Not Assigned'
+        'Delivered By': getStaffNameForOrder(order)
       }));
 
       const csvContent = [

@@ -16,27 +16,30 @@ interface StaffManagementProps {
 
 const StaffManagement: React.FC<StaffManagementProps> = ({ cafeId }) => {
   const { toast } = useToast();
-  const { staff, loading, error, addStaff, updateStaff, removeStaff } = useCafeStaff(cafeId);
+  const { staff, loading, error, addStaff, updateStaff, removeStaff, getStaffDisplayName } = useCafeStaff(cafeId);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    user_id: '',
+    staff_name: '',
     role: 'staff'
   });
 
   const handleAddStaff = async () => {
-    if (!formData.user_id.trim()) {
+    if (!formData.staff_name.trim()) {
       toast({
         title: "Error",
-        description: "Please enter a user ID",
+        description: "Please enter a staff name",
         variant: "destructive"
       });
       return;
     }
 
     try {
-      await addStaff(formData);
-      setFormData({ user_id: '', role: 'staff' });
+      await addStaff({
+        staff_name: formData.staff_name.trim(),
+        role: formData.role
+      });
+      setFormData({ staff_name: '', role: 'staff' });
       setIsAdding(false);
       toast({
         title: "Success",
@@ -68,7 +71,8 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ cafeId }) => {
     }
   };
 
-  const handleRemoveStaff = async (staffId: string, staffName: string) => {
+  const handleRemoveStaff = async (staffId: string, staff: CafeStaff) => {
+    const staffName = getStaffDisplayName(staff);
     if (!confirm(`Are you sure you want to remove ${staffName} from staff?`)) {
       return;
     }
@@ -137,12 +141,12 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ cafeId }) => {
             <h4 className="font-medium">Add New Staff Member</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="user_id">User ID</Label>
+                <Label htmlFor="staff_name">Staff Name</Label>
                 <Input
-                  id="user_id"
-                  placeholder="Enter user ID"
-                  value={formData.user_id}
-                  onChange={(e) => setFormData(prev => ({ ...prev, user_id: e.target.value }))}
+                  id="staff_name"
+                  placeholder="Enter staff name (e.g., John, Mike, Sarah)"
+                  value={formData.staff_name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, staff_name: e.target.value }))}
                 />
               </div>
               <div>
@@ -152,9 +156,10 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ cafeId }) => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="staff">Staff</SelectItem>
+                    <SelectItem value="delivery">Delivery Guy</SelectItem>
+                    <SelectItem value="cashier">Cashier</SelectItem>
                     <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="delivery">Delivery</SelectItem>
+                    <SelectItem value="staff">General Staff</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -178,14 +183,20 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ cafeId }) => {
                     <User className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium">{member.profile?.full_name || 'Unknown'}</p>
+                    <p className="font-medium">{getStaffDisplayName(member)}</p>
                     <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                      <Mail className="w-3 h-3" />
-                      <span>{member.profile?.email || 'No email'}</span>
-                      {member.profile?.phone && (
+                      {member.staff_name ? (
+                        <span>Staff Member</span>
+                      ) : (
                         <>
-                          <Phone className="w-3 h-3 ml-2" />
-                          <span>{member.profile.phone}</span>
+                          <Mail className="w-3 h-3" />
+                          <span>{member.profile?.email || 'No email'}</span>
+                          {member.profile?.phone && (
+                            <>
+                              <Phone className="w-3 h-3 ml-2" />
+                              <span>{member.profile.phone}</span>
+                            </>
+                          )}
                         </>
                       )}
                     </div>
@@ -203,7 +214,7 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ cafeId }) => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleRemoveStaff(member.id, member.profile?.full_name || 'this staff member')}
+                    onClick={() => handleRemoveStaff(member.id, member)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
