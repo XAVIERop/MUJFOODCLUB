@@ -94,8 +94,8 @@ const HeroBannerSection: React.FC = () => {
   const getCafeCardImage = (cafeName: string): string => {
     const cafeImages: { [key: string]: string } = {
       'Dialog': '/dialog_card.jpg',
-      'Chatkara': '/chatkara_card.png',
-      'CHATKARA': '/chatkara_card.png',
+      'Chatkara': '/chaap_homebanner.png',
+      'CHATKARA': '/chaap_homebanner.png',
       'Mini Meals': '/minimeals_card.png',
       'MINI MEALS': '/minimeals_card.png',
       'Cook House': '/cookhouse_card.png',
