@@ -573,14 +573,14 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                   <div className="mt-2 space-y-1">
                     <Label className="text-xs font-medium text-gray-600">Delivered By:</Label>
                     <Select
-                      value={order.delivered_by_staff_id || ''}
-                      onValueChange={(value) => onStaffUpdate?.(order.id, value || null)}
+                      value={order.delivered_by_staff_id || 'none'}
+                      onValueChange={(value) => onStaffUpdate?.(order.id, value === 'none' ? null : value)}
                     >
                       <SelectTrigger className="h-6 text-xs">
                         <SelectValue placeholder="Select staff" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Not Assigned</SelectItem>
+                        <SelectItem value="none">Not Assigned</SelectItem>
                         {staff.map((member) => (
                           <SelectItem key={member.id} value={member.id}>
                             {getStaffDisplayName ? getStaffDisplayName(member) : (member.staff_name || member.profile?.full_name || 'Unknown')}

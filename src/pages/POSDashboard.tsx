@@ -1950,14 +1950,14 @@ const POSDashboard = () => {
                                 <div className="space-y-2">
                                   <Label className="text-sm font-medium">Delivered By:</Label>
                                   <Select
-                                    value={order.delivered_by_staff_id || ''}
-                                    onValueChange={(value) => updateOrderStaff(order.id, value || null)}
+                                    value={order.delivered_by_staff_id || 'none'}
+                                    onValueChange={(value) => updateOrderStaff(order.id, value === 'none' ? null : value)}
                                   >
                                     <SelectTrigger>
                                       <SelectValue placeholder="Select staff member" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="">Not Assigned</SelectItem>
+                                      <SelectItem value="none">Not Assigned</SelectItem>
                                       {staff.map((member) => (
                                         <SelectItem key={member.id} value={member.id}>
                                           {getStaffDisplayName(member)}
