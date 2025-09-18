@@ -159,17 +159,12 @@ const CafeDashboard = () => {
 
       console.log('Simple query successful, found orders:', simpleData?.length || 0);
 
-      // If simple query works, try the full query
+      // If simple query works, try a simplified full query first
       const { data, error } = await supabase
         .from('orders')
         .select(`
           *,
           user:profiles(full_name, phone, block, email),
-          delivered_by_staff:cafe_staff!delivered_by_staff_id(
-            id,
-            role,
-            profile:profiles(full_name, email)
-          ),
           order_items(
             id,
             menu_item_id,
@@ -210,6 +205,9 @@ const CafeDashboard = () => {
         
         setOrders(data || []);
         setFilteredOrders(data || []);
+        
+        // If we need delivered_by_staff data, we can fetch it separately
+        // This avoids the complex join that was causing the 400 error
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
