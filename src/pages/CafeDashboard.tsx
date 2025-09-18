@@ -71,10 +71,19 @@ interface Analytics {
 }
 
 const CafeDashboard = () => {
-  const { user, profile } = useAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const [orders, setOrders] = useState<Order[]>([]);
+  console.log('🔍 CafeDashboard: Component starting to render');
+  
+  try {
+    const { user, profile } = useAuth();
+    console.log('🔍 CafeDashboard: useAuth successful', { user: !!user, profile: !!profile });
+    
+    const { toast } = useToast();
+    console.log('🔍 CafeDashboard: useToast successful');
+    
+    const navigate = useNavigate();
+    console.log('🔍 CafeDashboard: useNavigate successful');
+    
+    const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -159,17 +168,12 @@ const CafeDashboard = () => {
 
       console.log('Simple query successful, found orders:', simpleData?.length || 0);
 
-      // If simple query works, try the full query
+      // If simple query works, try a simplified full query first
       const { data, error } = await supabase
         .from('orders')
         .select(`
           *,
           user:profiles(full_name, phone, block, email),
-          delivered_by_staff:cafe_staff!delivered_by_staff_id(
-            id,
-            role,
-            profile:profiles(full_name, email)
-          ),
           order_items(
             id,
             menu_item_id,
@@ -183,6 +187,7 @@ const CafeDashboard = () => {
 
       if (error) {
         console.error('Full query failed, using simple data:', error);
+        console.error('Error details:', error.message, error.details, error.hint);
         // Use simple data if full query fails, but we need to transform it to match Order type
         const transformedOrders = (simpleData || []).map(order => ({
           ...order,
@@ -193,8 +198,25 @@ const CafeDashboard = () => {
         setFilteredOrders(transformedOrders);
       } else {
         console.log('Full query successful, found orders:', data?.length || 0);
+        console.log('Sample order data:', data?.[0]);
+        console.log('Sample order_items:', data?.[0]?.order_items);
+        
+        // Check if order_items are properly populated
+        const ordersWithItems = data?.filter(order => order.order_items && order.order_items.length > 0) || [];
+        const ordersWithoutItems = data?.filter(order => !order.order_items || order.order_items.length === 0) || [];
+        
+        console.log('Orders with items:', ordersWithItems.length);
+        console.log('Orders without items:', ordersWithoutItems.length);
+        
+        if (ordersWithoutItems.length > 0) {
+          console.log('Sample order without items:', ordersWithoutItems[0]);
+        }
+        
         setOrders(data || []);
         setFilteredOrders(data || []);
+        
+        // If we need delivered_by_staff data, we can fetch it separately
+        // This avoids the complex join that was causing the 400 error
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -1348,6 +1370,11 @@ const CafeDashboard = () => {
 
     </div>
   );
+  } catch (error) {
+    console.error('❌ CafeDashboard: Error in component:', error);
+    console.error('❌ CafeDashboard: Error stack:', error.stack);
+    throw error; // Re-throw to trigger ErrorBoundary
+  }
 };
 
 export default CafeDashboard;
