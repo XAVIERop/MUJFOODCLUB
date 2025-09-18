@@ -71,17 +71,10 @@ interface Analytics {
 }
 
 const CafeDashboard = () => {
-  console.log('🔍 CafeDashboard: Component starting to render');
-  
-  try {
-    const { user, profile } = useAuth();
-    console.log('🔍 CafeDashboard: useAuth successful', { user: !!user, profile: !!profile });
+  const { user, profile } = useAuth();
     
-    const { toast } = useToast();
-    console.log('🔍 CafeDashboard: useToast successful');
-    
-    const navigate = useNavigate();
-    console.log('🔍 CafeDashboard: useNavigate successful');
+  const { toast } = useToast();
+  const navigate = useNavigate();
     
     const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -481,7 +474,7 @@ const CafeDashboard = () => {
         ).join(', '),
         'Order Date': new Date(order.created_at).toLocaleString(),
         'Delivery Notes': order.delivery_notes || 'N/A',
-        'Delivered By': order.delivered_by_staff?.profile?.full_name || 'Not Assigned'
+        'Delivered By': 'Not Assigned'
       }));
 
       const csvContent = [
@@ -1370,11 +1363,6 @@ const CafeDashboard = () => {
 
     </div>
   );
-  } catch (error) {
-    console.error('❌ CafeDashboard: Error in component:', error);
-    console.error('❌ CafeDashboard: Error stack:', error.stack);
-    throw error; // Re-throw to trigger ErrorBoundary
-  }
 };
 
 export default CafeDashboard;
