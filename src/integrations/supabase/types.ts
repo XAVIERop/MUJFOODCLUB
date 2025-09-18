@@ -239,6 +239,7 @@ export interface Database {
           rating_submitted_at?: string | null
           phone_number?: string | null
           table_number?: string | null
+          delivered_by_staff_id?: string | null
         }
         Insert: {
           id?: string
@@ -258,6 +259,7 @@ export interface Database {
           rating_submitted_at?: string | null
           phone_number?: string | null
           table_number?: string | null
+          delivered_by_staff_id?: string | null
         }
         Update: {
           id?: string
@@ -277,6 +279,7 @@ export interface Database {
           rating_submitted_at?: string | null
           phone_number?: string | null
           table_number?: string | null
+          delivered_by_staff_id?: string | null
         }
         Relationships: [
           {

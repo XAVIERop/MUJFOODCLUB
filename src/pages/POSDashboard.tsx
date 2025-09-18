@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Clock, 
@@ -38,6 +39,8 @@ import { useSoundNotifications } from '@/hooks/useSoundNotifications';
 import { soundNotificationService } from '@/services/soundNotificationService';
 import { useOrderSubscriptions, useNotificationSubscriptions } from '@/hooks/useSubscriptionManager';
 import { useSimplePOSUpdates } from '@/hooks/useSimplePOSUpdates';
+import { useCafeStaff } from '@/hooks/useCafeStaff';
+import StaffManagement from '@/components/StaffManagement';
 import EnhancedOrderGrid from '@/components/EnhancedOrderGrid';
 import POSAnalytics from '@/components/POSAnalytics';
 import ThermalPrinter from '@/components/ThermalPrinter';
@@ -121,6 +124,9 @@ const POSDashboard = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isPrinterSetupOpen, setIsPrinterSetupOpen] = useState(false);
   const [isSettingsPrinterOpen, setIsSettingsPrinterOpen] = useState(false);
+  
+  // Staff management
+  const { staff, loading: staffLoading } = useCafeStaff(cafeId || undefined);
 
   // Scroll to top hook
   const { scrollToTopOnTabChange } = useScrollToTop();
@@ -430,6 +436,38 @@ const POSDashboard = () => {
       });
     } finally {
       setUpdatingOrder(null);
+    }
+  };
+
+  const updateOrderStaff = async (orderId: string, staffId: string | null) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ delivered_by_staff_id: staffId })
+        .eq('id', orderId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state
+      setOrders(prev => prev.map(order => 
+        order.id === orderId 
+          ? { ...order, delivered_by_staff_id: staffId }
+          : order
+      ));
+
+      toast({
+        title: "Staff Assigned",
+        description: staffId ? "Staff member assigned to order" : "Staff assignment removed"
+      });
+    } catch (error) {
+      console.error('Error updating order staff:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update staff assignment",
+        variant: "destructive"
+      });
     }
   };
 
@@ -1635,11 +1673,16 @@ const POSDashboard = () => {
           }} 
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-8 gap-1 sm:gap-2">
+          <TabsList className="grid w-full grid-cols-9 gap-1 sm:gap-2">
             <TabsTrigger value="orders" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <Receipt className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Orders</span>
               <span className="sm:hidden">O</span>
+            </TabsTrigger>
+            <TabsTrigger value="staff" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Staff</span>
+              <span className="sm:hidden">S</span>
             </TabsTrigger>
             <TabsTrigger value="manual-order" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -1886,6 +1929,29 @@ const POSDashboard = () => {
                                   </Button>
                                 )}
                               </div>
+
+                              {/* Staff Assignment Dropdown */}
+                              {(order.status === 'completed' || order.status === 'on_the_way') && (
+                                <div className="space-y-2">
+                                  <Label className="text-sm font-medium">Delivered By:</Label>
+                                  <Select
+                                    value={order.delivered_by_staff_id || ''}
+                                    onValueChange={(value) => updateOrderStaff(order.id, value || null)}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select staff member" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="">Not Assigned</SelectItem>
+                                      {staff.map((member) => (
+                                        <SelectItem key={member.id} value={member.id}>
+                                          {member.profile?.full_name || 'Unknown Staff'}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              )}
                             </CardContent>
                           </Card>
                         );
@@ -1893,6 +1959,17 @@ const POSDashboard = () => {
                     )}
                   </div>
                 ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Staff Management Tab */}
+          <TabsContent value="staff" className="space-y-6">
+            {cafeId ? (
+              <StaffManagement cafeId={cafeId} />
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Please select a cafe to manage staff</p>
               </div>
             )}
           </TabsContent>

@@ -165,6 +165,11 @@ const CafeDashboard = () => {
         .select(`
           *,
           user:profiles(full_name, phone, block, email),
+          delivered_by_staff:cafe_staff!delivered_by_staff_id(
+            id,
+            role,
+            profile:profiles(full_name, email)
+          ),
           order_items(
             id,
             menu_item_id,
@@ -453,7 +458,8 @@ const CafeDashboard = () => {
           `${item.menu_item.name} (${item.quantity}x)`
         ).join(', '),
         'Order Date': new Date(order.created_at).toLocaleString(),
-        'Delivery Notes': order.delivery_notes || 'N/A'
+        'Delivery Notes': order.delivery_notes || 'N/A',
+        'Delivered By': order.delivered_by_staff?.profile?.full_name || 'Not Assigned'
       }));
 
       const csvContent = [
