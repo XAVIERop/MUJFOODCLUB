@@ -71,10 +71,35 @@ interface Analytics {
 }
 
 const CafeDashboard = () => {
-  const { user, profile } = useAuth();
+  console.log('🔍 CafeDashboard: Starting component');
+  
+  let user, profile, toast, navigate;
+  
+  try {
+    const authResult = useAuth();
+    user = authResult.user;
+    profile = authResult.profile;
+    console.log('🔍 CafeDashboard: useAuth successful', { user: !!user, profile: !!profile });
+  } catch (error) {
+    console.error('❌ CafeDashboard: useAuth failed:', error);
+    throw error;
+  }
     
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  try {
+    toast = useToast().toast;
+    console.log('🔍 CafeDashboard: useToast successful');
+  } catch (error) {
+    console.error('❌ CafeDashboard: useToast failed:', error);
+    throw error;
+  }
+  
+  try {
+    navigate = useNavigate();
+    console.log('🔍 CafeDashboard: useNavigate successful');
+  } catch (error) {
+    console.error('❌ CafeDashboard: useNavigate failed:', error);
+    throw error;
+  }
     
     const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
