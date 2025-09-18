@@ -11,10 +11,10 @@ CREATE POLICY "cafe_owners_and_staff_view_order_items" ON public.order_items
         -- Allow cafe owners (user_type = 'cafe_owner' in profiles table)
         EXISTS (
             SELECT 1 FROM public.orders 
-            JOIN public.profiles ON profiles.id = orders.cafe_id::text
+            JOIN public.profiles ON profiles.cafe_id = orders.cafe_id
             WHERE orders.id = order_items.order_id 
             AND profiles.user_type = 'cafe_owner'
-            AND profiles.cafe_id = orders.cafe_id
+            AND profiles.id = auth.uid()
         )
         OR
         -- Allow cafe staff (in cafe_staff table)
