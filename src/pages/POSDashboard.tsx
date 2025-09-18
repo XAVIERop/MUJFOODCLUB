@@ -197,6 +197,7 @@ const POSDashboard = () => {
 
       if (error) {
         console.error('Full query failed, using simple data:', error);
+        console.error('Error details:', error.message, error.details, error.hint);
         // Use simple data if full query fails, but we need to transform it
         const transformedOrders = (simpleData || []).map(order => ({
           ...order,
@@ -208,6 +209,7 @@ const POSDashboard = () => {
         // Fetch order items separately for simple data
         const itemsData: {[key: string]: OrderItem[]} = {};
         for (const order of transformedOrders) {
+          console.log(`🔍 Fetching items for order ${order.id} (${order.order_number})`);
           const { data: items, error: itemsError } = await supabase
             .from('order_items')
             .select(`
@@ -217,24 +219,34 @@ const POSDashboard = () => {
             .eq('order_id', order.id);
 
           if (itemsError) {
-            console.error(`Error fetching items for order ${order.id}:`, itemsError);
-          } else if (items && items.length > 0) {
-            itemsData[order.id] = items;
+            console.error(`❌ Error fetching items for order ${order.id}:`, itemsError);
+            console.error('Items error details:', itemsError.message, itemsError.details, itemsError.hint);
+          } else {
+            console.log(`✅ Items for order ${order.id}:`, items?.length || 0, 'items');
+            if (items && items.length > 0) {
+              itemsData[order.id] = items;
+              console.log('Items data:', items);
+            }
           }
         }
+        console.log('Final itemsData:', itemsData);
         setOrderItems(itemsData);
       } else {
         console.log('Full query successful, found orders:', data?.length || 0);
+        console.log('Sample order data:', data?.[0]);
         setOrders(data || []);
         setFilteredOrders(data || []);
         
         // Extract order items from the joined data
         const itemsData: {[key: string]: OrderItem[]} = {};
         for (const order of data || []) {
+          console.log(`🔍 Processing order ${order.id} (${order.order_number}):`, order.order_items?.length || 0, 'items');
           if (order.order_items && order.order_items.length > 0) {
             itemsData[order.id] = order.order_items;
+            console.log('Order items:', order.order_items);
           }
         }
+        console.log('Final itemsData from joined query:', itemsData);
         setOrderItems(itemsData);
       }
     } catch (error) {
