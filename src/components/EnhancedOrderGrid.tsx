@@ -3,6 +3,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { 
   Search, 
   Clock, 
@@ -74,6 +76,9 @@ interface EnhancedOrderGridProps {
   onStatusUpdate: (orderId: string, newStatus: Order['status']) => void;
   loading?: boolean;
   cafeId?: string;
+  staff?: Array<{id: string; staff_name: string | null; role: string; profile?: {full_name: string}}>;
+  onStaffUpdate?: (orderId: string, staffId: string | null) => void;
+  getStaffDisplayName?: (staff: any) => string;
 }
 
 const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
@@ -82,7 +87,10 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
   onOrderSelect,
   onStatusUpdate,
   loading = false,
-  cafeId
+  cafeId,
+  staff = [],
+  onStaffUpdate,
+  getStaffDisplayName
 }) => {
   const { toast } = useToast();
   const { isConnected, isPrinting, printBothReceipts } = usePrinter();
@@ -559,6 +567,29 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                     </div>
                   </div>
                 </div>
+
+                {/* Staff Assignment Dropdown */}
+                {(order.status === 'completed' || order.status === 'on_the_way') && staff.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <Label className="text-xs font-medium text-gray-600">Delivered By:</Label>
+                    <Select
+                      value={order.delivered_by_staff_id || ''}
+                      onValueChange={(value) => onStaffUpdate?.(order.id, value || null)}
+                    >
+                      <SelectTrigger className="h-6 text-xs">
+                        <SelectValue placeholder="Select staff" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Not Assigned</SelectItem>
+                        {staff.map((member) => (
+                          <SelectItem key={member.id} value={member.id}>
+                            {getStaffDisplayName ? getStaffDisplayName(member) : (member.staff_name || member.profile?.full_name || 'Unknown')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="flex space-x-1.5">

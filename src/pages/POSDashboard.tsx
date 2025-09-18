@@ -1831,12 +1831,15 @@ const POSDashboard = () => {
 
             {/* Enhanced Grid View */}
             {useCompactLayout && (
-              <EnhancedOrderGrid
-                orders={filteredOrders}
-                orderItems={orderItems}
-                onOrderSelect={handleOrderSelect}
-                onStatusUpdate={handleCompactStatusUpdate}
-                loading={loading}
+            <EnhancedOrderGrid
+              orders={filteredOrders}
+              orderItems={orderItems}
+              onOrderSelect={handleOrderSelect}
+              onStatusUpdate={handleCompactStatusUpdate}
+              loading={loading}
+              staff={staff}
+              onStaffUpdate={updateOrderStaff}
+              getStaffDisplayName={getStaffDisplayName}
                 cafeId={cafeId}
               />
             )}
