@@ -183,6 +183,7 @@ const CafeDashboard = () => {
 
       if (error) {
         console.error('Full query failed, using simple data:', error);
+        console.error('Error details:', error.message, error.details, error.hint);
         // Use simple data if full query fails, but we need to transform it to match Order type
         const transformedOrders = (simpleData || []).map(order => ({
           ...order,
@@ -193,6 +194,20 @@ const CafeDashboard = () => {
         setFilteredOrders(transformedOrders);
       } else {
         console.log('Full query successful, found orders:', data?.length || 0);
+        console.log('Sample order data:', data?.[0]);
+        console.log('Sample order_items:', data?.[0]?.order_items);
+        
+        // Check if order_items are properly populated
+        const ordersWithItems = data?.filter(order => order.order_items && order.order_items.length > 0) || [];
+        const ordersWithoutItems = data?.filter(order => !order.order_items || order.order_items.length === 0) || [];
+        
+        console.log('Orders with items:', ordersWithItems.length);
+        console.log('Orders without items:', ordersWithoutItems.length);
+        
+        if (ordersWithoutItems.length > 0) {
+          console.log('Sample order without items:', ordersWithoutItems[0]);
+        }
+        
         setOrders(data || []);
         setFilteredOrders(data || []);
       }
