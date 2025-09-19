@@ -100,8 +100,8 @@ const MyOrders = () => {
       filtered = filtered.filter(order => 
         order.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
         order.cafe?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.order_items.some(item => 
-          item.menu_item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        (order.order_items || []).some(item => 
+          item.menu_item?.name?.toLowerCase().includes(searchQuery.toLowerCase())
         )
       );
     }
@@ -220,7 +220,7 @@ const MyOrders = () => {
     try {
       // Navigate to the cafe menu with pre-filled cart
       navigate(`/menu/${order.cafe?.name?.toLowerCase().replace(/\s+/g, '-') || 'unknown-cafe'}`, {
-        state: { reorderItems: order.order_items }
+        state: { reorderItems: order.order_items || [] }
       });
     } catch (error) {
       toast({
@@ -538,15 +538,15 @@ const MyOrders = () => {
                       <div className="bg-muted/50 rounded-lg p-3">
                         <p className="text-sm font-medium mb-2">Order Items:</p>
                         <div className="space-y-1">
-                          {order.order_items.slice(0, 3).map((item) => (
+                          {(order.order_items || []).slice(0, 3).map((item) => (
                             <div key={item.id} className="flex justify-between text-sm">
                               <span>{item.quantity}x {item.menu_item.name}</span>
                               <span>₹{item.total_price}</span>
                             </div>
                           ))}
-                          {order.order_items.length > 3 && (
+                          {(order.order_items || []).length > 3 && (
                             <p className="text-xs text-muted-foreground">
-                              +{order.order_items.length - 3} more items
+                              +{(order.order_items || []).length - 3} more items
                             </p>
                           )}
                         </div>
