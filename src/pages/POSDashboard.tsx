@@ -453,14 +453,24 @@ const POSDashboard = () => {
 
   const updateOrderStaff = async (orderId: string, staffId: string | null) => {
     try {
-      const { error } = await supabase
+      console.log('🔄 Updating order staff:', { orderId, staffId });
+      
+      const { data, error } = await supabase
         .from('orders')
         .update({ delivered_by_staff_id: staffId })
-        .eq('id', orderId);
+        .eq('id', orderId)
+        .select();
 
       if (error) {
+        console.error('❌ Supabase error details:', error);
+        console.error('❌ Error code:', error.code);
+        console.error('❌ Error message:', error.message);
+        console.error('❌ Error details:', error.details);
+        console.error('❌ Error hint:', error.hint);
         throw error;
       }
+
+      console.log('✅ Update successful:', data);
 
       // Update local state
       setOrders(prev => prev.map(order => 
@@ -474,7 +484,7 @@ const POSDashboard = () => {
         description: staffId ? "Staff member assigned to order" : "Staff assignment removed"
       });
     } catch (error) {
-      console.error('Error updating order staff:', error);
+      console.error('❌ Error updating order staff:', error);
       toast({
         title: "Error",
         description: "Failed to update staff assignment",
