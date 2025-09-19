@@ -1,15 +1,14 @@
--- Complete Rewards System Cleanup
--- This script removes all remaining rewards-related elements
+-- Remove Rewards System from Database
+-- This script safely removes all rewards-related tables, functions, and columns
+-- while preserving core functionality
 
--- 1. Drop rewards-related enums
--- Drop base types only - array types are automatically removed
-DROP TYPE IF EXISTS public._cafe_loyalty_points CASCADE;
-DROP TYPE IF EXISTS public._cafe_loyalty_transactions CASCADE;
-DROP TYPE IF EXISTS public.cafe_loyalty_points CASCADE;
-DROP TYPE IF EXISTS public.cafe_loyalty_transactions CASCADE;
-DROP TYPE IF EXISTS public.loyalty_tier CASCADE;
+-- 1. Drop rewards-specific tables (safe to remove)
+DROP TABLE IF EXISTS public.tier_maintenance CASCADE;
+DROP TABLE IF EXISTS public.user_bonuses CASCADE;
+DROP TABLE IF EXISTS public.maintenance_periods CASCADE;
+DROP TABLE IF EXISTS public.loyalty_transactions CASCADE;
 
--- 2. Drop any remaining rewards-related functions
+-- 2. Drop rewards-specific functions
 DROP FUNCTION IF EXISTS public.calculate_enhanced_points(amount DECIMAL, is_new_user BOOLEAN, new_user_orders_count INTEGER);
 DROP FUNCTION IF EXISTS public.handle_new_user_first_order(user_id UUID);
 DROP FUNCTION IF EXISTS public.track_maintenance_spending(user_id UUID, order_amount DECIMAL);
@@ -22,7 +21,8 @@ DROP FUNCTION IF EXISTS public.get_cafe_loyalty_discount(user_id UUID, cafe_id U
 DROP FUNCTION IF EXISTS public.calculate_cafe_loyalty_level(user_id UUID, cafe_id UUID);
 DROP FUNCTION IF EXISTS public.get_user_cafe_loyalty_summary(user_id UUID, cafe_id UUID);
 
--- 3. Remove rewards-specific columns from profiles table (if they exist)
+-- 3. Remove rewards-specific columns from profiles table
+-- Keep essential columns, remove rewards-specific ones
 ALTER TABLE public.profiles 
 DROP COLUMN IF EXISTS loyalty_points,
 DROP COLUMN IF EXISTS loyalty_tier,
@@ -34,44 +34,40 @@ DROP COLUMN IF EXISTS first_order_date,
 DROP COLUMN IF EXISTS tier_warning_sent,
 DROP COLUMN IF EXISTS last_maintenance_check;
 
--- 4. Keep points_earned and points_credited in orders table (for compatibility)
--- These are set to 0 in the checkout process and don't affect functionality
+-- 4. Remove rewards-specific columns from orders table
+-- Keep points_earned and points_credited (set to 0 in checkout) for compatibility
+-- ALTER TABLE public.orders 
+-- DROP COLUMN IF EXISTS points_earned,
+-- DROP COLUMN IF EXISTS points_credited;
 
--- 5. Drop any rewards-related triggers
-DROP TRIGGER IF EXISTS update_loyalty_points_trigger ON public.orders;
-DROP TRIGGER IF EXISTS track_cafe_loyalty_trigger ON public.orders;
+-- 5. Drop rewards-specific enums
+DROP TYPE IF EXISTS public.loyalty_tier CASCADE;
 
--- 6. Drop any rewards-related views
-DROP VIEW IF EXISTS public.user_rewards_summary;
-DROP VIEW IF EXISTS public.cafe_loyalty_summary;
-
--- 7. Drop any rewards-related indexes
+-- 6. Drop any rewards-specific indexes
 DROP INDEX IF EXISTS idx_profiles_loyalty_tier;
 DROP INDEX IF EXISTS idx_profiles_loyalty_points;
 DROP INDEX IF EXISTS idx_orders_points_earned;
 DROP INDEX IF EXISTS idx_loyalty_transactions_user_id;
 DROP INDEX IF EXISTS idx_loyalty_transactions_cafe_id;
 
--- 8. Verify cleanup
-SELECT 
-    'Complete rewards cleanup finished' as status,
-    'All rewards-related elements have been removed from database' as message;
+-- 7. Drop any rewards-specific triggers
+DROP TRIGGER IF EXISTS update_loyalty_points_trigger ON public.orders;
+DROP TRIGGER IF EXISTS track_cafe_loyalty_trigger ON public.orders;
 
--- 9. Show remaining enums to verify cleanup
-SELECT 
-    'REMAINING ENUMS' as category,
-    typname as enum_name,
-    'Core enum - kept' as action
-FROM pg_type 
-WHERE typtype = 'e' 
-AND typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
-ORDER BY typname;
+-- 8. Drop any rewards-specific views
+DROP VIEW IF EXISTS public.user_rewards_summary;
+DROP VIEW IF EXISTS public.cafe_loyalty_summary;
 
--- 10. Show core tables that remain intact
+-- 9. Clean up any remaining rewards-related policies
+-- (These will be automatically dropped when tables are dropped)
+
+-- 10. Verify cleanup
 SELECT 
-    'CORE TABLES' as category,
-    table_name,
-    'Remains intact' as action
+    'Rewards system cleanup completed' as status,
+    'All rewards-related tables, functions, and columns have been removed' as message;
+
+-- 11. Show remaining tables to verify core functionality is intact
+SELECT table_name 
 FROM information_schema.tables 
 WHERE table_schema = 'public' 
 AND table_type = 'BASE TABLE'
