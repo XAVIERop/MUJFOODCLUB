@@ -79,7 +79,6 @@ const MenuModern = () => {
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedMenuCategory, setSelectedMenuCategory] = useState('all');
 
   // Helper function to determine if identifier is UUID or slug
   const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
@@ -301,9 +300,9 @@ const MenuModern = () => {
       filtered = filtered.filter(item => item.is_vegetarian === false);
     }
     
-    // Apply menu category filter
-    if (selectedMenuCategory !== 'all') {
-      filtered = filtered.filter(item => item.category === selectedMenuCategory);
+    // Apply menu category filter (use selectedCategory for menu categories too)
+    if (selectedCategory !== 'all' && selectedCategory !== 'veg' && selectedCategory !== 'non-veg') {
+      filtered = filtered.filter(item => item.category === selectedCategory);
     }
     
     // Apply search filter
