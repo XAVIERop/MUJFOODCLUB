@@ -107,7 +107,6 @@ const Profile = () => {
       '⚠️ WARNING: This will reset ALL data for your test account!\n\n' +
       'This will delete:\n' +
       '• All orders and order history\n' +
-      '• All loyalty points and transactions\n' +
       '• Reset profile to initial state\n\n' +
       'Are you sure you want to continue?'
     );
@@ -131,18 +130,6 @@ const Profile = () => {
       }
       console.log('✅ Orders deleted successfully');
 
-      // Delete all loyalty transactions
-      console.log('🗑️ Deleting loyalty transactions for user:', user.id);
-      const { error: transactionsError } = await supabase
-        .from('loyalty_transactions')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (transactionsError) {
-        console.error('❌ Error deleting loyalty transactions:', transactionsError);
-        throw transactionsError;
-      }
-      console.log('✅ Loyalty transactions deleted successfully');
 
       // Delete any order ratings (need to join with orders table)
       console.log('🗑️ Deleting order ratings for user:', user.id);
@@ -202,45 +189,14 @@ const Profile = () => {
         console.log('✅ Cafe staff records deleted successfully');
       }
 
-      // Delete any user bonuses
-      console.log('🗑️ Deleting user bonuses for user:', user.id);
-      const { error: bonusesError } = await supabase
-        .from('user_bonuses')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (bonusesError) {
-        console.error('❌ Error deleting user bonuses:', bonusesError);
-        // Don't throw here, bonuses might not exist
-      } else {
-        console.log('✅ User bonuses deleted successfully');
-      }
-
-      // Delete any maintenance periods
-      console.log('🗑️ Deleting maintenance periods for user:', user.id);
-      const { error: maintenanceError } = await supabase
-        .from('maintenance_periods')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (maintenanceError) {
-        console.error('❌ Error deleting maintenance periods:', maintenanceError);
-        // Don't throw here, maintenance periods might not exist
-      } else {
-        console.log('✅ Maintenance periods deleted successfully');
-      }
 
       // Reset profile to initial state
       console.log('🔄 Resetting profile for user:', user.id);
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          loyalty_points: 0,
           total_orders: 0,
           total_spent: 0,
-          loyalty_tier: 'foodie',
-          is_new_user: true,
-          new_user_orders_count: 0,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -342,10 +298,6 @@ const Profile = () => {
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-sm">
-                    <Trophy className="w-4 h-4 text-muted-foreground" />
-                    <span>Loyalty Tier: {profile.loyalty_tier || 'Foodie'}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
                     <Receipt className="w-4 h-4 text-muted-foreground" />
                     <span>Total Orders: {profile.total_orders || 0}</span>
                   </div>
@@ -373,7 +325,7 @@ const Profile = () => {
                         )}
                       </Button>
                       <p className="text-xs text-muted-foreground mt-2 text-center">
-                        This will delete all orders, points, and reset your account to initial state
+                        This will delete all orders and reset your account to initial state
                       </p>
                       <Button
                         onClick={async () => {
