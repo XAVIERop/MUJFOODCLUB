@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { QrCode, User, LogOut, Settings, Menu, Home, Coffee, Gift, Utensils, Bell, Receipt, Store, Package, Heart, MapPin, ChevronDown } from 'lucide-react';
+import { QrCode, User, LogOut, Settings, Menu, Home, Coffee, Utensils, Bell, Receipt, Store, Package, Heart, MapPin, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationSubscriptions } from '@/hooks/useSubscriptionManager';
@@ -124,7 +124,6 @@ const Header = () => {
   const navItems = [
     { href: "/", label: "Home", icon: Home },
     { href: "/cafes", label: "Cafes", icon: Coffee },
-    { href: "/rewards", label: "Rewards", icon: Gift },
   ];
 
   return (
@@ -237,10 +236,6 @@ const Header = () => {
                     <DropdownMenuItem onClick={() => navigate('/orders')}>
                       <Package className="mr-2 h-4 w-4" />
                       <span>My Orders</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/rewards')}>
-                      <Gift className="mr-2 h-4 w-4" />
-                      <span>Rewards</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/cafes?favorites=true')}>
                       <Heart className="mr-2 h-4 w-4" />
@@ -368,14 +363,6 @@ const Header = () => {
                     <span className="text-base">Cafes</span>
                   </a>
                   
-                  <a
-                    href="/rewards"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center space-x-3 text-muted-foreground hover:text-primary transition-smooth p-2 rounded-lg hover:bg-muted/50"
-                  >
-                    <Gift className="w-5 h-5" />
-                    <span className="text-base">Rewards</span>
-                  </a>
                   
                   {/* User Actions - Simplified */}
                   {user ? (

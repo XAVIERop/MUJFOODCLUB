@@ -31,7 +31,6 @@ const OrderAnalyticsPage = lazy(() => import("./pages/OrderAnalyticsPage"));
 const Cafes = lazy(() => import("./pages/Cafes"));
 const QRCodePage = lazy(() => import("./pages/QRCodePage"));
 const Profile = lazy(() => import("./pages/Profile"));
-// const CafeRewards = lazy(() => import("./pages/CafeRewards")); // Disabled for simplified version
 const CafeDashboard = lazy(() => import("./pages/CafeDashboard"));
 const CafeManagement = lazy(() => import("./pages/CafeManagement"));
 const EnhancedCafeCardDemo = lazy(() => import("./components/EnhancedCafeCardDemo"));
