@@ -75,7 +75,7 @@ WHERE o.user_id = (
   WHERE email LIKE '%@muj.manipal.edu' 
   LIMIT 1
 )
-ORDER BY oi.created_at DESC
+ORDER BY o.created_at DESC
 LIMIT 5;
 
 -- 6. CREATE PROPER RLS POLICIES
