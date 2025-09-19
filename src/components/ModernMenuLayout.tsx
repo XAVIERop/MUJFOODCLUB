@@ -189,7 +189,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
             </div>
 
             {/* Menu Items Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {menuItems.map((item, index) => (
                 <ModernFoodCard
                   key={item.id || index}
@@ -240,7 +240,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
   );
 };
 
-// Modern Food Card Component
+// Modern Food Card Component (No Images)
 const ModernFoodCard: React.FC<{
   item: any;
   onAddToCart: (item: any) => void;
@@ -250,31 +250,35 @@ const ModernFoodCard: React.FC<{
   isFavorite?: (itemId: string) => boolean;
 }> = ({ item, onAddToCart, onRemoveFromCart, getCartQuantity, onToggleFavorite, isFavorite }) => {
   const cartQuantity = getCartQuantity(item.portions?.[0]?.id || item.id);
-  const hasImage = item.image_url || item.photo_url;
 
   return (
-    <Card className="group bg-white border-0 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
-      <CardContent className="p-0">
-        {/* Food Image */}
-        <div className="relative h-48 bg-gradient-to-br from-orange-100 to-red-100">
-          {hasImage ? (
-            <img
-              src={item.image_url || item.photo_url}
-              alt={item.baseName || item.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="text-6xl opacity-20">🍽️</div>
+    <Card className="group bg-white border border-orange-100 shadow-sm hover:shadow-md transition-all duration-300">
+      <CardContent className="p-4">
+        {/* Food Details Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-gray-900 text-lg">
+                {item.baseName || item.name}
+              </h3>
+              {/* Vegetarian Badge */}
+              {item.is_vegetarian && (
+                <Badge className="bg-green-500 text-white text-xs px-2 py-1">
+                  Veg
+                </Badge>
+              )}
             </div>
-          )}
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {item.description}
+            </p>
+          </div>
           
           {/* Favorite Button */}
           {onToggleFavorite && (
             <Button
               variant="ghost"
               size="sm"
-              className="absolute top-3 right-3 w-8 h-8 p-0 bg-white/80 hover:bg-white rounded-full shadow-sm"
+              className="w-8 h-8 p-0 hover:bg-orange-50 rounded-full"
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleFavorite(item.id);
@@ -288,70 +292,54 @@ const ModernFoodCard: React.FC<{
               />
             </Button>
           )}
-
-          {/* Vegetarian Badge */}
-          {item.is_vegetarian && (
-            <Badge className="absolute top-3 left-3 bg-green-500 text-white text-xs">
-              Veg
-            </Badge>
-          )}
         </div>
-
-        {/* Food Details */}
-        <div className="p-4">
-          <h3 className="font-semibold text-gray-900 mb-1 line-clamp-1">
-            {item.baseName || item.name}
-          </h3>
-          <p className="text-sm text-gray-500 mb-2 line-clamp-2">
-            {item.description}
-          </p>
-          
-          {/* Price and Add Button */}
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="text-lg font-bold text-gray-900">
-                ₹{item.portions?.[0]?.price || item.price}
+        
+        {/* Price and Controls */}
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            <span className="text-xl font-bold text-gray-900">
+              ₹{item.portions?.[0]?.price || item.price}
+            </span>
+            {item.preparation_time && (
+              <span className="text-xs text-gray-500 flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {item.preparation_time} mins
               </span>
-              {item.preparation_time && (
-                <span className="text-xs text-gray-400">
-                  {item.preparation_time} mins
-                </span>
-              )}
-            </div>
-            
-            {/* Quantity Controls */}
-            <div className="flex items-center gap-2">
-              {cartQuantity > 0 ? (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-8 h-8 p-0 rounded-full"
-                    onClick={() => onRemoveFromCart(item)}
-                  >
-                    <Minus className="w-3 h-3" />
-                  </Button>
-                  <span className="text-sm font-medium w-6 text-center">
-                    {cartQuantity}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-8 h-8 p-0 rounded-full"
-                    onClick={() => onAddToCart(item)}
-                  >
-                    <Plus className="w-3 h-3" />
-                  </Button>
-                </div>
-              ) : (
+            )}
+          </div>
+          
+          {/* Quantity Controls */}
+          <div className="flex items-center gap-2">
+            {cartQuantity > 0 ? (
+              <div className="flex items-center gap-2">
                 <Button
-                  onClick={() => onAddToCart(item)}
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-sm"
+                  variant="outline"
+                  size="sm"
+                  className="w-8 h-8 p-0 rounded-full border-orange-200 hover:bg-orange-50"
+                  onClick={() => onRemoveFromCart(item)}
                 >
-                  Add
+                  <Minus className="w-3 h-3" />
                 </Button>
-              )}
-            </div>
+                <span className="text-sm font-medium w-6 text-center">
+                  {cartQuantity}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-8 h-8 p-0 rounded-full border-orange-200 hover:bg-orange-50"
+                  onClick={() => onAddToCart(item)}
+                >
+                  <Plus className="w-3 h-3" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={() => onAddToCart(item)}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full text-sm font-medium shadow-sm"
+              >
+                Add
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>

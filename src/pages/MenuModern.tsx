@@ -17,8 +17,6 @@ interface MenuItem {
   is_available: boolean;
   out_of_stock: boolean;
   cafe_id: string;
-  image_url?: string;
-  photo_url?: string;
 }
 
 interface GroupedMenuItem {
