@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Utensils, Star, Gift } from "lucide-react";
+import { ArrowRight, Utensils, Star, Truck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/img.png";
 
@@ -11,9 +11,6 @@ const HeroContent: React.FC = () => {
     navigate('/cafes');
   };
 
-  const handleViewRewards = () => {
-    navigate('/rewards');
-  };
 
   return (
     <div className="text-center space-y-8">
@@ -26,7 +23,7 @@ const HeroContent: React.FC = () => {
           </span>
         </h1>
         <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-          Discover amazing food from your favorite campus cafes. Order, earn rewards, and enjoy delicious meals delivered right to your block.
+          Discover amazing food from your favorite campus cafes. Order and enjoy delicious meals delivered right to your block.
         </p>
       </div>
 
@@ -52,16 +49,6 @@ const HeroContent: React.FC = () => {
           <ArrowRight className="w-5 h-5 ml-2" />
         </Button>
         
-        <Button
-          onClick={handleViewRewards}
-          variant="outline"
-          size="lg"
-          className="px-8 py-4 text-lg font-semibold border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white rounded-xl transition-all duration-300"
-        >
-          <Gift className="w-5 h-5 mr-2" />
-          View Rewards
-          <Star className="w-5 h-5 ml-2" />
-        </Button>
       </div>
 
       {/* Features */}
@@ -78,13 +65,13 @@ const HeroContent: React.FC = () => {
           <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto">
             <Star className="w-6 h-6 text-orange-500" />
           </div>
-          <h3 className="font-semibold text-gray-900">Earn Rewards</h3>
-          <p className="text-sm text-gray-600">Points and discounts on every order</p>
+          <h3 className="font-semibold text-gray-900">Quality Food</h3>
+          <p className="text-sm text-gray-600">Fresh ingredients and authentic flavors</p>
         </div>
         
         <div className="text-center space-y-2">
           <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto">
-            <Gift className="w-6 h-6 text-orange-500" />
+            <Truck className="w-6 h-6 text-orange-500" />
           </div>
           <h3 className="font-semibold text-gray-900">Block Delivery</h3>
           <p className="text-sm text-gray-600">Delivered right to your doorstep</p>

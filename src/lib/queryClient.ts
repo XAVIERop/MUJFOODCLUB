@@ -41,7 +41,6 @@ export const queryKeys = {
   
   // User related queries
   profile: (userId: string) => ['profile', userId] as const,
-  userRewards: (userId: string) => ['rewards', userId] as const,
   
   // Notifications
   notifications: (userId: string) => ['notifications', userId] as const,

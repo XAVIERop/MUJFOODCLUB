@@ -154,8 +154,8 @@ const QRCodePage = () => {
                     3
                   </div>
                   <div>
-                    <p className="font-medium">Earn Rewards</p>
-                    <p className="text-sm text-muted-foreground">Automatically earn points and get tier-based discounts</p>
+                    <p className="font-medium">Track Orders</p>
+                    <p className="text-sm text-muted-foreground">Monitor your order status and delivery progress</p>
                   </div>
                 </div>
                 

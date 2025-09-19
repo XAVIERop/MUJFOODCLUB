@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Settings, Coffee, Gift, Utensils, Bell, Receipt, Store, Package, Heart, Home } from 'lucide-react';
+import { User, LogOut, Settings, Coffee, Utensils, Bell, Receipt, Store, Package, Heart, Home } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from '@/contexts/LocationContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -112,8 +112,7 @@ const SimpleHeader = () => {
   // Navigation items
   const navItems = [
     { label: 'Home', href: '/', icon: Home },
-    { label: 'Cafes', href: '/cafes', icon: Coffee },
-    { label: 'Rewards', href: '/rewards', icon: Gift }
+    { label: 'Cafes', href: '/cafes', icon: Coffee }
   ];
 
   return (
@@ -228,10 +227,6 @@ const SimpleHeader = () => {
                     <DropdownMenuItem onClick={() => navigate('/orders')}>
                       <Receipt className="mr-2 h-4 w-4" />
                       <span>My Orders</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/rewards')}>
-                      <Gift className="mr-2 h-4 w-4" />
-                      <span>Rewards</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/favorites')}>
                       <Heart className="mr-2 h-4 w-4" />

@@ -42,11 +42,11 @@ const QRCodeSection = () => {
               <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Star className="w-8 h-8 text-green-500" />
               </div>
-              <CardTitle className="text-xl">Earn Rewards</CardTitle>
+              <CardTitle className="text-xl">Track Orders</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Automatically earn loyalty points with every purchase and unlock tier-based discounts
+                Monitor your order status and delivery progress in real-time
               </p>
             </CardContent>
           </Card>
@@ -75,11 +75,11 @@ const QRCodeSection = () => {
               </p>
               <div className="flex items-center justify-center space-x-6">
                 <Button 
-                  onClick={() => navigate('/rewards')}
+                  onClick={() => navigate('/orders')}
                   className="bg-primary hover:bg-primary/90"
                 >
-                  <Gift className="w-4 h-4 mr-2" />
-                  View My Rewards
+                  <Package className="w-4 h-4 mr-2" />
+                  View My Orders
                 </Button>
                 <Button 
                   variant="outline"
