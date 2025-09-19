@@ -124,6 +124,7 @@ export const useUserOrdersQuery = (userId: string | null, options?: {
         .select(`
           *,
           user:profiles(full_name, phone, block, email),
+          cafe:cafes(name, location, id),
           order_items(
             id,
             menu_item_id,

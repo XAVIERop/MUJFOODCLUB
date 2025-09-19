@@ -99,7 +99,7 @@ const MyOrders = () => {
     if (searchQuery) {
       filtered = filtered.filter(order => 
         order.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.cafe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.cafe?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         order.order_items.some(item => 
           item.menu_item.name.toLowerCase().includes(searchQuery.toLowerCase())
         )
@@ -219,7 +219,7 @@ const MyOrders = () => {
   const handleReorder = useCallback(async (order: Order) => {
     try {
       // Navigate to the cafe menu with pre-filled cart
-      navigate(`/menu/${order.cafe.name.toLowerCase().replace(/\s+/g, '-')}`, {
+      navigate(`/menu/${order.cafe?.name?.toLowerCase().replace(/\s+/g, '-') || 'unknown-cafe'}`, {
         state: { reorderItems: order.order_items }
       });
     } catch (error) {
@@ -235,7 +235,7 @@ const MyOrders = () => {
     try {
       const shareData = {
         title: `Order #${order.order_number}`,
-        text: `Check out my order from ${order.cafe.name} - ₹${order.total_amount}`,
+        text: `Check out my order from ${order.cafe?.name || 'Unknown Cafe'} - ₹${order.total_amount}`,
         url: window.location.origin + `/order-confirmation/${order.order_number}`
       };
 
@@ -517,7 +517,7 @@ const MyOrders = () => {
                             </div>
                             <div className="flex items-center">
                               <MapPin className="w-4 h-4 mr-1" />
-                              {order.cafe.name}
+                              {order.cafe?.name || 'Unknown Cafe'}
                             </div>
                             <div className="flex items-center">
                               <CreditCard className="w-4 h-4 mr-1" />
