@@ -32,11 +32,13 @@ const SearchBar = () => {
         // Fetch menu items with cafe priority
         const { data: menuData, error: menuError } = await supabase
           .from('menu_items')
-          .select('id, name, description, price, cafe_id, cafes(name, priority)')
-          .order('cafes.priority', { ascending: true });
+          .select('id, name, description, price, cafe_id, cafes(name, priority)');
 
         if (!menuError && menuData) {
+          console.log('Menu items loaded:', menuData.length);
           setMenuItems(menuData);
+        } else {
+          console.error('Menu error:', menuError);
         }
       } catch (error) {
         console.error('Error fetching search data:', error);
@@ -84,6 +86,10 @@ const SearchBar = () => {
           // If same priority, sort alphabetically by dish name
           return a.name.localeCompare(b.name);
         });
+      
+      console.log('Search query:', searchQuery);
+      console.log('Filtered menu items:', filteredMenu.length);
+      console.log('Menu items total:', menuItems.length);
       
       return {
         filteredCafes: [],
