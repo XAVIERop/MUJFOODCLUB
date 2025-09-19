@@ -146,6 +146,13 @@ export const useUserOrdersQuery = (userId: string | null, options?: {
       const orders = Array.isArray(data) ? data : [];
       console.log(`✅ Fetched ${orders.length} orders for user`);
       
+      // Debug: Log the first order to see what data we're getting
+      if (orders.length > 0) {
+        console.log('🔍 First order data:', orders[0]);
+        console.log('🔍 Order items in first order:', orders[0].order_items);
+        console.log('🔍 Order items length:', orders[0].order_items?.length || 0);
+      }
+      
       return orders;
     },
     staleTime: options?.staleTime || 60 * 1000, // 1 minute
