@@ -1,70 +1,67 @@
--- Check Current Cafe Status and Owner Accounts
--- This script shows the current status of all cafes and their owner accounts
+-- Check current status of all cafes
+-- Run this in Supabase SQL Editor to see cafe status
 
--- Show all cafes with their details
+-- 1. Basic cafe information with status
 SELECT 
+  id,
   name,
   type,
   location,
   phone,
   hours,
+  rating,
+  total_reviews,
+  is_active,
   accepting_orders,
-  priority,
-  is_exclusive,
-  average_rating,
-  total_ratings,
-  created_at
-FROM public.cafes 
-ORDER BY priority ASC;
+  created_at,
+  updated_at
+FROM public.cafes
+ORDER BY name;
 
--- Show all cafe owner accounts
+-- 2. Cafe status summary
 SELECT 
-  p.email,
-  p.full_name,
-  p.user_type,
+  COUNT(*) as total_cafes,
+  COUNT(CASE WHEN is_active = true THEN 1 END) as active_cafes,
+  COUNT(CASE WHEN is_active = false THEN 1 END) as inactive_cafes,
+  COUNT(CASE WHEN accepting_orders = true THEN 1 END) as accepting_orders,
+  COUNT(CASE WHEN accepting_orders = false THEN 1 END) as not_accepting_orders
+FROM public.cafes;
+
+-- 3. Recent activity (last 24 hours)
+SELECT 
   c.name as cafe_name,
+  c.is_active,
   c.accepting_orders,
-  c.priority,
-  c.is_exclusive,
-  p.created_at as account_created
-FROM public.profiles p
-LEFT JOIN public.cafes c ON p.cafe_id = c.id
-WHERE p.user_type = 'cafe_owner'
-ORDER BY c.priority ASC;
-
--- Show cafes without owner accounts
-SELECT 
-  c.name,
-  c.type,
-  c.priority,
-  c.is_exclusive,
-  c.accepting_orders
+  COUNT(o.id) as orders_last_24h,
+  COALESCE(SUM(o.total_amount), 0) as revenue_last_24h
 FROM public.cafes c
-LEFT JOIN public.profiles p ON c.id = p.cafe_id AND p.user_type = 'cafe_owner'
-WHERE p.id IS NULL
-ORDER BY c.priority ASC;
+LEFT JOIN public.orders o ON c.id = o.cafe_id 
+  AND o.created_at >= NOW() - INTERVAL '24 hours'
+GROUP BY c.id, c.name, c.is_active, c.accepting_orders
+ORDER BY orders_last_24h DESC;
 
--- Show menu item counts for each cafe
+-- 4. Menu items availability by cafe
 SELECT 
-  c.name,
-  COUNT(mi.id) as menu_item_count,
-  COUNT(CASE WHEN mi.is_available = true THEN 1 END) as available_items
+  c.name as cafe_name,
+  c.is_active,
+  c.accepting_orders,
+  COUNT(mi.id) as total_menu_items,
+  COUNT(CASE WHEN mi.is_available = true AND mi.out_of_stock = false THEN 1 END) as available_items,
+  COUNT(CASE WHEN mi.is_available = false THEN 1 END) as unavailable_items,
+  COUNT(CASE WHEN mi.out_of_stock = true THEN 1 END) as out_of_stock_items
 FROM public.cafes c
 LEFT JOIN public.menu_items mi ON c.id = mi.cafe_id
-GROUP BY c.id, c.name
-ORDER BY c.priority ASC;
+GROUP BY c.id, c.name, c.is_active, c.accepting_orders
+ORDER BY c.name;
 
--- Show exclusive cafes status
+-- 5. Current orders by cafe
 SELECT 
-  name,
-  priority,
-  accepting_orders,
-  is_exclusive,
-  CASE 
-    WHEN EXISTS (SELECT 1 FROM public.profiles p WHERE p.cafe_id = c.id AND p.user_type = 'cafe_owner') 
-    THEN '✅ Has Owner' 
-    ELSE '❌ No Owner' 
-  END as owner_status
+  c.name as cafe_name,
+  o.status,
+  COUNT(o.id) as order_count,
+  COALESCE(SUM(o.total_amount), 0) as total_amount
 FROM public.cafes c
-WHERE is_exclusive = true
-ORDER BY priority ASC;
+LEFT JOIN public.orders o ON c.id = o.cafe_id 
+  AND o.status IN ('received', 'confirmed', 'preparing', 'on_the_way')
+GROUP BY c.id, c.name, o.status
+ORDER BY c.name, o.status;

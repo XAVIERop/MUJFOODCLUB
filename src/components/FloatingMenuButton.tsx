@@ -31,6 +31,9 @@ const FloatingMenuButton: React.FC<FloatingMenuButtonProps> = ({
       setIsVisible(scrollTop > 200);
     };
 
+    // Check initial scroll position
+    handleScroll();
+    
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -58,16 +61,20 @@ const FloatingMenuButton: React.FC<FloatingMenuButtonProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="floating-menu-container fixed bottom-6 right-6 z-50">
+    <div className="floating-menu-container fixed bottom-6 right-6 z-[9999]">
       {/* Floating Menu Button */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-14 h-14 rounded-full shadow-lg transition-all duration-300",
+          "w-16 h-16 rounded-full shadow-2xl transition-all duration-300 border-2 border-white",
           isOpen 
             ? "bg-orange-600 hover:bg-orange-700" 
             : "bg-orange-500 hover:bg-orange-600"
         )}
+        style={{ 
+          zIndex: 10000,
+          position: 'relative'
+        }}
       >
         {isOpen ? (
           <X className="w-6 h-6 text-white" />
@@ -78,7 +85,10 @@ const FloatingMenuButton: React.FC<FloatingMenuButtonProps> = ({
 
       {/* Category Overlay */}
       {isOpen && (
-        <div className="absolute bottom-16 right-0 w-80 bg-black/90 backdrop-blur-sm rounded-xl p-4 shadow-2xl border border-white/10">
+        <div 
+          className="absolute bottom-16 right-0 w-80 bg-black/90 backdrop-blur-sm rounded-xl p-4 shadow-2xl border border-white/10"
+          style={{ zIndex: 10001 }}
+        >
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-white text-lg font-semibold">Recommended</h3>
