@@ -316,7 +316,24 @@ const ModernFoodCard: React.FC<{
                   variant="outline"
                   size="sm"
                   className="w-8 h-8 p-0 rounded-full border-orange-200 hover:bg-orange-50"
-                  onClick={() => onRemoveFromCart(item)}
+                  onClick={() => {
+                    // Create a cart item structure for removal
+                    const cartItem = {
+                      item: {
+                        id: item.portions?.[0]?.id || item.id,
+                        name: item.baseName || item.name,
+                        description: item.description,
+                        price: item.portions?.[0]?.price || item.price,
+                        category: item.category,
+                        preparation_time: item.preparation_time,
+                        is_available: true
+                      },
+                      selectedPortion: item.portions?.[0]?.id || item.id,
+                      quantity: cartQuantity,
+                      notes: ''
+                    };
+                    onRemoveFromCart(cartItem);
+                  }}
                 >
                   <Minus className="w-3 h-3" />
                 </Button>

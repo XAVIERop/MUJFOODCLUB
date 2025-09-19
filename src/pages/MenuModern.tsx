@@ -240,10 +240,12 @@ const MenuModern = () => {
     const cartKey = cartItem.selectedPortion;
     setCart(prev => {
       const newCart = { ...prev };
-      if (newCart[cartKey] && newCart[cartKey].quantity > 1) {
-        newCart[cartKey].quantity -= 1;
-      } else {
-        delete newCart[cartKey];
+      if (newCart[cartKey]) {
+        if (newCart[cartKey].quantity > 1) {
+          newCart[cartKey].quantity -= 1;
+        } else {
+          delete newCart[cartKey];
+        }
       }
       return newCart;
     });
