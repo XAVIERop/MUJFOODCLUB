@@ -29,11 +29,11 @@ const SearchBar = () => {
           setCafes(cafesData);
         }
 
-        // Fetch menu items
+        // Fetch menu items with cafe priority
         const { data: menuData, error: menuError } = await supabase
           .from('menu_items')
-          .select('id, name, description, price, cafe_id, cafes(name)')
-          .order('name', { ascending: true });
+          .select('id, name, description, price, cafe_id, cafes(name, priority)')
+          .order('cafes.priority', { ascending: true });
 
         if (!menuError && menuData) {
           setMenuItems(menuData);
@@ -68,9 +68,23 @@ const SearchBar = () => {
         showMenuDropdown: false
       };
     } else {
-      const filteredMenu = menuItems.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      const filteredMenu = menuItems
+        .filter(item =>
+          item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .sort((a, b) => {
+          // Sort by cafe priority first, then by menu item name
+          const priorityA = a.cafes?.priority || 999;
+          const priorityB = b.cafes?.priority || 999;
+          
+          if (priorityA !== priorityB) {
+            return priorityA - priorityB; // Lower priority number = higher priority
+          }
+          
+          // If same priority, sort alphabetically by dish name
+          return a.name.localeCompare(b.name);
+        });
+      
       return {
         filteredCafes: [],
         filteredMenuItems: filteredMenu,
@@ -131,9 +145,22 @@ const SearchBar = () => {
                 setShowCafeDropdown(true);
               }
             } else {
-              const filteredMenu = menuItems.filter(item =>
-                item.name.toLowerCase().includes(transcript.toLowerCase())
-              );
+              const filteredMenu = menuItems
+                .filter(item =>
+                  item.name.toLowerCase().includes(transcript.toLowerCase())
+                )
+                .sort((a, b) => {
+                  // Sort by cafe priority first, then by menu item name
+                  const priorityA = a.cafes?.priority || 999;
+                  const priorityB = b.cafes?.priority || 999;
+                  
+                  if (priorityA !== priorityB) {
+                    return priorityA - priorityB; // Lower priority number = higher priority
+                  }
+                  
+                  // If same priority, sort alphabetically by dish name
+                  return a.name.localeCompare(b.name);
+                });
               if (filteredMenu.length > 0) {
                 setShowMenuDropdown(true);
               }
