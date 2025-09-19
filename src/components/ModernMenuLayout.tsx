@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import PromotionalBanner from '@/components/PromotionalBanner';
 import { promotionalBannerService, PromotionalBannerData } from '@/services/promotionalBannerService';
+import FloatingMenuButton from '@/components/FloatingMenuButton';
 
 interface ModernMenuLayoutProps {
   // Search and filters
@@ -56,6 +57,35 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
 }) => {
   const [showCart, setShowCart] = useState(false);
   const [promotionalBanners, setPromotionalBanners] = useState<PromotionalBannerData[]>([]);
+
+  // Calculate category counts for floating menu
+  const getCategoryCounts = () => {
+    const counts: { name: string; count: number }[] = [];
+    
+    // All items count
+    counts.push({ name: 'all', count: menuItems.length });
+    
+    // Veg count
+    const vegCount = menuItems.filter(item => item.is_vegetarian).length;
+    counts.push({ name: 'veg', count: vegCount });
+    
+    // Non-veg count
+    const nonVegCount = menuItems.filter(item => !item.is_vegetarian).length;
+    counts.push({ name: 'non-veg', count: nonVegCount });
+    
+    // Menu categories count
+    const categoryMap = new Map<string, number>();
+    menuItems.forEach(item => {
+      const category = item.category;
+      categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+    });
+    
+    categoryMap.forEach((count, category) => {
+      counts.push({ name: category, count });
+    });
+    
+    return counts;
+  };
 
   // Auto-show cart on mobile when items are added
   useEffect(() => {
@@ -236,6 +266,14 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
           </Button>
         </div>
       )}
+
+      {/* Floating Menu Button */}
+      <FloatingMenuButton
+        categories={getCategoryCounts()}
+        selectedCategory={selectedCategory}
+        onCategorySelect={onCategoryChange}
+        totalItems={menuItems.length}
+      />
     </div>
   );
 };
