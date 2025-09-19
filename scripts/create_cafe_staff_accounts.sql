@@ -1,15 +1,19 @@
 -- Create cafe staff accounts for all cafes
 -- This script creates staff accounts for all 13 cafes in the system
 
+-- NOTE: This script only creates the database records. 
+-- You need to manually create auth users in Supabase Auth dashboard for each email.
+
 -- 1. Create cafe owner profiles for each cafe
+-- These will be created automatically when auth users are created due to the trigger
+-- But we can also create them manually if needed
+
+-- First, let's create the profiles without specifying IDs (let the trigger handle it)
 INSERT INTO public.profiles (
-  id,
   email,
   full_name,
   block,
   phone,
-  loyalty_points,
-  loyalty_tier,
   qr_code,
   student_id,
   total_orders,
@@ -19,32 +23,34 @@ INSERT INTO public.profiles (
   updated_at
 ) VALUES 
 -- Chatkara
-(gen_random_uuid(), 'chatkara.owner@muj.manipal.edu', 'Chatkara Owner', 'B1', '+91-9876543210', 0, 'foodie'::loyalty_tier, 'QR-CHATKARA-OWNER', 'CHAT001', 0, 0, 'cafe_owner', NOW(), NOW()),
+('chatkara.owner@muj.manipal.edu', 'Chatkara Owner', 'B1', '+91-9876543210', 'QR-CHATKARA-OWNER', 'CHAT001', 0, 0, 'cafe_owner', NOW(), NOW()),
 -- Taste of India
-(gen_random_uuid(), 'tasteofindia.owner@muj.manipal.edu', 'Taste of India Owner', 'G1', '+91-9876543211', 0, 'foodie'::loyalty_tier, 'QR-TOI-OWNER', 'TOI001', 0, 0, 'cafe_owner', NOW(), NOW()),
+('tasteofindia.owner@muj.manipal.edu', 'Taste of India Owner', 'G1', '+91-9876543211', 'QR-TOI-OWNER', 'TOI001', 0, 0, 'cafe_owner', NOW(), NOW()),
 -- Italian Oven
-(gen_random_uuid(), 'italianoven.owner@muj.manipal.edu', 'Italian Oven Owner', 'G1', '+91-9876543212', 0, 'foodie'::loyalty_tier, 'QR-IO-OWNER', 'IO001', 0, 0, 'cafe_owner', NOW(), NOW()),
+('italianoven.owner@muj.manipal.edu', 'Italian Oven Owner', 'G1', '+91-9876543212', 'QR-IO-OWNER', 'IO001', 0, 0, 'cafe_owner', NOW(), NOW()),
 -- Food Court
-(gen_random_uuid(), 'foodcourt.owner@muj.manipal.edu', 'Food Court Owner', 'G1', '+91-9876543213', 0, 'foodie'::loyalty_tier, 'QR-FC-OWNER', 'FC001', 0, 0, 'cafe_owner', NOW(), NOW()),
+('foodcourt.owner@muj.manipal.edu', 'Food Court Owner', 'G1', '+91-9876543213', 'QR-FC-OWNER', 'FC001', 0, 0, 'cafe_owner', NOW(), NOW()),
 -- Kitchen Curry
-(gen_random_uuid(), 'kitchencurry.owner@muj.manipal.edu', 'Kitchen Curry Owner', 'G1', '+91-9876543214', 0, 'foodie'::loyalty_tier, 'QR-KC-OWNER', 'KC001', 0, 0, 'cafe_owner', NOW(), NOW()),
+('kitchencurry.owner@muj.manipal.edu', 'Kitchen Curry Owner', 'G1', '+91-9876543214', 'QR-KC-OWNER', 'KC001', 0, 0, 'cafe_owner', NOW(), NOW()),
 -- Havmor
-(gen_random_uuid(), 'havmor.owner@muj.manipal.edu', 'Havmor Owner', 'G1', '+91-9876543215', 0, 'foodie'::loyalty_tier, 'QR-HAVMOR-OWNER', 'HAV001', 0, 0, 'cafe_owner', NOW(), NOW()),
+('havmor.owner@muj.manipal.edu', 'Havmor Owner', 'G1', '+91-9876543215', 'QR-HAVMOR-OWNER', 'HAV001', 0, 0, 'cafe_owner', NOW(), NOW()),
 -- Cook House
-(gen_random_uuid(), 'cookhouse.owner@muj.manipal.edu', 'Cook House Owner', 'G1', '+91-9876543216', 0, 'foodie'::loyalty_tier, 'QR-COOK-OWNER', 'COOK001', 0, 0, 'cafe_owner', NOW(), NOW()),
+('cookhouse.owner@muj.manipal.edu', 'Cook House Owner', 'G1', '+91-9876543216', 'QR-COOK-OWNER', 'COOK001', 0, 0, 'cafe_owner', NOW(), NOW()),
 -- Stardom Café & Lounge
-(gen_random_uuid(), 'stardom.owner@muj.manipal.edu', 'Stardom Owner', 'G2', '+91-9876543217', 0, 'foodie'::loyalty_tier, 'QR-STARDOM-OWNER', 'STAR001', 0, 0, 'cafe_owner', NOW(), NOW()),
+('stardom.owner@muj.manipal.edu', 'Stardom Owner', 'G2', '+91-9876543217', 'QR-STARDOM-OWNER', 'STAR001', 0, 0, 'cafe_owner', NOW(), NOW()),
 -- Waffle Fit N Fresh
-(gen_random_uuid(), 'wafflefit.owner@muj.manipal.edu', 'Waffle Fit Owner', 'G1', '+91-9876543218', 0, 'foodie'::loyalty_tier, 'QR-WAFFLE-OWNER', 'WAF001', 0, 0, 'cafe_owner', NOW(), NOW()),
+('wafflefit.owner@muj.manipal.edu', 'Waffle Fit Owner', 'G1', '+91-9876543218', 'QR-WAFFLE-OWNER', 'WAF001', 0, 0, 'cafe_owner', NOW(), NOW()),
 -- The Crazy Chef
-(gen_random_uuid(), 'crazychef.owner@muj.manipal.edu', 'Crazy Chef Owner', 'G1', '+91-9876543219', 0, 'foodie'::loyalty_tier, 'QR-CHEF-OWNER', 'CHEF001', 0, 0, 'cafe_owner', NOW(), NOW()),
+('crazychef.owner@muj.manipal.edu', 'Crazy Chef Owner', 'G1', '+91-9876543219', 'QR-CHEF-OWNER', 'CHEF001', 0, 0, 'cafe_owner', NOW(), NOW()),
 -- Zero Degree
-(gen_random_uuid(), 'zerodegree.owner@muj.manipal.edu', 'Zero Degree Owner', 'G1', '+91-9876543220', 0, 'foodie'::loyalty_tier, 'QR-ZERO-OWNER', 'ZERO001', 0, 0, 'cafe_owner', NOW(), NOW()),
+('zerodegree.owner@muj.manipal.edu', 'Zero Degree Owner', 'G1', '+91-9876543220', 'QR-ZERO-OWNER', 'ZERO001', 0, 0, 'cafe_owner', NOW(), NOW()),
 -- Zaika Restaurant
-(gen_random_uuid(), 'zaika.owner@muj.manipal.edu', 'Zaika Owner', 'G1', '+91-9876543221', 0, 'foodie'::loyalty_tier, 'QR-ZAIKA-OWNER', 'ZAI001', 0, 0, 'cafe_owner', NOW(), NOW()),
+('zaika.owner@muj.manipal.edu', 'Zaika Owner', 'G1', '+91-9876543221', 'QR-ZAIKA-OWNER', 'ZAI001', 0, 0, 'cafe_owner', NOW(), NOW()),
 -- Dialog
-(gen_random_uuid(), 'dialog.owner@muj.manipal.edu', 'Dialog Owner', 'G1', '+91-9876543222', 0, 'foodie'::loyalty_tier, 'QR-DIALOG-OWNER', 'DIA001', 0, 0, 'cafe_owner', NOW(), NOW())
-ON CONFLICT (email) DO NOTHING;
+('dialog.owner@muj.manipal.edu', 'Dialog Owner', 'G1', '+91-9876543222', 'QR-DIALOG-OWNER', 'DIA001', 0, 0, 'cafe_owner', NOW(), NOW())
+ON CONFLICT (email) DO UPDATE SET
+  user_type = 'cafe_owner',
+  updated_at = NOW();
 
 -- 2. Create cafe staff records linking owners to their cafes
 INSERT INTO public.cafe_staff (

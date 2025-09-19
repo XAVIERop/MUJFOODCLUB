@@ -96,8 +96,8 @@ const HeroBannerSection: React.FC = () => {
       'Dialog': '/dialog_card.jpg',
       'Chatkara': '/chaap_homebanner.png',
       'CHATKARA': '/chaap_homebanner.png',
-      'Mini Meals': '/minimeals_card.png',
-      'MINI MEALS': '/minimeals_card.png',
+      'Mini Meals': '/minimeals_cardhome.png',
+      'MINI MEALS': '/minimeals_cardhome.png',
       'Cook House': '/cookhouse_card.png',
       'COOK HOUSE': '/cookhouse_card.png',
       'Dev Sweets & Snacks': '/devsweets_card.png',
@@ -137,7 +137,7 @@ const HeroBannerSection: React.FC = () => {
         rating: 4.8,
         ratingCount: 250,
         features: ['Fresh Ingredients', 'Quick Delivery', 'Student Discounts'],
-        imageUrl: '/muj-food-club-hero.jpg'
+        imageUrl: '/img.png'
       }
     ];
 
