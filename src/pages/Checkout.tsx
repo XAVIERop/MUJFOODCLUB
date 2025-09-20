@@ -103,8 +103,8 @@ const Checkout = () => {
     // No CGST/SGST for Chatkara orders
     const finalAmountWithDelivery = subtotal + deliveryCharge;
     
-    setCgst(0);
-    setSgst(0);
+      setCgst(0);
+      setSgst(0);
     setDeliveryFee(deliveryCharge);
     setFinalAmount(Math.max(0, finalAmountWithDelivery));
   }, [totalAmount, deliveryDetails.orderType]);
@@ -112,6 +112,12 @@ const Checkout = () => {
   const handlePlaceOrder = async () => {
     if (!user || !profile) {
       setError('Please sign in to place an order');
+      return;
+    }
+
+    // Validate phone number
+    if (!deliveryDetails.phoneNumber || deliveryDetails.phoneNumber.length !== 10) {
+      setError('Please enter a valid 10-digit phone number');
       return;
     }
 
@@ -151,6 +157,8 @@ const Checkout = () => {
           delivery_block: deliveryDetails.block,
           delivery_notes: deliveryDetails.deliveryNotes,
           payment_method: deliveryDetails.paymentMethod,
+          phone_number: deliveryDetails.phoneNumber,
+          customer_name: profile.full_name,
           points_earned: 0, // No points in simplified version
           status: 'received',
           estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString()
@@ -411,14 +419,20 @@ const Checkout = () => {
                       </div>
 
                     <div>
-                      <Label htmlFor="phoneNumber">Phone Number</Label>
+                      <Label htmlFor="phoneNumber">Phone Number *</Label>
                       <Input
                         id="phoneNumber"
                         type="tel"
                         value={deliveryDetails.phoneNumber}
                         onChange={(e) => setDeliveryDetails(prev => ({ ...prev, phoneNumber: e.target.value }))}
                         placeholder="Enter your phone number"
+                        required
+                        minLength={10}
+                        maxLength={10}
                         />
+                      {deliveryDetails.phoneNumber && deliveryDetails.phoneNumber.length !== 10 && (
+                        <p className="text-red-500 text-sm mt-1">Phone number must be 10 digits</p>
+                      )}
                       </div>
 
                     <div>
