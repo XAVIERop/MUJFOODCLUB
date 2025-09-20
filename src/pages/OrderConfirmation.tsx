@@ -27,6 +27,8 @@ const OrderConfirmation = () => {
   console.log('🔍 OrderConfirmation: orderNumber from location.state:', location.state?.orderNumber);
   console.log('🔍 OrderConfirmation: orderNumber from URL:', new URLSearchParams(window.location.search).get('order'));
   console.log('🔍 OrderConfirmation: Final orderNumber:', orderNumber);
+  console.log('🔍 OrderConfirmation: User ID:', user?.id);
+  console.log('🔍 OrderConfirmation: Query enabled:', !!orderNumber && !!user?.id);
 
   const statusSteps = [
     { key: 'received', label: 'Order Received', icon: Receipt, color: 'bg-green-500' },
@@ -49,12 +51,24 @@ const OrderConfirmation = () => {
 
   // Debug logging for order data
   useEffect(() => {
+    console.log('🔍 OrderConfirmation: Component state:', {
+      orderNumber,
+      userId: user?.id,
+      order,
+      loading,
+      orderError
+    });
+    
     if (order) {
       console.log('🔍 OrderConfirmation: Order data:', order);
       console.log('🔍 OrderConfirmation: Cafe data:', (order as any).cafe);
       console.log('🔍 OrderConfirmation: Order items:', (order as any).order_items);
     }
-  }, [order]);
+    
+    if (orderError) {
+      console.error('🔍 OrderConfirmation: Error:', orderError);
+    }
+  }, [order, orderNumber, user?.id, loading, orderError]);
 
   // Set up real-time subscription for order updates
   useEffect(() => {
@@ -370,7 +384,11 @@ const OrderConfirmation = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Cafe:</span>
-                  <span className="font-medium">{(order as any).cafe?.name || 'Loading...'}</span>
+                  <span className="font-medium">
+                    {(order as any).cafe?.name || 
+                     (!user?.id ? 'Please log in' : 
+                      !orderNumber ? 'Invalid order' : 'Loading...')}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Location:</span>
@@ -404,7 +422,11 @@ const OrderConfirmation = () => {
                 <CardTitle>Items Ordered</CardTitle>
               </CardHeader>
               <CardContent>
-                {(order as any).order_items && (order as any).order_items.length > 0 ? (
+                {!user?.id ? (
+                  <p className="text-gray-500 text-center py-4">Please log in to view order items</p>
+                ) : !orderNumber ? (
+                  <p className="text-gray-500 text-center py-4">Invalid order number</p>
+                ) : (order as any).order_items && (order as any).order_items.length > 0 ? (
                   <div className="space-y-3">
                     {(order as any).order_items.map((item: any) => (
                       <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
