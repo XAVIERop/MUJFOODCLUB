@@ -8,7 +8,6 @@ interface Order {
   cafe_id: string;
   status: 'received' | 'confirmed' | 'preparing' | 'on_the_way' | 'completed' | 'cancelled';
   total_amount: number;
-  points_earned: number;
   delivery_block: string;
   delivery_notes?: string;
   payment_method: string;
@@ -18,7 +17,6 @@ interface Order {
   updated_at: string;
   status_updated_at: string;
   completed_at: string | null;
-  points_credited: boolean;
   has_rating?: boolean;
   rating_submitted_at?: string;
   user: {
@@ -219,7 +217,8 @@ export const useOrderByNumberQuery = (orderNumber: string | null, userId: string
       
       console.log('🔄 Fetching order details by number:', orderNumber, 'for user:', userId);
       
-      const { data, error } = await supabase
+      // Try the full query first
+      let { data, error } = await supabase
         .from('orders')
         .select(`
           *,
@@ -239,7 +238,62 @@ export const useOrderByNumberQuery = (orderNumber: string | null, userId: string
         .eq('user_id', userId)
         .single();
 
-      if (error) {
+      // If the full query fails with 406 or other RLS issues, try a simpler query
+      if (error && (error.code === 'PGRST116' || error.message?.includes('406') || error.message?.includes('permission'))) {
+        console.log('🔄 Full query failed, trying simpler query...');
+        
+        const { data: simpleData, error: simpleError } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('order_number', orderNumber)
+          .eq('user_id', userId)
+          .single();
+        
+        if (simpleError) {
+          console.error('Simple query also failed:', simpleError);
+          
+          // Try the most basic query possible
+          const { data: basicData, error: basicError } = await supabase
+            .from('orders')
+            .select('id, order_number, status, total_amount, delivery_block, payment_method, created_at')
+            .eq('order_number', orderNumber)
+            .single();
+          
+          if (basicError) {
+            console.error('Even basic query failed:', basicError);
+            throw new Error(`Failed to fetch order: ${basicError.message}`);
+          }
+          
+          // Return minimal data
+          data = {
+            ...basicData,
+            cafe: null,
+            order_items: [],
+            user: null
+          };
+          
+          console.log('✅ Basic order data fetched:', data);
+        } else {
+          // Manually fetch related data
+          const [cafeData, orderItemsData, profileData] = await Promise.all([
+            supabase.from('cafes').select('name, location, id').eq('id', simpleData.cafe_id).single(),
+            supabase.from('order_items').select(`
+              id, menu_item_id, quantity, unit_price, total_price, special_instructions,
+              menu_item:menu_items(name, description)
+            `).eq('order_id', simpleData.id),
+            supabase.from('profiles').select('full_name, phone, block, email').eq('id', simpleData.user_id).single()
+          ]);
+          
+          data = {
+            ...simpleData,
+            cafe: cafeData.data,
+            order_items: orderItemsData.data || [],
+            user: profileData.data
+          };
+          
+          console.log('✅ Manually assembled order data:', data);
+        }
+      } else if (error) {
         console.error('Error fetching order by number:', error);
         throw new Error(`Failed to fetch order: ${error.message}`);
       }
