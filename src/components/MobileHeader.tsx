@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MapPin, ChevronDown, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/useAuth';
 
 interface MobileHeaderProps {
   selectedBlock: string;
@@ -20,6 +25,22 @@ const BLOCKS = [
 ];
 
 const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChange }) => {
+  const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const getInitials = (name?: string) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('');
+  };
+
+  const handleAuthAction = () => {
+    if (user) {
+      signOut();
+    } else {
+      navigate('/auth');
+    }
+  };
+
   return (
     <div className="bg-white px-4 py-4">
       {/* Top Row: Location + Profile - Swiggy Style */}
@@ -49,14 +70,52 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChang
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Profile Icon - Minimal Style */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-8 h-8 p-0 rounded-full hover:bg-gray-50"
-        >
-          <User className="w-4 h-4 text-gray-600" />
-        </Button>
+        {/* Profile/Auth Button - Using Existing Auth System */}
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
+                  <AvatarFallback className="bg-orange-100 text-orange-600">
+                    {getInitials(profile?.full_name)}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {profile?.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate('/profile')}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/orders')}>
+                <span>My Orders</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleAuthAction}>
+                <span>Sign Out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleAuthAction}
+            className="w-8 h-8 p-0 rounded-full hover:bg-gray-50"
+          >
+            <User className="w-4 h-4 text-gray-600" />
+          </Button>
+        )}
       </div>
 
 
