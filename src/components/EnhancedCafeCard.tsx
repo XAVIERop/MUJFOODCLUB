@@ -109,15 +109,15 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
   };
 
   const handleOrderNow = (cafeId: string) => {
-    // Only allow orders for Chatkara during soft launch
-    if (cafe.name.toLowerCase().includes('chatkara')) {
+    // Allow orders for cafes that are accepting orders
+    if (cafe.accepting_orders) {
       const identifier = cafe.slug || cafeId;
       navigate(`/menu/${identifier}`);
     } else {
-      // Show coming soon message for other cafes
+      // Show coming soon message for cafes not accepting orders
       toast({
         title: "Coming Soon!",
-        description: `${cafe.name} will be available for ordering soon. Currently only Chatkara is accepting orders.`,
+        description: `${cafe.name} will be available for ordering soon.`,
         variant: "default",
       });
     }
@@ -297,10 +297,10 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
             <Button
               size="sm"
               onClick={() => handleOrderNow(cafe.id)}
-              disabled={!cafe.accepting_orders || !isExclusive || !cafe.name.toLowerCase().includes('chatkara')}
+              disabled={!cafe.accepting_orders}
               className="text-xs font-medium bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
-              {cafe.name.toLowerCase().includes('chatkara') ? "Order Now" : "Coming Soon"}
+              {cafe.accepting_orders ? "Order Now" : "Coming Soon"}
             </Button>
           </div>
 
