@@ -5,6 +5,8 @@ import HeroBannerSection from "@/components/HeroBannerSection";
 import CafeCategories from "@/components/CafeCategories";
 import { FeaturedCafeGrid } from '../components/FeaturedCafeGrid';
 import CafeIconGrid from '../components/CafeIconGrid';
+import MobileLayoutWrapper from '../components/MobileLayoutWrapper';
+import MobileLayout from '../components/MobileLayout';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +35,7 @@ interface Cafe {
 const Index = () => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBlock, setSelectedBlock] = useState("B1");
 
   useEffect(() => {
     fetchCafes();
@@ -129,51 +132,61 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Simple Header with Location and Profile */}
-      <SimpleHeader />
-      
-      {/* Search Bar */}
-      <SearchBar />
-      
-      {/* Hero Banner Section */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <HeroBannerSection />
-      </div>
-      
-      {/* Cafe Categories */}
-      {!loading && cafes.length > 0 && (
-        <CafeCategories cafes={cafes} />
-      )}
-      
-      <main className="m-0 p-0">
-        {/* Unified Cafe Section - Merged Icon Grid + Cafe Cards */}
-        <section id="cafes" className="pt-4 pb-16 bg-white">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Single Section Header */}
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Explore all cafes nearby!
-              </h2>
-            </div>
-
-            {/* Cafe Icon Grid with Slide Buttons */}
-            {!loading && cafes.length > 0 && (
-              <div className="mb-12">
-                <CafeIconGrid cafes={cafes} />
-              </div>
-            )}
-
-            {/* Limited Cafe Grid - Show 6 cafes */}
-            <div className="cafe-grid">
-              <FeaturedCafeGrid showAll={false} maxCafes={6} cafes={cafes} />
-            </div>
-          </div>
-        </section>
+    <MobileLayoutWrapper
+      mobileChildren={
+        <MobileLayout 
+          cafes={cafes}
+          selectedBlock={selectedBlock}
+          onBlockChange={setSelectedBlock}
+        />
+      }
+    >
+      <div className="min-h-screen bg-background">
+        {/* Simple Header with Location and Profile */}
+        <SimpleHeader />
         
-        {/* Rewards Section removed for simplified version */}
-      </main>
-    </div>
+        {/* Search Bar */}
+        <SearchBar />
+        
+        {/* Hero Banner Section */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <HeroBannerSection />
+        </div>
+        
+        {/* Cafe Categories */}
+        {!loading && cafes.length > 0 && (
+          <CafeCategories cafes={cafes} />
+        )}
+        
+        <main className="m-0 p-0">
+          {/* Unified Cafe Section - Merged Icon Grid + Cafe Cards */}
+          <section id="cafes" className="pt-4 pb-16 bg-white">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              {/* Single Section Header */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  Explore all cafes nearby!
+                </h2>
+              </div>
+
+              {/* Cafe Icon Grid with Slide Buttons */}
+              {!loading && cafes.length > 0 && (
+                <div className="mb-12">
+                  <CafeIconGrid cafes={cafes} />
+                </div>
+              )}
+
+              {/* Limited Cafe Grid - Show 6 cafes */}
+              <div className="cafe-grid">
+                <FeaturedCafeGrid showAll={false} maxCafes={6} cafes={cafes} />
+              </div>
+            </div>
+          </section>
+          
+          {/* Rewards Section removed for simplified version */}
+        </main>
+      </div>
+    </MobileLayoutWrapper>
   );
 };
 
