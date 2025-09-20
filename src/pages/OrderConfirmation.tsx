@@ -47,6 +47,15 @@ const OrderConfirmation = () => {
     staleTime: 10 * 1000, // 10 seconds for real-time updates
   });
 
+  // Debug logging for order data
+  useEffect(() => {
+    if (order) {
+      console.log('🔍 OrderConfirmation: Order data:', order);
+      console.log('🔍 OrderConfirmation: Cafe data:', (order as any).cafe);
+      console.log('🔍 OrderConfirmation: Order items:', (order as any).order_items);
+    }
+  }, [order]);
+
   // Set up real-time subscription for order updates
   useEffect(() => {
     if (!order?.id) return;
@@ -333,7 +342,7 @@ const OrderConfirmation = () => {
                           <p className={`text-sm font-medium ${isActive ? 'text-gray-900' : 'text-gray-500'}`}>
                             {step.label}
                           </p>
-                          {isCurrent && order.status_updated_at && (
+                          {isCurrent && (order as any).status_updated_at && (
                             <p className="text-xs text-gray-500">
                               Estimated time: {formatTime(order.estimated_delivery)}
                             </p>
@@ -361,7 +370,7 @@ const OrderConfirmation = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Cafe:</span>
-                  <span className="font-medium">{order.cafe?.name}</span>
+                  <span className="font-medium">{(order as any).cafe?.name || 'Loading...'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Location:</span>
@@ -388,10 +397,46 @@ const OrderConfirmation = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Order Items */}
+            <Card className="food-card">
+              <CardHeader>
+                <CardTitle>Items Ordered</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(order as any).order_items && (order as any).order_items.length > 0 ? (
+                  <div className="space-y-3">
+                    {(order as any).order_items.map((item: any) => (
+                      <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{item.menu_item?.name || 'Item'}</p>
+                          {item.special_instructions && (
+                            <p className="text-sm text-gray-500 mt-1">Note: {item.special_instructions}</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">Qty: {item.quantity}</p>
+                          <p className="text-sm text-gray-500">₹{item.unit_price} each</p>
+                          <p className="font-semibold text-green-600">₹{item.total_price}</p>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="pt-3 border-t border-gray-200 mt-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-semibold">Total:</span>
+                        <span className="text-lg font-bold text-green-600">₹{order.total_amount}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">Loading order items...</p>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           {/* Rating Section */}
-          {order.status === 'completed' && !order.has_rating && (
+          {order.status === 'completed' && !(order as any).has_rating && (
             <div className="mt-8">
               <Card className="food-card">
                 <CardHeader>
@@ -404,7 +449,7 @@ const OrderConfirmation = () => {
                   <OrderRating
                     orderId={order.id}
                     orderNumber={order.order_number}
-                    cafeName={order.cafe?.name || 'Cafe'}
+                    cafeName={(order as any).cafe?.name || 'Cafe'}
                     onRatingSubmitted={() => {
                       refetchOrder();
                     }}
