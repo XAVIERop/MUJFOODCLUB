@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -47,6 +47,7 @@ const PROMOTIONAL_BANNERS: PromotionalBanner[] = [
 
 const MobilePromotionalBanners: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -59,6 +60,25 @@ const MobilePromotionalBanners: React.FC = () => {
       scrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
     }
   };
+
+  // Auto-slide every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (scrollRef.current) {
+        const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
+        const currentScroll = scrollRef.current.scrollLeft;
+        
+        // If we're at the end, scroll back to start
+        if (currentScroll >= maxScroll - 10) {
+          scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          scrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+        }
+      }
+    }, 5000); // 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="px-4 py-4">

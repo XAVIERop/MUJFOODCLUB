@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
-import { ChevronLeft, ChevronRight, Star, MapPin, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Star, MapPin, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 
@@ -23,18 +22,6 @@ interface MobileCafeSlideListProps {
 
 const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -280, behavior: 'smooth' });
-    }
-  };
-
-  const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 280, behavior: 'smooth' });
-    }
-  };
 
   // Get first 6 cafes (the ones accepting orders) for the slide list
   const featuredCafes = cafes
@@ -109,33 +96,12 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
         </Badge>
       </div>
 
-      <div className="relative">
-        {/* Left Scroll Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-lg"
-          onClick={scrollLeft}
-        >
-          <ChevronLeft className="w-4 h-4 text-gray-600" />
-        </Button>
-
-        {/* Right Scroll Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-lg"
-          onClick={scrollRight}
-        >
-          <ChevronRight className="w-4 h-4 text-gray-600" />
-        </Button>
-
-        {/* Cafes Scroll Container */}
-        <div 
-          ref={scrollRef}
-          className="flex space-x-4 overflow-x-auto scrollbar-hide px-8"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
+      {/* Cafes Scroll Container - Clean Style */}
+      <div 
+        ref={scrollRef}
+        className="flex space-x-4 overflow-x-auto scrollbar-hide"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
           {featuredCafes.map((cafe) => (
             <Link
               to={`/menu/${cafe.slug || cafe.id}`}

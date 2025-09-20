@@ -63,7 +63,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChang
       {/* Location Details - Swiggy Style */}
       <div className="text-center">
         <p className="text-sm text-gray-600">
-          Block {selectedBlock}, MUJ Campus, Manipal, Karnataka, India
+          Block {selectedBlock}, MUJ Hostel
         </p>
       </div>
     </div>
