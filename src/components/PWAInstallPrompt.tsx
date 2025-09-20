@@ -131,13 +131,27 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ className }) => {
     localStorage.setItem('pwa-install-dismissed', Date.now().toString());
   };
 
-  // Don't show if already installed, dismissed, or no prompt available
-  if (isInstalled || dismissed || !showInstallPrompt || !deferredPrompt) {
+  // DEBUG MODE: Always show for testing
+  const DEBUG_MODE = true;
+  
+  if (DEBUG_MODE) {
+    console.log('PWA Install Debug:', {
+      isInstalled,
+      dismissed,
+      showInstallPrompt,
+      hasDeferredPrompt: !!deferredPrompt,
+      windowWidth: window.innerWidth,
+      userAgent: navigator.userAgent
+    });
+  }
+
+  // Don't show if already installed, dismissed, or no prompt available (unless debug mode)
+  if (!DEBUG_MODE && (isInstalled || dismissed || !showInstallPrompt || !deferredPrompt)) {
     return null;
   }
 
-  // Don't show on desktop (only mobile/tablet)
-  if (window.innerWidth > 768) {
+  // Don't show on desktop (only mobile/tablet) unless debug mode
+  if (!DEBUG_MODE && window.innerWidth > 768) {
     return null;
   }
 
@@ -162,10 +176,16 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ className }) => {
             </Button>
           </div>
           <CardTitle className="text-lg text-orange-900">
-            Install MUJ Food Club
+            Install MUJ Food Club {DEBUG_MODE && "(DEBUG MODE)"}
           </CardTitle>
           <CardDescription className="text-orange-700">
             Add to your home screen for quick access and offline ordering.
+            {DEBUG_MODE && (
+              <div className="mt-2 text-xs text-orange-600">
+                Debug: {deferredPrompt ? 'Prompt Available' : 'No Prompt'} | 
+                Width: {window.innerWidth}px
+              </div>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
