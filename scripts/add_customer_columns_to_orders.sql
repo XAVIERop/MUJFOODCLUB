@@ -60,3 +60,5 @@ AND column_name IN ('customer_name', 'phone_number')
 ORDER BY column_name;
 
 SELECT '✅ Customer columns added to orders table successfully!' as status;
+
+

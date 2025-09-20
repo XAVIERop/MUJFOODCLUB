@@ -76,6 +76,11 @@ const Index = () => {
   const fetchCafes = async () => {
     try {
       console.log('🔍 Fetching cafes...');
+      console.log('🔍 Environment check:', {
+        SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+        SUPABASE_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Present' : 'Missing',
+        supabase: supabase ? 'Initialized' : 'Not initialized'
+      });
       
       // Use the same working pattern as Cafes page
       let { data, error } = await supabase
