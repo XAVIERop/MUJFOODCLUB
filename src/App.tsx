@@ -10,6 +10,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { LocationProvider } from "@/contexts/LocationContext";
 import { SecurityProvider, SecurityIndicator } from "@/components/SecurityProvider";
 import PWAUpdateManager from "@/components/PWAUpdateManager";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import BottomNavigation from "./components/BottomNavigation";
 import ScrollToTop from "./components/ScrollToTop";
@@ -91,6 +92,7 @@ const App = () => (
               )}
               <SecurityIndicator />
               <PWAUpdateManager />
+              <PWAInstallPrompt />
             </BrowserRouter>
           </TooltipProvider>
           </LocationProvider>
