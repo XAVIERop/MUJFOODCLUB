@@ -4,7 +4,7 @@ import MobileSearchBar from './MobileSearchBar';
 import MobileFoodCategories from './MobileFoodCategories';
 import MobilePromotionalBanners from './MobilePromotionalBanners';
 import MobileCafeSlideList from './MobileCafeSlideList';
-import MobileCafeCards from './MobileCafeCards';
+import { FeaturedCafeGrid } from './FeaturedCafeGrid';
 
 interface Cafe {
   id: string;
@@ -50,8 +50,14 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       {/* Featured Cafes Slide List */}
       <MobileCafeSlideList cafes={cafes} />
 
-      {/* All Cafe Cards */}
-      <MobileCafeCards cafes={cafes} />
+      {/* Featured Cafes - Same as Desktop */}
+      <div className="px-4 py-4">
+        <FeaturedCafeGrid 
+          cafes={cafes} 
+          maxCafes={6} 
+          showAll={false}
+        />
+      </div>
 
       {/* Bottom Spacing */}
       <div className="h-20"></div>
