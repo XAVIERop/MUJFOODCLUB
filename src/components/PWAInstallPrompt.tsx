@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Download, X, Smartphone, CheckCircle } from 'lucide-react';
+import { Download, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PWAInstallPromptProps {
@@ -163,66 +161,32 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ className }) => {
   // The actual install will work if the browser supports it
 
   return (
-    <div className={`fixed bottom-4 right-4 z-50 max-w-sm ${className}`}>
-      <Card className="border-orange-200 bg-orange-50 shadow-lg">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="bg-orange-100 text-orange-700">
-                <Smartphone className="w-3 h-3 mr-1" />
-                Install App
-              </Badge>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDismiss}
-              className="h-6 w-6 p-0 hover:bg-orange-100"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-          <CardTitle className="text-lg text-orange-900">
-            Install MUJ Food Club
-          </CardTitle>
-          <CardDescription className="text-orange-700">
-            Add to your home screen for quick access and offline ordering.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="flex gap-2">
-            <Button
-              onClick={handleInstall}
-              disabled={isInstalling}
-              className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
-              size="sm"
-            >
-              {isInstalling ? (
-                <>
-                  <Download className="w-4 h-4 mr-2 animate-pulse" />
-                  Installing...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Install Now
-                </>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleDismiss}
-              className="border-orange-200 text-orange-700 hover:bg-orange-100"
-              size="sm"
-            >
-              Later
-            </Button>
-          </div>
-          <p className="text-xs text-orange-600 mt-2">
-            Quick access • Offline ordering • Push notifications
-          </p>
-        </CardContent>
-      </Card>
+    <div className={`fixed bottom-6 right-6 z-50 ${className}`}>
+      {/* Small floating install button */}
+      <Button
+        onClick={handleInstall}
+        disabled={isInstalling}
+        className="h-12 w-12 rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+        size="sm"
+        title="Install MUJ Food Club App"
+      >
+        {isInstalling ? (
+          <Download className="w-5 h-5 animate-pulse" />
+        ) : (
+          <Download className="w-5 h-5" />
+        )}
+      </Button>
+      
+      {/* Dismiss button (small X) */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleDismiss}
+        className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 p-0 border-0 shadow-md"
+        title="Dismiss"
+      >
+        <X className="w-3 h-3" />
+      </Button>
     </div>
   );
 };
