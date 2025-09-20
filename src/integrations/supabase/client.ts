@@ -6,6 +6,12 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// Debug environment variables
+console.log('🔧 Environment variables check:');
+console.log('🔧 import.meta.env:', import.meta.env);
+console.log('🔧 VITE_SUPABASE_URL:', SUPABASE_URL);
+console.log('🔧 VITE_SUPABASE_ANON_KEY:', SUPABASE_PUBLISHABLE_KEY ? 'Present' : 'Missing');
+
 // Environment variables loaded successfully
 
 // Import the supabase client like this:
