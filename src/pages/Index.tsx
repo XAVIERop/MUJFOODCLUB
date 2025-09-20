@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import '../test-env';
 import { Star } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
@@ -80,7 +79,8 @@ const Index = () => {
       console.log('🔍 Environment check:', {
         SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
         SUPABASE_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Present' : 'Missing',
-        supabase: supabase ? 'Initialized' : 'Not initialized'
+        supabase: supabase ? 'Initialized' : 'Not initialized',
+        rpcMethod: typeof supabase?.rpc === 'function' ? 'Available' : 'Missing'
       });
       
       // Use the same working pattern as Cafes page
