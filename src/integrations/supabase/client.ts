@@ -17,6 +17,10 @@ let supabase: any = null;
 // Create Supabase client with error handling (singleton pattern)
 if (!supabase) {
   try {
+    console.log('🔧 Initializing Supabase client...');
+    console.log('🔧 SUPABASE_URL:', SUPABASE_URL);
+    console.log('🔧 SUPABASE_PUBLISHABLE_KEY:', SUPABASE_PUBLISHABLE_KEY ? 'Present' : 'Missing');
+    
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       console.error('Missing required Supabase environment variables');
       console.error('SUPABASE_URL:', !!SUPABASE_URL);
@@ -76,6 +80,7 @@ if (!supabase) {
         update: () => ({ eq: () => Promise.resolve({ data: null, error: { message: 'Supabase not initialized - check environment variables' } }) }),
         delete: () => ({ eq: () => Promise.resolve({ data: null, error: { message: 'Supabase not initialized - check environment variables' } }) }),
       }),
+      rpc: () => Promise.resolve({ data: [], error: { message: 'Supabase not initialized - check environment variables' } }),
       channel: () => ({
         on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
       }),
