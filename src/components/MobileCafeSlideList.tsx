@@ -156,8 +156,7 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
           ))}
         </div>
       </div>
-    </div>
-  );
+    );
 };
 
 export default MobileCafeSlideList;
