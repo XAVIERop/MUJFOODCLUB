@@ -1,6 +1,4 @@
 import React, { useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface FoodCategory {
   id: string;
@@ -38,47 +36,25 @@ const MobileFoodCategories: React.FC = () => {
 
   return (
     <div className="bg-white px-4 py-3">
-      <div className="relative">
-        {/* Left Scroll Button - Minimal Style */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white hover:bg-gray-50 rounded-full p-1.5 shadow-sm border border-gray-100"
-          onClick={scrollLeft}
-        >
-          <ChevronLeft className="w-3 h-3 text-gray-500" />
-        </Button>
-
-        {/* Right Scroll Button - Minimal Style */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white hover:bg-gray-50 rounded-full p-1.5 shadow-sm border border-gray-100"
-          onClick={scrollRight}
-        >
-          <ChevronRight className="w-3 h-3 text-gray-500" />
-        </Button>
-
-        {/* Categories Scroll Container - Clean Style */}
-        <div 
-          ref={scrollRef}
-          className="flex space-x-6 overflow-x-auto scrollbar-hide px-6"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {FOOD_CATEGORIES.map((category) => (
-            <div
-              key={category.id}
-              className="flex flex-col items-center space-y-2 min-w-[50px] cursor-pointer"
-            >
-              <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-xl hover:bg-orange-50 transition-colors">
-                {category.emoji}
-              </div>
-              <span className="text-xs text-gray-600 text-center leading-tight">
-                {category.name}
-              </span>
+      {/* Categories Scroll Container - Clean Style */}
+      <div 
+        ref={scrollRef}
+        className="flex space-x-6 overflow-x-auto scrollbar-hide"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {FOOD_CATEGORIES.map((category) => (
+          <div
+            key={category.id}
+            className="flex flex-col items-center space-y-2 min-w-[50px] cursor-pointer"
+          >
+            <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-xl hover:bg-orange-50 transition-colors">
+              {category.emoji}
             </div>
-          ))}
-        </div>
+            <span className="text-xs text-gray-600 text-center leading-tight">
+              {category.name}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

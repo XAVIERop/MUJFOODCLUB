@@ -59,19 +59,6 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChang
         </Button>
       </div>
 
-      {/* Logo - Centered and Clean */}
-      <div className="flex items-center justify-center mb-2">
-        <div className="flex items-center space-x-2">
-          <img 
-            src="/fav.png" 
-            alt="MUJ Food Club" 
-            className="h-7 w-auto"
-          />
-          <Badge className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
-            BETA
-          </Badge>
-        </div>
-      </div>
 
       {/* Location Details - Swiggy Style */}
       <div className="text-center">

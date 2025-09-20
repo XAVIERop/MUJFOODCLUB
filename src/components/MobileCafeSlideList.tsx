@@ -2,10 +2,12 @@ import React, { useRef } from 'react';
 import { ChevronLeft, ChevronRight, Star, MapPin, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Link } from 'react-router-dom';
 
 interface Cafe {
   id: string;
   name: string;
+  slug?: string;
   description: string;
   location: string;
   hours: string;
@@ -44,6 +46,60 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
     return null;
   }
 
+  // Use same cafe images as desktop EnhancedCafeCard
+  const getCafeImage = (cafeName: string): string => {
+    const cafeImages: { [key: string]: string } = {
+      'Dialog': '/dialog_card.jpg',
+      'Chatkara': '/chatkara_card.png',
+      'CHATKARA': '/chatkara_card.png',
+      'Mini Meals': '/minimeals_cardhome.png',
+      'MINI MEALS': '/minimeals_cardhome.png',
+      'Cook House': '/cookhouse_card.png',
+      'COOK HOUSE': '/cookhouse_card.png',
+      'Dev Sweets & Snacks': '/devsweets_card.png',
+      'DEV SWEETS & SNACKS': '/devsweets_card.png',
+      'Taste of India': '/tasteofindia_card.jpg',
+      'Food Court': '/foodcourt_card.jpg',
+      'The Kitchen Curry': '/thekitchencurry_logo.png',
+      'The Kitchen & Curry': '/thekitchencurry_logo.png',
+      'Havmor': '/havmor_card.jpg',
+      'Stardom': '/stardom_card.webp',
+      'STARDOM Café & Lounge': '/stardom_card.webp',
+      'Waffle Fit & Fresh': '/wafflefitnfresh_card.jpeg',
+      'Waffle Fit N Fresh': '/wafflefitnfresh_card.jpeg',
+      'The Crazy Chef': '/crazychef_logo.png',
+      'Zero Degree Cafe': '/zerodegreecafe_logo.jpg',
+      'ZERO DEGREE CAFE': '/zerodegreecafe_logo.jpg',
+      'Zaika Restaurant': '/zaika_logo.png',
+      'ZAIKA': '/zaika_logo.png',
+      'Italian Oven': '/italianoven_logo.png',
+      'Munch Box': '/munchbox_card.png',
+      'Punjabi Tadka': '/punjabitadka_card.jpg',
+      'The Waffle Co': '/thewaffleco.png',
+      'Soya Chaap Corner': '/chatkara_logo.jpg',
+      'Tea Tradition': '/teatradition_card.jpeg',
+      'China Town': '/china_card.png',
+      'Let\'s Go Live': '/letsgolive_card.jpg',
+      'LETS GO LIVE': '/letsgolive_card.jpg'
+    };
+
+    // Try to find exact match first
+    if (cafeImages[cafeName]) {
+      return cafeImages[cafeName];
+    }
+
+    // Try partial matches for variations in naming
+    const cafeNameLower = cafeName.toLowerCase();
+    for (const [cafeKey, imagePath] of Object.entries(cafeImages)) {
+      if (cafeNameLower.includes(cafeKey.toLowerCase()) || cafeKey.toLowerCase().includes(cafeNameLower)) {
+        return imagePath;
+      }
+    }
+
+    // Fallback to chatkara logo if no match found
+    return '/chatkara_logo.jpg';
+  };
+
   return (
     <div className="bg-white px-4 py-4">
       <div className="flex items-center justify-between mb-4">
@@ -81,29 +137,35 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {featuredCafes.map((cafe) => (
-            <div
+            <Link
+              to={`/menu/${cafe.slug || cafe.id}`}
               key={cafe.id}
               className="min-w-[240px] bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
             >
-              {/* Cafe Image Placeholder */}
-              <div className="h-32 bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                <span className="text-4xl">🍽️</span>
+              {/* Real Cafe Image */}
+              <div className="h-32 relative overflow-hidden">
+                <img
+                  src={getCafeImage(cafe.name)}
+                  alt={`${cafe.name} Food`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/20" />
+                {cafe.average_rating && (
+                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1">
+                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    <span className="text-xs font-medium text-gray-800">
+                      {cafe.average_rating.toFixed(1)}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Cafe Info */}
               <div className="p-3">
-                <div className="flex items-center justify-between mb-2">
+                <div className="mb-2">
                   <h4 className="font-bold text-gray-900 text-sm truncate">
                     {cafe.name}
                   </h4>
-                  {cafe.average_rating && (
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                      <span className="text-xs font-medium text-gray-600">
-                        {cafe.average_rating.toFixed(1)}
-                      </span>
-                    </div>
-                  )}
                 </div>
 
                 <div className="space-y-1 mb-3">
@@ -124,7 +186,7 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
                   Order Now
                 </Button>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

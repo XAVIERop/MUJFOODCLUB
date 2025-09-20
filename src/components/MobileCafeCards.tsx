@@ -59,6 +59,60 @@ const MobileCafeCards: React.FC<MobileCafeCardsProps> = ({ cafes }) => {
     toggleFavorite(cafeId);
   };
 
+  // Use same cafe images as desktop EnhancedCafeCard
+  const getCafeImage = (cafeName: string): string => {
+    const cafeImages: { [key: string]: string } = {
+      'Dialog': '/dialog_card.jpg',
+      'Chatkara': '/chatkara_card.png',
+      'CHATKARA': '/chatkara_card.png',
+      'Mini Meals': '/minimeals_cardhome.png',
+      'MINI MEALS': '/minimeals_cardhome.png',
+      'Cook House': '/cookhouse_card.png',
+      'COOK HOUSE': '/cookhouse_card.png',
+      'Dev Sweets & Snacks': '/devsweets_card.png',
+      'DEV SWEETS & SNACKS': '/devsweets_card.png',
+      'Taste of India': '/tasteofindia_card.jpg',
+      'Food Court': '/foodcourt_card.jpg',
+      'The Kitchen Curry': '/thekitchencurry_logo.png',
+      'The Kitchen & Curry': '/thekitchencurry_logo.png',
+      'Havmor': '/havmor_card.jpg',
+      'Stardom': '/stardom_card.webp',
+      'STARDOM Café & Lounge': '/stardom_card.webp',
+      'Waffle Fit & Fresh': '/wafflefitnfresh_card.jpeg',
+      'Waffle Fit N Fresh': '/wafflefitnfresh_card.jpeg',
+      'The Crazy Chef': '/crazychef_logo.png',
+      'Zero Degree Cafe': '/zerodegreecafe_logo.jpg',
+      'ZERO DEGREE CAFE': '/zerodegreecafe_logo.jpg',
+      'Zaika Restaurant': '/zaika_logo.png',
+      'ZAIKA': '/zaika_logo.png',
+      'Italian Oven': '/italianoven_logo.png',
+      'Munch Box': '/munchbox_card.png',
+      'Punjabi Tadka': '/punjabitadka_card.jpg',
+      'The Waffle Co': '/thewaffleco.png',
+      'Soya Chaap Corner': '/chatkara_logo.jpg',
+      'Tea Tradition': '/teatradition_card.jpeg',
+      'China Town': '/china_card.png',
+      'Let\'s Go Live': '/letsgolive_card.jpg',
+      'LETS GO LIVE': '/letsgolive_card.jpg'
+    };
+
+    // Try to find exact match first
+    if (cafeImages[cafeName]) {
+      return cafeImages[cafeName];
+    }
+
+    // Try partial matches for variations in naming
+    const cafeNameLower = cafeName.toLowerCase();
+    for (const [cafeKey, imagePath] of Object.entries(cafeImages)) {
+      if (cafeNameLower.includes(cafeKey.toLowerCase()) || cafeKey.toLowerCase().includes(cafeNameLower)) {
+        return imagePath;
+      }
+    }
+
+    // Fallback to chatkara logo if no match found
+    return '/chatkara_logo.jpg';
+  };
+
   return (
     <div className="px-4 py-4">
       <div className="flex items-center justify-between mb-4">
@@ -79,9 +133,13 @@ const MobileCafeCards: React.FC<MobileCafeCardsProps> = ({ cafes }) => {
             {/* Cafe Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <div className="flex items-center space-x-3">
-                {/* Cafe Icon */}
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg flex items-center justify-center">
-                  <span className="text-xl">🍽️</span>
+                {/* Real Cafe Image */}
+                <div className="w-12 h-12 rounded-lg overflow-hidden">
+                  <img
+                    src={getCafeImage(cafe.name)}
+                    alt={`${cafe.name} Food`}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 
                 {/* Cafe Info */}
