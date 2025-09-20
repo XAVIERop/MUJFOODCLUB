@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import MobileHeader from './MobileHeader';
-import SearchBar from './SearchBar';
+import MobileSearchBar from './MobileSearchBar';
 import MobileFoodCategories from './MobileFoodCategories';
 import MobilePromotionalBanners from './MobilePromotionalBanners';
 import MobileCafeSlideList from './MobileCafeSlideList';
@@ -38,10 +38,8 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
         onBlockChange={onBlockChange}
       />
 
-      {/* Search Bar */}
-      <div className="bg-white px-4 py-3 border-b border-gray-200">
-        <SearchBar />
-      </div>
+      {/* Clean Search Bar - Swiggy Style */}
+      <MobileSearchBar />
 
       {/* Food Categories */}
       <MobileFoodCategories />

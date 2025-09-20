@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { MapPin, ChevronDown, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,22 +20,20 @@ const BLOCKS = [
 ];
 
 const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChange }) => {
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-
   return (
-    <div className="bg-white border-b border-gray-200 px-4 py-3">
-      {/* Top Row: Location + Profile */}
-      <div className="flex items-center justify-between mb-3">
-        {/* Location Dropdown */}
+    <div className="bg-white px-4 py-4">
+      {/* Top Row: Location + Profile - Swiggy Style */}
+      <div className="flex items-center justify-between mb-4">
+        {/* Location Dropdown - Clean Swiggy Style */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
               variant="ghost" 
-              className="flex items-center space-x-2 px-2 py-1 h-auto"
+              className="flex items-center space-x-1 px-0 py-0 h-auto text-gray-900 hover:text-gray-900 hover:bg-transparent"
             >
               <MapPin className="w-4 h-4 text-orange-600" />
-              <span className="font-medium text-gray-900">{selectedBlock}</span>
-              <ChevronDown className="w-3 h-3 text-gray-500" />
+              <span className="font-medium text-base">{selectedBlock}</span>
+              <ChevronDown className="w-3 h-3 text-gray-400" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
@@ -51,29 +49,35 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChang
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Profile Icon */}
+        {/* Profile Icon - Minimal Style */}
         <Button
           variant="ghost"
           size="sm"
-          className="w-8 h-8 p-0 rounded-full"
-          onClick={() => setIsProfileOpen(!isProfileOpen)}
+          className="w-8 h-8 p-0 rounded-full hover:bg-gray-50"
         >
-          <User className="w-4 h-4" />
+          <User className="w-4 h-4 text-gray-600" />
         </Button>
       </div>
 
-      {/* Logo and Beta Badge */}
-      <div className="flex items-center justify-center">
+      {/* Logo - Centered and Clean */}
+      <div className="flex items-center justify-center mb-2">
         <div className="flex items-center space-x-2">
           <img 
             src="/fav.png" 
             alt="MUJ Food Club" 
-            className="h-8 w-auto"
+            className="h-7 w-auto"
           />
-          <Badge className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+          <Badge className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
             BETA
           </Badge>
         </div>
+      </div>
+
+      {/* Location Details - Swiggy Style */}
+      <div className="text-center">
+        <p className="text-sm text-gray-600">
+          Block {selectedBlock}, MUJ Campus, Manipal, Karnataka, India
+        </p>
       </div>
     </div>
   );
