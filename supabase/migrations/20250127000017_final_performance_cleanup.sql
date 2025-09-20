@@ -436,3 +436,6 @@ COMMENT ON POLICY "cafe_loyalty_transactions_comprehensive" ON public.cafe_loyal
 COMMENT ON POLICY "cafe_monthly_maintenance_comprehensive" ON public.cafe_monthly_maintenance IS 'Comprehensive policy for cafe monthly maintenance - users can view their own maintenance';
 COMMENT ON POLICY "cafe_ratings_comprehensive" ON public.cafe_ratings IS 'Comprehensive policy for cafe ratings - users can manage their own ratings';
 
+
+
+

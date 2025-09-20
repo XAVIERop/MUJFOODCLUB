@@ -76,55 +76,31 @@ const Index = () => {
   const fetchCafes = async () => {
     try {
       console.log('🔍 Fetching cafes...');
+      console.log('🔍 Supabase client ready, fetching cafes...');
       
-      // Try RPC function first
-      let data = null;
-      let error = null;
-      
-      try {
-        const rpcResult = await supabase.rpc('get_cafes_ordered');
-        data = rpcResult.data;
-        error = rpcResult.error;
-        
-        if (error) {
-          console.warn('⚠️ RPC function failed, trying direct query:', error.message);
-        }
-      } catch (rpcError) {
-        console.warn('⚠️ RPC function exception, trying direct query:', rpcError);
-        error = rpcError;
+      // Use the same working pattern as Cafes page
+      let { data, error } = await supabase
+        .rpc('get_cafes_ordered');
+
+      if (error) {
+        console.error('❌ Error fetching cafes:', error);
+        throw error;
       }
+
+      // Ensure data is an array
+      const cafesData = Array.isArray(data) ? data : [];
       
-      // Fallback to direct query if RPC fails
-      if (error || !data || data.length === 0) {
-        console.log('🔄 Trying direct table query...');
-        
-        const directResult = await supabase
-          .from('cafes')
-          .select('id, name, type, description, location, slug, priority, accepting_orders, average_rating, total_ratings, image_url')
-          .eq('is_active', true)
-          .order('priority', { ascending: true })
-          .limit(20);
-        
-        if (directResult.error) {
-          console.error('❌ Direct query also failed:', directResult.error);
-          throw directResult.error;
-        }
-        
-        data = directResult.data;
-        console.log('✅ Direct query successful');
-      }
-      
-      if (data && data.length > 0) {
-        console.log('✅ Successfully fetched cafes:', data.length);
-        console.log('✅ First few cafes:', data.slice(0, 3).map(c => c.name));
-        setCafes(data);
+      if (cafesData.length > 0) {
+        console.log('✅ Successfully fetched cafes:', cafesData.length);
+        console.log('✅ First few cafes:', cafesData.slice(0, 3).map(c => c.name));
+        setCafes(cafesData);
       } else {
         console.log('⚠️ No cafes found in database');
         setCafes([]);
       }
       
     } catch (error) {
-      console.error('❌ All cafe fetching methods failed:', error);
+      console.error('❌ Cafe fetching failed:', error);
       setCafes([]);
     } finally {
       setLoading(false);

@@ -286,3 +286,5 @@ SELECT
 FROM pg_policies 
 WHERE schemaname = 'public' 
     AND (qual = 'true' OR with_check = 'true');
+
+

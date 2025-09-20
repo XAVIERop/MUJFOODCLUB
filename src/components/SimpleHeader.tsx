@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
+import { useNavigate, useLocation as useRouterLocation, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -122,7 +122,10 @@ const SimpleHeader = () => {
           <div className="flex items-center justify-between">
             {/* Logo + Location (Left) */}
             <div className="flex items-center space-x-4">
-              <div className="relative">
+              <Link 
+                to="/" 
+                className="relative hover:scale-105 transition-transform cursor-pointer"
+              >
                 <img 
                   src="/fav.png" 
                   alt="MUJ Food Club" 
@@ -131,7 +134,7 @@ const SimpleHeader = () => {
                 <div className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">
                   BETA
                 </div>
-              </div>
+              </Link>
             </div>
 
             {/* Navigation Links (Center) */}

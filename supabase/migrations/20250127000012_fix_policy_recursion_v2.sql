@@ -160,3 +160,6 @@ COMMENT ON POLICY "Cafe staff can view their own records" ON public.cafe_staff I
 COMMENT ON POLICY "Cafe staff can update their own records" ON public.cafe_staff IS 'Allows staff to update their own records';
 COMMENT ON POLICY "Cafe owners can manage staff" ON public.cafe_staff IS 'Allows cafe owners to manage their staff';
 
+
+
+

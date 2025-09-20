@@ -454,3 +454,6 @@ COMMENT ON POLICY "order_items_insert_optimized" ON public.order_items IS 'Optim
 COMMENT ON POLICY "loyalty_transactions_select_optimized" ON public.loyalty_transactions IS 'Optimized policy for loyalty transaction viewing with single auth.uid() evaluation';
 COMMENT ON POLICY "loyalty_transactions_insert_optimized" ON public.loyalty_transactions IS 'Optimized policy for loyalty transaction creation with single auth.uid() evaluation';
 
+
+
+

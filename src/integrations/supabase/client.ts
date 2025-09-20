@@ -31,11 +31,31 @@ if (!supabase) {
         autoRefreshToken: true,
         detectSessionInUrl: true,
       },
+      realtime: {
+        // Add error handling for WebSocket connections
+        params: {
+          eventsPerSecond: 10,
+        },
+      },
       global: {
         headers: {
           'X-Client-Info': 'muj-food-club@1.0.0',
         },
       },
+    });
+
+    // Add global error handling for WebSocket connections
+    supabase.realtime.onOpen(() => {
+      console.log('✅ Supabase WebSocket connection opened');
+    });
+
+    supabase.realtime.onClose(() => {
+      console.log('⚠️ Supabase WebSocket connection closed');
+    });
+
+    supabase.realtime.onError((error) => {
+      console.warn('⚠️ Supabase WebSocket error (non-critical):', error);
+      // Don't throw - just log the warning
     });
     
     console.log('✅ Supabase client initialized successfully (singleton)');
@@ -56,10 +76,16 @@ if (!supabase) {
         update: () => ({ eq: () => Promise.resolve({ data: null, error: { message: 'Supabase not initialized - check environment variables' } }) }),
         delete: () => ({ eq: () => Promise.resolve({ data: null, error: { message: 'Supabase not initialized - check environment variables' } }) }),
       }),
+      rpc: () => Promise.resolve({ data: [], error: { message: 'Supabase not initialized - check environment variables' } }),
       channel: () => ({
         on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
       }),
       removeChannel: () => {},
+      realtime: {
+        onOpen: () => {},
+        onClose: () => {},
+        onError: () => {},
+      },
     } as any;
   }
 }

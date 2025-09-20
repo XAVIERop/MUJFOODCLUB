@@ -218,3 +218,6 @@ COMMENT ON POLICY "Cafe owners can view their cafe orders" ON public.orders IS '
 COMMENT ON POLICY "Users can view their own profile" ON public.profiles IS 'Restricts profile access to profile owner';
 COMMENT ON POLICY "Users can view their own loyalty transactions" ON public.loyalty_transactions IS 'Restricts loyalty transaction access to transaction owner';
 
+
+
+

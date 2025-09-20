@@ -16,7 +16,6 @@ import {
   ArrowLeft, 
   Eye, 
   ShoppingCart, 
-  Trophy,
   Search,
   Filter,
   Calendar,
@@ -27,7 +26,6 @@ import {
   RotateCcw,
   X,
   MoreVertical,
-  TrendingUp,
   Package,
   Timer
 } from 'lucide-react';
@@ -47,11 +45,9 @@ interface Order {
   delivery_block: string;
   delivery_notes?: string;
   payment_method: string;
-  points_earned: number;
   estimated_delivery: string;
   created_at: string;
   status_updated_at: string;
-  points_credited: boolean;
   cafe: {
     name: string;
     location: string;
@@ -167,14 +163,11 @@ const MyOrders = () => {
     ).length;
     const completedOrders = orders.filter(order => order.status === 'completed').length;
     const totalSpent = orders.reduce((sum, order) => sum + order.total_amount, 0);
-    const totalPoints = orders.reduce((sum, order) => sum + order.points_earned, 0);
-
     return {
       totalOrders,
       activeOrders,
       completedOrders,
-      totalSpent,
-      totalPoints
+      totalSpent
     };
   }, [orders]);
 
@@ -404,8 +397,8 @@ const MyOrders = () => {
                 <div className="flex items-center space-x-2">
                   <Trophy className="w-5 h-5 text-yellow-500" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Points Earned</p>
-                    <p className="text-2xl font-bold">{orderStats.totalPoints}</p>
+                    <p className="text-sm text-muted-foreground">Total Orders</p>
+                    <p className="text-2xl font-bold">{orderStats.totalOrders}</p>
                   </div>
                 </div>
               </CardContent>
@@ -528,7 +521,7 @@ const MyOrders = () => {
                         <div className="text-right">
                           <p className="text-2xl font-bold">₹{order.total_amount}</p>
                           <p className="text-sm text-muted-foreground">
-                            {order.points_earned} pts earned
+                            Order #{order.order_number}
                           </p>
                         </div>
                       </div>
@@ -585,20 +578,17 @@ const MyOrders = () => {
                         </div>
                       )}
 
-                      {/* Points Status for Completed Orders */}
+                      {/* Order Completed Status */}
                       {order.status === 'completed' && (
                         <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                           <div className="flex items-center">
-                            <Trophy className="w-5 h-5 text-green-500 mr-2" />
+                            <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
                             <div>
                               <p className="font-semibold text-green-800">
                                 Order Completed!
                               </p>
                               <p className="text-sm text-green-600">
-                                {order.points_credited 
-                                  ? `You earned ${order.points_earned} loyalty points!`
-                                  : 'Points will be credited shortly.'
-                                }
+                                Thank you for your order!
                               </p>
                             </div>
                           </div>

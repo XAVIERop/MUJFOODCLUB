@@ -350,3 +350,5 @@ UNION ALL
 SELECT '6. ALTER TABLE public.order_items DISABLE ROW LEVEL SECURITY;';
 
 SELECT 'RLS fix completed successfully!' as final_status;
+
+

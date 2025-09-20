@@ -16,3 +16,6 @@ ALTER FUNCTION public.check_security_status() SET search_path = public;
 ALTER FUNCTION public.handle_new_order() SET search_path = public;
 ALTER FUNCTION public.handle_order_status_update() SET search_path = public;
 
+
+
+

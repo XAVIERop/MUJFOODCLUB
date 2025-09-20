@@ -52,8 +52,9 @@ export const FeaturedCafeGrid: React.FC<FeaturedCafeGridProps> = ({ showAll = fa
   }
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="space-y-6">
+      {/* Mobile: 1 column, Desktop: 2-3 columns */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {limitedCafes.map((cafe) => (
           <EnhancedCafeCard key={cafe.id} cafe={cafe} />
         ))}
@@ -63,7 +64,7 @@ export const FeaturedCafeGrid: React.FC<FeaturedCafeGridProps> = ({ showAll = fa
         <div className="text-center">
           <Button 
             onClick={() => navigate('/cafes')}
-            className="px-8 py-3 text-lg"
+            className="px-6 py-2 text-base sm:px-8 sm:py-3 sm:text-lg"
             variant="outline"
           >
             Show All Cafes
