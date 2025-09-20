@@ -77,25 +77,22 @@ const Index = () => {
     try {
       console.log('🔍 Fetching cafes...');
       
-      // Try direct query first (more reliable)
-      const directResult = await supabase
-        .from('cafes')
-        .select('id, name, type, description, location, slug, priority, accepting_orders, average_rating, total_ratings, image_url, phone, hours, cuisine_categories')
-        .eq('is_active', true)
-        .order('priority', { ascending: true })
-        .limit(20);
-      
-      if (directResult.error) {
-        console.error('❌ Direct query failed:', directResult.error);
-        throw directResult.error;
+      // Use the same working pattern as Cafes page
+      let { data, error } = await supabase
+        .rpc('get_cafes_ordered');
+
+      if (error) {
+        console.error('❌ Error fetching cafes:', error);
+        throw error;
       }
+
+      // Ensure data is an array
+      const cafesData = Array.isArray(data) ? data : [];
       
-      const data = directResult.data;
-      
-      if (data && data.length > 0) {
-        console.log('✅ Successfully fetched cafes:', data.length);
-        console.log('✅ First few cafes:', data.slice(0, 3).map(c => c.name));
-        setCafes(data);
+      if (cafesData.length > 0) {
+        console.log('✅ Successfully fetched cafes:', cafesData.length);
+        console.log('✅ First few cafes:', cafesData.slice(0, 3).map(c => c.name));
+        setCafes(cafesData);
       } else {
         console.log('⚠️ No cafes found in database');
         setCafes([]);
@@ -103,12 +100,6 @@ const Index = () => {
       
     } catch (error) {
       console.error('❌ Cafe fetching failed:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
       setCafes([]);
     } finally {
       setLoading(false);
