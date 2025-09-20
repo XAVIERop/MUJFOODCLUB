@@ -4,7 +4,7 @@ import SearchBar from './SearchBar';
 import MobileFoodCategories from './MobileFoodCategories';
 import MobilePromotionalBanners from './MobilePromotionalBanners';
 import MobileCafeSlideList from './MobileCafeSlideList';
-import FeaturedCafeGrid from './FeaturedCafeGrid';
+import { FeaturedCafeGrid } from './FeaturedCafeGrid';
 
 interface Cafe {
   id: string;
