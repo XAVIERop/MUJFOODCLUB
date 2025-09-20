@@ -20,8 +20,10 @@ console.log('🔧 import.meta.env:', import.meta.env);
 // Singleton pattern to prevent multiple client instances
 let supabase: any = null;
 
-// Create Supabase client with error handling (singleton pattern)
-if (!supabase) {
+// Initialize Supabase client
+const initializeSupabase = () => {
+  if (supabase) return supabase;
+  
   try {
     console.log('✅ Initializing Supabase client...');
     
@@ -67,6 +69,7 @@ if (!supabase) {
     });
     
     console.log('✅ Supabase client initialized successfully (singleton)');
+    return supabase;
   } catch (error) {
     console.error('Failed to initialize Supabase client:', error);
     // Create a mock client that will show errors when used
@@ -95,7 +98,11 @@ if (!supabase) {
         onError: () => {},
       },
     } as any;
+    return supabase;
   }
-}
+};
+
+// Initialize immediately
+initializeSupabase();
 
 export { supabase };
