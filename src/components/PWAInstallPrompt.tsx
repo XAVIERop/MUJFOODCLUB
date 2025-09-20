@@ -40,14 +40,15 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ className }) => {
 
     // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
+      console.log('beforeinstallprompt event fired!');
       e.preventDefault();
       setDeferredPrompt(e as InstallPromptEvent);
       
-      // Show toast notification
+      // Show toast notification with install action
       toast.info('Install MUJ Food Club', {
-        description: 'Add to your home screen for quick access',
+        description: 'Tap the floating button to install',
         action: {
-          label: 'Install',
+          label: 'Install Now',
           onClick: () => handleInstall()
         }
       });
@@ -73,6 +74,25 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ className }) => {
     const timer = setTimeout(() => {
       if (!isInstalled && !dismissed && window.innerWidth <= 768) {
         setShowInstallPrompt(true);
+        
+        // Try to trigger install prompt by simulating user engagement
+        // This can help trigger the beforeinstallprompt event
+        const triggerEngagement = () => {
+          // Simulate user interaction to help trigger install prompt
+          const fakeEvent = new Event('click');
+          document.dispatchEvent(fakeEvent);
+          
+          // Try to focus on the install button to show engagement
+          setTimeout(() => {
+            const installBtn = document.querySelector('[title="Install MUJ Food Club App"]');
+            if (installBtn) {
+              (installBtn as HTMLElement).focus();
+            }
+          }, 1000);
+        };
+        
+        // Trigger engagement after showing the button
+        setTimeout(triggerEngagement, 500);
       }
     }, 2000);
 
@@ -88,26 +108,69 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ className }) => {
     setIsInstalling(true);
 
     try {
+      // Method 1: Try native install prompt first
       if (deferredPrompt) {
-        // Use the native install prompt if available
+        console.log('Using native install prompt');
         await deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         
         if (outcome === 'accepted') {
           console.log('User accepted the install prompt');
+          toast.success('Installing app...', {
+            description: 'MUJ Food Club will be added to your home screen'
+          });
         } else {
           console.log('User dismissed the install prompt');
         }
         
         setDeferredPrompt(null);
+        setShowInstallPrompt(false);
+        return;
+      }
+
+      // Method 2: Try to trigger install programmatically
+      console.log('No deferred prompt available, trying alternative methods');
+      
+      // Check if we can trigger install through other means
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isIOS = /iphone|ipad|ipod/.test(userAgent);
+      const isAndroid = /android/.test(userAgent);
+      const isChrome = /chrome/.test(userAgent) && !/edge/.test(userAgent);
+      const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
+
+      if (isIOS && isSafari) {
+        // iOS Safari - Show specific instructions
+        toast.info('Add to Home Screen', {
+          description: 'Tap the share button (□↗) and select "Add to Home Screen"',
+          duration: 8000,
+          action: {
+            label: 'Got it',
+            onClick: () => setShowInstallPrompt(false)
+          }
+        });
+      } else if (isAndroid && isChrome) {
+        // Android Chrome - Try to trigger install banner
+        toast.info('Install App', {
+          description: 'Look for the install banner at the bottom of your screen, or tap the menu (⋮) and select "Install app"',
+          duration: 8000,
+          action: {
+            label: 'Got it',
+            onClick: () => setShowInstallPrompt(false)
+          }
+        });
       } else {
-        // Fallback: Show instructions for manual installation
-        toast.info('Manual Installation', {
-          description: 'Tap the share button and select "Add to Home Screen"',
-          duration: 5000
+        // Generic fallback
+        toast.info('Install MUJ Food Club', {
+          description: 'Look for "Add to Home Screen" or "Install" option in your browser menu',
+          duration: 6000,
+          action: {
+            label: 'Got it',
+            onClick: () => setShowInstallPrompt(false)
+          }
         });
       }
-      
+
+      // Hide the floating button after showing instructions
       setShowInstallPrompt(false);
       
     } catch (error) {
