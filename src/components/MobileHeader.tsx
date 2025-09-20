@@ -1,13 +1,18 @@
 import React from 'react';
-import { MapPin, ChevronDown, User } from 'lucide-react';
+import { MapPin, ChevronDown, User, LogOut, Settings, Receipt, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 interface MobileHeaderProps {
   selectedBlock: string;
@@ -20,6 +25,23 @@ const BLOCKS = [
 ];
 
 const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChange }) => {
+  const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleAuthAction = () => {
+    if (user) {
+      // User is logged in, could open profile menu or navigate to profile
+      navigate('/profile');
+    } else {
+      // User is not logged in, navigate to auth page
+      navigate('/auth');
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <div className="bg-white px-4 py-4">
       {/* Top Row: Location + Profile - Swiggy Style */}
@@ -49,21 +71,63 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChang
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Profile Icon - Minimal Style */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-8 h-8 p-0 rounded-full hover:bg-gray-50"
-        >
-          <User className="w-4 h-4 text-gray-600" />
-        </Button>
+        {/* Profile Icon - Auth Integration */}
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-8 h-8 p-0 rounded-full hover:bg-gray-50">
+                <Avatar className="w-6 h-6">
+                  <AvatarImage src={profile?.avatar_url} />
+                  <AvatarFallback className="text-xs">
+                    {profile?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{profile?.full_name || 'User'}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate('/my-orders')}>
+                <Receipt className="mr-2 h-4 w-4" />
+                My Orders
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/favorites')}>
+                <Heart className="mr-2 h-4 w-4" />
+                Favorites
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/profile')}>
+                <Settings className="mr-2 h-4 w-4" />
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-8 h-8 p-0 rounded-full hover:bg-gray-50"
+            onClick={handleAuthAction}
+          >
+            <User className="w-4 h-4 text-gray-600" />
+          </Button>
+        )}
       </div>
 
 
       {/* Location Details - Swiggy Style */}
       <div className="text-center">
         <p className="text-sm text-gray-600">
-          Block {selectedBlock}, MUJ Campus, Manipal, Karnataka, India
+          Block {selectedBlock}, MUJ Hostel
         </p>
       </div>
     </div>

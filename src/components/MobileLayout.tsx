@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import MobileHeader from './MobileHeader';
-import MobileSearchBar from './MobileSearchBar';
+import SearchBar from './SearchBar';
 import MobileFoodCategories from './MobileFoodCategories';
 import MobilePromotionalBanners from './MobilePromotionalBanners';
 import MobileCafeSlideList from './MobileCafeSlideList';
-import MobileCafeCards from './MobileCafeCards';
+import FeaturedCafeGrid from './FeaturedCafeGrid';
 
 interface Cafe {
   id: string;
@@ -38,8 +38,10 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
         onBlockChange={onBlockChange}
       />
 
-      {/* Clean Search Bar - Swiggy Style */}
-      <MobileSearchBar />
+      {/* Search Bar - Same functionality as desktop */}
+      <div className="px-4 py-3 bg-white">
+        <SearchBar />
+      </div>
 
       {/* Food Categories */}
       <MobileFoodCategories />
@@ -50,8 +52,10 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       {/* Featured Cafes Slide List */}
       <MobileCafeSlideList cafes={cafes} />
 
-      {/* All Cafe Cards */}
-      <MobileCafeCards cafes={cafes} />
+      {/* Featured Cafe Grid - Top 6 cafes with Show All button */}
+      <div className="px-4 py-4">
+        <FeaturedCafeGrid cafes={cafes} />
+      </div>
 
       {/* Bottom Spacing */}
       <div className="h-20"></div>
