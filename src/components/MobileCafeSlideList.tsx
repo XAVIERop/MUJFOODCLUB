@@ -103,59 +103,58 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
         className="flex space-x-4 overflow-x-auto scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-          {featuredCafes.map((cafe) => (
-            <Link
-              to={`/menu/${cafe.slug || cafe.id}`}
-              key={cafe.id}
-              className="min-w-[240px] bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-            >
-              {/* Real Cafe Image */}
-              <div className="h-32 relative overflow-hidden">
-                <img
-                  src={getCafeImage(cafe.name)}
-                  alt={`${cafe.name} Food`}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/20" />
-                {cafe.average_rating && (
-                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1">
-                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                    <span className="text-xs font-medium text-gray-800">
-                      {cafe.average_rating.toFixed(1)}
-                    </span>
-                  </div>
-                )}
+        {featuredCafes.map((cafe) => (
+          <Link
+            to={`/menu/${cafe.slug || cafe.id}`}
+            key={cafe.id}
+            className="min-w-[240px] bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+          >
+            {/* Real Cafe Image */}
+            <div className="h-32 relative overflow-hidden">
+              <img
+                src={getCafeImage(cafe.name)}
+                alt={`${cafe.name} Food`}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/20" />
+              {cafe.average_rating && (
+                <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1">
+                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                  <span className="text-xs font-medium text-gray-800">
+                    {cafe.average_rating.toFixed(1)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Cafe Info */}
+            <div className="p-3">
+              <div className="mb-2">
+                <h4 className="font-bold text-gray-900 text-sm truncate">
+                  {cafe.name}
+                </h4>
               </div>
 
-              {/* Cafe Info */}
-              <div className="p-3">
-                <div className="mb-2">
-                  <h4 className="font-bold text-gray-900 text-sm truncate">
-                    {cafe.name}
-                  </h4>
+              <div className="space-y-1 mb-3">
+                <div className="flex items-center space-x-1 text-xs text-gray-500">
+                  <MapPin className="w-3 h-3" />
+                  <span className="truncate">{cafe.location}</span>
                 </div>
-
-                <div className="space-y-1 mb-3">
-                  <div className="flex items-center space-x-1 text-xs text-gray-500">
-                    <MapPin className="w-3 h-3" />
-                    <span className="truncate">{cafe.location}</span>
-                  </div>
-                  <div className="flex items-center space-x-1 text-xs text-gray-500">
-                    <Clock className="w-3 h-3" />
-                    <span>{cafe.hours}</span>
-                  </div>
+                <div className="flex items-center space-x-1 text-xs text-gray-500">
+                  <Clock className="w-3 h-3" />
+                  <span>{cafe.hours}</span>
                 </div>
-
-                <Button
-                  size="sm"
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white text-xs font-medium"
-                >
-                  Order Now
-                </Button>
               </div>
-            </Link>
-          ))}
-        </div>
+
+              <Button
+                size="sm"
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white text-xs font-medium"
+              >
+                Order Now
+              </Button>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

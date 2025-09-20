@@ -75,42 +75,41 @@ const MobilePromotionalBanners: React.FC = () => {
         className="flex space-x-4 overflow-x-auto scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-          {PROMOTIONAL_BANNERS.map((banner) => (
-            <div
-              key={banner.id}
-              className={`relative rounded-xl overflow-hidden ${banner.backgroundColor} w-[260px] h-32 flex-shrink-0`}
-            >
-              {/* Badge */}
-              {banner.badge && (
-                <div className="absolute top-2 right-2 z-10">
-                  <Badge className="bg-white/20 text-white border-white/30 text-xs px-2 py-1">
-                    {banner.badgeIcon && <span className="mr-1">{banner.badgeIcon}</span>}
-                    {banner.badge}
-                  </Badge>
-                </div>
-              )}
-
-              {/* Content */}
-              <div className="p-3 h-full flex flex-col justify-between">
-                <div>
-                  <h3 className={`text-base font-bold ${banner.textColor} mb-1`}>
-                    {banner.title}
-                  </h3>
-                  <p className={`text-xs ${banner.textColor} opacity-90 mb-2`}>
-                    {banner.subtitle}
-                  </p>
-                </div>
-                
-                <Button
-                  size="sm"
-                  className="bg-white text-gray-900 hover:bg-gray-100 font-medium text-xs py-1 px-3 h-auto"
-                >
-                  {banner.buttonText}
-                </Button>
+        {PROMOTIONAL_BANNERS.map((banner) => (
+          <div
+            key={banner.id}
+            className={`relative rounded-xl overflow-hidden ${banner.backgroundColor} w-[260px] h-32 flex-shrink-0`}
+          >
+            {/* Badge */}
+            {banner.badge && (
+              <div className="absolute top-2 right-2 z-10">
+                <Badge className="bg-white/20 text-white border-white/30 text-xs px-2 py-1">
+                  {banner.badgeIcon && <span className="mr-1">{banner.badgeIcon}</span>}
+                  {banner.badge}
+                </Badge>
               </div>
+            )}
+
+            {/* Content */}
+            <div className="p-3 h-full flex flex-col justify-between">
+              <div>
+                <h3 className={`text-base font-bold ${banner.textColor} mb-1`}>
+                  {banner.title}
+                </h3>
+                <p className={`text-xs ${banner.textColor} opacity-90 mb-2`}>
+                  {banner.subtitle}
+                </p>
+              </div>
+              
+              <Button
+                size="sm"
+                className="bg-white text-gray-900 hover:bg-gray-100 font-medium text-xs py-1 px-3 h-auto"
+              >
+                {banner.buttonText}
+              </Button>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );
