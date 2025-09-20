@@ -56,7 +56,7 @@ const MobilePromotionalBanners: React.FC = () => {
         setCurrentIndex(nextIndex);
         
         // Smooth scroll to next banner
-        const bannerWidth = 280 + 16; // banner width + gap
+        const bannerWidth = 260 + 16; // banner width + gap
         scrollRef.current.scrollTo({
           left: nextIndex * bannerWidth,
           behavior: 'smooth'
