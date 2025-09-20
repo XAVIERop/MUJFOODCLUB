@@ -51,13 +51,13 @@ const MobilePromotionalBanners: React.FC = () => {
 
   const scrollLeft = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -320, behavior: 'smooth' });
+      scrollRef.current.scrollBy({ left: -280, behavior: 'smooth' });
     }
   };
 
   const scrollRight = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+      scrollRef.current.scrollBy({ left: 280, behavior: 'smooth' });
     }
   };
 
@@ -72,7 +72,7 @@ const MobilePromotionalBanners: React.FC = () => {
         if (currentScroll >= maxScroll - 10) {
           scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
         } else {
-          scrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+          scrollRef.current.scrollBy({ left: 280, behavior: 'smooth' });
         }
       }
     }, 5000); // 5 seconds
@@ -106,13 +106,13 @@ const MobilePromotionalBanners: React.FC = () => {
         {/* Banners Scroll Container */}
         <div 
           ref={scrollRef}
-          className="flex space-x-4 overflow-x-auto scrollbar-hide px-8"
+          className="flex space-x-4 overflow-x-auto scrollbar-hide px-6"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {PROMOTIONAL_BANNERS.map((banner) => (
             <div
               key={banner.id}
-              className={`relative rounded-xl overflow-hidden ${banner.backgroundColor} min-w-[280px] flex-shrink-0`}
+              className={`relative rounded-xl overflow-hidden ${banner.backgroundColor} w-[260px] flex-shrink-0 h-32`}
             >
               {/* Badge */}
               {banner.badge && (
@@ -125,27 +125,27 @@ const MobilePromotionalBanners: React.FC = () => {
               )}
 
               {/* Content */}
-              <div className="p-4">
+              <div className="p-3 h-full flex flex-col justify-center">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <h3 className={`text-lg font-bold ${banner.textColor} mb-1`}>
+                    <h3 className={`text-base font-bold ${banner.textColor} mb-1`}>
                       {banner.title}
                     </h3>
-                    <p className={`text-sm ${banner.textColor} opacity-90 mb-3`}>
+                    <p className={`text-xs ${banner.textColor} opacity-90 mb-2`}>
                       {banner.subtitle}
                     </p>
                     <Button
                       size="sm"
-                      className="bg-white text-gray-900 hover:bg-gray-100 font-medium"
+                      className="bg-white text-gray-900 hover:bg-gray-100 font-medium text-xs px-3 py-1"
                     >
                       {banner.buttonText}
                     </Button>
                   </div>
                   
                   {/* Right side image placeholder */}
-                  <div className="ml-4">
-                    <div className="w-16 h-16 bg-white/20 rounded-lg flex items-center justify-center">
-                      <span className="text-2xl">🍽️</span>
+                  <div className="ml-3">
+                    <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                      <span className="text-lg">🍽️</span>
                     </div>
                   </div>
                 </div>
