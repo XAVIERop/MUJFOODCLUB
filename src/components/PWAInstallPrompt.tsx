@@ -23,49 +23,36 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ className }) => {
 
   useEffect(() => {
     // Check if app is already installed
-    const checkIfInstalled = () => {
-      // Check if running in standalone mode (installed)
-      if (window.matchMedia('(display-mode: standalone)').matches || 
-          (window.navigator as any).standalone === true) {
-        setIsInstalled(true);
-        return;
-      }
+    if (window.matchMedia('(display-mode: standalone)').matches || 
+        (window.navigator as any).standalone === true) {
+      setIsInstalled(true);
+      return;
+    }
+    
+    // Check localStorage for dismissed state
+    const dismissedState = localStorage.getItem('pwa-install-dismissed');
+    if (dismissedState) {
+      const dismissedTime = parseInt(dismissedState);
+      const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
       
-      // Check localStorage for dismissed state
-      const dismissedState = localStorage.getItem('pwa-install-dismissed');
-      if (dismissedState) {
-        const dismissedTime = parseInt(dismissedState);
-        const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
-        
-        // Show again after 7 days
-        if (daysSinceDismissed < 7) {
-          setDismissed(true);
-        }
+      if (daysSinceDismissed < 7) {
+        setDismissed(true);
       }
-    };
-
-    checkIfInstalled();
+    }
 
     // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
-      // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
-      
-      // Stash the event so it can be triggered later
       setDeferredPrompt(e as InstallPromptEvent);
       
-      // Show our custom install prompt
-      if (!isInstalled && !dismissed) {
-        setShowInstallPrompt(true);
-        
-        toast.info('Install MUJ Food Club', {
-          description: 'Add to your home screen for quick access',
-          action: {
-            label: 'Install',
-            onClick: () => handleInstall()
-          }
-        });
-      }
+      // Show toast notification
+      toast.info('Install MUJ Food Club', {
+        description: 'Add to your home screen for quick access',
+        action: {
+          label: 'Install',
+          onClick: () => handleInstall()
+        }
+      });
     };
 
     // Listen for app installed event
@@ -84,35 +71,45 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ className }) => {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
+    // Show the prompt after a short delay (for better UX)
+    const timer = setTimeout(() => {
+      if (!isInstalled && !dismissed && window.innerWidth <= 768) {
+        setShowInstallPrompt(true);
+      }
+    }, 2000);
+
     // Cleanup
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
+      clearTimeout(timer);
     };
   }, [isInstalled, dismissed]);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) {
-      return;
-    }
-
     setIsInstalling(true);
 
     try {
-      // Show the install prompt
-      await deferredPrompt.prompt();
-      
-      // Wait for the user to respond to the prompt
-      const { outcome } = await deferredPrompt.userChoice;
-      
-      if (outcome === 'accepted') {
-        console.log('User accepted the install prompt');
+      if (deferredPrompt) {
+        // Use the native install prompt if available
+        await deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        if (outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+        
+        setDeferredPrompt(null);
       } else {
-        console.log('User dismissed the install prompt');
+        // Fallback: Show instructions for manual installation
+        toast.info('Manual Installation', {
+          description: 'Tap the share button and select "Add to Home Screen"',
+          duration: 5000
+        });
       }
       
-      // Clear the deferredPrompt
-      setDeferredPrompt(null);
       setShowInstallPrompt(false);
       
     } catch (error) {
@@ -131,29 +128,39 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ className }) => {
     localStorage.setItem('pwa-install-dismissed', Date.now().toString());
   };
 
-  // DEBUG MODE: Always show for testing
-  const DEBUG_MODE = true;
-  
-  if (DEBUG_MODE) {
-    console.log('PWA Install Debug:', {
-      isInstalled,
-      dismissed,
-      showInstallPrompt,
-      hasDeferredPrompt: !!deferredPrompt,
-      windowWidth: window.innerWidth,
-      userAgent: navigator.userAgent
-    });
-  }
+  // Check if PWA is installable (more reliable method)
+  const isPWAInstallable = () => {
+    // Check if running in standalone mode (already installed)
+    if (window.matchMedia('(display-mode: standalone)').matches || 
+        (window.navigator as any).standalone === true) {
+      return false;
+    }
+    
+    // Check if user has dismissed recently (7 days)
+    const dismissedState = localStorage.getItem('pwa-install-dismissed');
+    if (dismissedState) {
+      const dismissedTime = parseInt(dismissedState);
+      const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
+      if (daysSinceDismissed < 7) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
 
-  // Don't show if already installed, dismissed, or no prompt available (unless debug mode)
-  if (!DEBUG_MODE && (isInstalled || dismissed || !showInstallPrompt || !deferredPrompt)) {
+  // Don't show if PWA is not installable
+  if (!isPWAInstallable()) {
     return null;
   }
 
-  // Don't show on desktop (only mobile/tablet) unless debug mode
-  if (!DEBUG_MODE && window.innerWidth > 768) {
+  // Don't show on desktop (only mobile/tablet)
+  if (window.innerWidth > 768) {
     return null;
   }
+
+  // Show the prompt (even without beforeinstallprompt event for better UX)
+  // The actual install will work if the browser supports it
 
   return (
     <div className={`fixed bottom-4 right-4 z-50 max-w-sm ${className}`}>
@@ -176,16 +183,10 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ className }) => {
             </Button>
           </div>
           <CardTitle className="text-lg text-orange-900">
-            Install MUJ Food Club {DEBUG_MODE && "(DEBUG MODE)"}
+            Install MUJ Food Club
           </CardTitle>
           <CardDescription className="text-orange-700">
             Add to your home screen for quick access and offline ordering.
-            {DEBUG_MODE && (
-              <div className="mt-2 text-xs text-orange-600">
-                Debug: {deferredPrompt ? 'Prompt Available' : 'No Prompt'} | 
-                Width: {window.innerWidth}px
-              </div>
-            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
