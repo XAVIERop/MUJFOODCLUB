@@ -14,13 +14,9 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 // Singleton pattern to prevent multiple client instances
 let supabase: any = null;
 
-// Initialize Supabase client
-const initializeSupabase = () => {
-  if (supabase) return supabase;
-  
+// Create Supabase client with error handling (singleton pattern)
+if (!supabase) {
   try {
-    console.log('✅ Initializing Supabase client...');
-    
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       console.error('Missing required Supabase environment variables');
       console.error('SUPABASE_URL:', !!SUPABASE_URL);
@@ -63,7 +59,6 @@ const initializeSupabase = () => {
     });
     
     console.log('✅ Supabase client initialized successfully (singleton)');
-    return supabase;
   } catch (error) {
     console.error('Failed to initialize Supabase client:', error);
     // Create a mock client that will show errors when used
@@ -92,11 +87,7 @@ const initializeSupabase = () => {
         onError: () => {},
       },
     } as any;
-    return supabase;
   }
-};
-
-// Initialize immediately
-initializeSupabase();
+}
 
 export { supabase };
