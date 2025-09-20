@@ -30,6 +30,10 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   onBlockChange, 
   selectedBlock 
 }) => {
+  // Debug logging
+  console.log('📱 MobileLayout: Received cafes:', cafes.length);
+  console.log('📱 MobileLayout: Cafes data:', cafes);
+  
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Header */}

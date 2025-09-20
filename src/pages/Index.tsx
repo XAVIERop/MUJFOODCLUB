@@ -77,42 +77,20 @@ const Index = () => {
     try {
       console.log('🔍 Fetching cafes...');
       
-      // Try RPC function first
-      let data = null;
-      let error = null;
+      // Try direct query first (more reliable)
+      const directResult = await supabase
+        .from('cafes')
+        .select('id, name, type, description, location, slug, priority, accepting_orders, average_rating, total_ratings, image_url, phone, hours, cuisine_categories')
+        .eq('is_active', true)
+        .order('priority', { ascending: true })
+        .limit(20);
       
-      try {
-        const rpcResult = await supabase.rpc('get_cafes_ordered');
-        data = rpcResult.data;
-        error = rpcResult.error;
-        
-        if (error) {
-          console.warn('⚠️ RPC function failed, trying direct query:', error.message);
-        }
-      } catch (rpcError) {
-        console.warn('⚠️ RPC function exception, trying direct query:', rpcError);
-        error = rpcError;
+      if (directResult.error) {
+        console.error('❌ Direct query failed:', directResult.error);
+        throw directResult.error;
       }
       
-      // Fallback to direct query if RPC fails
-      if (error || !data || data.length === 0) {
-        console.log('🔄 Trying direct table query...');
-        
-        const directResult = await supabase
-          .from('cafes')
-          .select('id, name, type, description, location, slug, priority, accepting_orders, average_rating, total_ratings, image_url')
-          .eq('is_active', true)
-          .order('priority', { ascending: true })
-          .limit(20);
-        
-        if (directResult.error) {
-          console.error('❌ Direct query also failed:', directResult.error);
-          throw directResult.error;
-        }
-        
-        data = directResult.data;
-        console.log('✅ Direct query successful');
-      }
+      const data = directResult.data;
       
       if (data && data.length > 0) {
         console.log('✅ Successfully fetched cafes:', data.length);
@@ -124,7 +102,13 @@ const Index = () => {
       }
       
     } catch (error) {
-      console.error('❌ All cafe fetching methods failed:', error);
+      console.error('❌ Cafe fetching failed:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       setCafes([]);
     } finally {
       setLoading(false);
