@@ -73,3 +73,6 @@ BEGIN
   RAISE NOTICE 'Anonymous users can now view cafes on the homepage';
 END $$;
 
+
+
+

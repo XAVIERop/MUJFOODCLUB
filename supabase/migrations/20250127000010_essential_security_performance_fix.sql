@@ -268,3 +268,6 @@ COMMENT ON INDEX idx_orders_cafe_id IS 'Index for cafe order queries';
 COMMENT ON INDEX idx_menu_items_cafe_id IS 'Index for cafe menu queries';
 COMMENT ON INDEX idx_order_items_order_id IS 'Index for order item queries';
 
+
+
+

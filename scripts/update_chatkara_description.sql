@@ -9,3 +9,6 @@ FROM public.cafes
 WHERE name = 'CHATKARA';
 
 
+
+
+

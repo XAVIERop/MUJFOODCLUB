@@ -112,3 +112,5 @@ LIMIT 5;
 
 -- Final status
 SELECT 'Order confirmation RLS fix completed!' as final_status;
+
+

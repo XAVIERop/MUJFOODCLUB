@@ -140,7 +140,6 @@ const Header = () => {
             <Link 
               to="/" 
               className="flex items-center space-x-1 sm:space-x-2 hover:scale-105 transition-transform cursor-pointer"
-              onClick={() => navigate('/')}
             >
               <img 
                 src="/foc.png" 
@@ -291,10 +290,7 @@ const Header = () => {
                     <Link 
                       to="/" 
                       className="flex items-center cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={() => {
-                        navigate('/');
-                        setIsMenuOpen(false);
-                      }}
+                      onClick={() => setIsMenuOpen(false)}
                     >
                       <img 
                         src="/foc.png" 

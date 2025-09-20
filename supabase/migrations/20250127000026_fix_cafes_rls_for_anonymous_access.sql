@@ -21,3 +21,6 @@ BEGIN
   RAISE NOTICE 'RLS policy created for anonymous cafe access';
 END $$;
 
+
+
+

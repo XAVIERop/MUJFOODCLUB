@@ -137,3 +137,6 @@ COMMENT ON POLICY "Cafe dashboard view is viewable by everyone" ON public.cafe_d
 COMMENT ON POLICY "Users can view their own orders in queue" ON public.order_queue_view IS 'Allows users to view their own orders in the queue';
 COMMENT ON POLICY "Cafe owners can view their cafe orders in queue" ON public.order_queue_view IS 'Allows cafe owners to view orders for their cafe in the queue';
 
+
+
+

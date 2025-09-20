@@ -11,3 +11,6 @@ FROM public.cafes
 ORDER BY name;
 
 
+
+
+

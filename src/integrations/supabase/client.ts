@@ -6,12 +6,6 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Debug environment variables
-console.log('🔧 Environment variables check:');
-console.log('🔧 import.meta.env:', import.meta.env);
-console.log('🔧 VITE_SUPABASE_URL:', SUPABASE_URL);
-console.log('🔧 VITE_SUPABASE_ANON_KEY:', SUPABASE_PUBLISHABLE_KEY ? 'Present' : 'Missing');
-
 // Environment variables loaded successfully
 
 // Import the supabase client like this:
@@ -23,9 +17,7 @@ let supabase: any = null;
 // Create Supabase client with error handling (singleton pattern)
 if (!supabase) {
   try {
-    console.log('🔧 Initializing Supabase client...');
-    console.log('🔧 SUPABASE_URL:', SUPABASE_URL);
-    console.log('🔧 SUPABASE_PUBLISHABLE_KEY:', SUPABASE_PUBLISHABLE_KEY ? 'Present' : 'Missing');
+    console.log('✅ Initializing Supabase client...');
     
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       console.error('Missing required Supabase environment variables');
