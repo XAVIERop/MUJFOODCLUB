@@ -55,7 +55,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
   onToggleFavorite,
   isFavorite
 }) => {
-  const [showCart, setShowCart] = useState(false);
+  // showCart state removed - using floating cart on mobile instead
   const [promotionalBanners, setPromotionalBanners] = useState<PromotionalBannerData[]>([]);
 
   // Calculate category counts for floating menu
@@ -87,12 +87,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
     return counts;
   };
 
-  // Auto-show cart on mobile when items are added
-  useEffect(() => {
-    if (getCartItemCount() > 0) {
-      setShowCart(true);
-    }
-  }, [getCartItemCount()]);
+  // Auto-show cart logic removed - using floating cart on mobile instead
 
   // Load promotional banners
   useEffect(() => {
@@ -234,11 +229,8 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
             </div>
           </div>
 
-          {/* Floating Cart Panel */}
-          <div className={cn(
-            "lg:block w-80",
-            showCart ? "block" : "hidden"
-          )}>
+          {/* Floating Cart Panel - Hidden on mobile, shown on desktop */}
+          <div className="hidden lg:block w-80">
             <ModernCartPanel
               cart={cart}
               getTotalAmount={getTotalAmount}
@@ -246,26 +238,12 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
               onCheckout={onCheckout}
               onRemoveFromCart={onRemoveFromCart}
               cafe={cafe}
-              onClose={() => setShowCart(false)}
             />
           </div>
         </div>
       </div>
 
-      {/* Mobile Cart Button */}
-      {getCartItemCount() > 0 && (
-        <div className="lg:hidden fixed bottom-4 right-4 z-50">
-          <Button
-            onClick={() => setShowCart(true)}
-            className="rounded-full w-14 h-14 bg-orange-500 hover:bg-orange-600 shadow-lg"
-          >
-            <ShoppingCart className="w-6 h-6" />
-            <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs min-w-[20px] h-5 flex items-center justify-center rounded-full">
-              {getCartItemCount()}
-            </Badge>
-          </Button>
-        </div>
-      )}
+      {/* Mobile Cart Button - Removed, replaced with floating cart in App.tsx */}
 
       {/* Floating Menu Button */}
       <FloatingMenuButton
@@ -410,8 +388,7 @@ const ModernCartPanel: React.FC<{
   onCheckout: () => void;
   onRemoveFromCart: (item: any) => void;
   cafe: any;
-  onClose: () => void;
-}> = ({ cart, getTotalAmount, getCartItemCount, onCheckout, onRemoveFromCart, cafe, onClose }) => {
+}> = ({ cart, getTotalAmount, getCartItemCount, onCheckout, onRemoveFromCart, cafe }) => {
   const cartItems = Object.values(cart);
   const deliveryFee = 10;
   const minimumOrder = 89;
@@ -422,14 +399,6 @@ const ModernCartPanel: React.FC<{
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900">My Orders</h3>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="lg:hidden p-1"
-          >
-            ×
-          </Button>
         </div>
         
         {/* Delivery Info */}
