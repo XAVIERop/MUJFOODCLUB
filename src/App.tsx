@@ -8,6 +8,7 @@ import { queryClient } from "@/lib/queryClient";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LocationProvider } from "@/contexts/LocationContext";
+import { CartProvider } from "@/hooks/useCart";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { SecurityProvider, SecurityIndicator } from "@/components/SecurityProvider";
 import PWAUpdateManager from "@/components/PWAUpdateManager";
@@ -15,6 +16,7 @@ import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import BottomNavigation from "./components/BottomNavigation";
 import ScrollToTop from "./components/ScrollToTop";
+import MobileFloatingCart from "./components/MobileFloatingCart";
 import { PerformanceMonitor } from "./components/PerformanceMonitor";
 import LoadingSpinner from "./components/LoadingSpinner";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -49,6 +51,7 @@ const App = () => (
         <AuthProvider>
           <SecurityProvider>
             <LocationProvider>
+              <CartProvider>
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
@@ -93,8 +96,10 @@ const App = () => (
               <SecurityIndicator />
               <PWAUpdateManager />
               <PWAInstallPrompt />
+              <MobileFloatingCart />
             </BrowserRouter>
           </TooltipProvider>
+              </CartProvider>
           </LocationProvider>
           </SecurityProvider>
         </AuthProvider>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useCart } from '@/hooks/useCart';
 import { supabase } from '@/integrations/supabase/client';
 import ModernMenuLayout from '@/components/ModernMenuLayout';
 import SimpleHeader from '@/components/SimpleHeader';
@@ -73,6 +74,12 @@ const MenuModern = () => {
   const [groupedMenuItems, setGroupedMenuItems] = useState<GroupedMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<{[key: string]: CartItem}>({});
+  const { setCart: setGlobalCart } = useCart();
+  
+  // Sync local cart with global cart context
+  useEffect(() => {
+    setGlobalCart(cart);
+  }, [cart, setGlobalCart]);
   
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState('');
