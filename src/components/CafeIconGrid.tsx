@@ -242,28 +242,12 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
 
   return (
     <div>
-      {/* Cafe Icons Row with Slide Buttons */}
+      {/* Cafe Icons Row - No Slide Buttons */}
       <div className="relative">
-        {/* Left Slide Button */}
-        <button
-          onClick={scrollLeft}
-          className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-200"
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-600" />
-        </button>
-
-        {/* Right Slide Button */}
-        <button
-          onClick={scrollRight}
-          className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-200"
-        >
-          <ChevronRight className="w-5 h-5 text-gray-600" />
-        </button>
-
         {/* Scrollable Cafe Icons Container */}
         <div
           ref={scrollContainerRef}
-          className="flex gap-6 px-8 overflow-x-auto scrollbar-hide scroll-smooth"
+          className="flex gap-6 px-4 overflow-x-auto scrollbar-hide scroll-smooth"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {cafes.map((cafe) => {

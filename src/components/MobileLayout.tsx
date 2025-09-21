@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import MobileHeader from './MobileHeader';
 import SearchBar from './SearchBar';
-import MobileFoodCategories from './MobileFoodCategories';
 import MobilePromotionalBanners from './MobilePromotionalBanners';
 import MobileCafeSlideList from './MobileCafeSlideList';
 import { FeaturedCafeGrid } from './FeaturedCafeGrid';
+import CafeIconGrid from './CafeIconGrid';
+import CafeCategories from './CafeCategories';
 
 interface Cafe {
   id: string;
@@ -43,14 +44,24 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
         <SearchBar />
       </div>
 
-      {/* Food Categories */}
-      <MobileFoodCategories />
+      {/* What's on your mind? section */}
+      <CafeCategories cafes={cafes} />
 
       {/* Promotional Banners */}
       <MobilePromotionalBanners />
 
       {/* Featured Cafes Slide List */}
       <MobileCafeSlideList cafes={cafes} />
+
+      {/* Explore all cafes nearby section */}
+      <div className="px-4 py-4 bg-white">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Explore all cafes nearby!
+        </h2>
+        {cafes.length > 0 && (
+          <CafeIconGrid cafes={cafes} />
+        )}
+      </div>
 
       {/* Featured Cafe Grid - Top 6 cafes with Show All button */}
       <div className="px-4 py-4">
