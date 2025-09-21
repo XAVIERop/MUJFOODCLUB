@@ -8,7 +8,7 @@ import { queryClient } from "@/lib/queryClient";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LocationProvider } from "@/contexts/LocationContext";
-import { SpeedInsights } from "@vercel/speed-insights/vite";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { SecurityProvider, SecurityIndicator } from "@/components/SecurityProvider";
 import PWAUpdateManager from "@/components/PWAUpdateManager";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
