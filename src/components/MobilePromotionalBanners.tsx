@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
 
 interface PromotionalBanner {
   id: string;
@@ -11,42 +12,86 @@ interface PromotionalBanner {
   textColor: string;
   badge?: string;
   badgeIcon?: string;
+  cafeId: string;
 }
 
 const PROMOTIONAL_BANNERS: PromotionalBanner[] = [
   {
-    id: 'order-now',
-    title: 'Order Now',
-    subtitle: 'Get your favorite meals delivered to your block',
+    id: 'chatkara',
+    title: 'Chatkara',
+    subtitle: 'Authentic North Indian flavors',
     buttonText: 'ORDER NOW',
     backgroundColor: 'bg-orange-600',
     textColor: 'text-white',
+    badge: 'POPULAR',
+    badgeIcon: '🔥',
+    cafeId: 'chatkara',
   },
   {
-    id: 'special-offers',
-    title: 'Special Offers',
-    subtitle: 'Exclusive deals for MUJ students',
-    buttonText: 'VIEW OFFERS',
+    id: 'food-court',
+    title: 'Food Court',
+    subtitle: 'Variety of cuisines under one roof',
+    buttonText: 'EXPLORE',
     backgroundColor: 'bg-green-600',
     textColor: 'text-white',
-    badge: 'LIMITED TIME',
-    badgeIcon: '⚡',
+    badge: 'MULTI-CUISINE',
+    badgeIcon: '🍽️',
+    cafeId: 'food-court',
   },
   {
-    id: 'new-cafes',
-    title: 'New Cafes',
-    subtitle: 'Discover the latest additions to our food court',
-    buttonText: 'EXPLORE',
+    id: 'mini-meals',
+    title: 'Mini Meals',
+    subtitle: 'Quick bites & light meals',
+    buttonText: 'ORDER NOW',
     backgroundColor: 'bg-purple-600',
     textColor: 'text-white',
-    badge: 'NEW',
-    badgeIcon: '🆕',
+    badge: 'QUICK',
+    badgeIcon: '⚡',
+    cafeId: 'mini-meals',
+  },
+  {
+    id: 'punjabi-tadka',
+    title: 'Punjabi Tadka',
+    subtitle: 'Spicy Punjabi delights',
+    buttonText: 'ORDER NOW',
+    backgroundColor: 'bg-red-600',
+    textColor: 'text-white',
+    badge: 'SPICY',
+    badgeIcon: '🌶️',
+    cafeId: 'punjabi-tadka',
+  },
+  {
+    id: 'munch-box',
+    title: 'Munch Box',
+    subtitle: 'Snacks & beverages',
+    buttonText: 'ORDER NOW',
+    backgroundColor: 'bg-blue-600',
+    textColor: 'text-white',
+    badge: 'SNACKS',
+    badgeIcon: '🍿',
+    cafeId: 'munch-box',
+  },
+  {
+    id: 'cook-house',
+    title: 'Cook House',
+    subtitle: 'Home-style cooking',
+    buttonText: 'ORDER NOW',
+    backgroundColor: 'bg-yellow-600',
+    textColor: 'text-white',
+    badge: 'HOMESTYLE',
+    badgeIcon: '🏠',
+    cafeId: 'cook-house',
   },
 ];
 
 const MobilePromotionalBanners: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const navigate = useNavigate();
+
+  const handleBannerClick = (cafeId: string) => {
+    navigate(`/cafes/${cafeId}`);
+  };
 
   // Auto-slide functionality
   useEffect(() => {
@@ -78,7 +123,8 @@ const MobilePromotionalBanners: React.FC = () => {
         {PROMOTIONAL_BANNERS.map((banner) => (
           <div
             key={banner.id}
-            className={`relative rounded-xl overflow-hidden ${banner.backgroundColor} w-[260px] h-32 flex-shrink-0`}
+            className={`relative rounded-xl overflow-hidden ${banner.backgroundColor} w-[260px] h-32 flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity`}
+            onClick={() => handleBannerClick(banner.cafeId)}
           >
             {/* Badge */}
             {banner.badge && (
@@ -104,6 +150,10 @@ const MobilePromotionalBanners: React.FC = () => {
               <Button
                 size="sm"
                 className="bg-white text-gray-900 hover:bg-gray-100 font-medium text-xs py-1 px-3 h-auto"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBannerClick(banner.cafeId);
+                }}
               >
                 {banner.buttonText}
               </Button>
