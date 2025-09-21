@@ -45,7 +45,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChang
   return (
     <div className="bg-white px-4 py-3">
       {/* Top Row: Location + Profile - Swiggy Style */}
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-start justify-between mb-1">
         {/* Location Dropdown - Clean Swiggy Style */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -75,10 +75,10 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChang
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="w-10 h-10 p-0 rounded-full hover:bg-gray-50">
-                <Avatar className="w-8 h-8">
+              <Button variant="ghost" size="sm" className="w-10 h-10 p-0 rounded-full hover:bg-gray-50 relative">
+                <Avatar className="w-8 h-8 ring-2 ring-orange-200 ring-offset-2 shadow-sm">
                   <AvatarImage src={profile?.avatar_url} />
-                  <AvatarFallback className="text-sm font-medium">
+                  <AvatarFallback className="text-sm font-medium bg-gradient-to-br from-orange-100 to-orange-200 text-orange-800">
                     {profile?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
                   </AvatarFallback>
                 </Avatar>
@@ -115,10 +115,12 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChang
           <Button
             variant="ghost"
             size="sm"
-            className="w-10 h-10 p-0 rounded-full hover:bg-gray-50"
+            className="w-10 h-10 p-0 rounded-full hover:bg-gray-50 relative"
             onClick={handleAuthAction}
           >
-            <User className="w-5 h-5 text-gray-600" />
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center ring-2 ring-gray-200 ring-offset-2 shadow-sm">
+              <User className="w-5 h-5 text-gray-600" />
+            </div>
           </Button>
         )}
       </div>
