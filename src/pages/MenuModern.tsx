@@ -74,12 +74,16 @@ const MenuModern = () => {
   const [groupedMenuItems, setGroupedMenuItems] = useState<GroupedMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<{[key: string]: CartItem}>({});
-  const { setCart: setGlobalCart } = useCart();
+  const { setCart: setGlobalCart, setCafe: setGlobalCafe } = useCart();
   
-  // Sync local cart with global cart context
+  // Sync local cart and cafe with global cart context
   useEffect(() => {
     setGlobalCart(cart);
   }, [cart, setGlobalCart]);
+  
+  useEffect(() => {
+    setGlobalCafe(cafe);
+  }, [cafe, setGlobalCafe]);
   
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState('');

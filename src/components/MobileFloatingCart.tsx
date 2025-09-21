@@ -5,7 +5,7 @@ import { useCart } from '@/hooks/useCart';
 const MobileFloatingCart: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { getItemCount, getTotalAmount, cart } = useCart();
+  const { getItemCount, getTotalAmount, cart, cafe } = useCart();
   
   const itemCount = getItemCount();
   const totalAmount = getTotalAmount();
@@ -14,8 +14,19 @@ const MobileFloatingCart: React.FC = () => {
   if (itemCount === 0 || !location.pathname.startsWith('/menu/')) return null;
 
   const handleViewCart = () => {
-    // Simply scroll to bottom where the checkout button usually is
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    // Navigate to checkout with cart data, just like desktop
+    if (!cafe) {
+      console.error('No cafe data available for checkout');
+      return;
+    }
+    
+    navigate('/checkout', {
+      state: {
+        cart,
+        cafe,
+        totalAmount
+      }
+    });
   };
 
   return (

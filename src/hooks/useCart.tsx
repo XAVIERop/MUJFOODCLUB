@@ -9,6 +9,8 @@ interface CartItem {
 interface CartContextType {
   cart: { [key: string]: CartItem };
   setCart: (cart: { [key: string]: CartItem }) => void;
+  cafe: any | null;
+  setCafe: (cafe: any | null) => void;
   addToCart: (item: any, quantity?: number, notes?: string) => void;
   removeFromCart: (itemId: string) => void;
   clearCart: () => void;
@@ -20,6 +22,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<{ [key: string]: CartItem }>({});
+  const [cafe, setCafe] = useState<any | null>(null);
 
   const addToCart = (item: any, quantity: number = 1, notes: string = '') => {
     setCart(prev => ({
@@ -62,6 +65,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     <CartContext.Provider value={{
       cart,
       setCart,
+      cafe,
+      setCafe,
       addToCart,
       removeFromCart,
       clearCart,
