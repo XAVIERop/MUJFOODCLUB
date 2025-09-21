@@ -17,7 +17,6 @@ import { ORDER_CONSTANTS } from '@/lib/constants';
 import { whatsappService } from '@/services/whatsappService';
 import { isDineInTakeawayAllowed, isDeliveryAllowed, getDineInTakeawayMessage } from '@/utils/timeRestrictions';
 import Header from '@/components/Header';
-import PhoneOTPVerification from '@/components/PhoneOTPVerification';
 
 interface MenuItem {
   id: string;
@@ -51,7 +50,7 @@ interface CartItem {
 const Checkout = () => {
   const navigate = useNavigate();
   const location = useRouterLocation();
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, sendPhoneOTP, verifyPhoneOTP } = useAuth();
   const { selectedBlock } = useLocation();
   const { toast } = useToast();
   
@@ -59,8 +58,11 @@ const Checkout = () => {
   const [error, setError] = useState('');
   
   // OTP Verification states
-  const [showOTPVerification, setShowOTPVerification] = useState(false);
   const [verifiedPhoneNumber, setVerifiedPhoneNumber] = useState<string | null>(null);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [isOTPLoading, setIsOTPLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
   
   // Get cart data from navigation state
   const cart: {[key: string]: CartItem} = location.state?.cart || {};
@@ -133,9 +135,8 @@ const Checkout = () => {
 
     // Check if phone number is verified
     if (verifiedPhoneNumber !== deliveryDetails.phoneNumber) {
-      // Show OTP verification
-      setShowOTPVerification(true);
-        return;
+      setError('Please verify your phone number with OTP before placing the order');
+      return;
     }
 
     setIsLoading(true);
@@ -272,31 +273,65 @@ const Checkout = () => {
     }
   };
 
-  // Handle OTP verification success
-  const handleOTPVerificationSuccess = (verifiedPhone: string) => {
-    setVerifiedPhoneNumber(verifiedPhone);
-    setShowOTPVerification(false);
-    // Automatically proceed with order placement
-    setTimeout(() => {
-      handlePlaceOrder();
-    }, 500);
+  // Handle sending OTP
+  const handleSendOTP = async () => {
+    if (!deliveryDetails.phoneNumber || deliveryDetails.phoneNumber.length !== 10) {
+      setOtpError('Please enter a valid 10-digit phone number first');
+      return;
+    }
+
+    setIsOTPLoading(true);
+    setOtpError('');
+
+    try {
+      const { error } = await sendPhoneOTP(deliveryDetails.phoneNumber);
+      
+      if (error) {
+        setOtpError(error.message || 'Failed to send OTP');
+      } else {
+        setOtpSent(true);
+        toast({
+          title: "OTP Sent Successfully",
+          description: `OTP sent to +91${deliveryDetails.phoneNumber}`,
+        });
+      }
+    } catch (err) {
+      setOtpError('Failed to send OTP');
+    } finally {
+      setIsOTPLoading(false);
+    }
   };
 
-  // Handle OTP verification back
-  const handleOTPVerificationBack = () => {
-    setShowOTPVerification(false);
-  };
+  // Handle OTP verification
+  const handleVerifyOTP = async () => {
+    if (!otpCode || otpCode.length !== 6) {
+      setOtpError('Please enter a valid 6-digit OTP');
+      return;
+    }
 
-  // Show OTP verification if needed
-  if (showOTPVerification) {
-    return (
-      <PhoneOTPVerification
-        phoneNumber={deliveryDetails.phoneNumber}
-        onVerificationSuccess={handleOTPVerificationSuccess}
-        onBack={handleOTPVerificationBack}
-      />
-    );
-  }
+    setIsOTPLoading(true);
+    setOtpError('');
+
+    try {
+      const { error } = await verifyPhoneOTP(deliveryDetails.phoneNumber, otpCode);
+      
+      if (error) {
+        setOtpError(error.message || 'Invalid OTP');
+      } else {
+        setVerifiedPhoneNumber(deliveryDetails.phoneNumber);
+        setOtpCode('');
+        setOtpSent(false);
+        toast({
+          title: "Phone Verified Successfully",
+          description: "Your phone number has been verified!",
+        });
+      }
+    } catch (err) {
+      setOtpError('Failed to verify OTP');
+    } finally {
+      setIsOTPLoading(false);
+    }
+  };
 
   if (!cart || Object.keys(cart).length === 0 || !cafe) {
   return (
@@ -465,9 +500,12 @@ const Checkout = () => {
                           value={deliveryDetails.phoneNumber}
                           onChange={(e) => {
                             setDeliveryDetails(prev => ({ ...prev, phoneNumber: e.target.value }));
-                            // Reset verified phone if user changes the number
+                            // Reset verified phone and OTP state if user changes the number
                             if (verifiedPhoneNumber && verifiedPhoneNumber !== e.target.value) {
                               setVerifiedPhoneNumber(null);
+                              setOtpSent(false);
+                              setOtpCode('');
+                              setOtpError('');
                             }
                           }}
                           placeholder="Enter your phone number"
@@ -490,6 +528,71 @@ const Checkout = () => {
                           <CheckCircle className="w-4 h-4 mr-1" />
                           Phone number verified
                         </p>
+                      )}
+                      
+                      {/* OTP Verification Section */}
+                      {deliveryDetails.phoneNumber && deliveryDetails.phoneNumber.length === 10 && verifiedPhoneNumber !== deliveryDetails.phoneNumber && (
+                        <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-medium text-gray-700">
+                              Verify phone number for secure delivery
+                            </span>
+                            {!otpSent ? (
+                              <Button
+                                onClick={handleSendOTP}
+                                disabled={isOTPLoading}
+                                size="sm"
+                                variant="outline"
+                                className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                              >
+                                {isOTPLoading ? 'Sending...' : 'Get OTP'}
+                              </Button>
+                            ) : (
+                              <span className="text-xs text-green-600 font-medium">OTP Sent!</span>
+                            )}
+                          </div>
+                          
+                          {otpSent && (
+                            <div className="space-y-3">
+                              <div>
+                                <Label htmlFor="otpCode" className="text-sm">Enter 6-digit OTP sent to +91{deliveryDetails.phoneNumber}</Label>
+                                <Input
+                                  id="otpCode"
+                                  type="text"
+                                  inputMode="numeric"
+                                  value={otpCode}
+                                  onChange={(e) => {
+                                    const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+                                    if (value.length <= 6) {
+                                      setOtpCode(value);
+                                      setOtpError(''); // Clear error when user starts typing
+                                    }
+                                  }}
+                                  placeholder="000000"
+                                  className="text-center text-lg tracking-widest mt-1"
+                                  maxLength={6}
+                                  disabled={isOTPLoading}
+                                />
+                              </div>
+                              <Button
+                                onClick={handleVerifyOTP}
+                                disabled={isOTPLoading || otpCode.length !== 6}
+                                size="sm"
+                                className="w-full"
+                                variant="hero"
+                              >
+                                {isOTPLoading ? 'Verifying...' : 'Verify OTP'}
+                              </Button>
+                            </div>
+                          )}
+                          
+                          {otpError && (
+                            <Alert variant="destructive" className="mt-3">
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertDescription className="text-sm">{otpError}</AlertDescription>
+                            </Alert>
+                          )}
+                        </div>
                       )}
                       </div>
 
@@ -536,9 +639,12 @@ const Checkout = () => {
                       value={deliveryDetails.phoneNumber}
                           onChange={(e) => {
                             setDeliveryDetails(prev => ({ ...prev, phoneNumber: e.target.value }));
-                            // Reset verified phone if user changes the number
+                            // Reset verified phone and OTP state if user changes the number
                             if (verifiedPhoneNumber && verifiedPhoneNumber !== e.target.value) {
                               setVerifiedPhoneNumber(null);
+                              setOtpSent(false);
+                              setOtpCode('');
+                              setOtpError('');
                             }
                           }}
                           placeholder="Enter your phone number"
@@ -556,7 +662,72 @@ const Checkout = () => {
                           Phone number verified
                         </p>
                       )}
-                  </div>
+                      
+                      {/* OTP Verification Section for Dine-in */}
+                      {deliveryDetails.phoneNumber && deliveryDetails.phoneNumber.length === 10 && verifiedPhoneNumber !== deliveryDetails.phoneNumber && (
+                        <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-medium text-gray-700">
+                              Verify phone number for secure service
+                            </span>
+                            {!otpSent ? (
+                              <Button
+                                onClick={handleSendOTP}
+                                disabled={isOTPLoading}
+                                size="sm"
+                                variant="outline"
+                                className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                              >
+                                {isOTPLoading ? 'Sending...' : 'Get OTP'}
+                              </Button>
+                            ) : (
+                              <span className="text-xs text-green-600 font-medium">OTP Sent!</span>
+                            )}
+                          </div>
+                          
+                          {otpSent && (
+                            <div className="space-y-3">
+                              <div>
+                                <Label htmlFor="otpCode" className="text-sm">Enter 6-digit OTP sent to +91{deliveryDetails.phoneNumber}</Label>
+                                <Input
+                                  id="otpCode"
+                                  type="text"
+                                  inputMode="numeric"
+                                  value={otpCode}
+                                  onChange={(e) => {
+                                    const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+                                    if (value.length <= 6) {
+                                      setOtpCode(value);
+                                      setOtpError(''); // Clear error when user starts typing
+                                    }
+                                  }}
+                                  placeholder="000000"
+                                  className="text-center text-lg tracking-widest mt-1"
+                                  maxLength={6}
+                                  disabled={isOTPLoading}
+                                />
+                              </div>
+                              <Button
+                                onClick={handleVerifyOTP}
+                                disabled={isOTPLoading || otpCode.length !== 6}
+                                size="sm"
+                                className="w-full"
+                                variant="hero"
+                              >
+                                {isOTPLoading ? 'Verifying...' : 'Verify OTP'}
+                              </Button>
+                            </div>
+                          )}
+                          
+                          {otpError && (
+                            <Alert variant="destructive" className="mt-3">
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertDescription className="text-sm">{otpError}</AlertDescription>
+                            </Alert>
+                          )}
+                        </div>
+                      )}
+                    </div>
                 </CardContent>
               </Card>
               )}

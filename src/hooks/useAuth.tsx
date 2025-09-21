@@ -305,11 +305,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const formattedPhone = `+91${phone}`;
 
       // Use Supabase phone OTP authentication
+      // Note: This will send OTP but won't create a user account
       const { error } = await supabase.auth.signInWithOtp({
-        phone: formattedPhone,
-        options: {
-          shouldCreateUser: false // Don't create user, just verify phone
-        }
+        phone: formattedPhone
       });
 
       return { error };
