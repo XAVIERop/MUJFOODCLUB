@@ -18,7 +18,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import { PerformanceMonitor } from "./components/PerformanceMonitor";
 import LoadingSpinner from "./components/LoadingSpinner";
 import ErrorBoundary from "./components/ErrorBoundary";
-import MobileErrorHandler from "./components/MobileErrorHandler";
+// import MobileErrorHandler from "./components/MobileErrorHandler";
 import PerformanceDashboard from "./components/PerformanceDashboard";
 
 // Lazy load all pages for better performance
@@ -45,8 +45,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 const App = () => (
   <ErrorBoundary>
-    <MobileErrorHandler>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <SecurityProvider>
             <LocationProvider>
@@ -101,8 +100,7 @@ const App = () => (
         </AuthProvider>
         <ReactQueryDevtools initialIsOpen={false} />
         <SpeedInsights />
-      </QueryClientProvider>
-    </MobileErrorHandler>
+    </QueryClientProvider>
   </ErrorBoundary>
 );
 

@@ -49,19 +49,25 @@ if (!supabase) {
       },
     });
 
-    // Add global error handling for WebSocket connections
-    supabase.realtime.onOpen(() => {
-      console.log('✅ Supabase WebSocket connection opened');
-    });
+    // Add global error handling for WebSocket connections (with safety checks)
+    if (supabase.realtime && typeof supabase.realtime.onOpen === 'function') {
+      supabase.realtime.onOpen(() => {
+        console.log('✅ Supabase WebSocket connection opened');
+      });
+    }
 
-    supabase.realtime.onClose(() => {
-      console.log('⚠️ Supabase WebSocket connection closed');
-    });
+    if (supabase.realtime && typeof supabase.realtime.onClose === 'function') {
+      supabase.realtime.onClose(() => {
+        console.log('⚠️ Supabase WebSocket connection closed');
+      });
+    }
 
-    supabase.realtime.onError((error) => {
-      console.warn('⚠️ Supabase WebSocket error (non-critical):', error);
-      // Don't throw - just log the warning
-    });
+    if (supabase.realtime && typeof supabase.realtime.onError === 'function') {
+      supabase.realtime.onError((error) => {
+        console.warn('⚠️ Supabase WebSocket error (non-critical):', error);
+        // Don't throw - just log the warning
+      });
+    }
     
     console.log('✅ Supabase client initialized successfully (singleton)');
   } catch (error) {
