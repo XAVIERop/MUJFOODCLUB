@@ -30,18 +30,19 @@ const MobileFloatingCart: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-green-600 text-white p-4 z-50 lg:hidden">
+    <div className="fixed bottom-16 left-4 right-4 bg-green-600 text-white p-3 rounded-lg shadow-lg z-40 lg:hidden">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <span className="font-medium">
+          <span className="font-medium text-sm">
             {itemCount} {itemCount === 1 ? 'Item' : 'Items'} added
           </span>
         </div>
         <button 
           onClick={handleViewCart}
-          className="bg-white text-green-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+          className="bg-white text-green-600 px-4 py-1.5 rounded-md font-medium text-sm hover:bg-gray-100 transition-colors flex items-center space-x-1"
         >
-          View Cart &gt;
+          <span>View Cart</span>
+          <span>&gt;</span>
         </button>
       </div>
     </div>
