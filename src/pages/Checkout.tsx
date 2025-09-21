@@ -17,6 +17,7 @@ import { ORDER_CONSTANTS } from '@/lib/constants';
 import { whatsappService } from '@/services/whatsappService';
 import { isDineInTakeawayAllowed, isDeliveryAllowed, getDineInTakeawayMessage } from '@/utils/timeRestrictions';
 import Header from '@/components/Header';
+import PhoneOTPVerification from '@/components/PhoneOTPVerification';
 
 interface MenuItem {
   id: string;
@@ -56,6 +57,10 @@ const Checkout = () => {
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // OTP Verification states
+  const [showOTPVerification, setShowOTPVerification] = useState(false);
+  const [verifiedPhoneNumber, setVerifiedPhoneNumber] = useState<string | null>(null);
   
   // Get cart data from navigation state
   const cart: {[key: string]: CartItem} = location.state?.cart || {};
@@ -124,6 +129,13 @@ const Checkout = () => {
     if (!isMinimumOrderMet) {
       setError(`Minimum order amount is ₹${ORDER_CONSTANTS.MINIMUM_ORDER_AMOUNT}`);
       return;
+    }
+
+    // Check if phone number is verified
+    if (verifiedPhoneNumber !== deliveryDetails.phoneNumber) {
+      // Show OTP verification
+      setShowOTPVerification(true);
+        return;
     }
 
     setIsLoading(true);
@@ -260,10 +272,36 @@ const Checkout = () => {
     }
   };
 
-  if (!cart || Object.keys(cart).length === 0 || !cafe) {
+  // Handle OTP verification success
+  const handleOTPVerificationSuccess = (verifiedPhone: string) => {
+    setVerifiedPhoneNumber(verifiedPhone);
+    setShowOTPVerification(false);
+    // Automatically proceed with order placement
+    setTimeout(() => {
+      handlePlaceOrder();
+    }, 500);
+  };
+
+  // Handle OTP verification back
+  const handleOTPVerificationBack = () => {
+    setShowOTPVerification(false);
+  };
+
+  // Show OTP verification if needed
+  if (showOTPVerification) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
+      <PhoneOTPVerification
+        phoneNumber={deliveryDetails.phoneNumber}
+        onVerificationSuccess={handleOTPVerificationSuccess}
+        onBack={handleOTPVerificationBack}
+      />
+    );
+  }
+
+  if (!cart || Object.keys(cart).length === 0 || !cafe) {
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <AlertCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -420,18 +458,38 @@ const Checkout = () => {
 
                     <div>
                       <Label htmlFor="phoneNumber">Phone Number *</Label>
-                      <Input
-                        id="phoneNumber"
-                        type="tel"
-                        value={deliveryDetails.phoneNumber}
-                        onChange={(e) => setDeliveryDetails(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                        placeholder="Enter your phone number"
-                        required
-                        minLength={10}
-                        maxLength={10}
-                        />
+                      <div className="relative">
+                        <Input
+                          id="phoneNumber"
+                          type="tel"
+                          value={deliveryDetails.phoneNumber}
+                          onChange={(e) => {
+                            setDeliveryDetails(prev => ({ ...prev, phoneNumber: e.target.value }));
+                            // Reset verified phone if user changes the number
+                            if (verifiedPhoneNumber && verifiedPhoneNumber !== e.target.value) {
+                              setVerifiedPhoneNumber(null);
+                            }
+                          }}
+                          placeholder="Enter your phone number"
+                          required
+                          minLength={10}
+                          maxLength={10}
+                          className={verifiedPhoneNumber === deliveryDetails.phoneNumber ? "border-green-500 bg-green-50" : ""}
+                          />
+                        {verifiedPhoneNumber === deliveryDetails.phoneNumber && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                      </div>
+                        )}
+                      </div>
                       {deliveryDetails.phoneNumber && deliveryDetails.phoneNumber.length !== 10 && (
                         <p className="text-red-500 text-sm mt-1">Phone number must be 10 digits</p>
+                      )}
+                      {verifiedPhoneNumber === deliveryDetails.phoneNumber && (
+                        <p className="text-green-600 text-sm mt-1 flex items-center">
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Phone number verified
+                        </p>
                       )}
                       </div>
 
@@ -471,13 +529,33 @@ const Checkout = () => {
                     
                     <div>
                       <Label htmlFor="phoneNumber">Phone Number</Label>
+                      <div className="relative">
                     <Input
                       id="phoneNumber"
                       type="tel"
                       value={deliveryDetails.phoneNumber}
-                        onChange={(e) => setDeliveryDetails(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                        placeholder="Enter your phone number"
-                    />
+                          onChange={(e) => {
+                            setDeliveryDetails(prev => ({ ...prev, phoneNumber: e.target.value }));
+                            // Reset verified phone if user changes the number
+                            if (verifiedPhoneNumber && verifiedPhoneNumber !== e.target.value) {
+                              setVerifiedPhoneNumber(null);
+                            }
+                          }}
+                          placeholder="Enter your phone number"
+                          className={verifiedPhoneNumber === deliveryDetails.phoneNumber ? "border-green-500 bg-green-50" : ""}
+                        />
+                        {verifiedPhoneNumber === deliveryDetails.phoneNumber && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          </div>
+                        )}
+                      </div>
+                      {verifiedPhoneNumber === deliveryDetails.phoneNumber && (
+                        <p className="text-green-600 text-sm mt-1 flex items-center">
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Phone number verified
+                        </p>
+                      )}
                   </div>
                 </CardContent>
               </Card>
