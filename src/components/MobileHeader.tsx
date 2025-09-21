@@ -43,9 +43,9 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChang
   };
 
   return (
-    <div className="bg-white px-4 py-3">
+    <div className="bg-white px-4 py-2">
       {/* Top Row: Location + Profile - Swiggy Style */}
-      <div className="flex items-start justify-between mb-1">
+      <div className="flex items-start justify-between mb-0.5">
         {/* Location Dropdown - Clean Swiggy Style */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -126,7 +126,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChang
       </div>
 
       {/* Location Details - Subtle Swiggy Style */}
-      <div className="text-left -mt-2">
+      <div className="text-left -mt-1">
         <p className="text-xs text-gray-500 font-normal">
           Block {selectedBlock}, MUJ Hostel
         </p>
