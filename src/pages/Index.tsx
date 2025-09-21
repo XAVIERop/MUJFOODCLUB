@@ -76,7 +76,9 @@ const Index = () => {
   const fetchCafes = async () => {
     try {
       console.log('🔍 Fetching cafes...');
-      console.log('🔍 Supabase client ready, fetching cafes...');
+      console.log('🔍 Supabase client:', supabase);
+      console.log('🔍 Supabase client type:', typeof supabase);
+      console.log('🔍 Supabase rpc method exists:', !!supabase.rpc);
       
       // Use the same working pattern as Cafes page
       let { data, error } = await supabase

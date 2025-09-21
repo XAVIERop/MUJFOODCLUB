@@ -17,8 +17,13 @@ let supabase: any = null;
 // Create Supabase client with error handling (singleton pattern)
 if (!supabase) {
   try {
+    console.log('🔧 Initializing Supabase client...');
+    console.log('🔧 SUPABASE_URL exists:', !!SUPABASE_URL);
+    console.log('🔧 SUPABASE_PUBLISHABLE_KEY exists:', !!SUPABASE_PUBLISHABLE_KEY);
+    console.log('🔧 SUPABASE_URL value:', SUPABASE_URL ? SUPABASE_URL.substring(0, 30) + '...' : 'undefined');
+    
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-      console.error('Missing required Supabase environment variables');
+      console.error('❌ Missing required Supabase environment variables');
       console.error('SUPABASE_URL:', !!SUPABASE_URL);
       console.error('SUPABASE_PUBLISHABLE_KEY:', !!SUPABASE_PUBLISHABLE_KEY);
       throw new Error('Missing required Supabase environment variables');
