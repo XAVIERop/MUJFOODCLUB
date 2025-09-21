@@ -75,10 +75,10 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChang
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="w-8 h-8 p-0 rounded-full hover:bg-gray-50">
-                <Avatar className="w-6 h-6">
+              <Button variant="ghost" size="sm" className="w-10 h-10 p-0 rounded-full hover:bg-gray-50">
+                <Avatar className="w-8 h-8">
                   <AvatarImage src={profile?.avatar_url} />
-                  <AvatarFallback className="text-xs">
+                  <AvatarFallback className="text-sm font-medium">
                     {profile?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
                   </AvatarFallback>
                 </Avatar>
@@ -115,10 +115,10 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChang
           <Button
             variant="ghost"
             size="sm"
-            className="w-8 h-8 p-0 rounded-full hover:bg-gray-50"
+            className="w-10 h-10 p-0 rounded-full hover:bg-gray-50"
             onClick={handleAuthAction}
           >
-            <User className="w-4 h-4 text-gray-600" />
+            <User className="w-5 h-5 text-gray-600" />
           </Button>
         )}
       </div>
