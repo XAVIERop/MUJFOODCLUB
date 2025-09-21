@@ -15,8 +15,7 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   sendOTP: (email: string) => Promise<{ error: any }>;
   verifyOTP: (email: string, token: string) => Promise<{ error: any }>;
-  sendPhoneOTP: (phone: string) => Promise<{ error: any }>;
-  verifyPhoneOTP: (phone: string, token: string) => Promise<{ error: any }>;
+  resendConfirmationEmail: (email: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -293,69 +292,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Send OTP to phone number for verification
-  const sendPhoneOTP = async (phone: string) => {
-    try {
-      // Validate phone number format (10 digits)
-      if (!phone || phone.length !== 10 || !/^\d{10}$/.test(phone)) {
-        return { error: { message: 'Please enter a valid 10-digit phone number' } };
-      }
-
-      // Format phone number with +91 country code
-      const formattedPhone = `+91${phone}`;
-
-      // Use Supabase phone OTP authentication
-      // Note: This will send OTP but won't create a user account
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: formattedPhone
-      });
-
-      return { error };
-    } catch (error) {
-      console.error('Phone OTP send error:', error);
-      return { error };
-    }
-  };
-
-  // Verify phone OTP
-  const verifyPhoneOTP = async (phone: string, token: string) => {
-    try {
-      // Validate inputs
-      if (!phone || phone.length !== 10 || !/^\d{10}$/.test(phone)) {
-        return { error: { message: 'Please enter a valid 10-digit phone number' } };
-      }
-
-      if (!token || token.length !== 6 || !/^\d{6}$/.test(token)) {
-        return { error: { message: 'Please enter a valid 6-digit OTP' } };
-      }
-
-      // Format phone number with +91 country code
-      const formattedPhone = `+91${phone}`;
-
-      // Verify OTP with Supabase
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone: formattedPhone,
-        token,
-        type: 'sms'
-      });
-
-      if (error) {
-        console.error('Phone OTP verification error:', error);
-        return { error };
-      }
-
-      // If verification successful, return success
-      if (data.user) {
-        console.log('Phone OTP verified successfully for:', formattedPhone);
-        return { error: null };
-      }
-
-      return { error: { message: 'OTP verification failed' } };
-    } catch (error) {
-      console.error('Phone OTP verification error:', error);
-      return { error };
-    }
-  };
 
   // Resend confirmation email
   const resendConfirmationEmail = async (email: string) => {
@@ -386,8 +322,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     refreshProfile,
     sendOTP,
     verifyOTP,
-    sendPhoneOTP,
-    verifyPhoneOTP,
     resendConfirmationEmail
   };
 
