@@ -367,9 +367,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error: { message: 'This email is not registered. Please sign up first.', code: 'email_not_found' } };
       }
 
-      // Send confirmation email (same as signup flow)
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
+      // Send magic link instead of confirmation email (to avoid rate limits)
+      const { error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
           emailRedirectTo: `${window.location.origin}/auth`
