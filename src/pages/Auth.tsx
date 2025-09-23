@@ -18,7 +18,9 @@ import {
   AlertCircle, 
   Loader2,
   Shield,
-  Smartphone
+  Smartphone,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -37,6 +39,21 @@ const Auth = () => {
   const [showOTP, setShowOTP] = useState(false);
   const [otpEmail, setOtpEmail] = useState('');
   const [otpValue, setOtpValue] = useState('');
+  
+  // Password strength states
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState({
+    score: 0,
+    feedback: '',
+    requirements: {
+      length: false,
+      uppercase: false,
+      lowercase: false,
+      number: false,
+      special: false
+    }
+  });
 
   // Signin form
   const [signinForm, setSigninForm] = useState({
@@ -60,6 +77,35 @@ const Auth = () => {
 
   // Scroll to top hook
   const { scrollToTopOnTabChange } = useScrollToTop();
+
+  // Password strength validation function
+  const validatePasswordStrength = (password: string) => {
+    const requirements = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+    };
+
+    const score = Object.values(requirements).filter(Boolean).length;
+    
+    let feedback = '';
+    if (score === 0) feedback = 'Very Weak';
+    else if (score === 1) feedback = 'Weak';
+    else if (score === 2) feedback = 'Fair';
+    else if (score === 3) feedback = 'Good';
+    else if (score === 4) feedback = 'Strong';
+    else if (score === 5) feedback = 'Very Strong';
+
+    setPasswordStrength({
+      score,
+      feedback,
+      requirements
+    });
+
+    return score >= 4; // Require at least 4 out of 5 requirements
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +163,17 @@ const Auth = () => {
       return;
     }
 
+    // Validate password strength
+    if (!validatePasswordStrength(signupForm.password)) {
+      toast({
+        title: "Weak Password",
+        description: "Password must be at least 8 characters with uppercase, lowercase, number, and special character.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const { error } = await signUp(
         signupForm.email,
@@ -126,11 +183,33 @@ const Auth = () => {
       );
       
       if (error) {
-        toast({
-          title: "Sign Up Failed",
-          description: error.message || "Please try again with different credentials.",
-          variant: "destructive"
-        });
+        // Handle specific error cases
+        if (error.code === 'user_already_exists') {
+          toast({
+            title: "Email Already Registered",
+            description: "This email is already registered. Please try signing in instead.",
+            variant: "destructive"
+          });
+          
+          // Switch to sign-in tab and pre-fill email
+          setActiveTab('signin');
+          setSigninForm({ ...signinForm, email: signupForm.email });
+          
+          // Show additional guidance after a delay
+          setTimeout(() => {
+            toast({
+              title: "💡 Need Help?",
+              description: "If you forgot your password, you can reset it from the sign-in page.",
+              variant: "default"
+            });
+          }, 2000);
+        } else {
+          toast({
+            title: "Sign Up Failed",
+            description: error.message || "Please try again with different credentials.",
+            variant: "destructive"
+          });
+        }
     } else {
         toast({
           title: "Account Created!",
@@ -460,39 +539,28 @@ const Auth = () => {
                     </Button>
                   </form>
 
-                  {/* Resend Confirmation Email */}
+                  {/* Forgot Password */}
                   <div className="text-center py-4">
-                    <p className="text-sm text-gray-600 mb-3">
-                      Didn't receive confirmation email?
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        if (signinForm.email) {
-                          setIsLoading(true);
-                          const { error } = await resendConfirmationEmail(signinForm.email);
-                          if (error) {
-                            toast({
-                              title: "Error",
-                              description: error.message || "Failed to resend email",
-                              variant: "destructive"
-                            });
-                          } else {
-                            toast({
-                              title: "Email Sent",
-                              description: "Confirmation email has been resent. Check your inbox.",
-                            });
-                          }
-                          setIsLoading(false);
-                        }
-                      }}
-                      disabled={!signinForm.email || isLoading}
-                      className="text-sm h-10 rounded-lg border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors"
-                    >
-                      Resend Confirmation Email
-                    </Button>
+                    <div className="border-t border-gray-200 pt-3">
+                      <p className="text-sm text-gray-600 mb-2">
+                        Forgot your password?
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          toast({
+                            title: "Password Reset",
+                            description: "Password reset functionality will be available soon. For now, please contact support if you need help.",
+                            variant: "default"
+                          });
+                        }}
+                        className="text-sm h-10 rounded-lg border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors"
+                      >
+                        Reset Password
+                      </Button>
+                    </div>
                   </div>
 
             </TabsContent>
@@ -574,16 +642,74 @@ const Auth = () => {
                       <Label htmlFor="signup-password" className="text-sm font-medium text-gray-700">Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <Input
-                      id="signup-password"
-                      type="password"
+                        <Input
+                          id="signup-password"
+                          type={showPassword ? "text" : "password"}
                           placeholder="Create a strong password"
                           value={signupForm.password}
-                          onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
-                          className="pl-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
+                          onChange={(e) => {
+                            setSignupForm({ ...signupForm, password: e.target.value });
+                            validatePasswordStrength(e.target.value);
+                          }}
+                          className="pl-12 pr-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
                           required
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
                       </div>
+                      
+                      {/* Password Strength Indicator */}
+                      {signupForm.password && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Password Strength:</span>
+                            <span className={`text-sm font-medium ${
+                              passwordStrength.score >= 4 ? 'text-green-600' : 
+                              passwordStrength.score >= 2 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                              {passwordStrength.feedback}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all duration-300 ${
+                                passwordStrength.score >= 4 ? 'bg-green-500' : 
+                                passwordStrength.score >= 2 ? 'bg-yellow-500' : 'bg-red-500'
+                              }`}
+                              style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                            />
+                          </div>
+                          
+                          {/* Password Requirements */}
+                          <div className="space-y-1 text-xs">
+                            <div className={`flex items-center gap-2 ${passwordStrength.requirements.length ? 'text-green-600' : 'text-gray-500'}`}>
+                              <CheckCircle className="h-3 w-3" />
+                              <span>At least 8 characters</span>
+                            </div>
+                            <div className={`flex items-center gap-2 ${passwordStrength.requirements.uppercase ? 'text-green-600' : 'text-gray-500'}`}>
+                              <CheckCircle className="h-3 w-3" />
+                              <span>One uppercase letter (A-Z)</span>
+                            </div>
+                            <div className={`flex items-center gap-2 ${passwordStrength.requirements.lowercase ? 'text-green-600' : 'text-gray-500'}`}>
+                              <CheckCircle className="h-3 w-3" />
+                              <span>One lowercase letter (a-z)</span>
+                            </div>
+                            <div className={`flex items-center gap-2 ${passwordStrength.requirements.number ? 'text-green-600' : 'text-gray-500'}`}>
+                              <CheckCircle className="h-3 w-3" />
+                              <span>One number (0-9)</span>
+                            </div>
+                            <div className={`flex items-center gap-2 ${passwordStrength.requirements.special ? 'text-green-600' : 'text-gray-500'}`}>
+                              <CheckCircle className="h-3 w-3" />
+                              <span>One special character (!@#$%^&*)</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -592,14 +718,21 @@ const Auth = () => {
                         <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <Input
                           id="signup-confirm-password"
-                          type="password"
+                          type={showConfirmPassword ? "text" : "password"}
                           placeholder="Confirm your password"
                           value={signupForm.confirmPassword}
                           onChange={(e) => setSignupForm({ ...signupForm, confirmPassword: e.target.value })}
-                          className="pl-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
-                      required
-                    />
-                  </div>
+                          className="pl-12 pr-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
+                      </div>
                       {signupForm.confirmPassword && signupForm.password !== signupForm.confirmPassword && (
                         <p className="text-sm text-red-500">Passwords do not match</p>
                       )}
@@ -620,6 +753,43 @@ const Auth = () => {
                       )}
                     </Button>
                   </form>
+
+                  {/* Resend Confirmation Email */}
+                  <div className="text-center py-4">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-3">
+                        Didn't receive confirmation email?
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          if (signupForm.email) {
+                            setIsLoading(true);
+                            const { error } = await resendConfirmationEmail(signupForm.email);
+                            if (error) {
+                              toast({
+                                title: "Error",
+                                description: error.message || "Failed to resend email",
+                                variant: "destructive"
+                              });
+                            } else {
+                              toast({
+                                title: "Email Sent",
+                                description: "Confirmation email has been resent. Check your inbox.",
+                              });
+                            }
+                            setIsLoading(false);
+                          }
+                        }}
+                        disabled={!signupForm.email || isLoading}
+                        className="text-sm h-10 rounded-lg border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors"
+                      >
+                        Resend Confirmation Email
+                      </Button>
+                    </div>
+                  </div>
                 </TabsContent>
 
                 {/* Email Verification Tab */}
