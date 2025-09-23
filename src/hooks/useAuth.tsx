@@ -17,6 +17,7 @@ interface AuthContextType {
   verifyOTP: (email: string, token: string) => Promise<{ error: any }>;
   resendConfirmationEmail: (email: string) => Promise<{ error: any }>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  updatePassword: (newPassword: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -342,6 +343,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Update password (for password reset flow)
+  const updatePassword = async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      return { error };
+    } catch (error) {
+      return { error };
+    }
+  };
+
   const value = {
     user,
     session,
@@ -355,7 +369,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sendOTP,
     verifyOTP,
     resendConfirmationEmail,
-    resetPassword
+    resetPassword,
+    updatePassword
   };
 
   return (
