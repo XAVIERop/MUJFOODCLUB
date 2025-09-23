@@ -325,7 +325,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Reset password
+  // Check if email exists in the system
+  const checkEmailExists = async (email: string) => {
+    try {
+      // Try to sign in with a dummy password to check if email exists
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: 'dummy_password_to_check_existence'
+      });
+      
+      // If error is "Invalid login credentials", email exists but password is wrong
+      // If error is "User not found", email doesn't exist
+      if (error?.message?.includes('Invalid login credentials')) {
+        return { exists: true, error: null };
+      } else if (error?.message?.includes('User not found') || error?.message?.includes('Invalid email')) {
+        return { exists: false, error: null };
+      } else {
+        // Other errors - assume email doesn't exist to be safe
+        return { exists: false, error: null };
+      }
+    } catch (error) {
+      return { exists: false, error };
+    }
+  };
+
+  // Simplified reset password - just send confirmation email
   const resetPassword = async (email: string) => {
     try {
       // Validate email domain
@@ -333,8 +357,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error: { message: 'Please use a valid MUJ email address (@muj.manipal.edu)' } };
       }
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?mode=reset-password`
+      // Check if email exists
+      const { exists, error: checkError } = await checkEmailExists(email);
+      if (checkError) {
+        return { error: { message: 'Unable to verify email. Please try again.' } };
+      }
+
+      if (!exists) {
+        return { error: { message: 'This email is not registered. Please sign up first.', code: 'email_not_found' } };
+      }
+
+      // Send confirmation email (same as signup flow)
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth`
+        }
       });
       
       return { error };

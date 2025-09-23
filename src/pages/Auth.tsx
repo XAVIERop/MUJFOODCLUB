@@ -75,28 +75,24 @@ const Auth = () => {
     email: ''
   });
 
-  // Password reset form
-  const [resetPasswordForm, setResetPasswordForm] = useState({
-    newPassword: '',
-    confirmPassword: ''
-  });
 
   // Scroll to top hook
   const { scrollToTopOnTabChange } = useScrollToTop();
 
-  // Handle password reset flow
+  // Handle password reset flow - simplified approach
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
     
     if (mode === 'reset-password') {
-      // User clicked password reset link - show password reset form
-      setActiveTab('reset-password');
+      // User clicked password reset link - they're already signed in via email
       toast({
-        title: "Reset Your Password",
-        description: "Please enter your new password below.",
+        title: "Password Reset Complete!",
+        description: "You have been signed in successfully. You can now change your password from your profile if needed.",
         variant: "default"
       });
+      // Clear URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
 
@@ -354,49 +350,31 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Validate password match
-    if (resetPasswordForm.newPassword !== resetPasswordForm.confirmPassword) {
-      toast({
-        title: "Password Mismatch",
-        description: "Passwords do not match. Please try again.",
-        variant: "destructive"
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    // Validate password strength
-    if (!validatePasswordStrength(resetPasswordForm.newPassword)) {
-      toast({
-        title: "Weak Password",
-        description: "Password must be at least 8 characters with uppercase, lowercase, number, and special character.",
-        variant: "destructive"
-      });
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const { error } = await updatePassword(resetPasswordForm.newPassword);
+      const { error } = await resetPassword(signinForm.email);
       
       if (error) {
-        toast({
-          title: "Password Update Failed",
-          description: error.message || "Please try again.",
-          variant: "destructive"
-        });
+        if (error.code === 'email_not_found') {
+          toast({
+            title: "Email Not Found",
+            description: error.message,
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Reset Failed",
+            description: error.message || "Please try again.",
+            variant: "destructive"
+          });
+        }
       } else {
         toast({
-          title: "Password Updated!",
-          description: "Your password has been successfully updated. You can now sign in with your new password.",
+          title: "Reset Email Sent!",
+          description: "Check your email for a confirmation link. Click it to sign in automatically.",
         });
         
-        // Clear the form and redirect to sign in
-        setResetPasswordForm({ newPassword: '', confirmPassword: '' });
-        setActiveTab('signin');
-        
-        // Clear URL parameters
-        window.history.replaceState({}, document.title, window.location.pathname);
+        // Clear the email field
+        setSigninForm({ ...signinForm, email: '' });
       }
     } catch (error) {
       toast({
@@ -554,7 +532,7 @@ const Auth = () => {
             }} 
             className="w-full"
           >
-                <TabsList className={`grid w-full mb-6 bg-gray-100 p-1 rounded-xl ${activeTab === 'reset-password' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                <TabsList className="grid w-full mb-6 bg-gray-100 p-1 rounded-xl grid-cols-2">
                   <TabsTrigger 
                     value="signin" 
                     className="rounded-lg font-medium transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm text-sm py-2"
@@ -567,14 +545,6 @@ const Auth = () => {
                   >
                     Sign Up
                   </TabsTrigger>
-                  {activeTab === 'reset-password' && (
-                    <TabsTrigger 
-                      value="reset-password"
-                      className="rounded-lg font-medium transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm text-sm py-2"
-                    >
-                      Reset Password
-                    </TabsTrigger>
-                  )}
             </TabsList>
             
                 {/* Sign In Tab */}
@@ -1005,132 +975,6 @@ const Auth = () => {
                   )}
             </TabsContent>
 
-                {/* Password Reset Tab */}
-                <TabsContent value="reset-password" className="space-y-5">
-                  <Alert className="mb-5 border-blue-200 bg-blue-50 rounded-xl">
-                    <CheckCircle className="h-5 w-5 text-blue-600" />
-                    <AlertDescription className="text-blue-800 font-medium text-sm">
-                      Enter your new password below to complete the reset process.
-                    </AlertDescription>
-                  </Alert>
-
-                  <form onSubmit={handlePasswordReset} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="reset-new-password" className="text-sm font-medium text-gray-700">New Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="reset-new-password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Enter your new password"
-                          value={resetPasswordForm.newPassword}
-                          onChange={(e) => {
-                            setResetPasswordForm({ ...resetPasswordForm, newPassword: e.target.value });
-                            validatePasswordStrength(e.target.value);
-                          }}
-                          className="pl-12 pr-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                        </button>
-                      </div>
-                      
-                      {/* Password Strength Indicator */}
-                      {resetPasswordForm.newPassword && (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Password Strength:</span>
-                            <span className={`text-sm font-medium ${
-                              passwordStrength.score >= 4 ? 'text-green-600' : 
-                              passwordStrength.score >= 2 ? 'text-yellow-600' : 'text-red-600'
-                            }`}>
-                              {passwordStrength.feedback}
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full transition-all duration-300 ${
-                                passwordStrength.score >= 4 ? 'bg-green-500' : 
-                                passwordStrength.score >= 2 ? 'bg-yellow-500' : 'bg-red-500'
-                              }`}
-                              style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
-                            />
-                          </div>
-                          
-                          {/* Password Requirements */}
-                          <div className="space-y-1 text-xs">
-                            <div className={`flex items-center gap-2 ${passwordStrength.requirements.length ? 'text-green-600' : 'text-gray-500'}`}>
-                              <CheckCircle className="h-3 w-3" />
-                              <span>At least 8 characters</span>
-                            </div>
-                            <div className={`flex items-center gap-2 ${passwordStrength.requirements.uppercase ? 'text-green-600' : 'text-gray-500'}`}>
-                              <CheckCircle className="h-3 w-3" />
-                              <span>One uppercase letter (A-Z)</span>
-                            </div>
-                            <div className={`flex items-center gap-2 ${passwordStrength.requirements.lowercase ? 'text-green-600' : 'text-gray-500'}`}>
-                              <CheckCircle className="h-3 w-3" />
-                              <span>One lowercase letter (a-z)</span>
-                            </div>
-                            <div className={`flex items-center gap-2 ${passwordStrength.requirements.number ? 'text-green-600' : 'text-gray-500'}`}>
-                              <CheckCircle className="h-3 w-3" />
-                              <span>One number (0-9)</span>
-                            </div>
-                            <div className={`flex items-center gap-2 ${passwordStrength.requirements.special ? 'text-green-600' : 'text-gray-500'}`}>
-                              <CheckCircle className="h-3 w-3" />
-                              <span>One special character (!@#$%^&*)</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="reset-confirm-password" className="text-sm font-medium text-gray-700">Confirm New Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="reset-confirm-password"
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="Confirm your new password"
-                          value={resetPasswordForm.confirmPassword}
-                          onChange={(e) => setResetPasswordForm({ ...resetPasswordForm, confirmPassword: e.target.value })}
-                          className="pl-12 pr-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                        </button>
-                      </div>
-                      {resetPasswordForm.confirmPassword && resetPasswordForm.newPassword !== resetPasswordForm.confirmPassword && (
-                        <p className="text-sm text-red-500">Passwords do not match</p>
-                      )}
-                    </div>
-
-                    <Button 
-                      type="submit" 
-                      className="w-full h-12 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200" 
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                          Updating Password...
-                        </>
-                      ) : (
-                        'Update Password'
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
           </Tabs>
               </div>
             </div>
