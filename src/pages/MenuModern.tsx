@@ -111,13 +111,25 @@ const MenuModern = () => {
     }
   };
 
-  // Group menu items by name and portion
+  // Group menu items by base name and portion
   const groupMenuItems = (items: MenuItem[]): GroupedMenuItem[] => {
     const grouped = items.reduce((acc, item) => {
-      const key = item.name;
+      // Extract base name by removing (Half) and (Full) suffixes
+      let baseName = item.name;
+      let portionType = 'Full'; // default
+      
+      if (item.name.includes(' (Half)')) {
+        baseName = item.name.replace(' (Half)', '');
+        portionType = 'Half';
+      } else if (item.name.includes(' (Full)')) {
+        baseName = item.name.replace(' (Full)', '');
+        portionType = 'Full';
+      }
+      
+      const key = baseName;
       if (!acc[key]) {
         acc[key] = {
-          baseName: item.name,
+          baseName: baseName,
           category: item.category,
           description: item.description,
           preparation_time: item.preparation_time,
@@ -128,7 +140,7 @@ const MenuModern = () => {
       
       acc[key].portions.push({
         id: item.id,
-        name: item.name,
+        name: portionType,
         price: item.price,
         is_available: item.is_available,
         out_of_stock: item.out_of_stock
@@ -136,6 +148,11 @@ const MenuModern = () => {
       
       return acc;
     }, {} as {[key: string]: GroupedMenuItem});
+    
+    // Sort portions by price (Half first, then Full)
+    Object.values(grouped).forEach(item => {
+      item.portions.sort((a, b) => a.price - b.price);
+    });
     
     return Object.values(grouped);
   };

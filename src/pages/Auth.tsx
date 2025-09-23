@@ -373,7 +373,7 @@ const Auth = () => {
           
           {/* Main Card Content */}
           <div className="bg-white min-h-[65vh] lg:min-h-screen lg:rounded-none rounded-t-3xl shadow-2xl lg:shadow-none lg:flex lg:items-center">
-            <div className="container mx-auto px-4 sm:px-6 py-6 lg:py-8 lg:w-full">
+            <div className="container mx-auto px-4 sm:px-6 py-6 lg:py-8 lg:w-full overflow-y-auto max-h-[calc(100vh-35vh)] lg:max-h-none">
               <div className="max-w-md mx-auto lg:max-w-lg">
 
               {/* Auth Form */}

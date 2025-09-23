@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, X, Heart } from 'lucide-react';
+import { Search, Filter, X, Heart, Store } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 
 import { useFavorites } from '../hooks/useFavorites';
@@ -8,6 +8,10 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import SimpleHeader from '../components/SimpleHeader';
 import { EnhancedCafeCard } from '../components/EnhancedCafeCard';
+import CafeIconGrid from '../components/CafeIconGrid';
+import CafeCategories from '../components/CafeCategories';
+import MobileLayoutWrapper from '../components/MobileLayoutWrapper';
+import MobileHeader from '../components/MobileHeader';
 
 
 interface Cafe {
@@ -33,6 +37,7 @@ const Cafes = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [selectedBlock, setSelectedBlock] = useState("B1");
 
 
   const { toggleFavorite, isFavorite, getFavoriteCafes } = useFavorites();
@@ -221,74 +226,145 @@ const Cafes = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 pt-4">
-      <SimpleHeader />
-      <div className="container mx-auto px-4">
-        {/* Page Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-4">All Cafes</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover and explore all our partner cafes. Filter by cuisine, search by name, or view your favorites.
+    <MobileLayoutWrapper
+      mobileChildren={
+        <div className="min-h-screen bg-white">
+          <MobileHeader 
+            selectedBlock={selectedBlock}
+            onBlockChange={setSelectedBlock}
+          />
+          <div className="container mx-auto px-4 pt-4">
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search cafes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 border-gray-200 focus:border-primary focus:ring-primary"
+            />
+          </div>
+        </div>
+        
+        {/* Categories */}
+        <div className="mb-6">
+          <CafeCategories cafes={cafes} />
+        </div>
+
+        {/* Active Filters Display */}
+        {(searchQuery || selectedCategory !== 'All' || showFavoritesOnly) && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {searchQuery && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Search: "{searchQuery}"
+                <button onClick={() => setSearchQuery('')} className="ml-1">
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            )}
+            {selectedCategory !== 'All' && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Category: {selectedCategory}
+                <button onClick={() => setSelectedCategory('All')} className="ml-1">
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            )}
+            {showFavoritesOnly && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Favorites Only
+                <button onClick={() => setShowFavoritesOnly(false)} className="ml-1">
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {/* Cafe Icon Grid */}
+        <div className="mb-6">
+          <CafeIconGrid cafes={cafes} />
+        </div>
+
+        {/* Favorites & Clear Filters */}
+        <div className="flex flex-row gap-4 mb-4">
+          {/* Favorites Toggle */}
+          <Button
+            variant={showFavoritesOnly ? "default" : "outline"}
+            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            className="flex-1 h-12 font-medium"
+          >
+            <Heart className={`w-4 h-4 mr-2 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+            {showFavoritesOnly ? 'All Cafes' : 'Favorites Only'}
+          </Button>
+
+          {/* Clear Filters */}
+          <Button
+            variant="outline"
+            onClick={clearFilters}
+            className="flex-1 h-12 font-medium border-gray-200 hover:border-primary hover:text-primary"
+          >
+            <X className="w-4 h-4 mr-2" />
+            Clear Filters
+          </Button>
+        </div>
+
+        {/* Results Count */}
+        <div className="mb-6">
+          <p className="text-sm text-muted-foreground">
+            Showing {filteredCafes.length} of {cafes.length} cafes
           </p>
         </div>
 
-        {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Search Bar */}
+        {/* Cafes Grid */}
+        {filteredCafes.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🍽️</div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">No cafes found</h3>
+            <p className="text-muted-foreground mb-4">
+              Try adjusting your search or filters to find what you're looking for.
+            </p>
+            <Button onClick={clearFilters} variant="outline">
+              Clear All Filters
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCafes.map((cafe) => (
+              <EnhancedCafeCard key={cafe.id} cafe={cafe} />
+            ))}
+          </div>
+        )}
+
+          </div>
+        </div>
+      }
+    >
+      <div className="min-h-screen bg-white pt-4">
+        <SimpleHeader />
+        <div className="container mx-auto px-4">
+          {/* Search Bar */}
+          <div className="mb-6">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 placeholder="Search cafes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 border-gray-200 focus:border-primary focus:ring-primary"
               />
             </div>
-
-            {/* Category Filter */}
-            <div>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                {cuisineCategories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Favorites Toggle */}
-            <div>
-              <Button
-                variant={showFavoritesOnly ? "default" : "outline"}
-                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                className="w-full"
-              >
-                <Heart className={`w-4 h-4 mr-2 ${showFavoritesOnly ? 'fill-current' : ''}`} />
-                {showFavoritesOnly ? 'All Cafes' : 'Favorites Only'}
-              </Button>
-            </div>
-
-            {/* Clear Filters */}
-            <div>
-              <Button
-                variant="outline"
-                onClick={clearFilters}
-                className="w-full"
-              >
-                <X className="w-4 h-4 mr-2" />
-                Clear Filters
-              </Button>
-            </div>
+          </div>
+          
+          {/* Categories */}
+          <div className="mb-6">
+            <CafeCategories cafes={cafes} />
           </div>
 
           {/* Active Filters Display */}
           {(searchQuery || selectedCategory !== 'All' || showFavoritesOnly) && (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mb-4 flex flex-wrap gap-2">
               {searchQuery && (
                 <Badge variant="secondary" className="flex items-center gap-1">
                   Search: "{searchQuery}"
@@ -315,38 +391,64 @@ const Cafes = () => {
               )}
             </div>
           )}
-        </div>
 
-        {/* Results Count */}
-        <div className="mb-6">
-          <p className="text-muted-foreground">
-            Showing {filteredCafes.length} of {cafes.length} cafes
-          </p>
-        </div>
+          {/* Cafe Icon Grid */}
+          <div className="mb-6">
+            <CafeIconGrid cafes={cafes} />
+          </div>
 
-        {/* Cafes Grid */}
-        {filteredCafes.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🍽️</div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">No cafes found</h3>
-            <p className="text-muted-foreground mb-4">
-              Try adjusting your search or filters to find what you're looking for.
-            </p>
-            <Button onClick={clearFilters} variant="outline">
-              Clear All Filters
+          {/* Favorites & Clear Filters */}
+          <div className="flex flex-row gap-4 mb-4">
+            {/* Favorites Toggle */}
+            <Button
+              variant={showFavoritesOnly ? "default" : "outline"}
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className="flex-1 h-12 font-medium"
+            >
+              <Heart className={`w-4 h-4 mr-2 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+              {showFavoritesOnly ? 'All Cafes' : 'Favorites Only'}
+            </Button>
+
+            {/* Clear Filters */}
+            <Button
+              variant="outline"
+              onClick={clearFilters}
+              className="flex-1 h-12 font-medium border-gray-200 hover:border-primary hover:text-primary"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Clear Filters
             </Button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCafes.map((cafe) => (
-              <EnhancedCafeCard key={cafe.id} cafe={cafe} />
-            ))}
+
+          {/* Results Count */}
+          <div className="mb-6">
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredCafes.length} of {cafes.length} cafes
+            </p>
           </div>
-        )}
 
-
+          {/* Cafes Grid */}
+          {filteredCafes.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🍽️</div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">No cafes found</h3>
+              <p className="text-muted-foreground mb-4">
+                Try adjusting your search or filters to find what you're looking for.
+              </p>
+              <Button onClick={clearFilters} variant="outline">
+                Clear All Filters
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredCafes.map((cafe) => (
+                <EnhancedCafeCard key={cafe.id} cafe={cafe} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </MobileLayoutWrapper>
   );
 };
 

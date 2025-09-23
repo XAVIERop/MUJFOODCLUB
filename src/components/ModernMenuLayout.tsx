@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Heart, ShoppingCart, MapPin, Clock, Star, Plus, Minus } from 'lucide-react';
+import { Search, Filter, Heart, ShoppingCart, MapPin, Clock, Star, Plus, Minus, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -213,20 +213,15 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
               </div>
             </div>
 
-            {/* Menu Items Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {menuItems.map((item, index) => (
-                <ModernFoodCard
-                  key={item.id || index}
-                  item={item}
-                  onAddToCart={onAddToCart}
-                  onRemoveFromCart={onRemoveFromCart}
-                  getCartQuantity={getCartQuantity}
-                  onToggleFavorite={onToggleFavorite}
-                  isFavorite={isFavorite}
-                />
-              ))}
-            </div>
+            {/* Menu Items - Grouped by Category */}
+            <MenuCategorySections
+              menuItems={menuItems}
+              onAddToCart={onAddToCart}
+              onRemoveFromCart={onRemoveFromCart}
+              getCartQuantity={getCartQuantity}
+              onToggleFavorite={onToggleFavorite}
+              isFavorite={isFavorite}
+            />
           </div>
 
           {/* Floating Cart Panel - Hidden on mobile, shown on desktop */}
@@ -256,16 +251,122 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
   );
 };
 
-// Modern Food Card Component (No Images)
-const ModernFoodCard: React.FC<{
-  item: any;
+// Menu Category Sections Component (Swiggy-style)
+const MenuCategorySections: React.FC<{
+  menuItems: any[];
   onAddToCart: (item: any) => void;
   onRemoveFromCart: (item: any) => void;
   getCartQuantity: (itemId: string) => number;
   onToggleFavorite?: (itemId: string) => void;
   isFavorite?: (itemId: string) => boolean;
+}> = ({ menuItems, onAddToCart, onRemoveFromCart, getCartQuantity, onToggleFavorite, isFavorite }) => {
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  // Group menu items by category
+  const groupedItems = menuItems.reduce((acc, item) => {
+    const category = item.category;
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(item);
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  // Convert to array and sort by category name
+  const sortedCategories = Object.entries(groupedItems).sort(([a], [b]) => a.localeCompare(b));
+
+  // Toggle category expansion
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(category)) {
+        newSet.delete(category);
+      } else {
+        newSet.add(category);
+      }
+      return newSet;
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      {sortedCategories.map(([category, items]) => {
+        const isExpanded = expandedCategories.has(category);
+        const itemCount = (items as any[]).length;
+
+        return (
+          <div key={category} className="bg-white rounded-lg border border-orange-100 shadow-sm">
+            {/* Category Header */}
+            <button
+              onClick={() => toggleCategory(category)}
+              className="w-full flex items-center justify-between p-4 hover:bg-orange-50 transition-colors duration-200 rounded-t-lg"
+            >
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {category}
+                </h3>
+                <Badge className="bg-orange-100 text-orange-700 text-xs px-2 py-1">
+                  {itemCount}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">
+                  {isExpanded ? 'Hide' : 'Show'}
+                </span>
+                {isExpanded ? (
+                  <ChevronUp className="w-5 h-5 text-gray-400" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                )}
+              </div>
+            </button>
+
+            {/* Category Items */}
+            {isExpanded && (
+              <div className="border-t border-orange-100 p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {(items as any[]).map((item, index) => (
+                    <ModernFoodCard
+                      key={item.baseName || item.id || index}
+                      item={item}
+                      onAddToCart={onAddToCart}
+                      onRemoveFromCart={onRemoveFromCart}
+                      getCartQuantity={getCartQuantity}
+                      onToggleFavorite={onToggleFavorite}
+                      isFavorite={isFavorite}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// Modern Food Card Component with Size Selector
+const ModernFoodCard: React.FC<{
+  item: any;
+  onAddToCart: (item: any, selectedPortion?: string) => void;
+  onRemoveFromCart: (item: any) => void;
+  getCartQuantity: (itemId: string) => number;
+  onToggleFavorite?: (itemId: string) => void;
+  isFavorite?: (itemId: string) => boolean;
 }> = ({ item, onAddToCart, onRemoveFromCart, getCartQuantity, onToggleFavorite, isFavorite }) => {
-  const cartQuantity = getCartQuantity(item.portions?.[0]?.id || item.id);
+  const [selectedSize, setSelectedSize] = useState<string>('');
+  
+  // Initialize selected size to the first available portion
+  useEffect(() => {
+    if (item.portions && item.portions.length > 0 && !selectedSize) {
+      setSelectedSize(item.portions[0].id);
+    }
+  }, [item.portions, selectedSize]);
+
+  const selectedPortion = item.portions?.find((p: any) => p.id === selectedSize) || item.portions?.[0];
+  const cartQuantity = getCartQuantity(selectedPortion?.id || item.id);
+  const hasMultipleSizes = item.portions && item.portions.length > 1;
 
   return (
     <Card className="group bg-white border border-orange-100 shadow-sm hover:shadow-md transition-all duration-300">
@@ -309,12 +410,36 @@ const ModernFoodCard: React.FC<{
             </Button>
           )}
         </div>
+
+        {/* Size Selector - Only show if multiple sizes available */}
+        {hasMultipleSizes && (
+          <div className="mb-3">
+            <div className="flex gap-2">
+              {item.portions.map((portion: any) => (
+                <Button
+                  key={portion.id}
+                  variant={selectedSize === portion.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedSize(portion.id)}
+                  className={cn(
+                    "text-xs px-3 py-1 rounded-full transition-all duration-200",
+                    selectedSize === portion.id
+                      ? "bg-orange-500 text-white shadow-sm"
+                      : "bg-white text-gray-600 border-orange-200 hover:bg-orange-50"
+                  )}
+                >
+                  {portion.name} - ₹{portion.price}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
         
         {/* Price and Controls */}
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-xl font-bold text-gray-900">
-              ₹{item.portions?.[0]?.price || item.price}
+              ₹{selectedPortion?.price || item.price}
             </span>
             {item.preparation_time && (
               <span className="text-xs text-gray-500 flex items-center gap-1">
@@ -336,15 +461,15 @@ const ModernFoodCard: React.FC<{
                     // Create a cart item structure for removal
                     const cartItem = {
                       item: {
-                        id: item.portions?.[0]?.id || item.id,
+                        id: selectedPortion?.id || item.id,
                         name: item.baseName || item.name,
                         description: item.description,
-                        price: item.portions?.[0]?.price || item.price,
+                        price: selectedPortion?.price || item.price,
                         category: item.category,
                         preparation_time: item.preparation_time,
                         is_available: true
                       },
-                      selectedPortion: item.portions?.[0]?.id || item.id,
+                      selectedPortion: selectedPortion?.id || item.id,
                       quantity: cartQuantity,
                       notes: ''
                     };
@@ -360,14 +485,14 @@ const ModernFoodCard: React.FC<{
                   variant="outline"
                   size="sm"
                   className="w-8 h-8 p-0 rounded-full border-orange-200 hover:bg-orange-50"
-                  onClick={() => onAddToCart(item)}
+                  onClick={() => onAddToCart(item, selectedSize)}
                 >
                   <Plus className="w-3 h-3" />
                 </Button>
               </div>
             ) : (
               <Button
-                onClick={() => onAddToCart(item)}
+                onClick={() => onAddToCart(item, selectedSize)}
                 className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full text-sm font-medium shadow-sm"
               >
                 Add

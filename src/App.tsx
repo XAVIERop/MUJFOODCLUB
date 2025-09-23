@@ -93,20 +93,20 @@ const App = () => (
                   <PerformanceDashboard />
                 </>
               )}
-              <SecurityIndicator />
+              {/* <SecurityIndicator /> */}
               <PWAUpdateManager />
               <PWAInstallPrompt />
               <MobileFloatingCart />
             </BrowserRouter>
           </TooltipProvider>
-              </CartProvider>
-          </LocationProvider>
-          </SecurityProvider>
+        </CartProvider>
+        </LocationProvider>
+        </SecurityProvider>
         </AuthProvider>
-        <ReactQueryDevtools initialIsOpen={false} />
+        {/* <ReactQueryDevtools initialIsOpen={false} /> */}
         <SpeedInsights />
-    </QueryClientProvider>
-  </ErrorBoundary>
-);
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
 
 export default App;

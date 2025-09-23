@@ -213,8 +213,8 @@ const Checkout = () => {
 
       // Navigate to order confirmation
       navigate(`/order-confirmation/${order.id}`);
-
-    } catch (error) {
+          
+      } catch (error) {
       console.error('Order placement error:', error);
       setError(error instanceof Error ? error.message : 'Failed to place order');
     } finally {
@@ -393,11 +393,11 @@ const Checkout = () => {
                           required
                           minLength={10}
                           maxLength={10}
-                          />
+                        />
                       </div>
                       {deliveryDetails.phoneNumber && deliveryDetails.phoneNumber.length !== 10 && (
                         <p className="text-red-500 text-sm mt-1">Phone number must be 10 digits</p>
-                      )}
+                  )}
                       </div>
 
                     <div>
@@ -436,14 +436,14 @@ const Checkout = () => {
                     
                     <div>
                       <Label htmlFor="phoneNumber">Phone Number</Label>
-                      <Input
-                        id="phoneNumber"
-                        type="tel"
-                        value={deliveryDetails.phoneNumber}
+                    <Input
+                      id="phoneNumber"
+                      type="tel"
+                      value={deliveryDetails.phoneNumber}
                         onChange={(e) => setDeliveryDetails(prev => ({ ...prev, phoneNumber: e.target.value }))}
                         placeholder="Enter your phone number"
-                      />
-                    </div>
+                    />
+                  </div>
                 </CardContent>
               </Card>
               )}
