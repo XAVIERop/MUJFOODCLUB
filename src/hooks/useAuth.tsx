@@ -16,6 +16,7 @@ interface AuthContextType {
   sendOTP: (email: string) => Promise<{ error: any }>;
   verifyOTP: (email: string, token: string) => Promise<{ error: any }>;
   resendConfirmationEmail: (email: string) => Promise<{ error: any }>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -155,6 +156,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       });
       
+      if (error) {
+        // Handle specific error cases
+        if (error.code === 'user_already_exists') {
+          return { 
+            error: { 
+              message: 'This email is already registered. Please try signing in instead.',
+              code: 'user_already_exists'
+            } 
+          };
+        }
+        return { error };
+      }
+      
       if (data.user && !error) {
         // Create profile for student
         await createProfile(data.user.id, email, fullName, block);
@@ -163,7 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // They must click the link to verify before they can log in
       }
       
-      return { error };
+      return { error: null };
     } catch (error) {
       return { error };
     }
@@ -310,6 +324,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Reset password
+  const resetPassword = async (email: string) => {
+    try {
+      // Validate email domain
+      if (!email.endsWith('@muj.manipal.edu')) {
+        return { error: { message: 'Please use a valid MUJ email address (@muj.manipal.edu)' } };
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?mode=reset-password`
+      });
+      
+      return { error };
+    } catch (error) {
+      return { error };
+    }
+  };
+
   const value = {
     user,
     session,
@@ -322,7 +354,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     refreshProfile,
     sendOTP,
     verifyOTP,
-    resendConfirmationEmail
+    resendConfirmationEmail,
+    resetPassword
   };
 
   return (

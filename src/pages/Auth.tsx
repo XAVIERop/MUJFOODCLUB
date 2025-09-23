@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,7 @@ import Header from '@/components/Header';
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { signUp, signIn, sendOTP, verifyOTP, resendConfirmationEmail } = useAuth();
+  const { signUp, signIn, sendOTP, verifyOTP, resendConfirmationEmail, resetPassword } = useAuth();
   const { toast } = useToast();
 
   // Form states
@@ -77,6 +77,21 @@ const Auth = () => {
 
   // Scroll to top hook
   const { scrollToTopOnTabChange } = useScrollToTop();
+
+  // Handle password reset flow
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    
+    if (mode === 'reset-password') {
+      // User clicked password reset link
+      toast({
+        title: "Password Reset",
+        description: "Please check your email for the password reset link and follow the instructions.",
+        variant: "default"
+      });
+    }
+  }, []);
 
   // Password strength validation function
   const validatePasswordStrength = (password: string) => {
@@ -549,13 +564,32 @@ const Auth = () => {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          toast({
-                            title: "Password Reset",
-                            description: "Password reset functionality will be available soon. For now, please contact support if you need help.",
-                            variant: "default"
-                          });
+                        onClick={async () => {
+                          if (signinForm.email) {
+                            setIsLoading(true);
+                            const { error } = await resetPassword(signinForm.email);
+                            if (error) {
+                              toast({
+                                title: "Error",
+                                description: error.message || "Failed to send password reset email",
+                                variant: "destructive"
+                              });
+                            } else {
+                              toast({
+                                title: "Password Reset Email Sent",
+                                description: "Check your email for instructions to reset your password.",
+                              });
+                            }
+                            setIsLoading(false);
+                          } else {
+                            toast({
+                              title: "Email Required",
+                              description: "Please enter your email address first.",
+                              variant: "destructive"
+                            });
+                          }
                         }}
+                        disabled={!signinForm.email || isLoading}
                         className="text-sm h-10 rounded-lg border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors"
                       >
                         Reset Password
