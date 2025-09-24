@@ -1371,6 +1371,7 @@ const POSDashboard = () => {
   };
 
   const formatOrderType = (order: Order) => {
+    // Check if it's a dine-in order
     if (order.delivery_block === 'DINE_IN') {
       return `🍽️ Dine In • Table ${order.table_number || 'N/A'}`;
     } else if (order.delivery_block === 'TAKEAWAY') {
@@ -1381,6 +1382,7 @@ const POSDashboard = () => {
   };
 
   const formatReceiptOrderType = (order: Order) => {
+    // Check if it's a dine-in order
     if (order.delivery_block === 'DINE_IN') {
       return `Dine In - Table ${order.table_number || 'N/A'}`;
     } else if (order.delivery_block === 'TAKEAWAY') {

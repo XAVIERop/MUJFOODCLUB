@@ -45,6 +45,7 @@ interface Order {
   total_amount: number;
   created_at: string;
   delivery_block: string;
+  table_number?: string;
   customer_name?: string;
   phone_number?: string;
   cafe_id: string;
@@ -1142,7 +1143,7 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
 
       {/* Selected Order Details */}
       {selectedOrder && (
-        <Card className="mt-6">
+        <Card className="mt-6 sticky top-4 z-10 bg-white shadow-lg border-2 border-orange-200">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">Order Details: {selectedOrder.order_number}</h3>
@@ -1168,9 +1169,33 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
                 <span className="ml-2 font-medium">{formatCurrency(selectedOrder.total_amount)}</span>
               </div>
               <div>
-                <span className="text-muted-foreground">Block:</span>
-                <span className="ml-2 font-medium">{selectedOrder.delivery_block}</span>
+                <span className="text-muted-foreground">
+                  {selectedOrder.delivery_block === 'DINE_IN' ? 'Location:' : 
+                   selectedOrder.delivery_block === 'TAKEAWAY' ? 'Type:' : 'Block:'}
+                </span>
+                <span className="ml-2 font-medium">
+                  {selectedOrder.delivery_block === 'DINE_IN' ? 'Dine In' :
+                   selectedOrder.delivery_block === 'TAKEAWAY' ? 'Takeaway' :
+                   selectedOrder.delivery_block}
+                </span>
               </div>
+              <div className="bg-yellow-200 p-2 text-xs mb-2">
+                🔍 DEBUG: delivery_block = "{selectedOrder.delivery_block}" | Is DINE_IN? {selectedOrder.delivery_block === 'DINE_IN' ? 'YES' : 'NO'}
+              </div>
+              {selectedOrder.delivery_block === 'DINE_IN' && (
+                <div>
+                  <div className="bg-red-500 text-white p-2 mb-2 text-sm">
+                    🚨 DEBUG: This code is working! Order delivery_block = {selectedOrder.delivery_block}
+                  </div>
+                  <span className="text-muted-foreground">Table Number:</span>
+                  <span className="ml-2 font-medium text-orange-600">
+                    {selectedOrder.table_number ? `Table ${selectedOrder.table_number}` : 'N/A'}
+                  </span>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Debug: table_number = "{selectedOrder.table_number}" (type: {typeof selectedOrder.table_number})
+                  </div>
+                </div>
+              )}
               <div>
                 <span className="text-muted-foreground">Time:</span>
                 <span className="ml-2 font-medium">{getTimeElapsed(selectedOrder.created_at)}</span>

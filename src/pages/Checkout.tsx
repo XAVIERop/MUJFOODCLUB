@@ -16,7 +16,48 @@ import { useToast } from '@/hooks/use-toast';
 import { ORDER_CONSTANTS } from '@/lib/constants';
 import { isDineInTakeawayAllowed, isDeliveryAllowed, getDineInTakeawayMessage } from '@/utils/timeRestrictions';
 import { generateDailyOrderNumber } from '@/utils/orderNumberGenerator';
+import { getCafeTableOptions } from '@/utils/tableMapping';
 import Header from '@/components/Header';
+
+// Helper function to get dropdown options based on order type and cafe
+const getLocationOptions = (orderType: string, cafeName: string) => {
+  if (orderType === 'dine_in') {
+    // For dine-in, show table numbers
+    const tableOptions = getCafeTableOptions(cafeName);
+    return tableOptions.map(table => ({
+      value: table.label, // "Table 1", "Table 2", etc.
+      label: table.label
+    }));
+  } else if (orderType === 'delivery') {
+    // For delivery, show blocks
+    return [
+      { value: 'B1', label: 'B1' },
+      { value: 'B2', label: 'B2' },
+      { value: 'B3', label: 'B3' },
+      { value: 'B4', label: 'B4' },
+      { value: 'B5', label: 'B5' },
+      { value: 'B6', label: 'B6' },
+      { value: 'B7', label: 'B7' },
+      { value: 'B8', label: 'B8' },
+      { value: 'B9', label: 'B9' },
+      { value: 'B10', label: 'B10' },
+      { value: 'B11', label: 'B11' },
+      { value: 'B12', label: 'B12' },
+      { value: 'G1', label: 'G1' },
+      { value: 'G2', label: 'G2' },
+      { value: 'G3', label: 'G3' },
+      { value: 'G4', label: 'G4' },
+      { value: 'G5', label: 'G5' },
+      { value: 'G6', label: 'G6' },
+      { value: 'G7', label: 'G7' },
+      { value: 'G8', label: 'G8' }
+    ];
+  } else if (orderType === 'takeaway') {
+    // For takeaway, show takeaway option
+    return [{ value: 'TAKEAWAY', label: 'Takeaway' }];
+  }
+  return [];
+};
 
 interface MenuItem {
   id: string;
@@ -69,8 +110,7 @@ const Checkout = () => {
     block: selectedBlock,
     deliveryNotes: '',
     paymentMethod: 'cod',
-    phoneNumber: profile?.phone || '',
-    tableNumber: ''
+    phoneNumber: profile?.phone || ''
   });
 
   // Calculate final amount
@@ -122,6 +162,14 @@ const Checkout = () => {
       return;
     }
 
+    // Validate location selection for all order types
+    if (!deliveryDetails.block) {
+      const locationType = deliveryDetails.orderType === 'dine_in' ? 'table number' : 
+                          deliveryDetails.orderType === 'delivery' ? 'block' : 'location';
+      setError(`Please select a ${locationType} for ${deliveryDetails.orderType} orders`);
+      return;
+    }
+
     if (!isMinimumOrderMet) {
       setError(`Minimum order amount is ₹${ORDER_CONSTANTS.MINIMUM_ORDER_AMOUNT}`);
       return;
@@ -158,6 +206,21 @@ const Checkout = () => {
         orderNumber = `ONLINE-${timestamp}-${random}-${userSuffix}`;
       }
 
+      // Handle delivery_block based on order type
+      let deliveryBlock;
+      let tableNumber = null;
+      
+      if (deliveryDetails.orderType === 'dine_in') {
+        // For dine-in, store table number separately and use 'DINE_IN' for delivery_block
+        tableNumber = deliveryDetails.block.replace('Table ', ''); // Extract "1" from "Table 1"
+        deliveryBlock = 'DINE_IN';
+      } else if (deliveryDetails.orderType === 'takeaway') {
+        deliveryBlock = 'TAKEAWAY';
+      } else {
+        // For delivery, use the block directly (B1, B2, etc.)
+        deliveryBlock = deliveryDetails.block;
+      }
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -166,11 +229,12 @@ const Checkout = () => {
           order_number: orderNumber,
           total_amount: finalAmount,
           order_type: deliveryDetails.orderType,
-          delivery_block: deliveryDetails.block,
-          delivery_notes: deliveryDetails.deliveryNotes,
+          delivery_block: deliveryBlock,
+          table_number: tableNumber,
+          delivery_notes: deliveryDetails.deliveryNotes || '',
           payment_method: deliveryDetails.paymentMethod,
-          phone_number: deliveryDetails.phoneNumber,
-          customer_name: profile.full_name,
+          phone_number: deliveryDetails.phoneNumber || '',
+          customer_name: profile?.full_name || '',
           points_earned: 0, // No points in simplified version
           status: 'received',
           estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString()
@@ -358,36 +422,41 @@ const Checkout = () => {
                 </CardContent>
               </Card>
 
-              {/* Delivery Details */}
-                  {deliveryDetails.orderType === 'delivery' && (
+              {/* Location Details - Dynamic based on order type */}
+                  {(deliveryDetails.orderType === 'delivery' || deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && (
                 <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center">
                       <MapPin className="w-5 h-5 mr-2" />
-                        Delivery Details
+                        {deliveryDetails.orderType === 'delivery' ? 'Delivery Details' : 
+                         deliveryDetails.orderType === 'dine_in' ? 'Dine In Details' : 
+                         'Takeaway Details'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div>
-                      <Label htmlFor="block">Block</Label>
+                      <Label htmlFor="location">
+                        {deliveryDetails.orderType === 'delivery' ? 'Block' : 
+                         deliveryDetails.orderType === 'dine_in' ? 'Table Number *' : 
+                         'Location'}
+                      </Label>
                         <Select 
                           value={deliveryDetails.block} 
                         onValueChange={(value) => setDeliveryDetails(prev => ({ ...prev, block: value }))}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Select your block" />
+                            <SelectValue placeholder={
+                              deliveryDetails.orderType === 'delivery' ? 'Select your block' :
+                              deliveryDetails.orderType === 'dine_in' ? 'Select table number' :
+                              'Select location'
+                            } />
                           </SelectTrigger>
                           <SelectContent>
-                          <SelectItem value="B1">B1</SelectItem>
-                          <SelectItem value="B2">B2</SelectItem>
-                          <SelectItem value="B3">B3</SelectItem>
-                          <SelectItem value="B4">B4</SelectItem>
-                          <SelectItem value="B5">B5</SelectItem>
-                          <SelectItem value="B6">B6</SelectItem>
-                          <SelectItem value="B7">B7</SelectItem>
-                          <SelectItem value="B8">B8</SelectItem>
-                          <SelectItem value="B9">B9</SelectItem>
-                          <SelectItem value="B10">B10</SelectItem>
+                          {getLocationOptions(deliveryDetails.orderType, cafe.name).map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -425,39 +494,6 @@ const Checkout = () => {
                 </Card>
                   )}
 
-              {/* Dine In Details */}
-                  {deliveryDetails.orderType === 'dine_in' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Clock className="w-5 h-5 mr-2" />
-                      Dine In Details
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="tableNumber">Table Number</Label>
-                      <Input
-                        id="tableNumber"
-                        value={deliveryDetails.tableNumber}
-                        onChange={(e) => setDeliveryDetails(prev => ({ ...prev, tableNumber: e.target.value }))}
-                        placeholder="Enter table number"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="phoneNumber">Phone Number</Label>
-                    <Input
-                      id="phoneNumber"
-                      type="tel"
-                      value={deliveryDetails.phoneNumber}
-                        onChange={(e) => setDeliveryDetails(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                        placeholder="Enter your phone number"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-              )}
 
               {/* Payment Method */}
               <Card>

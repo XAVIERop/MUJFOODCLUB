@@ -53,6 +53,7 @@ interface Order {
   total_amount: number;
   created_at: string;
   delivery_block: string;
+  table_number?: string;
   customer_name?: string;
   phone_number?: string;
   cafe_id: string;
@@ -563,7 +564,13 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                     </div>
                     <div className="flex items-center space-x-1">
                       <MapPin className="h-2.5 w-2.5" />
-                      <span className="truncate">{order.delivery_block}</span>
+                      <span className="truncate">
+                        {order.delivery_block === 'DINE_IN' && order.table_number ? 
+                         `Table ${order.table_number}` :
+                         order.delivery_block === 'DINE_IN' ? 'Dine In' :
+                         order.delivery_block === 'TAKEAWAY' ? 'Takeaway' :
+                         order.delivery_block}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -694,8 +701,18 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                 </div>
                 <div className="flex items-center space-x-2">
                   <MapPin className="h-3 w-3" />
-                  <span>{hoveredOrder.delivery_block}</span>
+                  <span>
+                    {hoveredOrder.delivery_block === 'DINE_IN' ? 'Dine In' :
+                     hoveredOrder.delivery_block === 'TAKEAWAY' ? 'Takeaway' :
+                     `Block ${hoveredOrder.delivery_block}`}
+                  </span>
                 </div>
+                {hoveredOrder.delivery_block === 'DINE_IN' && hoveredOrder.table_number && (
+                  <div className="flex items-center space-x-2">
+                    <div className="h-3 w-3 text-orange-600">🍽️</div>
+                    <span className="text-orange-600 font-medium">Table {hoveredOrder.table_number}</span>
+                  </div>
+                )}
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-3 w-3" />
                   <span>{formatDate(hoveredOrder.created_at)}</span>

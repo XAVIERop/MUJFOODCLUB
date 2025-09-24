@@ -23,7 +23,7 @@ export const OrderSchema = z.object({
 export const ProfileSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name cannot exceed 100 characters'),
   student_id: z.string().regex(/^[A-Z0-9]{8,12}$/, 'Invalid student ID format').optional(),
-  block: z.enum(['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7']),
+  block: z.enum(['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'B12', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8']),
   phone: z.string().regex(/^[6-9]\d{9}$/, 'Invalid Indian phone number format').optional()
 });
 

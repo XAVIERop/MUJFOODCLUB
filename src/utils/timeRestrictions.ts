@@ -5,11 +5,13 @@
  * @returns {boolean} true if dine-in/takeaway is allowed, false otherwise
  */
 export function isDineInTakeawayAllowed(): boolean {
-  const now = new Date();
-  const currentHour = now.getHours();
+  // TEMPORARILY DISABLED FOR TESTING - Always allow dine-in and takeaway
+  return true;
   
-  // Allow dine-in and takeaway from 11 AM (11) to 11 PM (23)
-  return currentHour >= 11 && currentHour < 23;
+  // Original time restriction (commented out for testing):
+  // const now = new Date();
+  // const currentHour = now.getHours();
+  // return currentHour >= 11 && currentHour < 23;
 }
 
 /**
@@ -51,6 +53,7 @@ export function getDineInTakeawayMessage(): string {
 export function isDeliveryAllowed(): boolean {
   return true;
 }
+
 
 
 
