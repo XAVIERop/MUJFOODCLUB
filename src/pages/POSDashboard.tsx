@@ -117,6 +117,19 @@ const POSDashboard = () => {
   const [useCompactLayout, setUseCompactLayout] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState('orders');
+  
+  // Track printed orders to prevent duplicates
+  const [printedOrders, setPrintedOrders] = useState<Set<string>>(new Set());
+  
+  // Cleanup printed orders tracking every hour to prevent memory issues
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      setPrintedOrders(new Set()); // Clear the tracking set
+      console.log('🧹 AUTO-PRINT: Cleared printed orders tracking to prevent memory issues');
+    }, 60 * 60 * 1000); // Every hour
+
+    return () => clearInterval(cleanupInterval);
+  }, []);
   const [cafeId, setCafeId] = useState<string | null>(null);
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -566,9 +579,40 @@ const POSDashboard = () => {
 
   const autoPrintReceiptWithCafeService = async (order: Order) => {
     console.log('🚀 UNIFIED PRINT: Using Unified Print Service!');
+    
+    // Check if this order has already been auto-printed to prevent duplicates
+    if (printedOrders.has(order.id)) {
+      console.log('🚫 AUTO-PRINT: Order already printed, skipping duplicate:', order.order_number);
+      return;
+    }
+    
+    // Check if order is too old (older than 10 minutes) to prevent printing stale orders
+    const orderAge = Date.now() - new Date(order.created_at).getTime();
+    const maxAge = 10 * 60 * 1000; // 10 minutes
+    if (orderAge > maxAge) {
+      console.log('🚫 AUTO-PRINT: Order too old, skipping auto-print:', order.order_number, 'Age:', Math.round(orderAge / 1000), 'seconds');
+      return;
+    }
+    
     try {
       console.log('Auto-printing with Unified Print Service for order:', order.order_number);
       
+      // Fetch complete order data with user relations to get proper customer name
+      const { data: completeOrder, error: orderError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          user:profiles(full_name, phone, block),
+          cafe:cafes(name, location)
+        `)
+        .eq('id', order.id)
+        .single();
+
+      if (orderError || !completeOrder) {
+        console.error('Error fetching complete order data:', orderError);
+        return;
+      }
+
       // Get order items
       const { data: items, error: itemsError } = await supabase
         .from('order_items')
@@ -587,14 +631,15 @@ const POSDashboard = () => {
         return;
       }
 
-      // Create receipt data with cafe information
+      // Create receipt data with complete cafe and customer information
       const receiptData = {
-        order_id: order.id,
-        order_number: order.order_number,
-        cafe_name: order.cafe?.name || 'Cafe',
-        customer_name: order.user?.full_name || 'Customer',
-        customer_phone: order.user?.phone || order.phone_number || 'N/A',
-        delivery_block: order.delivery_block || order.user?.block || 'N/A',
+        order_id: completeOrder.id,
+        order_number: completeOrder.order_number,
+        cafe_name: completeOrder.cafe?.name || 'Cafe',
+        customer_name: completeOrder.user?.full_name || completeOrder.customer_name || 'Customer',
+        customer_phone: completeOrder.user?.phone || completeOrder.phone_number || 'N/A',
+        delivery_block: completeOrder.delivery_block || completeOrder.user?.block || 'N/A',
+        table_number: completeOrder.table_number || '',
         items: (items || []).map(item => ({
           id: item.id,
           name: item.menu_item?.name || 'Item',
@@ -603,19 +648,20 @@ const POSDashboard = () => {
           total_price: item.total_price,
           special_instructions: item.special_instructions
         })),
-        subtotal: order.subtotal || 0,
-        tax_amount: order.tax_amount || 0,
+        subtotal: completeOrder.subtotal || 0,
+        tax_amount: completeOrder.tax_amount || 0,
         discount_amount: 0,
-        final_amount: order.total_amount,
-        payment_method: order.payment_method || 'COD',
-        order_date: order.created_at,
-        estimated_delivery: order.estimated_delivery || '30 minutes',
-        points_earned: order.points_earned || 0,
+        final_amount: completeOrder.total_amount,
+        payment_method: completeOrder.payment_method || 'COD',
+        order_date: completeOrder.created_at,
+        estimated_delivery: completeOrder.estimated_delivery || '30 minutes',
+        points_earned: completeOrder.points_earned || 0,
         points_redeemed: 0
       };
 
       console.log('🚀 UNIFIED PRINT: Cafe ID:', cafeId);
       console.log('🚀 UNIFIED PRINT: Cafe name:', receiptData.cafe_name);
+      console.log('🚀 UNIFIED PRINT: Customer name:', receiptData.customer_name);
       console.log('🚀 UNIFIED PRINT: Full receiptData:', receiptData);
       
       // Use Unified Print Service with cafe-specific routing
@@ -627,6 +673,10 @@ const POSDashboard = () => {
       
       if (result.success) {
         console.log('✅ UNIFIED PRINT: Success!', result);
+        
+        // Mark this order as printed to prevent duplicates
+        setPrintedOrders(prev => new Set(prev).add(order.id));
+        
         toast({
           title: "Receipt Printed",
           description: `KOT and Receipt for order #${order.order_number} printed using ${result.method}`,
