@@ -51,21 +51,24 @@ async function testAuthWithDelays() {
 
     // Test 2: Check Profile Creation
     console.log('2️⃣ Testing Profile Creation...');
-    const { data: profile, error: profileError } = await supabase
+    const { data: profiles, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', signupData.user.id)
-      .single();
+      .eq('id', signupData.user.id);
+    
+    const profile = profiles && profiles.length > 0 ? profiles[0] : null;
 
     if (profileError) {
       console.log('❌ Profile Creation Failed:', profileError.message);
       console.log('🔍 This might be a database trigger issue');
-    } else {
+    } else if (profile) {
       console.log('✅ Profile Created Successfully');
       console.log('👤 Name:', profile.full_name);
       console.log('🏠 Block:', profile.block);
       console.log('📧 Email:', profile.email);
       console.log('🎫 QR Code:', profile.qr_code);
+    } else {
+      console.log('❌ Profile Creation Failed: No profile found');
     }
 
     // Test 3: Email Confirmation (simulate by using magic link)

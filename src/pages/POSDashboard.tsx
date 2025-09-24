@@ -76,6 +76,7 @@ interface Order {
   subtotal?: number;
   tax_amount?: number;
   table_number?: string;
+  delivered_by_staff_id?: string;
   cafe?: {
     id: string;
     name: string;
@@ -122,6 +123,16 @@ const POSDashboard = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  
+  // Date range filter states
+  const [dateRange, setDateRange] = useState<'today' | 'yesterday' | 'this_week' | 'last_week' | 'this_month' | 'custom' | 'all'>('today');
+  const [customDateRange, setCustomDateRange] = useState<{
+    startDate: string;
+    endDate: string;
+  }>({
+    startDate: '',
+    endDate: ''
+  });
   const [isPrinterSetupOpen, setIsPrinterSetupOpen] = useState(false);
   const [isSettingsPrinterOpen, setIsSettingsPrinterOpen] = useState(false);
   
@@ -159,12 +170,28 @@ const POSDashboard = () => {
       const cacheBuster = Date.now();
       console.log('POS Dashboard: Fetching orders with cache buster:', cacheBuster);
       
-      // First, try a simple query without joins
-      const { data: simpleData, error: simpleError } = await supabase
+      // Get date range filter
+      const dateFilter = getDateRangeFilter();
+      
+      // Build query with date filtering
+      let query = supabase
         .from('orders')
         .select('*')
         .eq('cafe_id', cafeId)
-        .neq('id', '00000000-0000-0000-0000-000000000000') // Cache buster
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Cache buster
+      
+      // Add date filtering if specified
+      if (dateFilter) {
+        if (dateFilter.startDate) {
+          query = query.gte('created_at', dateFilter.startDate);
+        }
+        if (dateFilter.endDate) {
+          query = query.lt('created_at', dateFilter.endDate);
+        }
+      }
+      
+      // First, try a simple query without joins
+      const { data: simpleData, error: simpleError } = await query
         .order('created_at', { ascending: false });
 
       if (simpleError) {
@@ -175,7 +202,7 @@ const POSDashboard = () => {
       console.log('Simple query successful, found orders:', simpleData?.length || 0);
 
       // If simple query works, try the full query with joins
-      const { data, error } = await supabase
+      let fullQuery = supabase
         .from('orders')
         .select(`
           *,
@@ -192,7 +219,19 @@ const POSDashboard = () => {
           )
         `)
         .eq('cafe_id', cafeId)
-        .neq('id', '00000000-0000-0000-0000-000000000000') // Cache buster
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Cache buster
+      
+      // Add date filtering to full query as well
+      if (dateFilter) {
+        if (dateFilter.startDate) {
+          fullQuery = fullQuery.gte('created_at', dateFilter.startDate);
+        }
+        if (dateFilter.endDate) {
+          fullQuery = fullQuery.lt('created_at', dateFilter.endDate);
+        }
+      }
+      
+      const { data, error } = await fullQuery
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -375,6 +414,32 @@ const POSDashboard = () => {
     }
     
     setUpdatingOrder(orderId);
+    
+    // OPTIMISTIC UPDATE: Update UI immediately for faster response
+    const optimisticUpdate = () => {
+      setOrders(prev => prev.map(order => 
+        order.id === orderId 
+          ? { 
+              ...order, 
+              status: newStatus,
+              status_updated_at: new Date().toISOString()
+            }
+          : order
+      ));
+      setFilteredOrders(prev => prev.map(order => 
+        order.id === orderId 
+          ? { 
+              ...order, 
+              status: newStatus,
+              status_updated_at: new Date().toISOString()
+            }
+          : order
+      ));
+    };
+    
+    // Apply optimistic update immediately
+    optimisticUpdate();
+    
     try {
       const updateData: any = {
         status: newStatus,
@@ -396,8 +461,12 @@ const POSDashboard = () => {
           updateData.completed_at = new Date().toISOString();
           updateData.points_credited = true;
           
-          // Credit points to user when order is completed
-          await creditPointsToUser(orderId);
+          // Credit points to user when order is completed (ASYNC - don't wait)
+          // This runs in background and won't block the status update
+          creditPointsToUser(orderId).catch(error => {
+            console.error('Background points crediting failed:', error);
+            // Could show a subtle notification here if needed
+          });
           break;
       }
 
@@ -433,17 +502,19 @@ const POSDashboard = () => {
         description: `Order status changed to ${newStatus.replace('_', ' ')}`,
       });
 
-      // Small delay to prevent rapid updates
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Refresh orders
+      // Refresh orders (removed artificial 500ms delay for faster response)
       await fetchOrders();
     } catch (error) {
       console.error('Error updating order status:', error);
+      
+      // ROLLBACK: Revert optimistic update on error
+      console.log('🔄 Rolling back optimistic update due to error');
+      await fetchOrders(); // Refresh to get correct state
+      
       const errorMessage = error.message || 'Unknown error occurred';
       toast({
         title: "Update Failed",
-        description: `Failed to update order status: ${errorMessage}`,
+        description: `Failed to update order status: ${errorMessage}. Changes have been reverted.`,
         variant: "destructive"
       });
     } finally {
@@ -1319,6 +1390,94 @@ const POSDashboard = () => {
     }
   };
 
+  // Date range helper functions
+  const getDateRangeFilter = () => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    switch (dateRange) {
+      case 'today':
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return {
+          startDate: today.toISOString(),
+          endDate: tomorrow.toISOString()
+        };
+      
+      case 'yesterday':
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return {
+          startDate: yesterday.toISOString(),
+          endDate: today.toISOString()
+        };
+      
+      case 'this_week':
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        return {
+          startDate: startOfWeek.toISOString(),
+          endDate: endOfWeek.toISOString()
+        };
+      
+      case 'last_week':
+        const startOfLastWeek = new Date(today);
+        startOfLastWeek.setDate(today.getDate() - today.getDay() - 7);
+        const endOfLastWeek = new Date(startOfLastWeek);
+        endOfLastWeek.setDate(startOfLastWeek.getDate() + 7);
+        return {
+          startDate: startOfLastWeek.toISOString(),
+          endDate: endOfLastWeek.toISOString()
+        };
+      
+      case 'this_month':
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        return {
+          startDate: startOfMonth.toISOString(),
+          endDate: endOfMonth.toISOString()
+        };
+      
+      case 'custom':
+        return {
+          startDate: customDateRange.startDate ? new Date(customDateRange.startDate).toISOString() : '',
+          endDate: customDateRange.endDate ? new Date(customDateRange.endDate).toISOString() : ''
+        };
+      
+      case 'all':
+      default:
+        return null; // No date filter
+    }
+  };
+
+  const formatDateRangeDisplay = () => {
+    switch (dateRange) {
+      case 'today':
+        return 'Today';
+      case 'yesterday':
+        return 'Yesterday';
+      case 'this_week':
+        return 'This Week';
+      case 'last_week':
+        return 'Last Week';
+      case 'this_month':
+        return 'This Month';
+      case 'custom':
+        if (customDateRange.startDate && customDateRange.endDate) {
+          const start = new Date(customDateRange.startDate).toLocaleDateString();
+          const end = new Date(customDateRange.endDate).toLocaleDateString();
+          return `${start} - ${end}`;
+        }
+        return 'Custom Range';
+      case 'all':
+        return 'All Time';
+      default:
+        return 'Today';
+    }
+  };
+
   useEffect(() => {
     const fetchCafeId = async () => {
       if (!user || !profile) {
@@ -1362,7 +1521,7 @@ const POSDashboard = () => {
         }
         
         // Debug: If no cafe_id found, try to find Chatkara cafe
-        if (!profile.cafe_id && !staffData?.length) {
+        if (!profile.cafe_id) {
           console.log('🔍 POS Dashboard: No cafe_id found, searching for Chatkara cafe...');
           const { data: chatkaraCafe, error: chatkaraError } = await supabase
             .from('cafes')
@@ -1545,7 +1704,7 @@ const POSDashboard = () => {
     if (cafeId) {
       fetchOrders();
     }
-  }, [cafeId]);
+  }, [cafeId, dateRange, customDateRange]);
 
   if (loading) {
     return (
@@ -1648,7 +1807,9 @@ const POSDashboard = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Orders</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Total Orders ({formatDateRangeDisplay()})
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{filteredOrders.length}</div>
@@ -1656,11 +1817,13 @@ const POSDashboard = () => {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Total Revenue ({formatDateRangeDisplay()})
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                ₹{orders.reduce((sum, order) => sum + order.total_amount, 0)}
+                ₹{filteredOrders.reduce((sum, order) => sum + order.total_amount, 0)}
               </div>
             </CardContent>
           </Card>
@@ -1676,7 +1839,7 @@ const POSDashboard = () => {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Completed Today</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Completed Orders</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
@@ -1786,6 +1949,122 @@ const POSDashboard = () => {
               <div className="text-sm text-muted-foreground">
                 {useCompactLayout ? 'Grid view for high-volume orders' : 'Detailed view for individual orders'}
               </div>
+            </div>
+
+            {/* Date Range Filter */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-blue-800">📅 Date Range:</span>
+                  <span className="text-sm text-blue-700 bg-blue-100 px-2 py-1 rounded">
+                    {formatDateRangeDisplay()}
+                  </span>
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Quick Date Range Buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant={dateRange === 'today' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setDateRange('today')}
+                      className="text-xs"
+                    >
+                      Today
+                    </Button>
+                    <Button
+                      variant={dateRange === 'yesterday' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setDateRange('yesterday')}
+                      className="text-xs"
+                    >
+                      Yesterday
+                    </Button>
+                    <Button
+                      variant={dateRange === 'this_week' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setDateRange('this_week')}
+                      className="text-xs"
+                    >
+                      This Week
+                    </Button>
+                    <Button
+                      variant={dateRange === 'last_week' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setDateRange('last_week')}
+                      className="text-xs"
+                    >
+                      Last Week
+                    </Button>
+                    <Button
+                      variant={dateRange === 'this_month' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setDateRange('this_month')}
+                      className="text-xs"
+                    >
+                      This Month
+                    </Button>
+                    <Button
+                      variant={dateRange === 'all' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setDateRange('all')}
+                      className="text-xs"
+                    >
+                      All Time
+                    </Button>
+                  </div>
+                  
+                  {/* Custom Date Range */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={dateRange === 'custom' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setDateRange('custom')}
+                      className="text-xs"
+                    >
+                      Custom
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Custom Date Range Inputs */}
+              {dateRange === 'custom' && (
+                <div className="mt-4 pt-4 border-t border-blue-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="start-date" className="text-sm font-medium text-blue-800">
+                        Start Date
+                      </Label>
+                      <Input
+                        id="start-date"
+                        type="date"
+                        value={customDateRange.startDate}
+                        onChange={(e) => setCustomDateRange(prev => ({
+                          ...prev,
+                          startDate: e.target.value
+                        }))}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="end-date" className="text-sm font-medium text-blue-800">
+                        End Date
+                      </Label>
+                      <Input
+                        id="end-date"
+                        type="date"
+                        value={customDateRange.endDate}
+                        onChange={(e) => setCustomDateRange(prev => ({
+                          ...prev,
+                          endDate: e.target.value
+                        }))}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Search and Filter Controls */}
@@ -1935,7 +2214,10 @@ const POSDashboard = () => {
                                     className="flex-1"
                                   >
                                     {updatingOrder === order.id ? (
-                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                      <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        Updating...
+                                      </>
                                     ) : (
                                       <>
                                         <CheckCircle className="w-4 h-4 mr-2" />

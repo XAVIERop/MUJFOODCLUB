@@ -169,8 +169,8 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
         <div className="flex gap-6">
           {/* Main Content Area */}
           <div className="flex-1">
-            {/* Promotional Banner */}
-            {promotionalBanners.length > 0 && (
+            {/* Promotional Banner - HIDDEN FOR NOW */}
+            {false && promotionalBanners.length > 0 && (
               <PromotionalBanner 
                 banners={promotionalBanners}
                 onDismiss={(bannerId) => {
@@ -181,8 +181,8 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
               />
             )}
             
-            {/* Debug: Show banner count */}
-            {process.env.NODE_ENV === 'development' && (
+            {/* Debug: Show banner count - HIDDEN */}
+            {false && process.env.NODE_ENV === 'development' && (
               <div className="mb-4 p-2 bg-blue-100 text-blue-800 text-sm rounded">
                 Debug: {promotionalBanners.length} promotional banners loaded
               </div>
@@ -192,7 +192,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <h1 className="text-2xl font-bold text-gray-900">{cafe?.name}</h1>
-                {cafe?.average_rating && (
+                {cafe?.average_rating && cafe?.total_ratings && cafe.total_ratings > 0 && (
                   <div className="flex items-center gap-1">
                     <Star className="w-4 h-4 text-yellow-400 fill-current" />
                     <span className="text-sm font-medium text-gray-600">
@@ -534,8 +534,6 @@ const ModernCartPanel: React.FC<{
           </div>
           <div className="flex items-center gap-4 text-xs text-gray-500">
             <span>40 mins</span>
-            <span>•</span>
-            <span>2 kms</span>
           </div>
         </div>
       </div>

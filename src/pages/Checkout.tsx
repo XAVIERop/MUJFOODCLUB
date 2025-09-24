@@ -15,6 +15,7 @@ import { useLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/hooks/use-toast';
 import { ORDER_CONSTANTS } from '@/lib/constants';
 import { isDineInTakeawayAllowed, isDeliveryAllowed, getDineInTakeawayMessage } from '@/utils/timeRestrictions';
+import { generateDailyOrderNumber } from '@/utils/orderNumberGenerator';
 import Header from '@/components/Header';
 
 interface MenuItem {
@@ -141,11 +142,21 @@ const Checkout = () => {
         items_count: Object.values(cart).length
       });
 
-      // Create order (using the exact same pattern as the working CafeScanner)
-      const timestamp = Date.now();
-      const random = Math.random().toString(36).substr(2, 8).toUpperCase();
-      const userSuffix = user.id.substr(-4).toUpperCase();
-      const orderNumber = `ONLINE-${timestamp}-${random}-${userSuffix}`;
+      // Generate order number using new daily reset system
+      console.log('🔄 Generating order number for cafe:', cafe.id);
+      let orderNumber: string;
+      
+      try {
+        orderNumber = await generateDailyOrderNumber(cafe.id);
+        console.log('✅ Generated daily order number:', orderNumber);
+      } catch (error) {
+        console.error('❌ Failed to generate daily order number, using fallback:', error);
+        // Fallback to old system
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substr(2, 8).toUpperCase();
+        const userSuffix = user.id.substr(-4).toUpperCase();
+        orderNumber = `ONLINE-${timestamp}-${random}-${userSuffix}`;
+      }
 
       const { data: order, error: orderError } = await supabase
         .from('orders')

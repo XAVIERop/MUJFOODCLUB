@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { generateDailyOrderNumber } from '@/utils/orderNumberGenerator';
 
 interface StudentProfile {
   id: string;
@@ -226,11 +227,21 @@ const CafeScanner = ({ cafeId }: { cafeId: string }) => {
       const finalAmount = calculateFinalTotal();
       const pointsToEarn = Math.floor(finalAmount * 0.1); // 10% of final amount
 
-      // Generate order number
-      const timestamp = Date.now();
-      const random = Math.random().toString(36).substr(2, 8).toUpperCase();
-      const userSuffix = studentProfile.id.substr(-4).toUpperCase();
-      const orderNumber = `OFFLINE-${timestamp}-${random}-${userSuffix}`;
+      // Generate order number using new daily reset system
+      console.log('🔄 Generating offline order number for cafe:', cafeId);
+      let orderNumber: string;
+      
+      try {
+        orderNumber = await generateDailyOrderNumber(cafeId);
+        console.log('✅ Generated daily order number:', orderNumber);
+      } catch (error) {
+        console.error('❌ Failed to generate daily order number, using fallback:', error);
+        // Fallback to old system
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substr(2, 8).toUpperCase();
+        const userSuffix = studentProfile.id.substr(-4).toUpperCase();
+        orderNumber = `OFFLINE-${timestamp}-${random}-${userSuffix}`;
+      }
 
       // Create order
       const { data: order, error: orderError } = await supabase
