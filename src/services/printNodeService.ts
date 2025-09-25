@@ -408,24 +408,41 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Determine cafe-specific format (Chatkara first, then Food Court)
+    // Determine cafe-specific format (Chatkara first, then Mini Meals, then Food Court)
     const isChatkara = cafe_name?.toLowerCase().includes('chatkara') || 
                        cafe_name === 'CHATKARA' ||
                        cafe_name?.toLowerCase() === 'chatkara';
+    const isMiniMeals = cafe_name?.toLowerCase().includes('mini meals') || 
+                        cafe_name === 'MINI MEALS' ||
+                        cafe_name?.toLowerCase() === 'mini meals';
     const isFoodCourt = cafe_name?.toLowerCase().includes('food court') || 
                         cafe_name === 'FOOD COURT' ||
                         cafe_name?.toLowerCase() === 'food court';
     
     console.log('🔍 PrintNode Service - Cafe name:', cafe_name);
     console.log('🔍 PrintNode Service - Is Chatkara:', isChatkara);
+    console.log('🔍 PrintNode Service - Is Mini Meals:', isMiniMeals);
     console.log('🔍 PrintNode Service - Is Food Court:', isFoodCourt);
-    console.log('🔍 PrintNode Service - Using format:', isChatkara ? 'CHATKARA' : isFoodCourt ? 'FOOD COURT' : 'MUJ FOOD CLUB');
+    console.log('🔍 PrintNode Service - Using format:', isChatkara ? 'CHATKARA' : isMiniMeals ? 'MINI MEALS' : isFoodCourt ? 'FOOD COURT' : 'MUJ FOOD CLUB');
     
     let receipt;
     
     if (isChatkara) {
       // Chatkara format (compact, thermal printer optimized with bold text)
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'CHATKARA'}\x1B\x21\x00
+    ----------------------------------------
+    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
+    \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
+    \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
+    \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
+    \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
+    ----------------------------------------
+    \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
+    ----------------------------------------`;
+    } else if (isMiniMeals) {
+      // Mini Meals format (using Chatkara template with Mini Meals branding)
+      receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'MINI MEALS'}\x1B\x21\x00
     ----------------------------------------
     \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block || 'N/A'}\x1B\x21\x00
     \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
@@ -467,9 +484,9 @@ MUJFOODCLUB!`;
       const itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
       const qty = item.quantity.toString().padStart(2);
       
-      // Use different format for Chatkara vs others
+      // Use different format for Chatkara and Mini Meals vs others
       let price, amount;
-      if (isChatkara) {
+      if (isChatkara || isMiniMeals) {
         price = item.unit_price.toFixed(0).padStart(4);
         amount = item.total_price.toFixed(0).padStart(5);
       } else {
@@ -477,7 +494,7 @@ MUJFOODCLUB!`;
         amount = item.total_price.toFixed(0).padStart(5);
       }
       
-      if (isChatkara) {
+      if (isChatkara || isMiniMeals) {
         // Keep normal size for item names in receipt
         receipt += `\n    \x1B\x21\x08${itemName}\x1B\x21\x00 ${qty}    ${price}    ${amount}`;
       } else {
@@ -488,6 +505,28 @@ MUJFOODCLUB!`;
     // Add cafe-specific footer
     if (isChatkara) {
       // Determine if it's a delivery order based on delivery_block
+      const isDelivery = data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block);
+      const deliveryCharge = isDelivery ? 10 : 0;
+      const finalTotal = final_amount; // Use actual final amount from database
+      
+      receipt += `\n    ----------------------------------------
+    \x1B\x21\x08Total Qty: ${totalQty}\x1B\x21\x00
+    \x1B\x21\x08Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00`;
+      
+      // Only show delivery charge if it's a delivery order
+      if (deliveryCharge > 0) {
+        receipt += `\n    \x1B\x21\x08Delivery Charge: +${deliveryCharge}\x1B\x21\x00`;
+      }
+      
+      receipt += `\n    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
+    ----------------------------------------
+    \x1B\x21\x08Thanks Order Again\x1B\x21\x00
+    \x1B\x21\x08mujfoodclub.in\x1B\x21\x00
+    ----------------------------------------
+    ----------------------------------------
+    ----------------------------------------`;
+    } else if (isMiniMeals) {
+      // Mini Meals footer (using Chatkara template)
       const isDelivery = data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block);
       const deliveryCharge = isDelivery ? 10 : 0;
       const finalTotal = final_amount; // Use actual final amount from database
@@ -548,18 +587,22 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Determine cafe-specific format (Chatkara first, then Food Court)
+    // Determine cafe-specific format (Chatkara first, then Mini Meals, then Food Court)
     const isChatkara = cafe_name?.toLowerCase().includes('chatkara') || 
                        cafe_name === 'CHATKARA' ||
                        cafe_name?.toLowerCase() === 'chatkara';
+    const isMiniMeals = cafe_name?.toLowerCase().includes('mini meals') || 
+                        cafe_name === 'MINI MEALS' ||
+                        cafe_name?.toLowerCase() === 'mini meals';
     const isFoodCourt = cafe_name?.toLowerCase().includes('food court') || 
                         cafe_name === 'FOOD COURT' ||
                         cafe_name?.toLowerCase() === 'food court';
     
     console.log('🔍 PrintNode KOT - Cafe name:', cafe_name);
     console.log('🔍 PrintNode KOT - Is Chatkara:', isChatkara);
+    console.log('🔍 PrintNode KOT - Is Mini Meals:', isMiniMeals);
     console.log('🔍 PrintNode KOT - Is Food Court:', isFoodCourt);
-    console.log('🔍 PrintNode KOT - Using format:', isChatkara ? 'CHATKARA' : isFoodCourt ? 'FOOD COURT' : 'MUJ FOOD CLUB');
+    console.log('🔍 PrintNode KOT - Using format:', isChatkara ? 'CHATKARA' : isMiniMeals ? 'MINI MEALS' : isFoodCourt ? 'FOOD COURT' : 'MUJ FOOD CLUB');
     
     // Proper center-aligned KOT format with bold formatting
     let kot = `    ----------------------------------------
@@ -575,7 +618,7 @@ MUJFOODCLUB!`;
       const itemName = item.name.toUpperCase();
       const qty = item.quantity.toString();
       
-      if (isChatkara) {
+      if (isChatkara || isMiniMeals) {
         // Create proper two-column layout: item name (left) and quantity (right)
         const totalWidth = 40; // Total width of the line
         const qtyWidth = 4; // Width for quantity column
@@ -619,6 +662,12 @@ MUJFOODCLUB!`;
 
     // Add cafe-specific footer
     if (isChatkara) {
+      kot += `\n    ----------------------------------------
+    \x1B\x21\x08Thanks\x1B\x21\x00
+    ----------------------------------------
+    ----------------------------------------
+    ----------------------------------------`;
+    } else if (isMiniMeals) {
       kot += `\n    ----------------------------------------
     \x1B\x21\x08Thanks\x1B\x21\x00
     ----------------------------------------
