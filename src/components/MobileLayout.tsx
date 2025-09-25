@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Header from './Header';
 import SearchBar from './SearchBar';
 import MobilePromotionalBanners from './MobilePromotionalBanners';
 import MobileCafeSlideList from './MobileCafeSlideList';
@@ -33,11 +32,6 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 }) => {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Header */}
-      <Header 
-        selectedBlock={selectedBlock}
-        onBlockChange={onBlockChange}
-      />
 
       {/* Search Bar - Same functionality as desktop */}
       <div className="px-4 py-3 bg-white">

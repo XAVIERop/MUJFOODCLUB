@@ -27,7 +27,9 @@ import {
   X,
   MoreVertical,
   Package,
-  Timer
+  Timer,
+  TrendingUp,
+  Trophy
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserOrdersQuery } from '@/hooks/useOrdersQuery';
