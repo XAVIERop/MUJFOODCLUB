@@ -143,9 +143,11 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
 
   return (
     <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-      isHomePage 
-        ? 'border-b border-white/20 bg-black/40 backdrop-blur-lg text-white shadow-lg' 
-        : 'border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 text-foreground'
+      isMobile 
+        ? 'border-b border-border/40 bg-white text-foreground shadow-sm' // Simple white background for mobile
+        : isHomePage 
+          ? 'border-b border-white/20 bg-black/40 backdrop-blur-lg text-white shadow-lg' 
+          : 'border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 text-foreground'
     } m-0`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
@@ -154,9 +156,9 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
             {isMobile ? (
               /* Mobile Location Dropdown */
               <div className="flex items-center space-x-2">
-                <MapPin className={`w-4 h-4 ${isHomePage ? 'text-white/80' : 'text-muted-foreground'}`} />
+                <MapPin className="w-4 h-4 text-muted-foreground" />
                 <Select value={selectedBlock} onValueChange={setSelectedBlock}>
-                  <SelectTrigger className={`w-32 h-8 text-sm ${isHomePage ? 'bg-black/20 border-white/30 text-white' : 'bg-background'}`}>
+                  <SelectTrigger className="w-32 h-8 text-sm bg-white border-border">
                     <SelectValue placeholder="Select Block" />
                   </SelectTrigger>
                   <SelectContent>
@@ -237,9 +239,11 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className={`relative h-8 w-8 rounded-full ${
-                      isHomePage 
-                        ? 'text-white/90 hover:text-white hover:bg-black/30' 
-                        : ''
+                      isMobile 
+                        ? 'text-foreground hover:text-foreground hover:bg-muted' 
+                        : isHomePage 
+                          ? 'text-white/90 hover:text-white hover:bg-black/30' 
+                          : ''
                     }`}>
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
@@ -309,9 +313,11 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
             <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="sm" className={`md:hidden ${
-                  isHomePage 
-                    ? 'text-white/90 hover:text-white hover:bg-black/30' 
-                    : ''
+                  isMobile 
+                    ? 'text-foreground hover:text-foreground hover:bg-muted' 
+                    : isHomePage 
+                      ? 'text-white/90 hover:text-white hover:bg-black/30' 
+                      : ''
                 }`}>
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle Menu</span>
