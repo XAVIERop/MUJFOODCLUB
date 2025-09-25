@@ -32,7 +32,7 @@ const PROMOTIONAL_BANNERS: PromotionalBanner[] = [
     id: 'food-court',
     title: 'Food Court',
     subtitle: 'Variety of cuisines under one roof',
-    buttonText: 'EXPLORE',
+    buttonText: 'ORDER NOW',
     backgroundColor: 'bg-green-600',
     textColor: 'text-white',
     badge: 'MULTI-CUISINE',
