@@ -145,9 +145,7 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
     <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${
       isMobile 
         ? 'border-b border-border/40 bg-white text-foreground shadow-sm' // Simple white background for mobile
-        : isHomePage 
-          ? 'border-b border-white/20 bg-black/40 backdrop-blur-lg text-white shadow-lg' 
-          : 'border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 text-foreground'
+        : 'border-b border-border/40 bg-white text-foreground shadow-sm' // Simple white background for desktop too
     } m-0`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
@@ -197,11 +195,7 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
                 <a
                   key={item.label}
                   href={item.href}
-                  className={`flex items-center space-x-2 transition-smooth story-link ${
-                    isHomePage
-                      ? 'text-white/80 hover:text-white'
-                      : 'text-muted-foreground hover:text-primary'
-                  }`}
+                  className="flex items-center space-x-2 transition-smooth story-link text-muted-foreground hover:text-primary"
                 >
                   <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
@@ -220,11 +214,7 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`relative hidden sm:inline-flex ${
-                    isHomePage 
-                      ? 'text-white/90 hover:text-white hover:bg-black/30' 
-                      : ''
-                  }`}
+                  className="relative hidden sm:inline-flex text-foreground hover:text-foreground hover:bg-muted"
                   onClick={() => setIsNotificationOpen(true)}
                 >
                   <Bell className="w-5 h-5" />
@@ -238,13 +228,7 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
                 {/* Profile Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className={`relative h-8 w-8 rounded-full ${
-                      isMobile 
-                        ? 'text-foreground hover:text-foreground hover:bg-muted' 
-                        : isHomePage 
-                          ? 'text-white/90 hover:text-white hover:bg-black/30' 
-                          : ''
-                    }`}>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full text-foreground hover:text-foreground hover:bg-muted">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
                         <AvatarFallback>{profile?.full_name?.charAt(0) || 'U'}</AvatarFallback>
@@ -299,9 +283,9 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
               </>
             ) : (
               <Button 
-                variant={isHomePage ? "outline" : "hero"} 
+                variant="hero" 
                 onClick={handleAuthAction}
-                className={`${isHomePage ? "border-white/40 text-white hover:bg-black/30 hover:border-white/60 bg-black/20" : ""} text-xs sm:text-sm`}
+                className="text-xs sm:text-sm"
               >
                 <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Sign In</span>
@@ -312,13 +296,7 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
             {/* Mobile Menu */}
             <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" className={`md:hidden ${
-                  isMobile 
-                    ? 'text-foreground hover:text-foreground hover:bg-muted' 
-                    : isHomePage 
-                      ? 'text-white/90 hover:text-white hover:bg-black/30' 
-                      : ''
-                }`}>
+                <Button variant="ghost" size="sm" className="md:hidden text-foreground hover:text-foreground hover:bg-muted">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle Menu</span>
                 </Button>
