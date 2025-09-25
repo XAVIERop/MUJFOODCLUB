@@ -152,22 +152,26 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
           {/* Left Section - Logo (Desktop) or Location Dropdown (Mobile) */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             {isMobile ? (
-              /* Mobile Location Dropdown */
-              <div className="flex items-center space-x-2">
-                <MapPin className="w-4 h-4 text-muted-foreground" />
-                <Select value={selectedBlock} onValueChange={setSelectedBlock}>
-                  <SelectTrigger className="w-32 h-8 text-sm bg-white border-border">
-                    <SelectValue placeholder="Select Block" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {HOSTEL_BLOCKS.map((block) => (
-                      <SelectItem key={block} value={block}>
-                        {block}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              /* Mobile Location Dropdown - Simple Style */
+              <Select value={selectedBlock} onValueChange={setSelectedBlock}>
+                <SelectTrigger className="w-auto h-auto p-0 bg-transparent border-none shadow-none [&>svg]:hidden">
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="w-4 h-4 text-red-500" />
+                    <div className="flex flex-col items-start">
+                      <span className="text-base font-bold text-gray-900">{selectedBlock}</span>
+                      <span className="text-xs text-gray-600">Block {selectedBlock}, MUJ Hostel</span>
+                    </div>
+                    <ChevronDown className="w-3 h-3 text-gray-500 ml-1" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  {HOSTEL_BLOCKS.map((block) => (
+                    <SelectItem key={block} value={block}>
+                      {block}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ) : (
               /* Desktop Logo */
               <Link 
