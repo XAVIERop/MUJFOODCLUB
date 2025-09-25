@@ -232,7 +232,18 @@ class UnifiedPrintService {
         console.log('⚠️ No printer configuration found, trying direct PrintNode printing...');
         // Try direct PrintNode printing without database configuration
         if (this.printNodeService) {
-          const result = await this.printNodeService.printKOT(formattedReceiptData);
+          // Get cafe-specific printer ID
+          let targetPrinterId: number | undefined;
+          if (cafeName.toLowerCase().includes('chatkara')) {
+            targetPrinterId = 74698272; // Chatkara POS-80-Series
+          } else if (cafeName.toLowerCase().includes('food court')) {
+            targetPrinterId = 74692682; // Food Court EPSON TM-T82 Receipt
+          } else if (cafeName.toLowerCase().includes('mini meals')) {
+            targetPrinterId = 74756354; // Mini Meals Printer
+          }
+          
+          console.log(`🖨️ Using direct PrintNode for KOT (Printer ID: ${targetPrinterId || 'default'})`);
+          const result = await this.printNodeService.printKOT(formattedReceiptData, targetPrinterId);
           if (result.success) {
             return { ...result, method: 'printnode-direct' };
           }
@@ -314,7 +325,18 @@ class UnifiedPrintService {
         console.log('⚠️ No printer configuration found, trying direct PrintNode printing...');
         // Try direct PrintNode printing without database configuration
         if (this.printNodeService) {
-          const result = await this.printNodeService.printOrderReceipt(formattedReceiptData);
+          // Get cafe-specific printer ID
+          let targetPrinterId: number | undefined;
+          if (cafeName.toLowerCase().includes('chatkara')) {
+            targetPrinterId = 74698272; // Chatkara POS-80-Series
+          } else if (cafeName.toLowerCase().includes('food court')) {
+            targetPrinterId = 74692682; // Food Court EPSON TM-T82 Receipt
+          } else if (cafeName.toLowerCase().includes('mini meals')) {
+            targetPrinterId = 74756354; // Mini Meals Printer
+          }
+          
+          console.log(`🖨️ Using direct PrintNode for Receipt (Printer ID: ${targetPrinterId || 'default'})`);
+          const result = await this.printNodeService.printOrderReceipt(formattedReceiptData, targetPrinterId);
           if (result.success) {
             return { ...result, method: 'printnode-direct' };
           }
