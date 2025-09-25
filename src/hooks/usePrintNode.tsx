@@ -85,6 +85,19 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
           return fallbackKey;
         }
         return apiKey;
+      } else if (cafe.name.toLowerCase().includes('mini meals')) {
+        console.log('Using Mini Meals API key');
+        const apiKey = import.meta.env.VITE_MINI_MEALS_PRINTNODE_API_KEY;
+        if (!apiKey || apiKey === 'your-mini-meals-printnode-api-key') {
+          console.warn('VITE_MINI_MEALS_PRINTNODE_API_KEY not set, using main API key');
+          const fallbackKey = import.meta.env.VITE_PRINTNODE_API_KEY;
+          if (!fallbackKey) {
+            console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+            return '';
+          }
+          return fallbackKey;
+        }
+        return apiKey;
       }
 
       // Fallback to general API key
@@ -223,6 +236,8 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
               targetPrinterId = 74698272; // Chatkara POS-80-Series
             } else if (cafe.name.toLowerCase().includes('food court')) {
               targetPrinterId = 74692682; // Food Court EPSON TM-T82 Receipt
+            } else if (cafe.name.toLowerCase().includes('mini meals')) {
+              targetPrinterId = 74756354; // Mini Meals Printer
             }
           }
         } catch (error) {
@@ -272,6 +287,8 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
               targetPrinterId = 74698272; // Chatkara POS-80-Series
             } else if (cafe.name.toLowerCase().includes('food court')) {
               targetPrinterId = 74692682; // Food Court EPSON TM-T82 Receipt
+            } else if (cafe.name.toLowerCase().includes('mini meals')) {
+              targetPrinterId = 74756354; // Mini Meals Printer
             }
           }
         } catch (error) {
