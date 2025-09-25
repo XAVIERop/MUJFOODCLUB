@@ -98,11 +98,11 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ selectedBlock, onBlockChang
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate('/my-orders')}>
+              <DropdownMenuItem onClick={() => navigate('/orders')}>
                 <Receipt className="mr-2 h-4 w-4" />
                 My Orders
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/favorites')}>
+              <DropdownMenuItem onClick={() => navigate('/cafes?favorites=true')}>
                 <Heart className="mr-2 h-4 w-4" />
                 Favorites
               </DropdownMenuItem>

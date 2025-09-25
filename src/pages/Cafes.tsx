@@ -87,8 +87,6 @@ const Cafes = () => {
           table: 'cafes'
         }, 
         (payload) => {
-          console.log('🏪 Cafes page: Cafe updated via real-time:', payload.new);
-          
           // Update the specific cafe in the state
           setCafes(prevCafes => 
             prevCafes.map(cafe => 
@@ -99,9 +97,7 @@ const Cafes = () => {
           );
         }
       )
-      .subscribe((status) => {
-        console.log('📡 Cafes page: Cafe subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -114,8 +110,6 @@ const Cafes = () => {
 
   const fetchCafes = async () => {
     try {
-      console.log('Cafes page: Fetching cafes...');
-      
       // Use the priority-based ordering function
       let { data, error } = await supabase
         .rpc('get_cafes_ordered');

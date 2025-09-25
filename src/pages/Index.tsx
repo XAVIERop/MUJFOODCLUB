@@ -36,6 +36,7 @@ const Index = () => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBlock, setSelectedBlock] = useState("B1");
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
   useEffect(() => {
     fetchCafes();
@@ -52,8 +53,6 @@ const Index = () => {
           table: 'cafes'
         }, 
         (payload) => {
-          console.log('🏪 Index: Cafe updated via real-time:', payload.new);
-          
           // Update the specific cafe in the state
           setCafes(prevCafes => 
             prevCafes.map(cafe => 
@@ -64,9 +63,7 @@ const Index = () => {
           );
         }
       )
-      .subscribe((status) => {
-        console.log('📡 Index: Cafe subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -75,11 +72,15 @@ const Index = () => {
 
   const fetchCafes = async () => {
     try {
-      console.log('🔍 Fetching cafes...');
-      console.log('🔍 Supabase client:', supabase);
-      console.log('🔍 Supabase client type:', typeof supabase);
-      console.log('🔍 Supabase rpc method exists:', !!supabase.rpc);
+      // Cache for 5 minutes to prevent unnecessary re-fetching
+      const now = Date.now();
+      const cacheTime = 5 * 60 * 1000; // 5 minutes
       
+      if (cafes.length > 0 && (now - lastFetchTime) < cacheTime) {
+        setLoading(false);
+        return;
+      }
+
       // Use the same working pattern as Cafes page
       let { data, error } = await supabase
         .rpc('get_cafes_ordered');
@@ -93,11 +94,9 @@ const Index = () => {
       const cafesData = Array.isArray(data) ? data : [];
       
       if (cafesData.length > 0) {
-        console.log('✅ Successfully fetched cafes:', cafesData.length);
-        console.log('✅ First few cafes:', cafesData.slice(0, 3).map(c => c.name));
         setCafes(cafesData);
+        setLastFetchTime(now);
       } else {
-        console.log('⚠️ No cafes found in database');
         setCafes([]);
       }
       
