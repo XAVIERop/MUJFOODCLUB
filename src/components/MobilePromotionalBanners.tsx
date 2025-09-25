@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PromotionalBanner {
   id: string;
@@ -25,7 +26,7 @@ const PROMOTIONAL_BANNERS: PromotionalBanner[] = [
     textColor: 'text-white',
     badge: 'POPULAR',
     badgeIcon: '🔥',
-    cafeId: 'chatkara',
+    cafeId: 'CHATKARA',
   },
   {
     id: 'food-court',
@@ -36,7 +37,7 @@ const PROMOTIONAL_BANNERS: PromotionalBanner[] = [
     textColor: 'text-white',
     badge: 'MULTI-CUISINE',
     badgeIcon: '🍽️',
-    cafeId: 'food-court',
+    cafeId: 'Food Court',
   },
   {
     id: 'mini-meals',
@@ -47,7 +48,7 @@ const PROMOTIONAL_BANNERS: PromotionalBanner[] = [
     textColor: 'text-white',
     badge: 'QUICK',
     badgeIcon: '⚡',
-    cafeId: 'mini-meals',
+    cafeId: 'Mini Meals',
   },
   {
     id: 'punjabi-tadka',
@@ -58,7 +59,7 @@ const PROMOTIONAL_BANNERS: PromotionalBanner[] = [
     textColor: 'text-white',
     badge: 'SPICY',
     badgeIcon: '🌶️',
-    cafeId: 'punjabi-tadka',
+    cafeId: 'Punjabi Tadka',
   },
   {
     id: 'munch-box',
@@ -69,7 +70,7 @@ const PROMOTIONAL_BANNERS: PromotionalBanner[] = [
     textColor: 'text-white',
     badge: 'SNACKS',
     badgeIcon: '🍿',
-    cafeId: 'munch-box',
+    cafeId: 'Munch Box',
   },
   {
     id: 'cook-house',
@@ -80,7 +81,7 @@ const PROMOTIONAL_BANNERS: PromotionalBanner[] = [
     textColor: 'text-white',
     badge: 'HOMESTYLE',
     badgeIcon: '🏠',
-    cafeId: 'cook-house',
+    cafeId: 'Cook House',
   },
 ];
 
@@ -89,8 +90,28 @@ const MobilePromotionalBanners: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const navigate = useNavigate();
 
-  const handleBannerClick = (cafeId: string) => {
-    navigate(`/cafes/${cafeId}`);
+  const handleBannerClick = async (cafeName: string) => {
+    try {
+      // Fetch the actual cafe ID from the database using the cafe name
+      const { data, error } = await supabase
+        .from('cafes')
+        .select('id')
+        .eq('name', cafeName)
+        .single();
+      
+      if (error || !data) {
+        console.error('Error fetching cafe:', error);
+        // Fallback: try to navigate to cafes page
+        navigate('/cafes');
+        return;
+      }
+      
+      // Navigate to the menu page using the actual cafe ID (UUID)
+      navigate(`/menu/${data.id}`);
+    } catch (error) {
+      console.error('Error navigating to cafe:', error);
+      navigate('/cafes');
+    }
   };
 
   // Auto-slide functionality

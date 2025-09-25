@@ -238,13 +238,13 @@ const HeroBannerSection: React.FC = () => {
         document.querySelector('.cafe-grid')?.scrollIntoView({ behavior: 'smooth' });
         break;
       case 'navigate_to_chatkara':
-        window.location.href = '/menu/chatkara';
+        window.location.href = '/menu/CHATKARA';
         break;
       case 'navigate_to_food_court':
-        window.location.href = '/menu/food-court';
+        window.location.href = '/menu/Food Court';
         break;
       case 'navigate_to_mini_meals':
-        window.location.href = '/menu/mini-meals';
+        window.location.href = '/menu/Mini Meals';
         break;
       default:
         // Handle cafe-specific actions
