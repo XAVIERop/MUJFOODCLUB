@@ -6,12 +6,11 @@ import { useFavorites } from '../hooks/useFavorites';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import SimpleHeader from '../components/SimpleHeader';
+import Header from '../components/Header';
 import { EnhancedCafeCard } from '../components/EnhancedCafeCard';
 import CafeIconGrid from '../components/CafeIconGrid';
 import CafeCategories from '../components/CafeCategories';
 import MobileLayoutWrapper from '../components/MobileLayoutWrapper';
-import MobileHeader from '../components/MobileHeader';
 
 
 interface Cafe {
@@ -208,7 +207,7 @@ const Cafes = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-muted/30 pt-4">
-        <SimpleHeader />
+        <Header />
         <div className="container mx-auto px-4">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -221,12 +220,10 @@ const Cafes = () => {
 
   return (
     <MobileLayoutWrapper
+      selectedBlock={selectedBlock}
+      onBlockChange={setSelectedBlock}
       mobileChildren={
         <div className="min-h-screen bg-white">
-          <MobileHeader 
-            selectedBlock={selectedBlock}
-            onBlockChange={setSelectedBlock}
-          />
           <div className="container mx-auto px-4 pt-4">
         {/* Search Bar */}
         <div className="mb-6">
@@ -336,7 +333,7 @@ const Cafes = () => {
       }
     >
       <div className="min-h-screen bg-white pt-4">
-        <SimpleHeader />
+        <Header />
         <div className="container mx-auto px-4">
           {/* Search Bar */}
           <div className="mb-6">

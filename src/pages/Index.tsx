@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import SimpleHeader from "@/components/SimpleHeader";
+import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import HeroBannerSection from "@/components/HeroBannerSection";
 import CafeCategories from "@/components/CafeCategories";
@@ -119,8 +119,8 @@ const Index = () => {
       }
     >
       <div className="min-h-screen bg-background">
-        {/* Simple Header with Location and Profile */}
-        <SimpleHeader />
+        {/* Header with Location and Profile */}
+        <Header selectedBlock={selectedBlock} onBlockChange={setSelectedBlock} />
         
         {/* Search Bar */}
         <SearchBar />

@@ -1,9 +1,12 @@
 import React from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import Header from './Header';
 
 interface MobileLayoutWrapperProps {
   children: React.ReactNode;
   mobileChildren?: React.ReactNode;
+  selectedBlock?: string;
+  onBlockChange?: (block: string) => void;
 }
 
 /**
@@ -12,13 +15,20 @@ interface MobileLayoutWrapperProps {
  */
 const MobileLayoutWrapper: React.FC<MobileLayoutWrapperProps> = ({ 
   children, 
-  mobileChildren 
+  mobileChildren,
+  selectedBlock,
+  onBlockChange
 }) => {
   const isMobile = useIsMobile();
   
   // If mobileChildren is provided, use it for mobile, otherwise use default children
   if (isMobile && mobileChildren) {
-    return <>{mobileChildren}</>;
+    return (
+      <>
+        <Header selectedBlock={selectedBlock} onBlockChange={onBlockChange} />
+        {mobileChildren}
+      </>
+    );
   }
   
   // Default behavior: render the original children (desktop layout)

@@ -401,15 +401,14 @@ class PrinterService {
           <body>
             <div class="header">
               <div class="logo">CHATKARA</div>
+              <div class="subtitle" style="font-size: 16px; font-weight: bold;">${orderData.user?.phone || orderData.phone_number || 'N/A'} ${orderData.user?.block || orderData.delivery_block || 'N/A'}</div>
+              <div class="subtitle" style="font-size: 16px; font-weight: bold;">Token No.: ${orderData.order_number}</div>
             </div>
             
             <div class="order-info">
               <div class="info-row">
-                <span style="font-size: 16px; font-weight: bold;">${orderData.user?.phone || orderData.phone_number || 'N/A'} ${orderData.user?.block || orderData.delivery_block || 'N/A'}</span>
-              </div>
-              <div class="info-row">
                 <span>Name:</span>
-                <span>${orderData.user?.full_name || 'WALK-IN'}</span>
+                <span>${orderData.user?.full_name || orderData.customer_name || 'Customer'}</span>
               </div>
               <div class="info-row">
                 <span>Date:</span>
@@ -421,10 +420,6 @@ class PrinterService {
               </div>
               <div class="info-row">
                 <span>Bill No.:</span>
-                <span>${orderData.order_number.replace(/[^\d]/g, '')}</span>
-              </div>
-              <div class="info-row">
-                <span>Token No.:</span>
                 <span>${orderData.order_number.replace(/[^\d]/g, '')}</span>
               </div>
             </div>
@@ -657,14 +652,13 @@ class PrinterService {
       const finalTotal = orderData.subtotal + deliveryCharge - discountAmount;
       
       let text = `CHATKARA\n`;
-      text += `========================\n`;
-      text += `Name: (M: ${orderData.user?.phone || orderData.phone_number || 'N/A'})\n`;
-      text += `Adr: ${orderData.user?.block || orderData.delivery_block || 'N/A'}\n`;
+      text += `${orderData.user?.phone || orderData.phone_number || 'N/A'} ${orderData.user?.block || orderData.delivery_block || 'N/A'}\n`;
+      text += `Token No.: ${orderData.order_number}\n`;
+      text += `Name: ${orderData.user?.full_name || orderData.customer_name || 'Customer'}\n`;
       text += `Date: ${dateStr}\n`;
       text += `${timeStr} Delivery\n`;
       text += `Cashier: biller\n`;
       text += `Bill No.: ${orderData.order_number.replace(/[^\d]/g, '')}\n`;
-      text += `Token No.: ${Math.floor(Math.random() * 1000) + 1}\n`;
       text += `========================\n`;
       text += `Item\t\tQty\tPrice\tAmount\n`;
       text += `------------------------\n`;

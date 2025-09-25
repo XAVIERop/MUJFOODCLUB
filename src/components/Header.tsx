@@ -12,7 +12,12 @@ import { useNotificationSubscriptions } from '@/hooks/useSubscriptionManager';
 import { useLocation as useLocationContext } from '@/contexts/LocationContext';
 import NotificationCenter from './NotificationCenter';
 
-const Header = () => {
+interface HeaderProps {
+  selectedBlock?: string;
+  onBlockChange?: (block: string) => void;
+}
+
+const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockChange }: HeaderProps = {}) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -20,7 +25,11 @@ const Header = () => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { selectedBlock, setSelectedBlock } = useLocationContext();
+  const { selectedBlock: contextSelectedBlock, setSelectedBlock: contextSetSelectedBlock } = useLocationContext();
+  
+  // Use props if provided, otherwise use context
+  const selectedBlock = propSelectedBlock || contextSelectedBlock;
+  const setSelectedBlock = propOnBlockChange || contextSetSelectedBlock;
 
   // Check if we're on the home page (hero section)
   const isHomePage = location.pathname === '/';

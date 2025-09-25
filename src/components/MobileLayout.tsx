@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import MobileHeader from './MobileHeader';
+import Header from './Header';
 import SearchBar from './SearchBar';
 import MobilePromotionalBanners from './MobilePromotionalBanners';
 import MobileCafeSlideList from './MobileCafeSlideList';
@@ -34,7 +34,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Header */}
-      <MobileHeader 
+      <Header 
         selectedBlock={selectedBlock}
         onBlockChange={onBlockChange}
       />

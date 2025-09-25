@@ -273,6 +273,11 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               font-size: 10px;
             }
             
+            .token-number {
+              font-size: 12px;
+              font-weight: bold;
+            }
+            
             .order-details {
               margin-bottom: 6px;
               font-size: 10px;
@@ -314,8 +319,9 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
             <div class="cafe-name">${orderData.cafe_name}</div>
             
             <div class="customer-info">
-              <div>Name: (M: ${orderData.customer_phone})</div>
-              <div>Adr: ${orderData.delivery_block}</div>
+              <div>M: ${orderData.customer_phone} ${orderData.delivery_block}</div>
+              <div class="token-number">Token No.: ${orderData.order_number}</div>
+              <div>Name: ${orderData.customer_name || 'Customer'}</div>
             </div>
             
             <div class="order-details">
@@ -324,7 +330,6 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               <div>Delivery</div>
               <div>Cashier: biller</div>
               <div>Bill No.: ${orderData.order_number}</div>
-              <div>Token No.: ${orderData.order_number}</div>
             </div>
             
             <table class="items-table">

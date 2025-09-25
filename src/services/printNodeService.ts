@@ -428,11 +428,11 @@ MUJFOODCLUB!`;
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'CHATKARA'}\x1B\x21\x00
     ----------------------------------------
     \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block || 'N/A'}\x1B\x21\x00
-    \x1B\x21\x08Name: ${customer_name || 'WALK-IN'}\x1B\x21\x00
+    \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
+    \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
     \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
     \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
     \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
-    \x1B\x21\x08Token No.: ${order_number}\x1B\x21\x00
     ----------------------------------------
     \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
     ----------------------------------------`;

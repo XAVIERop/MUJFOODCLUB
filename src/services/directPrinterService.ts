@@ -489,19 +489,23 @@ class DirectPrinterService {
                 border-top: 1px solid #000;
                 padding-top: 2mm;
               }
+              .token-number {
+                font-size: 11px;
+                font-weight: bold;
+              }
             </style>
           </head>
           <body>
             <div class="header">
-              <div class="logo">MUJ FOOD CLUB</div>
-              <div class="subtitle">Delicious Food, Great Service</div>
-              <div class="subtitle">www.mujfoodclub.in</div>
+              <div class="logo">CHATKARA</div>
+              <div class="subtitle">${orderData.user?.phone || orderData.phone_number || 'N/A'} ${orderData.user?.block || orderData.delivery_block || 'N/A'}</div>
+              <div class="subtitle token-number">Token No.: ${orderData.order_number}</div>
             </div>
             
             <div class="order-info">
               <div class="info-row">
-                <span>Receipt #:</span>
-                <span>${orderData.order_number}</span>
+                <span>Name:</span>
+                <span>${orderData.user?.full_name || orderData.customer_name || 'Customer'}</span>
               </div>
               <div class="info-row">
                 <span>Date:</span>
@@ -512,53 +516,62 @@ class DirectPrinterService {
                 <span>${timeStr}</span>
               </div>
               <div class="info-row">
-                <span>Customer:</span>
-                <span>${orderData.user?.full_name || 'Walk-in Customer'}</span>
+                <span>Delivery</span>
+                <span></span>
               </div>
               <div class="info-row">
-                <span>Phone:</span>
-                <span>${orderData.user?.phone || orderData.phone_number || 'N/A'}</span>
+                <span>Cashier:</span>
+                <span>biller</span>
               </div>
               <div class="info-row">
-                <span>Block:</span>
-                <span>${orderData.user?.block || orderData.delivery_block || 'N/A'}</span>
+                <span>Bill No.:</span>
+                <span>${orderData.order_number}</span>
               </div>
             </div>
             
             <div class="items-section">
               <div class="info-row" style="font-weight: bold; margin-bottom: 1mm; border-bottom: 1px solid #000; padding-bottom: 0.5mm;">
                 <span>Item</span>
-                <span>Qty × Price</span>
-                <span>Total</span>
+                <span>Qty.</span>
+                <span>Price</span>
+                <span>Amount</span>
               </div>
               ${orderItems.map(item => `
                 <div class="item-row">
                   <div class="item-name">${item.menu_item.name}</div>
-                  <div class="item-details">${item.quantity} × ₹${item.unit_price}</div>
-                  <div class="item-details">₹${item.total_price}</div>
+                  <div class="item-details">${item.quantity}</div>
+                  <div class="item-details">${item.unit_price}</div>
+                  <div class="item-details">${item.total_price}</div>
                 </div>
               `).join('')}
             </div>
             
             <div class="total-section">
               <div class="info-row">
-                <span>Subtotal:</span>
-                <span>₹${orderData.subtotal}</span>
+                <span>Total Qty:</span>
+                <span>${orderItems.reduce((sum, item) => sum + item.quantity, 0)}</span>
               </div>
               <div class="info-row">
-                <span>Tax (5%):</span>
-                <span>₹${orderData.tax_amount}</span>
+                <span>Sub Total:</span>
+                <span>${orderData.subtotal}</span>
               </div>
-              <div class="info-row" style="font-size: 10px; margin-top: 1mm; border-top: 1px solid #000; padding-top: 0.5mm;">
-                <span>TOTAL:</span>
-                <span>₹${orderData.total_amount}</span>
+              <div class="info-row">
+                <span>Delivery Charge:</span>
+                <span>+10</span>
+              </div>
+              <div class="info-row">
+                <span>MUJ Food Club Discount:</span>
+                <span>-${Math.round(orderData.subtotal * 0.05)}</span>
+              </div>
+              <div class="info-row" style="font-size: 12px; margin-top: 1mm; border-top: 1px solid #000; padding-top: 0.5mm;">
+                <span>Grand Total:</span>
+                <span>${Math.round(orderData.subtotal + 10 - orderData.subtotal * 0.05)}rs</span>
               </div>
             </div>
             
             <div class="footer">
-              <div>Thank you for your order!</div>
-              <div>Please collect your receipt</div>
-              <div>For support: support@mujfoodclub.in</div>
+              <div>Thanks Order Again</div>
+              <div>mujfoodclub.in</div>
             </div>
           </body>
         </html>
