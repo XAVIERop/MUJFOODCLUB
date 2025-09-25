@@ -487,16 +487,21 @@ MUJFOODCLUB!`;
 
     // Add cafe-specific footer
     if (isChatkara) {
-      const deliveryCharge = 10;
-      const discountAmount = subtotal * 0.05; // 5% discount
-      const finalTotal = subtotal + deliveryCharge - discountAmount;
+      // Determine if it's a delivery order based on delivery_block
+      const isDelivery = data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block);
+      const deliveryCharge = isDelivery ? 10 : 0;
+      const finalTotal = final_amount; // Use actual final amount from database
       
       receipt += `\n    ----------------------------------------
     \x1B\x21\x08Total Qty: ${totalQty}\x1B\x21\x00
-    \x1B\x21\x08Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00
-    \x1B\x21\x08Delivery Charge: +${deliveryCharge}\x1B\x21\x00
-    \x1B\x21\x08MUJ Food Club Discount: -${discountAmount.toFixed(0)}\x1B\x21\x00
-    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
+    \x1B\x21\x08Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00`;
+      
+      // Only show delivery charge if it's a delivery order
+      if (deliveryCharge > 0) {
+        receipt += `\n    \x1B\x21\x08Delivery Charge: +${deliveryCharge}\x1B\x21\x00`;
+      }
+      
+      receipt += `\n    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
     ----------------------------------------
     \x1B\x21\x08Thanks Order Again\x1B\x21\x00
     \x1B\x21\x08mujfoodclub.in\x1B\x21\x00
@@ -506,11 +511,9 @@ MUJFOODCLUB!`;
     } else if (isFoodCourt) {
       receipt += `\n    ----------------------------------------
     Total Qty: ${totalQty}
-    Sub                             ${subtotal.toFixed(0)}
-    Total                           ${subtotal.toFixed(0)}
+    Sub Total                        ${subtotal.toFixed(0)}
     CGST@2.5 2.5%                   ${cgst.toFixed(0)}
     SGST@2.5 2.5%                   ${sgst.toFixed(0)}
-    MUJFOODCLUB Discount            ${discount.toFixed(0)}
     ----------------------------------------
     \x1B\x21\x30Grand Total                     ${final_amount.toFixed(0)}\x1B\x21\x00
     Paid via ${payment_method?.toUpperCase() || 'COD'}
