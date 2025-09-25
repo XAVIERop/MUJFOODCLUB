@@ -18,37 +18,37 @@ const BottomNavigation = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 lg:hidden shadow-lg">
-      <div className="flex items-center justify-center gap-16 py-1 px-2">
+      <div className="flex items-center justify-center gap-20 py-3 px-4">
         {/* Home Tab */}
         <button
           onClick={() => navigate('/')}
-          className={`flex flex-col items-center py-1 px-2 rounded-lg transition-all duration-200 ${
+          className={`flex flex-col items-center py-2 px-3 rounded-lg transition-all duration-200 ${
             isActive('/') 
               ? 'text-primary bg-primary/10' 
               : 'text-gray-600 hover:text-primary hover:bg-gray-50'
           }`}
         >
-          <Home className={`w-4 h-4 mb-0.5 ${isActive('/') ? 'text-primary' : ''}`} />
-          <span className="text-[10px] font-medium">Home</span>
+          <Home className={`w-6 h-6 mb-1 ${isActive('/') ? 'text-primary' : ''}`} />
+          <span className="text-xs font-medium">Home</span>
         </button>
 
         {/* Cafes Tab */}
         <button
           onClick={() => navigate('/cafes')}
-          className={`flex flex-col items-center py-1 px-2 rounded-lg transition-all duration-200 ${
+          className={`flex flex-col items-center py-2 px-3 rounded-lg transition-all duration-200 ${
             isActive('/cafes') 
               ? 'text-primary bg-primary/10' 
               : 'text-gray-600 hover:text-primary hover:bg-gray-50'
           }`}
         >
-          <Store className={`w-4 h-4 mb-0.5 ${isActive('/cafes') ? 'text-primary' : ''}`} />
-          <span className="text-[10px] font-medium">Cafes</span>
+          <Store className={`w-6 h-6 mb-1 ${isActive('/cafes') ? 'text-primary' : ''}`} />
+          <span className="text-xs font-medium">Cafes</span>
         </button>
 
       </div>
       
       {/* Home Indicator for iOS - More compact */}
-      <div className="w-20 h-0.5 bg-gray-300 rounded-full mx-auto mb-0.5"></div>
+      <div className="w-20 h-0.5 bg-gray-300 rounded-full mx-auto mb-1"></div>
     </div>
   );
 };
