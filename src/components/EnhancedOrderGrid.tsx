@@ -23,7 +23,8 @@ import {
   Phone,
   MapPin,
   CreditCard,
-  Calendar
+  Calendar,
+  EyeOff
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import FoodCourtReceipt from './FoodCourtReceipt';
@@ -107,6 +108,11 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
   const [simpleReceiptOrder, setSimpleReceiptOrder] = useState<Order | null>(null);
   const [hoveredOrder, setHoveredOrder] = useState<Order | null>(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelOrder, setCancelOrder] = useState<Order | null>(null);
+  const [cancelPassword, setCancelPassword] = useState('');
+  const [showCancelPassword, setShowCancelPassword] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Calculate time elapsed since order creation
   const getTimeElapsed = (createdAt: string): string => {
@@ -204,22 +210,36 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
     );
   }, [filteredOrders]);
 
-  // Handle card click for popup
+  // Handle card click for popup with improved positioning
   const handleCardClick = (order: Order, event: React.MouseEvent) => {
     const rect = event.currentTarget.getBoundingClientRect();
     const popupWidth = 400; // Approximate popup width
-    const popupHeight = 300; // Approximate popup height
+    const popupHeight = 500; // Approximate popup height
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const margin = 20; // Margin from viewport edges
     
-    let x = rect.left + rect.width + 10;
+    let x = rect.left + rect.width + 10; // Default: show to the right
     let y = rect.top;
     
-    // Adjust position if popup would go off-screen
-    if (x + popupWidth > window.innerWidth) {
+    // Adjust horizontal position if popup would go off-screen
+    if (x + popupWidth + margin > viewportWidth) {
       x = rect.left - popupWidth - 10; // Show to the left instead
     }
     
-    if (y + popupHeight > window.innerHeight) {
-      y = window.innerHeight - popupHeight - 10; // Adjust to fit in viewport
+    // Ensure popup doesn't go off the left edge
+    if (x < margin) {
+      x = margin;
+    }
+    
+    // Adjust vertical position if popup would go off-screen
+    if (y + popupHeight + margin > viewportHeight) {
+      y = viewportHeight - popupHeight - margin;
+    }
+    
+    // Ensure popup doesn't go above the top edge
+    if (y < margin) {
+      y = margin;
     }
     
     setPopupPosition({ x, y });
@@ -229,6 +249,96 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
   // Close popup
   const closePopup = () => {
     setHoveredOrder(null);
+  };
+
+  const handleCancelOrder = (order: Order) => {
+    setCancelOrder(order);
+    setShowCancelDialog(true);
+    setCancelPassword('');
+    setShowCancelPassword(false);
+    // Don't close popup immediately - let user enter password
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelOrder) return;
+
+    if (!cancelPassword.trim()) {
+      toast({
+        title: "Password Required",
+        description: "Please enter the cancellation password",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Cafe cancellation password - in a real app, this should be configurable per cafe
+    const CAFE_CANCELLATION_PASSWORD = 'cafe123';
+
+    if (cancelPassword !== CAFE_CANCELLATION_PASSWORD) {
+      toast({
+        title: "Invalid Password",
+        description: "The cancellation password is incorrect",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsCancelling(true);
+    try {
+      // Call the onStatusUpdate function to update the order status to cancelled
+      await onStatusUpdate(cancelOrder.id, 'cancelled');
+      
+      toast({
+        title: "Order Cancelled",
+        description: `Order ${cancelOrder.order_number} has been cancelled successfully`,
+      });
+      
+      setShowCancelDialog(false);
+      setCancelOrder(null);
+      setCancelPassword('');
+      closePopup();
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast({
+        title: "Cancellation Failed",
+        description: "Failed to cancel the order. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  // Improved popup positioning logic
+  const getPopupTransform = (x: number, y: number) => {
+    const popupWidth = 400; // Approximate popup width
+    const popupHeight = 500; // Approximate popup height
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    let transformX = 'none';
+    let transformY = 'none';
+    
+    // Handle horizontal positioning
+    if (x + popupWidth > viewportWidth) {
+      transformX = 'translateX(-100%)';
+    }
+    
+    // Handle vertical positioning
+    if (y + popupHeight > viewportHeight) {
+      transformY = 'translateY(-100%)';
+    }
+    
+    // Combine transforms
+    if (transformX !== 'none' && transformY !== 'none') {
+      return `${transformX} ${transformY}`;
+    } else if (transformX !== 'none') {
+      return transformX;
+    } else if (transformY !== 'none') {
+      return transformY;
+    }
+    
+    return 'none';
   };
 
   // Close popup when clicking outside
@@ -663,14 +773,22 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
 
       {/* Order Details Popup */}
       {hoveredOrder && (
-        <div
-          className="order-popup fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-4 max-w-sm"
-          style={{
-            left: `${popupPosition.x}px`,
-            top: `${popupPosition.y}px`,
-            transform: popupPosition.x > window.innerWidth - 400 ? 'translateX(-100%)' : 'none'
-          }}
-        >
+        <>
+          {/* Backdrop overlay */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-20 z-40"
+            onClick={closePopup}
+          />
+          
+          {/* Popup */}
+          <div
+            className="order-popup fixed z-50 bg-white border border-gray-200 rounded-lg shadow-2xl p-4 max-w-sm min-w-[320px] max-h-[80vh] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
+            style={{
+              left: `${popupPosition.x}px`,
+              top: `${popupPosition.y}px`,
+              transform: getPopupTransform(popupPosition.x, popupPosition.y)
+            }}
+          >
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-gray-900">Order Details</h3>
             <Button
@@ -740,8 +858,73 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
               </div>
             </div>
 
+            {/* Cancel Password Prompt */}
+            {showCancelDialog && cancelOrder && hoveredOrder && hoveredOrder.id === cancelOrder.id && (
+              <div className="pt-3 border-t border-red-200 bg-red-50 p-3 rounded-lg">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                    <span className="font-medium text-red-800">Cancel Order #{cancelOrder.order_number}</span>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="cancel-password" className="text-sm font-medium">
+                      Cancellation Password:
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="cancel-password"
+                        type={showCancelPassword ? "text" : "password"}
+                        value={cancelPassword}
+                        onChange={(e) => setCancelPassword(e.target.value)}
+                        placeholder="Enter cancellation password"
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowCancelPassword(!showCancelPassword)}
+                      >
+                        {showCancelPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={handleConfirmCancel}
+                      disabled={isCancelling}
+                      className="flex-1"
+                    >
+                      {isCancelling ? 'Cancelling...' : 'Confirm Cancel'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setShowCancelDialog(false);
+                        setCancelOrder(null);
+                        setCancelPassword('');
+                      }}
+                      disabled={isCancelling}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Actions */}
-            <div className="flex space-x-2 pt-2 border-t">
+            <div className="flex flex-wrap gap-2 pt-2 border-t">
               <Button
                 size="sm"
                 variant="outline"
@@ -785,9 +968,25 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
               >
                 🧾 Receipt
               </Button>
+
+              {/* Cancel Button - Only show for orders that can be cancelled and not already in cancel mode */}
+              {hoveredOrder && !['completed', 'cancelled'].includes(hoveredOrder.status) && !showCancelDialog && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCancelOrder(hoveredOrder);
+                  }}
+                  className="text-lg px-3 py-2"
+                  title="Cancel Order"
+                >
+                  ❌ Cancel
+                </Button>
+              )}
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Receipt Modals */}
@@ -820,6 +1019,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
           }}
         />
       )}
+
     </div>
   );
 };
