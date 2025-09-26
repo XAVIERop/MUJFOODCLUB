@@ -18,6 +18,7 @@ import CafeScanner from '../components/CafeScanner';
 import OrderNotificationSound from '../components/OrderNotificationSound';
 import Header from '../components/Header';
 import PasswordProtectedSection from '../components/PasswordProtectedSection';
+import CafeCancellationDialog from '../components/CafeCancellationDialog';
 
 interface OrderItem {
   id: string;
@@ -885,7 +886,7 @@ const CafeDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24 lg:pb-8">
       <Header />
       
       <div className="container mx-auto px-4 py-8">
@@ -1210,12 +1211,19 @@ const CafeDashboard = () => {
                           )}
                           
                           {order.status !== 'completed' && order.status !== 'cancelled' && (
-                            <Button
-                              variant="destructive"
-                              onClick={() => cancelOrder(order.id)}
-                            >
-                              Cancel Order
-                            </Button>
+                            <CafeCancellationDialog
+                              orderId={order.id}
+                              orderNumber={order.order_number}
+                              onCancel={() => {
+                                fetchOrders();
+                                fetchAnalytics();
+                              }}
+                              trigger={
+                                <Button variant="destructive">
+                                  Cancel Order
+                                </Button>
+                              }
+                            />
                           )}
                         </div>
                       </CardContent>

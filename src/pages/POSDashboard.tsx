@@ -54,6 +54,8 @@ import OrderNotificationSound from '@/components/OrderNotificationSound';
 import { testPrintNodeSetup } from '@/utils/testPrintNodeSetup';
 import Header from '@/components/Header';
 import PasswordProtectedSection from '@/components/PasswordProtectedSection';
+import CafeCancellationDialog from '@/components/CafeCancellationDialog';
+import { autoCancellationService } from '@/services/autoCancellationService';
 // import SimplePOSDebugger from '@/components/SimplePOSDebugger'; // Temporarily disabled due to React error
 
 interface Order {
@@ -136,6 +138,12 @@ const POSDashboard = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  
+  // Auto-cancellation state
+  const [autoCancelStatus, setAutoCancelStatus] = useState<{
+    isRunning: boolean;
+    isChecking: boolean;
+  }>({ isRunning: false, isChecking: false });
   
   // Date range filter states
   const [dateRange, setDateRange] = useState<'today' | 'yesterday' | 'this_week' | 'last_week' | 'this_month' | 'custom' | 'all'>('today');
@@ -576,6 +584,59 @@ const POSDashboard = () => {
       });
     }
   };
+
+  // Auto-cancellation functions
+  const handleManualAutoCancellation = async () => {
+    try {
+      const result = await autoCancellationService.triggerAutoCancellation();
+      
+      if (result.success && result.cancelled_count > 0) {
+        toast({
+          title: "Auto-Cancellation Complete",
+          description: `${result.cancelled_count} orders were auto-cancelled: ${result.cancelled_orders.join(', ')}`,
+        });
+        
+        // Refresh orders to show updated status
+        await fetchOrders();
+      } else {
+        toast({
+          title: "Auto-Cancellation Check",
+          description: "No orders needed to be auto-cancelled",
+        });
+      }
+    } catch (error) {
+      console.error('Error in manual auto-cancellation:', error);
+      toast({
+        title: "Auto-Cancellation Error",
+        description: "Failed to check for auto-cancellation",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const toggleAutoCancellation = () => {
+    if (autoCancelStatus.isRunning) {
+      autoCancellationService.stopPeriodicChecks();
+      setAutoCancelStatus({ isRunning: false, isChecking: false });
+      toast({
+        title: "Auto-Cancellation Stopped",
+        description: "Periodic auto-cancellation checks have been stopped",
+      });
+    } else {
+      autoCancellationService.startPeriodicChecks();
+      setAutoCancelStatus({ isRunning: true, isChecking: false });
+      toast({
+        title: "Auto-Cancellation Started",
+        description: "Periodic auto-cancellation checks are now running (every 2 minutes)",
+      });
+    }
+  };
+
+  // Initialize auto-cancellation service status
+  useEffect(() => {
+    const status = autoCancellationService.getStatus();
+    setAutoCancelStatus(status);
+  }, []);
 
   const autoPrintReceiptWithCafeService = async (order: Order) => {
     console.log('🚀 UNIFIED PRINT: Using Unified Print Service!');
@@ -1767,7 +1828,7 @@ const POSDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-24 lg:pb-6">
       <Header />
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
@@ -1811,6 +1872,34 @@ const POSDashboard = () => {
                 <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </Button>
+              
+              {/* Auto-Cancellation Controls */}
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={handleManualAutoCancellation}
+                  variant="outline"
+                  size="sm"
+                  className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                >
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  Check Auto-Cancel
+                </Button>
+                <Button 
+                  onClick={toggleAutoCancellation}
+                  variant={autoCancelStatus.isRunning ? "destructive" : "outline"}
+                  size="sm"
+                  className={autoCancelStatus.isRunning ? "" : "text-green-600 border-green-200 hover:bg-green-50"}
+                >
+                  <Clock className="w-4 h-4 mr-2" />
+                  {autoCancelStatus.isRunning ? 'Stop Auto-Cancel' : 'Start Auto-Cancel'}
+                </Button>
+                {autoCancelStatus.isRunning && (
+                  <Badge variant="secondary" className="text-xs">
+                    Running (2min intervals)
+                  </Badge>
+                )}
+              </div>
+              
               {cafeId && (
                 <div className="text-sm text-gray-500">
                   Cafe ID: {cafeId}
@@ -2279,13 +2368,19 @@ const POSDashboard = () => {
                                   </Button>
                                 )}
                                 {order.status === 'received' && (
-                                  <Button
-                                    variant="destructive"
-                                    onClick={() => updateOrderStatus(order.id, 'cancelled')}
-                                    disabled={updatingOrder === order.id}
-                                  >
-                                    Cancel Order
-                                  </Button>
+                                  <CafeCancellationDialog
+                                    orderId={order.id}
+                                    orderNumber={order.order_number}
+                                    onCancel={fetchOrders}
+                                    trigger={
+                                      <Button
+                                        variant="destructive"
+                                        disabled={updatingOrder === order.id}
+                                      >
+                                        Cancel Order
+                                      </Button>
+                                    }
+                                  />
                                 )}
                               </div>
 

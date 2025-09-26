@@ -17,6 +17,7 @@ import { ORDER_CONSTANTS } from '@/lib/constants';
 import { isDineInTakeawayAllowed, isDeliveryAllowed, getDineInTakeawayMessage } from '@/utils/timeRestrictions';
 import { generateDailyOrderNumber } from '@/utils/orderNumberGenerator';
 import { getCafeTableOptions } from '@/utils/tableMapping';
+import { WhatsAppService } from '@/services/whatsappService';
 import Header from '@/components/Header';
 
 // Helper function to get dropdown options based on order type and cafe
@@ -283,8 +284,46 @@ const Checkout = () => {
         description: `Your order #${order.order_number} has been confirmed. Estimated delivery: 30 minutes.`,
       });
 
-      // WhatsApp notifications temporarily disabled
-      console.log('📱 WhatsApp notifications disabled for now');
+      // Send WhatsApp notification to cafe
+      try {
+        console.log('📱 Sending WhatsApp notification for order:', order.order_number);
+        const whatsappService = WhatsAppService.getInstance();
+        
+        // Format order data for WhatsApp
+        const orderData = {
+          id: order.id,
+          order_number: order.order_number,
+          customer_name: profile?.full_name || 'Customer',
+          phone_number: deliveryDetails.phoneNumber || '+91 0000000000',
+          delivery_block: deliveryDetails.block || 'N/A',
+          total_amount: order.total_amount.toString(),
+          created_at: order.created_at,
+          items_text: Object.values(cart).map(item => 
+            `• ${item.item.name} x${item.quantity} - ₹${(item.item.price * item.quantity).toFixed(2)}`
+          ).join('\n'),
+          delivery_notes: deliveryDetails.deliveryNotes || '',
+          frontend_url: window.location.origin,
+          order_items: Object.values(cart).map(item => ({
+            quantity: item.quantity,
+            menu_item: {
+              name: item.item.name,
+              price: item.item.price
+            },
+            total_price: item.item.price * item.quantity
+          }))
+        };
+        
+        const whatsappSuccess = await whatsappService.sendOrderNotification(cafe?.id || '', orderData);
+        
+        if (whatsappSuccess) {
+          console.log('✅ WhatsApp notification sent successfully');
+        } else {
+          console.log('❌ WhatsApp notification failed');
+        }
+      } catch (whatsappError) {
+        console.error('❌ WhatsApp notification error:', whatsappError);
+        // Don't fail the order if WhatsApp fails
+      }
 
       // Navigate to order confirmation
       navigate(`/order-confirmation/${order.id}`);
@@ -317,7 +356,7 @@ const Checkout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24 lg:pb-8">
       <Header />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-4xl mx-auto">

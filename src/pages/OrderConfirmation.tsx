@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock, MapPin, Trophy, Home, ShoppingCart, Receipt, ChefHat, Truck, Star } from 'lucide-react';
+import { CheckCircle, Clock, MapPin, Trophy, Home, ShoppingCart, Receipt, ChefHat, Truck, Star, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +19,9 @@ const OrderConfirmation = () => {
   const queryClient = useQueryClient();
   
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [timeLeft, setTimeLeft] = useState<number>(120); // 2 minutes in seconds
+  const [showCancelButton, setShowCancelButton] = useState<boolean>(false);
+  const [isCancelling, setIsCancelling] = useState<boolean>(false);
 
   const { orderId } = useParams();
   const orderNumber = orderId || location.state?.orderNumber || new URLSearchParams(window.location.search).get('order');
@@ -122,6 +125,74 @@ const OrderConfirmation = () => {
       supabase.removeChannel(channel);
     };
   }, [order?.id, refetchOrder, toast]);
+
+  // Handle cancel order functionality
+  const handleCancelOrder = async () => {
+    if (!order || !user) return;
+    
+    setIsCancelling(true);
+    try {
+      const { error } = await supabase.rpc('cancel_order_with_reason', {
+        p_order_id: order.id,
+        p_cancelled_by: user.id,
+        p_cancellation_reason: 'Cancelled by customer within 2-minute window'
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Order Cancelled",
+        description: "Your order has been cancelled successfully"
+      });
+
+      // Refetch order data to get updated status
+      refetchOrder();
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel order",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  // Timer for 2-minute cancel window
+  useEffect(() => {
+    if (!order || order.status !== 'received') {
+      setShowCancelButton(false);
+      return;
+    }
+
+    // Calculate time left based on order creation time
+    const orderTime = new Date(order.created_at).getTime();
+    const currentTime = new Date().getTime();
+    const elapsedSeconds = Math.floor((currentTime - orderTime) / 1000);
+    const remainingSeconds = Math.max(0, 120 - elapsedSeconds); // 2 minutes = 120 seconds
+
+    if (remainingSeconds > 0) {
+      setTimeLeft(remainingSeconds);
+      setShowCancelButton(true);
+
+      const timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            setShowCancelButton(false);
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    } else {
+      setTimeLeft(0);
+      setShowCancelButton(false);
+    }
+  }, [order]);
 
   // Handle order data updates and errors
   useEffect(() => {
@@ -295,7 +366,7 @@ const OrderConfirmation = () => {
   const StatusIcon = getStatusIcon(order.status);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24 lg:pb-8">
       <Header />
       
       <div className="container mx-auto px-4 py-8">
@@ -483,6 +554,18 @@ const OrderConfirmation = () => {
 
           {/* Action Buttons */}
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            {/* Cancel Order Button - Only show for received status within 2-minute window */}
+            {showCancelButton && order?.status === 'received' && (
+              <button 
+                onClick={handleCancelOrder}
+                disabled={isCancelling}
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-red-600 text-white hover:bg-red-700 h-10 px-4 py-2 cursor-pointer"
+              >
+                <X className="w-4 h-4 mr-2" />
+                {isCancelling ? 'Cancelling...' : `Cancel Order (${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')})`}
+              </button>
+            )}
+            
             <div 
               onClick={() => navigate('/')}
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer"

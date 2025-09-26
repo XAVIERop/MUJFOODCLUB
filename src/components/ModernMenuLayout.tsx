@@ -247,6 +247,9 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
         onCategorySelect={onCategoryChange}
         totalItems={menuItems.length}
       />
+
+      {/* Bottom Spacing for Mobile Navigation */}
+      <div className="h-24 pb-safe lg:hidden"></div>
     </div>
   );
 };

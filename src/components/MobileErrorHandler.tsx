@@ -32,7 +32,7 @@ const MobileErrorHandler: React.FC<MobileErrorHandlerProps> = ({ children }) => 
 
   if (hasError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 pb-24 lg:pb-4">
         <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
           <div className="text-center">
             <div className="text-red-500 text-6xl mb-4">⚠️</div>

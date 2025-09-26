@@ -390,7 +390,7 @@ const MenuModern = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-24 lg:pb-8">
       <Header />
       <ModernMenuLayout
         searchQuery={searchQuery}

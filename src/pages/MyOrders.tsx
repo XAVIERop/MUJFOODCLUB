@@ -254,14 +254,14 @@ const MyOrders = () => {
   }, [toast]);
 
   const handleCancelOrder = useCallback(async (orderId: string) => {
+    if (!user?.id) return;
+    
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ 
-          status: 'cancelled',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', orderId);
+      const { error } = await supabase.rpc('cancel_order_with_reason', {
+        p_order_id: orderId,
+        p_cancelled_by: user.id,
+        p_cancellation_reason: 'Cancelled by customer from My Orders'
+      });
 
       if (error) throw error;
 
@@ -272,13 +272,14 @@ const MyOrders = () => {
 
       refetch();
     } catch (error) {
+      console.error('Error cancelling order:', error);
       toast({
         title: "Error",
         description: "Failed to cancel order",
         variant: "destructive"
       });
     }
-  }, [toast, refetch]);
+  }, [toast, refetch, user?.id]);
 
   if (!user) {
     return (
@@ -326,7 +327,7 @@ const MyOrders = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24 lg:pb-8">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
@@ -491,7 +492,7 @@ const MyOrders = () => {
             <div className="space-y-4">
               {filteredOrders.map((order) => {
                 const StatusIcon = getStatusIcon(order.status);
-                const canCancel = ['received', 'confirmed'].includes(order.status);
+                const canCancel = order.status === 'received';
                 
                 return (
                   <Card key={order.id} className="food-card">

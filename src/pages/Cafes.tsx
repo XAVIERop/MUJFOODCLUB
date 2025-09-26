@@ -223,7 +223,7 @@ const Cafes = () => {
       selectedBlock={selectedBlock}
       onBlockChange={setSelectedBlock}
       mobileChildren={
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-white pb-24">
           <div className="container mx-auto px-4 pt-4">
         {/* Search Bar */}
         <div className="mb-6">

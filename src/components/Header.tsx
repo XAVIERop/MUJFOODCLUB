@@ -144,8 +144,8 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
   return (
     <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${
       isMobile 
-        ? 'border-b border-border/40 bg-white text-foreground shadow-sm' // Simple white background for mobile
-        : 'border-b border-border/40 bg-white text-foreground shadow-sm' // Simple white background for desktop too
+        ? 'border-b border-gray-200 bg-white text-foreground shadow-xl shadow-gray-300/60' // More visible shadow for mobile navbar
+        : 'border-b border-gray-200 bg-white text-foreground shadow-xl shadow-gray-300/60' // More visible shadow for desktop navbar too
     } m-0`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">

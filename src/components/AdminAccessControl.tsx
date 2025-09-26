@@ -53,7 +53,7 @@ const AdminAccessControl: React.FC<AdminAccessControlProps> = ({ children }) => 
 
   if (isAuthenticated) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen pb-24 lg:pb-8">
         {/* Admin Header */}
         <div className="bg-gray-900 text-white p-4">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
@@ -77,7 +77,7 @@ const AdminAccessControl: React.FC<AdminAccessControlProps> = ({ children }) => 
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 pb-24 lg:pb-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center mb-4">
