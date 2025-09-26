@@ -42,44 +42,52 @@ export class WhatsAppService {
    */
   async sendOrderNotification(cafeId: string, orderData: OrderData): Promise<boolean> {
     try {
-      console.log('📱 WhatsApp Service: Sending order notification for cafe:', cafeId);
-      console.log('📱 WhatsApp Service: Order data:', orderData);
+      console.log('📱 [WHATSAPP SERVICE] Starting notification process...');
+      console.log('📱 [WHATSAPP SERVICE] Cafe ID:', cafeId);
+      console.log('📱 [WHATSAPP SERVICE] Order data:', JSON.stringify(orderData, null, 2));
       
       // Get cafe WhatsApp settings
+      console.log('📱 [WHATSAPP SERVICE] Fetching cafe settings...');
       const cafeSettings = await this.getCafeWhatsAppSettings(cafeId);
-      console.log('📱 WhatsApp Service: Cafe settings:', cafeSettings);
+      console.log('📱 [WHATSAPP SERVICE] Cafe settings:', JSON.stringify(cafeSettings, null, 2));
       
       if (!cafeSettings) {
-        console.log('❌ WhatsApp Service: Cafe not found');
+        console.log('❌ [WHATSAPP SERVICE] Cafe not found');
         return false;
       }
       
       if (!cafeSettings.whatsapp_enabled || !cafeSettings.whatsapp_notifications) {
-        console.log('❌ WhatsApp Service: WhatsApp notifications disabled for cafe:', cafeSettings.name);
+        console.log('❌ [WHATSAPP SERVICE] WhatsApp notifications disabled for cafe:', cafeSettings.name);
+        console.log('   whatsapp_enabled:', cafeSettings.whatsapp_enabled);
+        console.log('   whatsapp_notifications:', cafeSettings.whatsapp_notifications);
         return false;
       }
       
       if (!cafeSettings.whatsapp_phone) {
-        console.log('❌ WhatsApp Service: No WhatsApp phone number configured for cafe:', cafeSettings.name);
+        console.log('❌ [WHATSAPP SERVICE] No WhatsApp phone number configured for cafe:', cafeSettings.name);
         return false;
       }
       
+      console.log('📱 [WHATSAPP SERVICE] All checks passed, formatting message...');
+      
       // Format the message
       const message = this.formatOrderMessage(orderData, cafeSettings.name);
+      console.log('📱 [WHATSAPP SERVICE] Message formatted:', message);
       
       // Send the notification
+      console.log('📱 [WHATSAPP SERVICE] Sending message to:', cafeSettings.whatsapp_phone);
       const success = await this.sendMessage(cafeSettings.whatsapp_phone, message);
       
       if (success) {
-        console.log('✅ WhatsApp Service: Notification sent successfully to:', cafeSettings.whatsapp_phone);
+        console.log('✅ [WHATSAPP SERVICE] Notification sent successfully to:', cafeSettings.whatsapp_phone);
       } else {
-        console.log('❌ WhatsApp Service: Failed to send notification');
+        console.log('❌ [WHATSAPP SERVICE] Failed to send notification');
       }
       
       return success;
       
     } catch (error) {
-      console.error('❌ WhatsApp Service: Error sending notification:', error);
+      console.error('❌ [WHATSAPP SERVICE] Error sending notification:', error);
       return false;
     }
   }

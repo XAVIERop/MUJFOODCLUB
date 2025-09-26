@@ -286,8 +286,13 @@ const Checkout = () => {
 
       // Send WhatsApp notification to cafe
       try {
-        console.log('📱 Sending WhatsApp notification for order:', order.order_number);
+        console.log('📱 [CHECKOUT] Starting WhatsApp notification process...');
+        console.log('📱 [CHECKOUT] Order:', order.order_number);
+        console.log('📱 [CHECKOUT] Cafe ID:', cafe?.id);
+        console.log('📱 [CHECKOUT] Cafe Name:', cafe?.name);
+        
         const whatsappService = WhatsAppService.getInstance();
+        console.log('📱 [CHECKOUT] WhatsApp service instance created');
         
         // Format order data for WhatsApp
         const orderData = {
@@ -313,15 +318,20 @@ const Checkout = () => {
           }))
         };
         
+        console.log('📱 [CHECKOUT] Order data formatted:', JSON.stringify(orderData, null, 2));
+        console.log('📱 [CHECKOUT] Calling WhatsApp service...');
+        
         const whatsappSuccess = await whatsappService.sendOrderNotification(cafe?.id || '', orderData);
         
+        console.log('📱 [CHECKOUT] WhatsApp service result:', whatsappSuccess);
+        
         if (whatsappSuccess) {
-          console.log('✅ WhatsApp notification sent successfully');
+          console.log('✅ [CHECKOUT] WhatsApp notification sent successfully');
         } else {
-          console.log('❌ WhatsApp notification failed');
+          console.log('❌ [CHECKOUT] WhatsApp notification failed');
         }
       } catch (whatsappError) {
-        console.error('❌ WhatsApp notification error:', whatsappError);
+        console.error('❌ [CHECKOUT] WhatsApp notification error:', whatsappError);
         // Don't fail the order if WhatsApp fails
       }
 
