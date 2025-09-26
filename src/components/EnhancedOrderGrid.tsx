@@ -986,6 +986,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
               )}
             </div>
           </div>
+          </div>
         </>
       )}
 
