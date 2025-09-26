@@ -1633,20 +1633,41 @@ const POSDashboard = () => {
           setCafeId(profile.cafe_id);
         }
         
-        // Debug: If no cafe_id found, try to find Chatkara cafe
+        // Debug: If no cafe_id found, try to find cafe by user's profile
         if (!profile.cafe_id) {
-          console.log('🔍 POS Dashboard: No cafe_id found, searching for Chatkara cafe...');
-          const { data: chatkaraCafe, error: chatkaraError } = await supabase
+          console.log('🔍 POS Dashboard: No cafe_id found, searching for user\'s cafe...');
+          
+          // First try to find cafe by user's email domain or name
+          const userEmail = user.email || '';
+          const userName = profile.full_name || '';
+          
+          // Search for cafes that might match the user
+          const { data: userCafe, error: userCafeError } = await supabase
             .from('cafes')
             .select('id, name')
-            .ilike('name', '%chatkara%')
+            .or(`name.ilike.%${userName}%,name.ilike.%${userEmail.split('@')[0]}%`)
             .limit(1);
             
-          if (chatkaraError) {
-            console.error('Error finding Chatkara cafe:', chatkaraError);
-          } else if (chatkaraCafe && chatkaraCafe.length > 0) {
-            console.log('✅ POS Dashboard: Found Chatkara cafe, using ID:', chatkaraCafe[0].id);
-            setCafeId(chatkaraCafe[0].id);
+          if (userCafeError) {
+            console.error('Error finding user cafe:', userCafeError);
+          } else if (userCafe && userCafe.length > 0) {
+            console.log('✅ POS Dashboard: Found user cafe, using ID:', userCafe[0].id);
+            setCafeId(userCafe[0].id);
+          } else {
+            // Fallback to Chatkara for testing
+            console.log('🔍 POS Dashboard: No user cafe found, searching for Chatkara cafe...');
+            const { data: chatkaraCafe, error: chatkaraError } = await supabase
+              .from('cafes')
+              .select('id, name')
+              .ilike('name', '%chatkara%')
+              .limit(1);
+              
+            if (chatkaraError) {
+              console.error('Error finding Chatkara cafe:', chatkaraError);
+            } else if (chatkaraCafe && chatkaraCafe.length > 0) {
+              console.log('✅ POS Dashboard: Found Chatkara cafe, using ID:', chatkaraCafe[0].id);
+              setCafeId(chatkaraCafe[0].id);
+            }
           }
         }
       } catch (error) {
@@ -2694,20 +2715,31 @@ const POSDashboard = () => {
         {/* Simple POS Debugger - Temporarily disabled due to React error */}
         {/* <SimplePOSDebugger cafeId={cafeId} /> */}
         
-        {/* Manual Chatkara Override for Testing */}
+        {/* Manual Cafe Override for Testing */}
         {!cafeId && (
           <div className="fixed top-4 right-4 z-50 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
             <p className="font-bold">No Cafe ID Found</p>
-            <p className="text-sm">Click to use Chatkara for testing:</p>
-            <button 
-              onClick={() => {
-                console.log('🔧 Manual override: Setting Chatkara cafe ID');
-                setCafeId('25d0b247-0731-4e52-a0fb-023526adfa34');
-              }}
-              className="mt-2 bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600"
-            >
-              Use Chatkara (25d0b247-0731-4e52-a0fb-023526adfa34)
-            </button>
+            <p className="text-sm">Click to use a cafe for testing:</p>
+            <div className="flex flex-col gap-2 mt-2">
+              <button 
+                onClick={() => {
+                  console.log('🔧 Manual override: Setting Punjabi Tadka cafe ID');
+                  setCafeId('6097276a-f9c2-4a1e-b95d-eda66b3f6cc3');
+                }}
+                className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+              >
+                Use Punjabi Tadka (6097276a-f9c2-4a1e-b95d-eda66b3f6cc3)
+              </button>
+              <button 
+                onClick={() => {
+                  console.log('🔧 Manual override: Setting Chatkara cafe ID');
+                  setCafeId('25d0b247-0731-4e52-a0fb-023526adfa34');
+                }}
+                className="bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600"
+              >
+                Use Chatkara (25d0b247-0731-4e52-a0fb-023526adfa34)
+              </button>
+            </div>
           </div>
         )}
 
