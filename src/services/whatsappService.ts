@@ -173,6 +173,11 @@ ${itemsText}${notesText}
       console.log('TWILIO_ACCOUNT_SID:', WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID ? '✅ Set' : '❌ Missing');
       console.log('TWILIO_AUTH_TOKEN:', WHATSAPP_CONFIG.TWILIO_AUTH_TOKEN ? '✅ Set' : '❌ Missing');
       console.log('TWILIO_WHATSAPP_FROM:', WHATSAPP_CONFIG.TWILIO_WHATSAPP_FROM || '❌ Missing');
+      console.log('Raw values:', {
+        TWILIO_ACCOUNT_SID: WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID,
+        TWILIO_AUTH_TOKEN: WHATSAPP_CONFIG.TWILIO_AUTH_TOKEN,
+        TWILIO_WHATSAPP_FROM: WHATSAPP_CONFIG.TWILIO_WHATSAPP_FROM
+      });
       
       // Try Twilio first, then fallback to WhatsApp Web
       if (WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID && WHATSAPP_CONFIG.TWILIO_AUTH_TOKEN) {
