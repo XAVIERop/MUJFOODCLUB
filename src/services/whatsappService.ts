@@ -100,6 +100,14 @@ export class WhatsAppService {
         return null;
       }
 
+      // Temporary override for Cook House to use test number
+      if (data.name === 'COOK HOUSE') {
+        console.log('📱 Overriding Cook House WhatsApp number to test number');
+        data.whatsapp_phone = '+91 8383080140';
+        data.whatsapp_enabled = true;
+        data.whatsapp_notifications = true;
+      }
+
       return data;
     } catch (error) {
       console.error('Error in getCafeWhatsAppSettings:', error);
