@@ -47,16 +47,13 @@ const Cafes = () => {
     'Pizza',
     'North Indian',
     'Chinese',
-    'Quick Bytes',
     'Desserts',
-    'Italian',
-    'Street Food',
+    'Chaap',
     'Multi-Cuisine',
     'Waffles',
     'Ice Cream',
     'Beverages',
-    'Fast Food',
-    'Café'
+    'Fast Food'
   ];
 
   useEffect(() => {

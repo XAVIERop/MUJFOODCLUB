@@ -30,16 +30,13 @@ const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
     'Pizza',
     'North Indian',
     'Chinese',
-    'Quick Bytes',
     'Desserts',
-    'Italian',
-    'Street Food',
+    'Chaap',
     'Multi-Cuisine',
     'Waffles',
     'Ice Cream',
     'Beverages',
-    'Fast Food',
-    'Café'
+    'Fast Food'
   ];
 
   // Map categories to SVG icons
@@ -48,22 +45,23 @@ const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
       'Pizza': { image: '/pizza.svg', name: 'Pizza' },
       'North Indian': { image: '/NorthIndian.svg', name: 'North Indian' },
       'Chinese': { image: '/chinese.svg', name: 'Chinese' },
-      'Quick Bytes': { image: '/QuickBites.svg', name: 'Quick Bytes' },
       'Desserts': { image: '/deserts.svg', name: 'Desserts' },
-      'Italian': { image: '/pizza.svg', name: 'Italian' }, // Using pizza.svg as fallback
-      'Street Food': { image: '/chaap.svg', name: 'Street Food' }, // Using chaap.svg as fallback
+      'Chaap': { image: '/chaap.svg', name: 'Chaap' },
       'Multi-Cuisine': { image: '/multicuisine.svg', name: 'Multi-Cuisine' },
       'Waffles': { image: '/waffles.svg', name: 'Waffles' },
       'Ice Cream': { image: '/deserts.svg', name: 'Ice Cream' }, // Using deserts.svg as fallback
       'Beverages': { image: '/coffee.svg', name: 'Beverages' }, // Using coffee.svg as fallback
       'Fast Food': { image: '/QuickBites.svg', name: 'Fast Food' }, // Using QuickBites.svg as fallback
-      'Café': { image: '/coffee.svg', name: 'Café' }, // Using coffee.svg as fallback
     };
 
     return categoryMap[type] || { image: '/multicuisine.svg', name: type };
   };
 
   const handleCategoryClick = (category: string) => {
+    // Make Waffles not clickable
+    if (category === 'Waffles') {
+      return;
+    }
     navigate(`/cafes?category=${encodeURIComponent(category)}`);
   };
 
@@ -73,10 +71,11 @@ const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
         <div className="flex space-x-4 overflow-x-auto pb-2 scrollbar-hide">
         {categories.map((category) => {
           const categoryInfo = getCategoryInfo(category);
+          const isClickable = category !== 'Waffles';
           return (
             <div
               key={category}
-              className="flex-shrink-0 w-20 cursor-pointer hover:scale-105 transition-transform"
+              className={`flex-shrink-0 w-20 ${isClickable ? 'cursor-pointer hover:scale-105' : 'cursor-not-allowed opacity-60'} transition-transform`}
               onClick={() => handleCategoryClick(category)}
             >
               <div className="text-center">

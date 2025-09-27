@@ -124,6 +124,33 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
       {/* Enhanced Header Section */}
       <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-orange-100 shadow-sm">
         <div className="container mx-auto px-4 py-4">
+          {/* Swiggy-style Cafe Info Card */}
+          <div className="bg-gray-900 rounded-lg p-4 mb-4 text-white">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-white mb-2">{cafe?.name}</h1>
+                <div className="flex items-center gap-4 text-sm text-gray-300">
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4" />
+                    <span>{cafe?.location}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    <span>{cafe?.hours}</span>
+                  </div>
+                </div>
+              </div>
+              {cafe?.average_rating && cafe?.total_ratings && cafe.total_ratings > 0 && (
+                <div className="flex items-center gap-1 bg-green-600 px-2 py-1 rounded">
+                  <Star className="w-3 h-3 text-white fill-current" />
+                  <span className="text-xs font-medium text-white">
+                    {cafe.average_rating.toFixed(1)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Search Bar */}
           <div className="relative mb-4">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -188,30 +215,6 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
               </div>
             )}
 
-            {/* Cafe Info Header */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h1 className="text-2xl font-bold text-gray-900">{cafe?.name}</h1>
-                {cafe?.average_rating && cafe?.total_ratings && cafe.total_ratings > 0 && (
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="text-sm font-medium text-gray-600">
-                      {cafe.average_rating.toFixed(1)} ({cafe.total_ratings})
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-4 text-sm text-gray-500">
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{cafe?.location}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  <span>{cafe?.hours}</span>
-                </div>
-              </div>
-            </div>
 
             {/* Menu Items - Grouped by Category */}
             <MenuCategorySections
@@ -381,12 +384,6 @@ const ModernFoodCard: React.FC<{
               <h3 className="font-semibold text-gray-900 text-lg">
                 {item.baseName || item.name}
               </h3>
-              {/* Vegetarian Badge */}
-              {item.is_vegetarian && (
-                <Badge className="bg-green-500 text-white text-xs px-2 py-1">
-                  Veg
-                </Badge>
-              )}
             </div>
             <p className="text-sm text-gray-600 line-clamp-2">
               {item.description}

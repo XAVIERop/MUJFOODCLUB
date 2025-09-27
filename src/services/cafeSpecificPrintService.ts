@@ -145,6 +145,9 @@ export class CafeSpecificPrintService {
     } else if (cafeName.toLowerCase().includes('food court')) {
       console.log('✅ Using Food Court API key');
       return import.meta.env.VITE_FOODCOURT_PRINTNODE_API_KEY || '';
+    } else if (cafeName.toLowerCase().includes('punjabi') && cafeName.toLowerCase().includes('tadka')) {
+      console.log('✅ Using Punjabi Tadka API key');
+      return import.meta.env.VITE_PUNJABI_TADKA_PRINTNODE_API_KEY || '';
     }
     
     // Fallback to general API key
@@ -220,6 +223,8 @@ export class CafeSpecificPrintService {
         printerId = 74698272; // Chatkara POS-80-Series
       } else if (cafe.name.toLowerCase().includes('food court')) {
         printerId = 74692682; // Food Court EPSON TM-T82 Receipt
+      } else if (cafe.name.toLowerCase().includes('punjabi') && cafe.name.toLowerCase().includes('tadka')) {
+        printerId = 74760016; // Punjabi Tadka Printer
       } else {
         return { success: false, error: 'No printer ID configured for this cafe' };
       }

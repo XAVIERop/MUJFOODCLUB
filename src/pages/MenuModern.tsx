@@ -114,22 +114,74 @@ const MenuModern = () => {
   // Group menu items by base name and portion
   const groupMenuItems = (items: MenuItem[]): GroupedMenuItem[] => {
     const grouped = items.reduce((acc, item) => {
-      // Extract base name by removing (Half) and (Full) suffixes
+      // Extract base name by removing (Half), (Full), (Veg), (Non-veg), (Chicken), (Mutton), (Regular), (Medium), (Dry), and (Gravy) suffixes
       let baseName = item.name;
       let portionType = 'Full'; // default
+      let hasVariant = false;
       
       if (item.name.includes(' (Half)')) {
         baseName = item.name.replace(' (Half)', '');
         portionType = 'Half';
+        hasVariant = true;
       } else if (item.name.includes(' (Full)')) {
         baseName = item.name.replace(' (Full)', '');
         portionType = 'Full';
+        hasVariant = true;
+      } else if (item.name.includes(' (Veg)')) {
+        baseName = item.name.replace(' (Veg)', '');
+        portionType = 'Veg';
+        hasVariant = true;
+      } else if (item.name.includes(' (Non-veg)')) {
+        baseName = item.name.replace(' (Non-veg)', '');
+        portionType = 'Non-veg';
+        hasVariant = true;
+      } else if (item.name.includes(' (Chicken)')) {
+        baseName = item.name.replace(' (Chicken)', '');
+        portionType = 'Chicken';
+        hasVariant = true;
+      } else if (item.name.includes(' (Mutton)')) {
+        baseName = item.name.replace(' (Mutton)', '');
+        portionType = 'Mutton';
+        hasVariant = true;
+      } else if (item.name.includes(' (Regular)')) {
+        baseName = item.name.replace(' (Regular)', '');
+        portionType = 'Regular';
+        hasVariant = true;
+      } else if (item.name.includes(' (Medium)')) {
+        baseName = item.name.replace(' (Medium)', '');
+        portionType = 'Medium';
+        hasVariant = true;
+      } else if (item.name.includes(' (Dry)')) {
+        baseName = item.name.replace(' (Dry)', '');
+        portionType = 'Dry';
+        hasVariant = true;
+      } else if (item.name.includes(' (Gravy)')) {
+        baseName = item.name.replace(' (Gravy)', '');
+        portionType = 'Gravy';
+        hasVariant = true;
+      } else if (item.name.includes(' (Plain)')) {
+        baseName = item.name.replace(' (Plain)', '');
+        portionType = 'Plain';
+        hasVariant = true;
+      } else if (item.name.includes(' (Butter)')) {
+        baseName = item.name.replace(' (Butter)', '');
+        portionType = 'Butter';
+        hasVariant = true;
+      } else if (item.name.includes(' (Roasted)')) {
+        baseName = item.name.replace(' (Roasted)', '');
+        portionType = 'Roasted';
+        hasVariant = true;
+      } else if (item.name.includes(' (Fried)')) {
+        baseName = item.name.replace(' (Fried)', '');
+        portionType = 'Fried';
+        hasVariant = true;
       }
       
-      const key = baseName;
+      // Only group items that have variants, otherwise treat as individual items
+      const key = hasVariant ? baseName : item.name;
       if (!acc[key]) {
         acc[key] = {
-          baseName: baseName,
+          baseName: hasVariant ? baseName : item.name,
           category: item.category,
           description: item.description,
           preparation_time: item.preparation_time,
@@ -140,7 +192,7 @@ const MenuModern = () => {
       
       acc[key].portions.push({
         id: item.id,
-        name: portionType,
+        name: hasVariant ? portionType : 'Full',
         price: item.price,
         is_available: item.is_available,
         out_of_stock: item.out_of_stock
@@ -149,9 +201,19 @@ const MenuModern = () => {
       return acc;
     }, {} as {[key: string]: GroupedMenuItem});
     
-    // Sort portions by price (Half first, then Full)
+    // Sort portions by price (Half first, then Full, then Veg, then Non-veg, then Chicken, then Mutton, then Regular, then Medium, then Dry, then Gravy)
     Object.values(grouped).forEach(item => {
-      item.portions.sort((a, b) => a.price - b.price);
+      item.portions.sort((a, b) => {
+        // First sort by type priority, then by price
+        const typeOrder = { 'Half': 1, 'Full': 2, 'Veg': 3, 'Non-veg': 4, 'Chicken': 5, 'Mutton': 6, 'Regular': 7, 'Medium': 8, 'Dry': 9, 'Gravy': 10, 'Plain': 11, 'Butter': 12, 'Roasted': 13, 'Fried': 14 };
+        const aOrder = typeOrder[a.name as keyof typeof typeOrder] || 15;
+        const bOrder = typeOrder[b.name as keyof typeof typeOrder] || 15;
+        
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        return a.price - b.price;
+      });
     });
     
     return Object.values(grouped);

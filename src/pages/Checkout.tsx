@@ -157,6 +157,12 @@ const Checkout = () => {
       return;
     }
 
+    // TEMPORARY RESTRICTION: Only Cook House accepting orders
+    if (cafe.name !== 'COOK HOUSE') {
+      setError('This cafe is temporarily not accepting orders. They will resume service in the next 2 days.');
+      return;
+    }
+
     // Validate phone number
     if (!deliveryDetails.phoneNumber || deliveryDetails.phoneNumber.length !== 10) {
       setError('Please enter a valid 10-digit phone number');
@@ -165,10 +171,16 @@ const Checkout = () => {
 
     // Validate location selection for all order types
     if (!deliveryDetails.block) {
-      const locationType = deliveryDetails.orderType === 'dine_in' ? 'table number' : 
-                          deliveryDetails.orderType === 'delivery' ? 'block' : 'location';
-      setError(`Please select a ${locationType} for ${deliveryDetails.orderType} orders`);
-      return;
+      if (deliveryDetails.orderType === 'dine_in') {
+        setError('Please select a table number for dine-in orders');
+        return;
+      } else if (deliveryDetails.orderType === 'delivery') {
+        setError('Please select a block for delivery orders');
+        return;
+      } else if (deliveryDetails.orderType === 'takeaway') {
+        setError('Please select a location for takeaway orders');
+        return;
+      }
     }
 
     if (!isMinimumOrderMet) {
@@ -408,7 +420,7 @@ const Checkout = () => {
                           name="orderType"
                           value="delivery"
                           checked={deliveryDetails.orderType === 'delivery'}
-                          onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value }))}
+                          onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
                           disabled={!isDeliveryAllowed()}
                         />
                         <Label htmlFor="delivery" className="flex items-center">
@@ -427,7 +439,7 @@ const Checkout = () => {
                           name="orderType"
                           value="takeaway"
                           checked={deliveryDetails.orderType === 'takeaway'}
-                          onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value }))}
+                          onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
                           disabled={!isDineInTakeawayAllowed()}
                         />
                         <Label htmlFor="takeaway" className="flex items-center">
@@ -446,7 +458,7 @@ const Checkout = () => {
                           name="orderType"
                           value="dine_in"
                           checked={deliveryDetails.orderType === 'dine_in'}
-                          onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value }))}
+                          onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
                           disabled={!isDineInTakeawayAllowed()}
                         />
                         <Label htmlFor="dine_in" className="flex items-center">

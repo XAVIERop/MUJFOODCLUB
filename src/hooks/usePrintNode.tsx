@@ -98,6 +98,19 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
           return fallbackKey;
         }
         return apiKey;
+      } else if (cafe.name.toLowerCase().includes('punjabi') && cafe.name.toLowerCase().includes('tadka')) {
+        console.log('Using Punjabi Tadka API key');
+        const apiKey = import.meta.env.VITE_PUNJABI_TADKA_PRINTNODE_API_KEY;
+        if (!apiKey || apiKey === 'your-punjabi-tadka-printnode-api-key') {
+          console.warn('VITE_PUNJABI_TADKA_PRINTNODE_API_KEY not set, using main API key');
+          const fallbackKey = import.meta.env.VITE_PRINTNODE_API_KEY;
+          if (!fallbackKey) {
+            console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+            return '';
+          }
+          return fallbackKey;
+        }
+        return apiKey;
       }
 
       // Fallback to general API key
@@ -238,6 +251,8 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
               targetPrinterId = 74692682; // Food Court EPSON TM-T82 Receipt
             } else if (cafe.name.toLowerCase().includes('mini meals')) {
               targetPrinterId = 74756354; // Mini Meals Printer
+            } else if (cafe.name.toLowerCase().includes('punjabi') && cafe.name.toLowerCase().includes('tadka')) {
+              targetPrinterId = 74760016; // Punjabi Tadka Printer
             }
           }
         } catch (error) {
@@ -289,6 +304,8 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
               targetPrinterId = 74692682; // Food Court EPSON TM-T82 Receipt
             } else if (cafe.name.toLowerCase().includes('mini meals')) {
               targetPrinterId = 74756354; // Mini Meals Printer
+            } else if (cafe.name.toLowerCase().includes('punjabi') && cafe.name.toLowerCase().includes('tadka')) {
+              targetPrinterId = 74760016; // Punjabi Tadka Printer
             }
           }
         } catch (error) {

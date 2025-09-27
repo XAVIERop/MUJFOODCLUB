@@ -349,23 +349,14 @@ const OrderConfirmationNew = () => {
           {/* Rating Section */}
           {order.status === 'completed' && !order.has_rating && (
             <div className="mt-8">
-              <Card className="food-card">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Star className="w-5 h-5 mr-2 text-yellow-500" />
-                    Rate Your Order
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <OrderRating
-                    orderId={order.id}
-                    cafeName={order.cafe?.name || 'Cafe'}
-                    onRatingSubmitted={() => {
-                      fetchOrder();
-                    }}
-                  />
-                </CardContent>
-              </Card>
+              <OrderRating
+                orderId={order.id}
+                orderNumber={order.order_number}
+                cafeName={order.cafe?.name || 'Cafe'}
+                onRatingSubmitted={() => {
+                  fetchOrder();
+                }}
+              />
             </div>
           )}
 
