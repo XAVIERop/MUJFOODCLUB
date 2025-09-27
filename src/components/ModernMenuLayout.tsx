@@ -153,7 +153,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
 
           {/* Search Bar */}
           <div className="relative mb-4">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-orange-500 w-5 h-5 z-10" />
             <Input
               type="text"
               placeholder="What would you like to eat?"

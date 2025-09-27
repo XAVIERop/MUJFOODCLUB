@@ -66,10 +66,10 @@ const FloatingMenuButton: React.FC<FloatingMenuButtonProps> = ({
       <Button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-16 h-16 rounded-full shadow-2xl transition-all duration-300 border-2 border-white",
+          "w-20 h-20 rounded-full shadow-2xl transition-all duration-300 border-2 border-orange-500 flex flex-col items-center justify-center",
           isOpen 
-            ? "bg-orange-600 hover:bg-orange-700" 
-            : "bg-orange-500 hover:bg-orange-600"
+            ? "bg-black hover:bg-gray-800" 
+            : "bg-black hover:bg-gray-800"
         )}
         style={{ 
           zIndex: 10000,
@@ -77,9 +77,9 @@ const FloatingMenuButton: React.FC<FloatingMenuButtonProps> = ({
         }}
       >
         {isOpen ? (
-          <X className="w-6 h-6 text-white" />
+          <X className="w-5 h-5 text-white" />
         ) : (
-          <Menu className="w-6 h-6 text-white" />
+          <span className="text-white text-sm font-medium">MENU</span>
         )}
       </Button>
 
