@@ -157,8 +157,8 @@ const Checkout = () => {
       return;
     }
 
-    // TEMPORARY RESTRICTION: Only Cook House accepting orders
-    if (cafe.name !== 'COOK HOUSE') {
+    // TEMPORARY RESTRICTION: Only Cook House and Chatkara accepting orders
+    if (cafe.name !== 'COOK HOUSE' && cafe.name !== 'CHATKARA') {
       setError('This cafe is temporarily not accepting orders. They will resume service in the next 2 days.');
       return;
     }

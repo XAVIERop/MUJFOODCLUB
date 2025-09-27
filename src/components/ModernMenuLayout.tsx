@@ -140,7 +140,8 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
                   </div>
                 </div>
               </div>
-              {cafe?.average_rating && cafe?.total_ratings && cafe.total_ratings > 0 && (
+              {/* Rating display hidden for now */}
+              {false && cafe?.average_rating && cafe?.total_ratings && cafe.total_ratings > 0 && (
                 <div className="flex items-center gap-1 bg-green-600 px-2 py-1 rounded">
                   <Star className="w-3 h-3 text-white fill-current" />
                   <span className="text-xs font-medium text-white">
@@ -412,13 +413,13 @@ const ModernFoodCard: React.FC<{
       <CardContent className="p-4">
         {/* Food Details Header */}
         <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
+          <div className={`flex-1 ${item.category === 'Thali' ? 'min-h-[120px]' : ''}`}>
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-gray-900 text-lg">
                 {item.baseName || item.name}
               </h3>
             </div>
-            <p className="text-sm text-gray-600 line-clamp-2">
+            <p className={`text-sm text-gray-600 ${item.category === 'Thali' ? 'whitespace-normal leading-relaxed' : 'line-clamp-2'}`}>
               {item.description}
             </p>
           </div>
