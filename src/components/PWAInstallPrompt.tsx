@@ -224,19 +224,19 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ className }) => {
   // The actual install will work if the browser supports it
 
   return (
-    <div className={`fixed bottom-6 right-6 z-50 ${className}`}>
+    <div className={`fixed bottom-6 left-6 z-50 ${className}`}>
       {/* Small floating install button */}
       <Button
         onClick={handleInstall}
         disabled={isInstalling}
-        className="h-12 w-12 rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+        className="h-16 w-16 rounded-full bg-black hover:bg-gray-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-orange-500 flex items-center justify-center hover:scale-105 transform shadow-orange-500/50 hover:shadow-orange-500/70"
         size="sm"
         title="Install MUJ Food Club App"
       >
         {isInstalling ? (
-          <Download className="w-5 h-5 animate-pulse" />
+          <Download className="w-6 h-6 text-white animate-bounce" />
         ) : (
-          <Download className="w-5 h-5" />
+          <Download className="w-6 h-6 text-white" />
         )}
       </Button>
       
@@ -245,7 +245,7 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ className }) => {
         variant="ghost"
         size="sm"
         onClick={handleDismiss}
-        className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 p-0 border-0 shadow-md"
+        className="absolute -top-2 -left-2 h-6 w-6 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 p-0 border-0 shadow-md"
         title="Dismiss"
       >
         <X className="w-3 h-3" />
