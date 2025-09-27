@@ -111,7 +111,7 @@ export class WhatsAppService {
       // Temporary override for Cook House to use test number
       if (data.name === 'COOK HOUSE') {
         console.log('📱 Overriding Cook House WhatsApp number to test number');
-        data.whatsapp_phone = '+91 8383080140';
+        data.whatsapp_phone = '+91 9116966635';
         data.whatsapp_enabled = true;
         data.whatsapp_notifications = true;
       }
