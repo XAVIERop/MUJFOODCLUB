@@ -224,6 +224,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
               getCartQuantity={getCartQuantity}
               onToggleFavorite={onToggleFavorite}
               isFavorite={isFavorite}
+              selectedCategory={selectedCategory}
             />
           </div>
 
@@ -265,7 +266,8 @@ const MenuCategorySections: React.FC<{
   getCartQuantity: (itemId: string) => number;
   onToggleFavorite?: (itemId: string) => void;
   isFavorite?: (itemId: string) => boolean;
-}> = ({ menuItems, onAddToCart, onRemoveFromCart, getCartQuantity, onToggleFavorite, isFavorite }) => {
+  selectedCategory: string;
+}> = ({ menuItems, onAddToCart, onRemoveFromCart, getCartQuantity, onToggleFavorite, isFavorite, selectedCategory }) => {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   // Group menu items by category
@@ -294,6 +296,37 @@ const MenuCategorySections: React.FC<{
     });
   };
 
+  // Scroll to category section
+  const scrollToCategory = (category: string) => {
+    const categoryElement = document.querySelector(`[data-category="${category}"]`);
+    if (categoryElement) {
+      categoryElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' // This ensures it scrolls to the TOP of the category section
+      });
+    }
+  };
+
+  // Auto-expand and scroll to category when selected
+  useEffect(() => {
+    if (selectedCategory && selectedCategory !== 'all' && selectedCategory !== 'veg' && selectedCategory !== 'non-veg') {
+      // Expand the category if it's not already expanded
+      setExpandedCategories(prev => {
+        if (!prev.has(selectedCategory)) {
+          const newSet = new Set(prev);
+          newSet.add(selectedCategory);
+          return newSet;
+        }
+        return prev;
+      });
+      
+      // Scroll to the category section
+      setTimeout(() => {
+        scrollToCategory(selectedCategory);
+      }, 100); // Small delay to ensure the category is expanded first
+    }
+  }, [selectedCategory]);
+
   return (
     <div className="space-y-4">
       {sortedCategories.map(([category, items]) => {
@@ -301,7 +334,7 @@ const MenuCategorySections: React.FC<{
         const itemCount = (items as any[]).length;
 
         return (
-          <div key={category} className="bg-white rounded-lg border border-orange-100 shadow-sm">
+          <div key={category} data-category={category} className="bg-white rounded-lg border border-orange-100 shadow-sm">
             {/* Category Header */}
             <button
               onClick={() => toggleCategory(category)}
