@@ -121,6 +121,10 @@ const Checkout = () => {
   const [cgst, setCgst] = useState(0);
   const [sgst, setSgst] = useState(0);
   const [deliveryFee, setDeliveryFee] = useState(0);
+  
+  // MUJ FOOD CLUB discount
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const isEligibleForDiscount = cafe?.name === 'CHATKARA' || cafe?.name === 'COOK HOUSE';
 
   // Minimum order amount validation
   const isMinimumOrderMet = totalAmount >= ORDER_CONSTANTS.MINIMUM_ORDER_AMOUNT;
@@ -138,18 +142,30 @@ const Checkout = () => {
     }
   }, [cart, cafe, navigate]);
 
-  // Calculate delivery charges (no taxes for Chatkara)
+  // Update phone number when profile changes
+  useEffect(() => {
+    if (profile?.phone) {
+      setDeliveryDetails(prev => ({ ...prev, phoneNumber: profile.phone }));
+    }
+  }, [profile?.phone]);
+
+  // Calculate delivery charges and discount
   useEffect(() => {
     const subtotal = totalAmount;
     const deliveryCharge = deliveryDetails.orderType === 'delivery' ? ORDER_CONSTANTS.DELIVERY_CHARGE : 0;
-    // No CGST/SGST for Chatkara orders
-    const finalAmountWithDelivery = subtotal + deliveryCharge;
     
-      setCgst(0);
-      setSgst(0);
+    // Calculate MUJ FOOD CLUB discount (5% on subtotal)
+    const discount = isEligibleForDiscount ? subtotal * 0.05 : 0;
+    
+    // No CGST/SGST for Chatkara orders
+    const finalAmountWithDelivery = subtotal + deliveryCharge - discount;
+    
+    setCgst(0);
+    setSgst(0);
     setDeliveryFee(deliveryCharge);
+    setDiscountAmount(discount);
     setFinalAmount(Math.max(0, finalAmountWithDelivery));
-  }, [totalAmount, deliveryDetails.orderType]);
+  }, [totalAmount, deliveryDetails.orderType, isEligibleForDiscount]);
 
   const handlePlaceOrder = async () => {
     if (!user || !profile) {
@@ -612,9 +628,17 @@ const Checkout = () => {
                     </div>
                     
                     {deliveryDetails.orderType === 'delivery' && (
-                      <div className="flex justify-between items-center text-orange-600">
+                      <div className="flex justify-between items-center text-black">
                         <span>Delivery Charge</span>
                         <span>+₹{ORDER_CONSTANTS.DELIVERY_CHARGE}</span>
+                      </div>
+                    )}
+                    
+                    {/* MUJ FOOD CLUB Discount */}
+                    {isEligibleForDiscount && discountAmount > 0 && (
+                      <div className="flex justify-between items-center text-green-600">
+                        <span className="font-bold">MUJ FOOD CLUB DISCOUNT (5%)</span>
+                        <span className="font-bold">-₹{discountAmount.toFixed(2)}</span>
                       </div>
                     )}
                     
@@ -636,10 +660,10 @@ const Checkout = () => {
                 </Alert>
               )}
 
-                  {/* Delivery Charge Notice */}
+                  {/* Order Confirmation Notice */}
                   {deliveryDetails.orderType === 'delivery' && (
                     <div className="mt-2 p-2 bg-green-50 rounded text-xs text-green-700">
-                      <strong>Delivery:</strong> ₹{ORDER_CONSTANTS.DELIVERY_CHARGE} delivery charge added to all orders
+                      <strong>Please double-check your order and address details.</strong>
                     </div>
                   )}
                   

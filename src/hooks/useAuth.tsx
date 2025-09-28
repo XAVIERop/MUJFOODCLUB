@@ -8,7 +8,7 @@ interface AuthContextType {
   session: Session | null;
   profile: any | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, block: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, block: string, phone: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: any) => Promise<{ error: any }>;
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const createProfile = async (userId: string, email: string, fullName: string, block: string) => {
+  const createProfile = async (userId: string, email: string, fullName: string, block: string, phone: string) => {
     try {
       // Extract name from email if fullName is not provided
       const displayName = fullName || email.split('@')[0];
@@ -65,6 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         full_name: displayName,
         user_type: 'student',
         block: block,
+        phone: phone,
         loyalty_points: 0,
         loyalty_tier: 'foodie',
         total_orders: 0,
@@ -135,7 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   );
 
-  const signUp = async (email: string, password: string, fullName: string, block: string) => {
+  const signUp = async (email: string, password: string, fullName: string, block: string, phone: string) => {
     try {
       // Validate email domain
       if (!email.endsWith('@muj.manipal.edu')) {
@@ -172,7 +173,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (data.user && !error) {
         // Create profile for student
-        await createProfile(data.user.id, email, fullName, block);
+        await createProfile(data.user.id, email, fullName, block, phone);
         
         // User will receive confirmation email
         // They must click the link to verify before they can log in
@@ -298,7 +299,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const fullName = data.user.user_metadata?.full_name || email.split('@')[0];
         const block = data.user.user_metadata?.block || 'B1';
         
-        await createProfile(data.user.id, email, fullName, block);
+        await createProfile(data.user.id, email, fullName, block, '');
       }
 
       return { error: null };

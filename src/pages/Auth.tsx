@@ -67,7 +67,8 @@ const Auth = () => {
     password: '', 
     confirmPassword: '',
     fullName: '', 
-    block: 'B1'
+    block: 'B1',
+    phone: ''
   });
 
   // OTP form
@@ -181,6 +182,17 @@ const Auth = () => {
       return;
     }
 
+    // Validate phone number
+    if (!signupForm.phone || signupForm.phone.length !== 10) {
+      toast({
+        title: "Invalid Phone Number",
+        description: "Please enter a valid 10-digit phone number.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
+
     // Validate password strength
     if (!validatePasswordStrength(signupForm.password)) {
       toast({
@@ -197,7 +209,8 @@ const Auth = () => {
         signupForm.email,
         signupForm.password,
         signupForm.fullName,
-        signupForm.block
+        signupForm.block,
+        signupForm.phone
       );
       
       if (error) {
@@ -714,6 +727,30 @@ const Auth = () => {
                           ))}
                         </select>
                       </div>
+                    </div>
+
+                  <div className="space-y-2">
+                      <Label htmlFor="signup-phone" className="text-sm font-medium text-gray-700">Phone Number</Label>
+                      <div className="relative">
+                        <Smartphone className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <Input
+                          id="signup-phone"
+                          type="tel"
+                          placeholder="Enter 10-digit phone number"
+                          value={signupForm.phone}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+                            if (value.length <= 10) {
+                              setSignupForm({ ...signupForm, phone: value });
+                            }
+                          }}
+                          className="pl-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
+                          required
+                        />
+                      </div>
+                      {signupForm.phone && signupForm.phone.length !== 10 && (
+                        <p className="text-sm text-red-500">Phone number must be exactly 10 digits</p>
+                      )}
                     </div>
 
                   <div className="space-y-2">
