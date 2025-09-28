@@ -47,10 +47,7 @@ const OrderConfirmation = () => {
     isLoading: loading, 
     error: orderError,
     refetch: refetchOrder
-  } = useOrderByNumberQuery(orderNumber, user?.id || null, {
-    enabled: !!orderNumber && !!user?.id,
-    staleTime: 10 * 1000, // 10 seconds for real-time updates
-  });
+  } = useOrderByNumberQuery(orderNumber || '');
 
   // Debug logging for order data
   useEffect(() => {

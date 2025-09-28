@@ -30,7 +30,7 @@ const MobileFloatingCart: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-16 left-4 right-4 bg-green-600 text-white p-3 rounded-lg shadow-lg z-40 lg:hidden">
+    <div className="fixed bottom-20 left-4 right-4 bg-green-600 text-white p-3 rounded-lg shadow-lg z-40 lg:hidden">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <span className="font-medium text-sm">

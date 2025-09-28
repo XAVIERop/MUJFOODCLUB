@@ -254,7 +254,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
       />
 
       {/* Bottom Spacing for Mobile Navigation */}
-      <div className="h-24 pb-safe lg:hidden"></div>
+      <div className="h-32 pb-safe lg:hidden"></div>
     </div>
   );
 };

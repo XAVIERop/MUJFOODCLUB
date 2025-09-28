@@ -62,8 +62,8 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
         <FeaturedCafeGrid cafes={cafes} />
       </div>
 
-      {/* Bottom Spacing - Increased for proper mobile scrolling */}
-      <div className="h-24 pb-safe"></div>
+      {/* Bottom Spacing - Increased for proper mobile scrolling and navigation */}
+      <div className="h-32 pb-safe"></div>
     </div>
   );
 };

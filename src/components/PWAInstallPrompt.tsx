@@ -224,7 +224,7 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ className }) => {
   // The actual install will work if the browser supports it
 
   return (
-    <div className={`fixed bottom-6 left-6 z-50 ${className}`}>
+    <div className={`fixed bottom-20 left-6 z-50 ${className}`}>
       {/* Small floating install button */}
       <Button
         onClick={handleInstall}

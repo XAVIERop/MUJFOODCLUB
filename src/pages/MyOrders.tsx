@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Header from '@/components/Header';
 import { 
   Clock, 
   CheckCircle, 
@@ -32,7 +33,7 @@ import {
   Trophy
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useUserOrdersQuery } from '@/hooks/useOrdersQuery';
+import { useUserOrdersQuery } from '@/hooks/useOrdersQuery.tsx';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -76,6 +77,7 @@ const MyOrders = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [sortBy, setSortBy] = useState<string>('newest');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   // Use React Query for data fetching
@@ -88,6 +90,41 @@ const MyOrders = () => {
     enabled: !!user,
     staleTime: 30 * 1000, // 30 seconds
   });
+
+  // Pull-to-refresh functionality
+  useEffect(() => {
+    let startY = 0;
+    let isPulling = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const currentY = e.touches[0].clientY;
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      
+      // Only trigger if at the very top and pulling down
+      if (scrollTop === 0 && currentY > startY && currentY - startY > 50) {
+        if (!isPulling && !isRefreshing) {
+          isPulling = true;
+          setIsRefreshing(true);
+          refetch().finally(() => {
+            setIsRefreshing(false);
+            isPulling = false;
+          });
+        }
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchmove', handleTouchMove);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [refetch, isRefreshing]);
 
   // Filter and search orders
   const filteredOrders = useMemo(() => {
@@ -328,37 +365,9 @@ const MyOrders = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 lg:pb-8">
+      <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate(-1)}
-                className="mr-4"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold">My Orders</h1>
-                <p className="text-muted-foreground">
-                  {orderStats.totalOrders} total orders • {orderStats.activeOrders} active
-                </p>
-              </div>
-            </div>
-            <div className="flex space-x-2">
-              <Button onClick={() => navigate('/order-analytics')} variant="outline" size="sm">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Analytics
-              </Button>
-              <Button onClick={() => refetch()} variant="outline" size="sm">
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Refresh
-              </Button>
-            </div>
-          </div>
 
           {/* Order Statistics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

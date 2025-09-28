@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCart } from '@/hooks/useCart';
+import { useLocation } from 'react-router-dom';
 
 interface Category {
   name: string;
@@ -23,6 +25,13 @@ const FloatingMenuButton: React.FC<FloatingMenuButtonProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const { getItemCount } = useCart();
+  const location = useLocation();
+  
+  // Check if cart has items and we're on a menu page
+  const itemCount = getItemCount();
+  const isOnMenuPage = location.pathname.startsWith('/menu/');
+  const hasCartItems = itemCount > 0;
 
   // Show button after scrolling down a bit
   useEffect(() => {
@@ -61,18 +70,25 @@ const FloatingMenuButton: React.FC<FloatingMenuButtonProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="floating-menu-container fixed bottom-6 right-6 z-[9999]">
+    <div className={cn(
+      "floating-menu-container fixed right-6 z-50 transition-all duration-300",
+      // Move up when cart is visible on menu page - increased spacing
+      isOnMenuPage && hasCartItems ? "bottom-36" : "bottom-6"
+    )}>
       {/* Floating Menu Button */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-20 h-20 rounded-full shadow-2xl transition-all duration-300 border-2 border-orange-500 flex flex-col items-center justify-center",
+          "w-16 h-12 rounded-full shadow-2xl transition-all duration-300 border-2 border-orange-500 flex flex-col items-center justify-center",
+          isOnMenuPage && hasCartItems 
+            ? "rounded-2xl w-20 h-10" // More rectangular when cart is visible
+            : "rounded-full w-16 h-12", // Circular when no cart
           isOpen 
             ? "bg-black hover:bg-gray-800" 
             : "bg-black hover:bg-gray-800"
         )}
         style={{ 
-          zIndex: 10000,
+          zIndex: 51,
           position: 'relative'
         }}
       >
@@ -87,7 +103,7 @@ const FloatingMenuButton: React.FC<FloatingMenuButtonProps> = ({
       {isOpen && (
         <div 
           className="absolute bottom-16 right-0 w-80 bg-black/90 backdrop-blur-sm rounded-xl p-4 shadow-2xl border border-white/10"
-          style={{ zIndex: 10001 }}
+          style={{ zIndex: 52 }}
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-4">

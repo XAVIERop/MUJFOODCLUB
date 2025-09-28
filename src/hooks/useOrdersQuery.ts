@@ -154,7 +154,16 @@ export const useOrderByNumberQuery = (orderNumber: string) => {
           estimated_delivery,
           status,
           created_at,
-          updated_at
+          updated_at,
+          cafe:cafes(name, location, id),
+          order_items(
+            id,
+            quantity,
+            unit_price,
+            total_price,
+            special_instructions,
+            menu_item:menu_items(name, description)
+          )
         `)
         .eq('order_number', orderNumber)
         .single();
@@ -177,7 +186,16 @@ export const useOrderByNumberQuery = (orderNumber: string) => {
             estimated_delivery,
             status,
             created_at,
-            updated_at
+            updated_at,
+            cafe:cafes(name, location, id),
+            order_items(
+              id,
+              quantity,
+              unit_price,
+              total_price,
+              special_instructions,
+              menu_item:menu_items(name, description)
+            )
           `)
           .eq('id', orderNumber)
           .single();

@@ -17,7 +17,7 @@ const BottomNavigation = () => {
 
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 lg:hidden shadow-lg">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 lg:hidden shadow-lg">
       <div className="flex items-center justify-center gap-16 py-2 px-3">
         {/* Home Tab */}
         <button
