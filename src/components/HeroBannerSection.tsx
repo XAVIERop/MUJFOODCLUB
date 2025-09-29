@@ -176,7 +176,7 @@ const HeroBannerSection: React.FC = () => {
       title: 'Pizza Lovers Special',
       description: 'Buy 2 Get 1 Free on all pizzas',
       backgroundColor: 'bg-gradient-to-br from-yellow-400 to-red-500',
-      imageUrl: '/pizzalover.svg',
+      imageUrl: '/pizza.svg',
       discount: '33% OFF',
       ctaText: 'Order Now →',
       ctaAction: 'navigate_to_pizza'
@@ -186,7 +186,7 @@ const HeroBannerSection: React.FC = () => {
       title: 'Chinese Delight',
       description: 'Hot momos and noodles',
       backgroundColor: 'bg-gradient-to-br from-red-400 to-orange-500',
-      imageUrl: '/chinesedelight.svg',
+      imageUrl: '/chinese.svg',
       discount: '20% OFF',
       ctaText: 'Order Now →',
       ctaAction: 'navigate_to_chinese'
@@ -196,7 +196,7 @@ const HeroBannerSection: React.FC = () => {
       title: 'Authentic Indian',
       description: 'Biryani and curry specials',
       backgroundColor: 'bg-gradient-to-br from-orange-400 to-yellow-500',
-      imageUrl: '/authenticindian.svg',
+      imageUrl: '/NorthIndian.svg',
       discount: '25% OFF',
       ctaText: 'Order Now →',
       ctaAction: 'navigate_to_indian'
