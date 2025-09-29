@@ -177,7 +177,6 @@ const HeroBannerSection: React.FC = () => {
       description: 'Buy 2 Get 1 Free on all pizzas',
       backgroundColor: 'bg-gradient-to-br from-yellow-400 to-red-500',
       imageUrl: '/pizzalover.png',
-      discount: '33% OFF',
       ctaText: 'Order Now →',
       ctaAction: 'navigate_to_pizza'
     },
@@ -187,7 +186,6 @@ const HeroBannerSection: React.FC = () => {
       description: 'Hot momos and noodles',
       backgroundColor: 'bg-gradient-to-br from-red-400 to-orange-500',
       imageUrl: '/chinesedelight.png',
-      discount: '20% OFF',
       ctaText: 'Order Now →',
       ctaAction: 'navigate_to_chinese'
     },
@@ -197,7 +195,6 @@ const HeroBannerSection: React.FC = () => {
       description: 'Biryani and curry specials',
       backgroundColor: 'bg-gradient-to-br from-orange-400 to-yellow-500',
       imageUrl: '/indianfood.png',
-      discount: '25% OFF',
       ctaText: 'Order Now →',
       ctaAction: 'navigate_to_indian'
     }
