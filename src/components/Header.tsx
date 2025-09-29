@@ -27,7 +27,7 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [isCafeOwner, setIsCafeOwner] = useState(false);
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -210,7 +210,12 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
 
           {/* Right Section - User Actions */}
           <div className="flex items-center space-x-2 sm:space-x-4">
-            {user && profile ? (
+            {loading ? (
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                <span className="text-xs text-muted-foreground">Loading...</span>
+              </div>
+            ) : user && profile ? (
               <>
                 {/* Cafe-specific rewards - removed unified points display */}
 
@@ -382,7 +387,12 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
                   
                   
                   {/* User Actions - Simplified */}
-                  {user ? (
+                  {loading ? (
+                    <div className="flex items-center space-x-2 w-full justify-center py-2 mt-4">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                      <span className="text-sm text-muted-foreground">Loading...</span>
+                    </div>
+                  ) : user ? (
                     <Button 
                       variant="outline" 
                       onClick={() => {

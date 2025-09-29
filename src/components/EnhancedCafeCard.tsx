@@ -309,9 +309,16 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               size="sm"
               onClick={() => handleOrderNow(cafe.id)}
               disabled={!cafe.accepting_orders}
-              className="text-xs font-medium bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              className={`text-xs font-medium ${
+                cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house')
+                  ? "bg-orange-600 hover:bg-orange-700"
+                  : "bg-gray-500 hover:bg-gray-600"
+              } disabled:bg-gray-300 disabled:cursor-not-allowed`}
             >
-              {cafe.accepting_orders ? "Order Now" : "Coming Soon"}
+              {cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house')
+                ? "Order Now"
+                : "Coming Soon"
+              }
             </Button>
           </div>
 

@@ -148,9 +148,16 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
 
               <Button
                 size="sm"
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white text-xs font-medium"
+                className={`w-full text-white text-xs font-medium ${
+                  cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house')
+                    ? "bg-orange-600 hover:bg-orange-700"
+                    : "bg-gray-500 hover:bg-gray-600"
+                }`}
               >
-                Order Now
+                {cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house')
+                  ? "Order Now"
+                  : "Coming Soon"
+                }
               </Button>
             </div>
           </Link>
