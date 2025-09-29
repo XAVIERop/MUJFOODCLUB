@@ -292,13 +292,11 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
               </>
             ) : (
               <Button 
-                variant="hero" 
+                variant="ghost" 
                 onClick={handleAuthAction}
-                className="text-xs sm:text-sm"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-100 hover:bg-gray-200 border-0 p-0 flex items-center justify-center transition-all duration-200 hover:scale-105"
               >
-                <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Sign In</span>
-                <span className="sm:hidden">Sign In</span>
+                <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
               </Button>
             )}
 
@@ -405,12 +403,11 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
                       Sign Out
                     </Button>
                   ) : (
-                    <Button variant="hero" onClick={() => {
+                    <Button variant="ghost" onClick={() => {
                       navigate('/auth');
                       setIsMenuOpen(false);
-                    }} className="mt-4">
-                      <User className="w-4 h-4 mr-2" />
-                      Sign In
+                    }} className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 border-0 p-0 flex items-center justify-center transition-all duration-200 hover:scale-105 mt-4">
+                      <User className="w-5 h-5 text-gray-600" />
                     </Button>
                   )}
                 </div>
