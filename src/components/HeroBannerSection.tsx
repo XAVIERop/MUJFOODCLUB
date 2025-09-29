@@ -78,7 +78,9 @@ const HeroBannerSection: React.FC = () => {
             setCafes(fallbackData || []);
           }
         } else {
-          setCafes(data || []);
+          // Show only first 6 cafes
+          const limitedCafes = (data || []).slice(0, 6);
+          setCafes(limitedCafes);
         }
       } catch (error) {
         console.error('Error fetching cafes:', error);
@@ -174,7 +176,7 @@ const HeroBannerSection: React.FC = () => {
       title: 'Pizza Lovers Special',
       description: 'Buy 2 Get 1 Free on all pizzas',
       backgroundColor: 'bg-gradient-to-br from-yellow-400 to-red-500',
-      imageUrl: '/pizza.jpg',
+      imageUrl: '/pizzalover.svg',
       discount: '33% OFF',
       ctaText: 'Order Now →',
       ctaAction: 'navigate_to_pizza'
@@ -184,7 +186,7 @@ const HeroBannerSection: React.FC = () => {
       title: 'Chinese Delight',
       description: 'Hot momos and noodles',
       backgroundColor: 'bg-gradient-to-br from-red-400 to-orange-500',
-      imageUrl: '/china_card.png',
+      imageUrl: '/chinesedelight.svg',
       discount: '20% OFF',
       ctaText: 'Order Now →',
       ctaAction: 'navigate_to_chinese'
@@ -194,7 +196,7 @@ const HeroBannerSection: React.FC = () => {
       title: 'Authentic Indian',
       description: 'Biryani and curry specials',
       backgroundColor: 'bg-gradient-to-br from-orange-400 to-yellow-500',
-      imageUrl: '/tasteofindia_card.jpg',
+      imageUrl: '/authenticindian.svg',
       discount: '25% OFF',
       ctaText: 'Order Now →',
       ctaAction: 'navigate_to_indian'
@@ -387,17 +389,19 @@ const HeroBannerSection: React.FC = () => {
       </div>
 
       {/* Promotional Cards - Horizontal Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="flex flex-wrap justify-center gap-4">
         {promotionalCards.map((card) => (
           <div
             key={card.id}
             className={cn(
-              "p-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer h-full relative overflow-hidden",
+              "rounded-lg shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer relative overflow-hidden",
               card.backgroundColor
             )}
             style={{
+              width: '300px',
+              height: '150px',
               backgroundImage: card.imageUrl 
-                ? `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url(${card.imageUrl})`
+                ? `url(${card.imageUrl})`
                 : undefined,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
@@ -406,28 +410,14 @@ const HeroBannerSection: React.FC = () => {
             onClick={() => handleCtaClick(card.ctaAction)}
           >
 
-            {/* Card Content */}
-            <div className="space-y-2 relative z-10">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-white text-sm lg:text-base drop-shadow-lg">{card.title}</h3>
-                {card.discount && (
-                  <Badge className="bg-red-500 text-white text-xs">
-                    {card.discount}
-                  </Badge>
-                )}
+            {/* Only show discount badge - no overlay text */}
+            {card.discount && (
+              <div className="absolute top-2 right-2 z-10">
+                <Badge className="bg-red-500 text-white text-xs">
+                  {card.discount}
+                </Badge>
               </div>
-              
-              <p className="text-sm text-white drop-shadow-lg">{card.description}</p>
-              
-              <div className="flex items-center justify-between">
-                {card.price && (
-                  <span className="font-bold text-white drop-shadow-lg">{card.price}</span>
-                )}
-                <span className="text-sm font-medium text-yellow-300 hover:text-yellow-200 drop-shadow-lg">
-                  {card.ctaText}
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         ))}
       </div>

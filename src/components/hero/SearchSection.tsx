@@ -30,7 +30,9 @@ const SearchSection: React.FC<SearchSectionProps> = ({ selectedBlock, onBlockCha
           .order('priority', { ascending: true });
 
         if (!cafesError && cafesData) {
-          setCafes(cafesData);
+          // Show only first 6 cafes
+          const limitedCafes = cafesData.slice(0, 6);
+          setCafes(limitedCafes);
         }
 
         // Fetch menu items

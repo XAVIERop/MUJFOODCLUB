@@ -124,7 +124,10 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
   };
 
   const handleCall = (phone: string) => {
-    window.open(`tel:${phone}`, '_blank');
+    // Show confirmation popup before calling
+    if (window.confirm(`Do you want to call ${cafe.name} at ${phone}?`)) {
+      window.open(`tel:${phone}`, '_blank');
+    }
   };
 
   const handleWhatsApp = (phone: string, cafeName: string) => {

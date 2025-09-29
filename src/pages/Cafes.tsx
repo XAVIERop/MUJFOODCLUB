@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Search, Filter, X, Heart, Store } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 
@@ -30,6 +31,7 @@ interface Cafe {
 }
 
 const Cafes = () => {
+  const location = useLocation();
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [filteredCafes, setFilteredCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,6 +73,28 @@ const Cafes = () => {
       setSelectedCategory(urlParams.get('category') || 'All');
     }
   }, []);
+
+  // Listen to URL parameter changes (when user clicks different categories)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const categoryParam = urlParams.get('category');
+    
+    if (categoryParam && categoryParam !== selectedCategory) {
+      setSelectedCategory(categoryParam);
+    }
+    
+    const favoritesParam = urlParams.get('favorites');
+    if (favoritesParam === 'true' && !showFavoritesOnly) {
+      setShowFavoritesOnly(true);
+    } else if (favoritesParam !== 'true' && showFavoritesOnly) {
+      setShowFavoritesOnly(false);
+    }
+    
+    const searchParam = urlParams.get('search');
+    if (searchParam !== searchQuery) {
+      setSearchQuery(searchParam || '');
+    }
+  }, [location.search]); // This will trigger when URL changes
 
   // Real-time subscription for cafe updates (ratings, etc.)
   useEffect(() => {
@@ -150,7 +174,11 @@ const Cafes = () => {
       console.log('Cafes page: Cafes already ordered by priority:', filteredCafes);
       console.log('Cafes page: Final cafe names:', filteredCafes.map(c => c.name));
       
-      setCafes(filteredCafes || []);
+      // Show only first 6 cafes
+      const limitedCafes = filteredCafes.slice(0, 6);
+      console.log('Cafes page: Limited to first 6 cafes:', limitedCafes.map(c => c.name));
+      
+      setCafes(limitedCafes || []);
       
     } catch (error) {
       console.error('Cafes page: Error fetching cafes:', error);

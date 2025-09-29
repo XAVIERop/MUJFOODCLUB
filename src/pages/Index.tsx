@@ -81,27 +81,51 @@ const Index = () => {
         return;
       }
 
-      // Use the same working pattern as Cafes page
+      console.log('🔄 Homepage: Fetching cafes...');
+      
+      // Try RPC function first, fallback to direct query if it fails
       let { data, error } = await supabase
         .rpc('get_cafes_ordered');
 
       if (error) {
-        console.error('❌ Error fetching cafes:', error);
-        throw error;
+        console.warn('⚠️ RPC function failed, trying direct query:', error);
+        
+        // Fallback to direct query
+        const { data: directData, error: directError } = await supabase
+          .from('cafes')
+          .select('*')
+          .eq('is_active', true)
+          .order('priority', { ascending: true, nullsLast: true })
+          .order('average_rating', { ascending: false, nullsLast: true })
+          .order('name', { ascending: true });
+
+        if (directError) {
+          console.error('❌ Direct query also failed:', directError);
+          throw directError;
+        }
+        
+        data = directData;
+        console.log('✅ Homepage: Direct query successful, got', data?.length || 0, 'cafes');
+      } else {
+        console.log('✅ Homepage: RPC function successful, got', data?.length || 0, 'cafes');
       }
 
       // Ensure data is an array
       const cafesData = Array.isArray(data) ? data : [];
       
       if (cafesData.length > 0) {
-        setCafes(cafesData);
+        // Show only first 6 cafes
+        const limitedCafes = cafesData.slice(0, 6);
+        setCafes(limitedCafes);
         setLastFetchTime(now);
+        console.log('✅ Homepage: Set cafes (limited to first 6):', limitedCafes.map(c => c.name));
       } else {
+        console.warn('⚠️ Homepage: No cafes found');
         setCafes([]);
       }
       
     } catch (error) {
-      console.error('❌ Cafe fetching failed:', error);
+      console.error('❌ Homepage: Cafe fetching failed:', error);
       setCafes([]);
     } finally {
       setLoading(false);

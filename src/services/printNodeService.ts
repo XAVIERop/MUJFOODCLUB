@@ -412,6 +412,13 @@ MUJFOODCLUB!`;
     const isChatkara = cafe_name?.toLowerCase().includes('chatkara') || 
                        cafe_name === 'CHATKARA' ||
                        cafe_name?.toLowerCase() === 'chatkara';
+    const isCookHouse = cafe_name?.toLowerCase().includes('cook house') || 
+                        cafe_name === 'COOK HOUSE' ||
+                        cafe_name?.toLowerCase() === 'cook house';
+    
+    // Calculate MUJ FOOD CLUB discount (5% on subtotal for Chatkara and Cook House)
+    const isEligibleForDiscount = isChatkara || isCookHouse;
+    const mujFoodClubDiscount = isEligibleForDiscount ? subtotal * 0.05 : 0;
     const isMiniMeals = cafe_name?.toLowerCase().includes('mini meals') || 
                         cafe_name === 'MINI MEALS' ||
                         cafe_name?.toLowerCase() === 'mini meals';
@@ -421,9 +428,10 @@ MUJFOODCLUB!`;
     
     console.log('🔍 PrintNode Service - Cafe name:', cafe_name);
     console.log('🔍 PrintNode Service - Is Chatkara:', isChatkara);
+    console.log('🔍 PrintNode Service - Is Cook House:', isCookHouse);
     console.log('🔍 PrintNode Service - Is Mini Meals:', isMiniMeals);
     console.log('🔍 PrintNode Service - Is Food Court:', isFoodCourt);
-    console.log('🔍 PrintNode Service - Using format:', isChatkara ? 'CHATKARA' : isMiniMeals ? 'MINI MEALS' : isFoodCourt ? 'FOOD COURT' : 'MUJ FOOD CLUB');
+    console.log('🔍 PrintNode Service - Using format:', isChatkara ? 'CHATKARA' : isCookHouse ? 'COOK HOUSE' : isMiniMeals ? 'MINI MEALS' : isFoodCourt ? 'FOOD COURT' : 'MUJ FOOD CLUB');
     
     let receipt;
     
@@ -463,6 +471,19 @@ MUJFOODCLUB!`;
     Date: ${dateStr}    ${timeStr}    ${payment_method?.toUpperCase() === 'COD' ? 'Pick Up' : 'Delivery'}
     Cashier: biller    \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Token No.: ${order_number.slice(-2)}\x1B\x21\x00
+    ----------------------------------------
+    \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
+    ----------------------------------------`;
+    } else if (isCookHouse) {
+      // Cook House format (using Chatkara template with Cook House branding)
+      receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'COOK HOUSE'}\x1B\x21\x00
+    ----------------------------------------
+    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
+    \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
+    \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
+    \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
+    \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
     ----------------------------------------
     \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
     ----------------------------------------`;
@@ -518,6 +539,11 @@ MUJFOODCLUB!`;
         receipt += `\n    \x1B\x21\x08Delivery Charge: +${deliveryCharge}\x1B\x21\x00`;
       }
       
+      // Show MUJ FOOD CLUB discount if applicable
+      if (mujFoodClubDiscount > 0) {
+        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (5%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
+      }
+      
       receipt += `\n    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
     ----------------------------------------
     \x1B\x21\x08Thanks Order Again\x1B\x21\x00
@@ -538,6 +564,38 @@ MUJFOODCLUB!`;
       // Only show delivery charge if it's a delivery order
       if (deliveryCharge > 0) {
         receipt += `\n    \x1B\x21\x08Delivery Charge: +${deliveryCharge}\x1B\x21\x00`;
+      }
+      
+      // Show MUJ FOOD CLUB discount if applicable
+      if (mujFoodClubDiscount > 0) {
+        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (5%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
+      }
+      
+      receipt += `\n    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
+    ----------------------------------------
+    \x1B\x21\x08Thanks Order Again\x1B\x21\x00
+    \x1B\x21\x08mujfoodclub.in\x1B\x21\x00
+    ----------------------------------------
+    ----------------------------------------
+    ----------------------------------------`;
+    } else if (isCookHouse) {
+      // Cook House footer (using Chatkara template)
+      const isDelivery = data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block);
+      const deliveryCharge = isDelivery ? 10 : 0;
+      const finalTotal = final_amount; // Use actual final amount from database
+      
+      receipt += `\n    ----------------------------------------
+    \x1B\x21\x08Total Qty: ${totalQty}\x1B\x21\x00
+    \x1B\x21\x08Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00`;
+      
+      // Only show delivery charge if it's a delivery order
+      if (deliveryCharge > 0) {
+        receipt += `\n    \x1B\x21\x08Delivery Charge: +${deliveryCharge}\x1B\x21\x00`;
+      }
+      
+      // Show MUJ FOOD CLUB discount if applicable
+      if (mujFoodClubDiscount > 0) {
+        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (5%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
       }
       
       receipt += `\n    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
