@@ -9,6 +9,7 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import Header from '../components/Header';
 import { HorizontalCafeCard } from '../components/HorizontalCafeCard';
+import { EnhancedCafeCard } from '../components/EnhancedCafeCard';
 import CafeIconGrid from '../components/CafeIconGrid';
 import CafeCategories from '../components/CafeCategories';
 import MobileLayoutWrapper from '../components/MobileLayoutWrapper';
@@ -337,7 +338,16 @@ const Cafes = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCafes.map((cafe) => (
-              <HorizontalCafeCard key={cafe.id} cafe={cafe} />
+              <React.Fragment key={cafe.id}>
+                {/* Mobile: Horizontal Card */}
+                <div className="block lg:hidden">
+                  <HorizontalCafeCard cafe={cafe} />
+                </div>
+                {/* Desktop: Vertical Card */}
+                <div className="hidden lg:block">
+                  <EnhancedCafeCard cafe={cafe} />
+                </div>
+              </React.Fragment>
             ))}
           </div>
         )}
@@ -447,7 +457,16 @@ const Cafes = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredCafes.map((cafe) => (
-                <HorizontalCafeCard key={cafe.id} cafe={cafe} />
+                <React.Fragment key={cafe.id}>
+                  {/* Mobile: Horizontal Card */}
+                  <div className="block lg:hidden">
+                    <HorizontalCafeCard cafe={cafe} />
+                  </div>
+                  {/* Desktop: Vertical Card */}
+                  <div className="hidden lg:block">
+                    <EnhancedCafeCard cafe={cafe} />
+                  </div>
+                </React.Fragment>
               ))}
             </div>
           )}
