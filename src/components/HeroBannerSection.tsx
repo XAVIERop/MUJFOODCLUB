@@ -96,16 +96,16 @@ const HeroBannerSection: React.FC = () => {
   const getCafeCardImage = (cafeName: string): string => {
     const cafeImages: { [key: string]: string } = {
       'Dialog': '/dialog_card.jpg',
-      'Chatkara': '/chaap_homebanner.png',
-      'CHATKARA': '/chaap_homebanner.png',
-      'Mini Meals': '/minimeals_cardhome.png',
-      'MINI MEALS': '/minimeals_cardhome.png',
+      'Chatkara': '/chatkara_bb.png',
+      'CHATKARA': '/chatkara_bb.png',
+      'Mini Meals': '/minimeals_bb.png',
+      'MINI MEALS': '/minimeals_bb.png',
       'Cook House': '/cookhouse_card.png',
       'COOK HOUSE': '/cookhouse_card.png',
       'Dev Sweets & Snacks': '/devsweets_card.png',
       'DEV SWEETS & SNACKS': '/devsweets_card.png',
       'Taste of India': '/tasteofindia_card.jpg',
-      'Food Court': '/foodcourt_card.jpg',
+      'Food Court': '/cookhouse_bb.png',
       'The Kitchen Curry': '/thekitchencurry_logo.png',
       'The Kitchen & Curry': '/thekitchencurry_logo.png',
       'Havmor': '/havmor_card.jpg',
@@ -124,47 +124,72 @@ const HeroBannerSection: React.FC = () => {
     return cafeImages[cafeName] || cafeImages[cafeName.toUpperCase()] || '/menu_hero.png';
   };
 
-  // Create hero banners from cafe data
+  // Create hero banners from specific cafes
   const createHeroBanners = (): HeroBanner[] => {
-    const defaultBanners: HeroBanner[] = [
+    const specificBanners: HeroBanner[] = [
       {
-        id: 'muj-food-club',
-        title: 'Experience Campus Dining at Its Finest',
-        subtitle: 'Fresh Ingredients, Authentic Flavors, Student-Friendly Prices',
-        description: 'Elevating Campus Dining Experiences. Indulge Your Senses. Crafting Culinary Memories.',
-        ctaText: 'Explore Cafes',
-        ctaAction: 'scroll_to_cafes',
-        backgroundColor: 'bg-gradient-to-r from-purple-600 to-indigo-700',
+        id: 'chatkara-banner',
+        title: 'Discover Chatkara',
+        subtitle: 'Delicious Food',
+        description: 'Fresh ingredients, authentic flavors, student-friendly prices.',
+        ctaText: 'Order Now',
+        ctaAction: 'menu_chatkara',
+        backgroundColor: 'bg-gradient-to-r from-blue-600 to-purple-700',
         textColor: 'text-white',
-        rating: 4.8,
-        ratingCount: 250,
-        features: ['Fresh Ingredients', 'Quick Delivery', 'Student Discounts'],
-        imageUrl: '/img.png'
+        rating: 4.5,
+        ratingCount: 100,
+        features: ['Fresh Food', 'Fast Service', 'Great Prices'],
+        imageUrl: '/chatkara_bb.png',
+        cafeId: 'chatkara'
+      },
+      {
+        id: 'mini-meals-banner',
+        title: 'Discover Mini Meals',
+        subtitle: 'Delicious Food',
+        description: 'Fresh ingredients, authentic flavors, student-friendly prices.',
+        ctaText: 'Order Now',
+        ctaAction: 'menu_mini-meals',
+        backgroundColor: 'bg-gradient-to-r from-blue-600 to-purple-700',
+        textColor: 'text-white',
+        rating: 4.5,
+        ratingCount: 100,
+        features: ['Fresh Food', 'Fast Service', 'Great Prices'],
+        imageUrl: '/minimeals_bb.png',
+        cafeId: 'mini-meals'
+      },
+      {
+        id: 'cook-house-banner',
+        title: 'Discover Cook House',
+        subtitle: 'Delicious Food',
+        description: 'Fresh ingredients, authentic flavors, student-friendly prices.',
+        ctaText: 'Order Now',
+        ctaAction: 'menu_cook-house',
+        backgroundColor: 'bg-gradient-to-r from-blue-600 to-purple-700',
+        textColor: 'text-white',
+        rating: 4.5,
+        ratingCount: 100,
+        features: ['Fresh Food', 'Fast Service', 'Great Prices'],
+        imageUrl: '/cookhouse_bb.png',
+        cafeId: 'cook-house'
+      },
+      {
+        id: 'food-court-banner',
+        title: 'Discover Food Court',
+        subtitle: 'Delicious Food',
+        description: 'Fresh ingredients, authentic flavors, student-friendly prices.',
+        ctaText: 'Order Now',
+        ctaAction: 'menu_food-court',
+        backgroundColor: 'bg-gradient-to-r from-blue-600 to-purple-700',
+        textColor: 'text-white',
+        rating: 4.5,
+        ratingCount: 100,
+        features: ['Fresh Food', 'Fast Service', 'Great Prices'],
+        imageUrl: '/fodcourt_bb.png',
+        cafeId: 'food-court'
       }
     ];
 
-    // Add cafe-specific banners (simplified content)
-    const cafeBanners: HeroBanner[] = cafes.slice(0, 3).map((cafe, index) => {
-      const imageUrl = getCafeCardImage(cafe.name);
-      
-      return {
-        id: `cafe-${cafe.id}`,
-        title: `Discover ${cafe.name}`,
-        subtitle: cafe.type || 'Delicious Food',
-        description: `Fresh ingredients, authentic flavors, student-friendly prices.`,
-        ctaText: 'Order Now',
-        ctaAction: `menu_${cafe.slug || cafe.id}`,
-        backgroundColor: `bg-gradient-to-r from-blue-600 to-purple-700`,
-        textColor: 'text-white',
-        rating: cafe.rating || 4.5,
-        ratingCount: cafe.total_reviews || 100,
-        features: ['Fresh Food', 'Fast Service', 'Great Prices'],
-        imageUrl: imageUrl,
-        cafeId: cafe.id
-      };
-    });
-
-    return [...defaultBanners, ...cafeBanners];
+    return specificBanners;
   };
 
   const heroBanners: HeroBanner[] = createHeroBanners();
@@ -272,151 +297,104 @@ const HeroBannerSection: React.FC = () => {
   }
 
   return (
-    <div className="w-full mb-8 space-y-6">
-      {/* Full-Width Hero Banner */}
-      <div 
-        className={cn(
-          "relative overflow-hidden rounded-xl shadow-lg w-full",
-          currentBanner.backgroundColor,
-          currentBanner.textColor
-        )}
-        style={{
-          backgroundImage: currentBanner.imageUrl 
-            ? `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${currentBanner.imageUrl})`
-            : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
+    <div className="w-full mb-8">
+      {/* Desktop: Side-by-side layout, Mobile: Stacked layout */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Main Hero Banner - Left side on desktop */}
+        <div 
+          className={cn(
+            "relative overflow-hidden rounded-xl shadow-lg flex-1 lg:flex-[2]",
+            currentBanner.backgroundColor,
+            currentBanner.textColor
+          )}
+          style={{
+            backgroundImage: currentBanner.imageUrl 
+              ? `url(${currentBanner.imageUrl})`
+              : undefined,
+            backgroundSize: 'contain',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        >
+          <div className="relative p-6 lg:p-8 h-full min-h-[400px] lg:min-h-[500px]">
+            {/* Navigation Arrows */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handlePrevious}
+              onMouseEnter={() => setIsAutoPlaying(false)}
+              onMouseLeave={() => setIsAutoPlaying(true)}
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/20 w-8 h-8 p-0 z-10"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleNext}
+              onMouseEnter={() => setIsAutoPlaying(false)}
+              onMouseLeave={() => setIsAutoPlaying(true)}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/20 w-8 h-8 p-0 z-10"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
 
-        <div className="relative p-6 lg:p-8">
-          {/* Navigation Arrows */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handlePrevious}
-            onMouseEnter={() => setIsAutoPlaying(false)}
-            onMouseLeave={() => setIsAutoPlaying(true)}
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/20 w-8 h-8 p-0 z-10"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleNext}
-            onMouseEnter={() => setIsAutoPlaying(false)}
-            onMouseLeave={() => setIsAutoPlaying(true)}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/20 w-8 h-8 p-0 z-10"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+            <div className="flex flex-col justify-between h-full">
+              {/* Content */}
+              <div className="text-center lg:text-left">
+              </div>
 
-          <div className="flex flex-col lg:flex-row items-center gap-6 max-w-6xl mx-auto">
-            {/* Content */}
-            <div className="flex-1 text-center lg:text-left">
-              {/* Rating */}
-              {currentBanner.rating && (
-                <div className="flex items-center justify-center lg:justify-start gap-1 mb-3">
-                  <Star className="w-4 h-4 fill-current text-yellow-400" />
-                  <span className="text-sm font-medium">
-                    {currentBanner.rating}★ ({currentBanner.ratingCount?.toLocaleString()}+ Rating)
-                  </span>
-                </div>
-              )}
-
-              {/* Title */}
-              <h2 className="text-2xl lg:text-4xl font-bold mb-2">
-                {currentBanner.title}
-              </h2>
-
-              {/* Subtitle */}
-              <p className="text-lg lg:text-xl opacity-90 mb-3">
-                {currentBanner.subtitle}
-              </p>
-
-              {/* Description */}
-              <p className="text-sm lg:text-base opacity-80 mb-6 max-w-2xl">
-                {currentBanner.description}
-              </p>
-
-              {/* Features */}
-              <div className="flex flex-wrap gap-4 mb-6 justify-center lg:justify-start">
-                {currentBanner.features.map((feature, index) => (
-                  <div key={index} className="flex items-center gap-2 text-sm">
-                    {index === 0 ? (
-                      <Truck className="w-4 h-4" />
-                    ) : (
-                      <CheckCircle className="w-4 h-4" />
+              {/* Navigation Dots - Bottom */}
+              <div className="flex items-center justify-center pb-4 space-x-2">
+                {heroBanners.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleBannerClick(index)}
+                    className={cn(
+                      "w-2 h-2 rounded-full transition-all duration-200",
+                      index === currentBannerIndex
+                        ? "bg-white w-6"
+                        : "bg-white/40 hover:bg-white/60"
                     )}
-                    <span>{feature}</span>
-                  </div>
+                  />
                 ))}
               </div>
-
-              {/* CTA Button */}
-              <Button
-                onClick={() => handleCtaClick(currentBanner.ctaAction)}
-                className="bg-white text-gray-900 hover:bg-white/90 font-semibold px-8 py-4 rounded-lg shadow-lg text-lg"
-                size="lg"
-              >
-                {currentBanner.ctaText}
-              </Button>
             </div>
-
-          </div>
-
-          {/* Navigation Dots */}
-          <div className="flex items-center justify-center mt-6 space-x-2">
-            {heroBanners.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => handleBannerClick(index)}
-                className={cn(
-                  "w-2 h-2 rounded-full transition-all duration-200",
-                  index === currentBannerIndex
-                    ? "bg-white w-6"
-                    : "bg-white/40 hover:bg-white/60"
-                )}
-              />
-            ))}
           </div>
         </div>
-      </div>
 
-      {/* Promotional Cards - Horizontal Row */}
-      <div className="flex flex-wrap justify-center gap-4">
-        {promotionalCards.map((card) => (
-          <div
-            key={card.id}
-            className={cn(
-              "rounded-lg shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer relative overflow-hidden",
-              card.backgroundColor
-            )}
-            style={{
-              width: '300px',
-              height: '150px',
-              backgroundImage: card.imageUrl 
-                ? `url(${card.imageUrl})`
-                : undefined,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
-            }}
-            onClick={() => handleCtaClick(card.ctaAction)}
-          >
-
-            {/* Only show discount badge - no overlay text */}
-            {card.discount && (
-              <div className="absolute top-2 right-2 z-10">
-                <Badge className="bg-red-500 text-white text-xs">
-                  {card.discount}
-                </Badge>
-              </div>
-            )}
-          </div>
-        ))}
+        {/* Promotional Cards - Right side on desktop, stacked vertically */}
+        <div className="flex flex-col gap-4 lg:flex-1">
+          {promotionalCards.map((card) => (
+            <div
+              key={card.id}
+              className={cn(
+                "rounded-lg shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer relative overflow-hidden",
+                card.backgroundColor
+              )}
+              style={{
+                width: '100%',
+                height: '150px',
+                backgroundImage: card.imageUrl 
+                  ? `url(${card.imageUrl})`
+                  : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+              onClick={() => handleCtaClick(card.ctaAction)}
+            >
+              {/* Only show discount badge - no overlay text */}
+              {card.discount && (
+                <div className="absolute top-2 right-2 z-10">
+                  <Badge className="bg-red-500 text-white text-xs">
+                    {card.discount}
+                  </Badge>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

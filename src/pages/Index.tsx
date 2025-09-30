@@ -164,7 +164,7 @@ const Index = () => {
           <section id="cafes" className="pt-4 pb-16 bg-white">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
               {/* Single Section Header */}
-              <div className="mb-8">
+              <div className="mb-8 text-center">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">
                   Explore all cafes nearby!
                 </h2>

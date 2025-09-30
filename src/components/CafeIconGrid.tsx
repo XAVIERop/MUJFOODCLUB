@@ -247,7 +247,7 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
         {/* Scrollable Cafe Icons Container */}
         <div
           ref={scrollContainerRef}
-          className="flex gap-6 px-4 overflow-x-auto scrollbar-hide scroll-smooth"
+          className="flex gap-6 px-4 overflow-x-auto scrollbar-hide scroll-smooth justify-center"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {cafes.map((cafe) => {

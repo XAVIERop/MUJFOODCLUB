@@ -68,7 +68,7 @@ const CafeCategories: React.FC<CafeCategoriesProps> = ({ cafes }) => {
   return (
     <div className="bg-white pt-4 pb-2">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex space-x-4 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex justify-center space-x-4 overflow-x-auto pb-2 scrollbar-hide">
         {categories.map((category) => {
           const categoryInfo = getCategoryInfo(category);
           const isClickable = category !== 'Waffles';

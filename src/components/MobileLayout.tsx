@@ -47,7 +47,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 
       {/* Explore all cafes nearby section */}
       <div className="px-4 py-4 bg-white">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 text-center">
           Explore all cafes nearby!
         </h2>
         {cafes.length > 0 && (
