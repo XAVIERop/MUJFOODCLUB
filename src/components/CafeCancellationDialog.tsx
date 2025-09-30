@@ -6,6 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CafeCancellationDialogProps {
   orderId: string;
@@ -26,6 +28,7 @@ const CafeCancellationDialog: React.FC<CafeCancellationDialogProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Cafe cancellation password - in a real app, this should be configurable per cafe
   const CAFE_CANCELLATION_PASSWORD = 'cafe123';
@@ -60,10 +63,6 @@ const CafeCancellationDialog: React.FC<CafeCancellationDialogProps> = ({
 
     setIsCancelling(true);
     try {
-      // Import supabase here to avoid circular dependencies
-      const { supabase } = await import('@/integrations/supabase/client');
-      const { user } = await import('@/hooks/useAuth').then(module => module.useAuth());
-      
       if (!user?.id) {
         throw new Error('User not authenticated');
       }
