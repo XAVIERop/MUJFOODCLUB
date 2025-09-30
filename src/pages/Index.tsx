@@ -179,7 +179,7 @@ const Index = () => {
 
               {/* Limited Cafe Grid - Show 6 cafes */}
               <div className="cafe-grid">
-                <FeaturedCafeGrid showAll={false} maxCafes={6} cafes={cafes} />
+                <FeaturedCafeGrid showAll={false} maxCafes={6} cafes={cafes} loading={loading} />
               </div>
             </div>
           </section>

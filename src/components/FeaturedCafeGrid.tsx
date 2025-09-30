@@ -23,9 +23,10 @@ interface FeaturedCafeGridProps {
   showAll?: boolean;
   maxCafes?: number;
   cafes: Cafe[]; // Required prop - no fallback
+  loading?: boolean; // Add loading prop
 }
 
-export const FeaturedCafeGrid: React.FC<FeaturedCafeGridProps> = ({ showAll = false, maxCafes = 3, cafes }) => {
+export const FeaturedCafeGrid: React.FC<FeaturedCafeGridProps> = ({ showAll = false, maxCafes = 3, cafes, loading = false }) => {
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
 
@@ -33,6 +34,19 @@ export const FeaturedCafeGrid: React.FC<FeaturedCafeGridProps> = ({ showAll = fa
   console.log('🎯 FeaturedCafeGrid: Received cafes prop:', cafes.length, 'cafes');
   if (cafes.length > 0) {
     console.log('🎯 FeaturedCafeGrid: First 5 cafes from props:', cafes.slice(0, 5).map(c => `${c.name} (Priority: ${c.priority})`));
+  }
+
+  // Show loading state if loading
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
+        <h3 className="text-xl font-semibold text-foreground mb-2">Loading cafes...</h3>
+        <p className="text-muted-foreground">
+          Please wait while we fetch the latest cafes.
+        </p>
+      </div>
+    );
   }
 
   // Limit cafes if not showing all
