@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Heart, ShoppingCart, MapPin, Clock, Star, Plus, Minus, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Filter, Heart, ShoppingCart, MapPin, Clock, Star, Plus, Minus, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -119,38 +119,97 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
     loadBanners();
   }, [cafe?.id]);
 
+  // Get cafe image for header background
+  const getCafeHeaderImage = () => {
+    const cafeImages: { [key: string]: string } = {
+      'CHATKARA': '/chatkara_card.png',
+      'COOK HOUSE': '/cookhouse_card.png',
+      'FOOD COURT': '/foodcourt_card.jpg',
+      'Mini Meals': '/minimeals_cardhome.png',
+      'Punjabi Tadka': '/punjabitadka_card.jpg',
+      'Munch Box': '/munchbox_card.png',
+      'Dev Sweets & Snacks': '/devsweets_card.png',
+      'Taste of India': '/tasteofindia_card.jpg',
+      'Havmor': '/havmor_card.jpg',
+      'Stardom': '/stardom_card.webp',
+      'Waffle Fit & Fresh': '/wafflefitnfresh_card.jpeg',
+      'The Crazy Chef': '/crazychef_logo.png',
+      'Zero Degree Cafe': '/zerodegreecafe_logo.jpg',
+      'Zaika Restaurant': '/zaika_logo.png',
+      'Italian Oven': '/italianoven_logo.png',
+      'The Waffle Co': '/thewaffleco.png',
+      'Soya Chaap Corner': '/chatkara_logo.jpg',
+      'Tea Tradition': '/teatradition_card.jpeg',
+      'China Town': '/china_card.png',
+      'Let\'s Go Live': '/letsgolive_card.jpg'
+    };
+
+    if (cafe?.name && cafeImages[cafe.name]) {
+      return cafeImages[cafe.name];
+    }
+
+    // Fallback to default cafe image
+    return '/chatkara_logo.jpg';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
-      {/* Enhanced Header Section */}
-      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-orange-100 shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          {/* Swiggy-style Cafe Info Card */}
-          <div className="bg-gray-900 rounded-lg p-4 mb-4 text-white">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h1 className="text-2xl font-bold text-white mb-2">{cafe?.name}</h1>
-                <div className="flex items-center gap-4 text-sm text-gray-300">
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    <span>{cafe?.location}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    <span>{cafe?.hours}</span>
-                  </div>
-                </div>
+      {/* Image Header Section - Like Kichi Coffee Design */}
+      <div className="relative h-64 md:h-80 overflow-hidden">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url(${getCafeHeaderImage()})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        />
+        
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-black/40" />
+        
+        {/* Content Overlay */}
+        <div className="relative z-10 h-full flex flex-col justify-between p-6">
+          {/* Top Row - Back Button and Bookmark */}
+          <div className="flex items-center justify-between">
+            <button 
+              onClick={() => window.history.back()}
+              className="bg-white/20 backdrop-blur-sm rounded-full p-2 hover:bg-white/30 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-white" />
+            </button>
+            <button className="bg-white/20 backdrop-blur-sm rounded-full p-2 hover:bg-white/30 transition-colors">
+              <Heart className="w-5 h-5 text-white" />
+            </button>
+          </div>
+          
+          {/* Bottom Row - Cafe Info */}
+          <div className="space-y-3">
+            <h1 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">
+              {cafe?.name}
+            </h1>
+            <div className="flex items-center gap-1 text-white/90">
+              <MapPin className="w-4 h-4" />
+              <span className="text-sm">{cafe?.location}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
+                <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                <span className="text-sm font-medium text-white">
+                  {cafe?.average_rating ? cafe.average_rating.toFixed(1) : '4.5'} ({cafe?.total_ratings || 1256} Reviews)
+                </span>
               </div>
-              {/* Rating display hidden for now */}
-              {false && cafe?.average_rating && cafe?.total_ratings && cafe.total_ratings > 0 && (
-                <div className="flex items-center gap-1 bg-green-600 px-2 py-1 rounded">
-                  <Star className="w-3 h-3 text-white fill-current" />
-                  <span className="text-xs font-medium text-white">
-                    {cafe.average_rating.toFixed(1)}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
+        </div>
+        
+        {/* Curved Bottom Edge */}
+        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent" />
+      </div>
+
+      {/* Search and Filter Section */}
+      <div className="bg-white px-4 py-4 -mt-2 relative z-20">
 
           {/* Search Bar */}
           <div className="relative mb-4">
@@ -191,7 +250,6 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
             ))}
           </div>
         </div>
-      </div>
 
       <div className="container mx-auto px-4 py-6">
         <div className="flex gap-6">

@@ -206,7 +206,7 @@ const SearchBar = () => {
   };
 
   return (
-    <div className="bg-white px-4 py-3 border-b border-gray-100 relative">
+    <div className="bg-white px-4 py-3 relative rounded-b-3xl">
       <form onSubmit={handleSearch} className="flex items-center space-x-2">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />

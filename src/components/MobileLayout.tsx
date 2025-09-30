@@ -34,9 +34,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     <div className="min-h-screen bg-gray-50">
 
       {/* Search Bar - Same functionality as desktop */}
-      <div className="px-4 py-3 bg-white">
-        <SearchBar />
-      </div>
+      <SearchBar />
 
       {/* What's on your mind? section */}
       <CafeCategories cafes={cafes} />

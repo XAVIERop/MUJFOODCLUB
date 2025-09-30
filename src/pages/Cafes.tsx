@@ -8,7 +8,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import Header from '../components/Header';
-import { EnhancedCafeCard } from '../components/EnhancedCafeCard';
+import { HorizontalCafeCard } from '../components/HorizontalCafeCard';
 import CafeIconGrid from '../components/CafeIconGrid';
 import CafeCategories from '../components/CafeCategories';
 import MobileLayoutWrapper from '../components/MobileLayoutWrapper';
@@ -250,16 +250,26 @@ const Cafes = () => {
       mobileChildren={
         <div className="min-h-screen bg-white pb-32">
           <div className="container mx-auto px-4 pt-4">
-        {/* Search Bar */}
+        {/* Search Bar with Favorites Button */}
         <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search cafes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 border-gray-200 focus:border-primary focus:ring-primary"
-            />
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search cafes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 border-gray-200 focus:border-primary focus:ring-primary"
+              />
+            </div>
+            {/* Favorites Button - Icon Only */}
+            <Button
+              variant={showFavoritesOnly ? "default" : "outline"}
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className="h-10 w-10 p-0"
+            >
+              <Heart className={`w-4 h-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+            </Button>
           </div>
         </div>
         
@@ -298,33 +308,12 @@ const Cafes = () => {
           </div>
         )}
 
-        {/* Cafe Icon Grid */}
-        <div className="mb-6">
+        {/* Cafe Icon Grid - Hidden on Mobile */}
+        <div className="mb-6 hidden">
           <CafeIconGrid cafes={cafes} />
         </div>
 
-        {/* Favorites & Clear Filters */}
-        <div className="flex flex-row gap-4 mb-4">
-          {/* Favorites Toggle */}
-          <Button
-            variant={showFavoritesOnly ? "default" : "outline"}
-            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            className="flex-1 h-12 font-medium"
-          >
-            <Heart className={`w-4 h-4 mr-2 ${showFavoritesOnly ? 'fill-current' : ''}`} />
-            {showFavoritesOnly ? 'All Cafes' : 'Favorites Only'}
-          </Button>
-
-          {/* Clear Filters */}
-          <Button
-            variant="outline"
-            onClick={clearFilters}
-            className="flex-1 h-12 font-medium border-gray-200 hover:border-primary hover:text-primary"
-          >
-            <X className="w-4 h-4 mr-2" />
-            Clear Filters
-          </Button>
-        </div>
+        {/* Clear Filters - Removed */}
 
         {/* Results Count */}
         <div className="mb-6">
@@ -348,7 +337,7 @@ const Cafes = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCafes.map((cafe) => (
-              <EnhancedCafeCard key={cafe.id} cafe={cafe} />
+              <HorizontalCafeCard key={cafe.id} cafe={cafe} />
             ))}
           </div>
         )}
@@ -458,7 +447,7 @@ const Cafes = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredCafes.map((cafe) => (
-                <EnhancedCafeCard key={cafe.id} cafe={cafe} />
+                <HorizontalCafeCard key={cafe.id} cafe={cafe} />
               ))}
             </div>
           )}

@@ -142,10 +142,10 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
   ];
 
   return (
-    <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+    <header className={`w-full transition-all duration-300 ${
       isMobile 
-        ? 'border-b border-gray-200 bg-white text-foreground shadow-xl shadow-gray-300/60' // More visible shadow for mobile navbar
-        : 'border-b border-gray-200 bg-white text-foreground shadow-xl shadow-gray-300/60' // More visible shadow for desktop navbar too
+        ? 'bg-white text-gray-900 shadow-xl shadow-gray-300/60' // White background for mobile navbar - not sticky, no border
+        : 'sticky top-0 z-50 border-b border-gray-200 bg-white text-foreground shadow-xl shadow-gray-300/60' // Keep sticky for desktop navbar
     } m-0`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
@@ -303,7 +303,7 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
             {/* Mobile Menu */}
             <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" className="md:hidden text-foreground hover:text-foreground hover:bg-muted">
+                <Button variant="ghost" size="sm" className="hidden text-foreground hover:text-foreground hover:bg-muted">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle Menu</span>
                 </Button>

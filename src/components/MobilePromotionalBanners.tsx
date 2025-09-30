@@ -14,74 +14,33 @@ interface PromotionalBanner {
   badge?: string;
   badgeIcon?: string;
   cafeId: string;
+  backgroundImage?: string;
 }
 
 const PROMOTIONAL_BANNERS: PromotionalBanner[] = [
   {
     id: 'chatkara',
-    title: 'Chatkara',
-    subtitle: 'Authentic North Indian flavors',
-    buttonText: 'ORDER NOW',
+    title: '',
+    subtitle: '',
+    buttonText: '',
     backgroundColor: 'bg-orange-600',
     textColor: 'text-white',
-    badge: 'POPULAR',
-    badgeIcon: '🔥',
+    badge: '',
+    badgeIcon: '',
     cafeId: 'CHATKARA',
-  },
-  {
-    id: 'food-court',
-    title: 'Food Court',
-    subtitle: 'Variety of cuisines under one roof',
-    buttonText: 'ORDER NOW',
-    backgroundColor: 'bg-green-600',
-    textColor: 'text-white',
-    badge: 'MULTI-CUISINE',
-    badgeIcon: '🍽️',
-    cafeId: 'Food Court',
-  },
-  {
-    id: 'mini-meals',
-    title: 'Mini Meals',
-    subtitle: 'Quick bites & light meals',
-    buttonText: 'ORDER NOW',
-    backgroundColor: 'bg-purple-600',
-    textColor: 'text-white',
-    badge: 'QUICK',
-    badgeIcon: '⚡',
-    cafeId: 'Mini Meals',
-  },
-  {
-    id: 'punjabi-tadka',
-    title: 'Punjabi Tadka',
-    subtitle: 'Spicy Punjabi delights',
-    buttonText: 'ORDER NOW',
-    backgroundColor: 'bg-red-600',
-    textColor: 'text-white',
-    badge: 'SPICY',
-    badgeIcon: '🌶️',
-    cafeId: 'Punjabi Tadka',
-  },
-  {
-    id: 'munch-box',
-    title: 'Munch Box',
-    subtitle: 'Snacks & beverages',
-    buttonText: 'ORDER NOW',
-    backgroundColor: 'bg-blue-600',
-    textColor: 'text-white',
-    badge: 'SNACKS',
-    badgeIcon: '🍿',
-    cafeId: 'Munch Box',
+    backgroundImage: '/chatkara_offer.jpeg',
   },
   {
     id: 'cook-house',
-    title: 'Cook House',
-    subtitle: 'Home-style cooking',
-    buttonText: 'ORDER NOW',
+    title: '',
+    subtitle: '',
+    buttonText: '',
     backgroundColor: 'bg-yellow-600',
     textColor: 'text-white',
-    badge: 'HOMESTYLE',
-    badgeIcon: '🏠',
+    badge: '',
+    badgeIcon: '',
     cafeId: 'Cook House',
+    backgroundImage: '/cookhouse_offer.jpeg',
   },
 ];
 
@@ -122,7 +81,7 @@ const MobilePromotionalBanners: React.FC = () => {
         setCurrentIndex(nextIndex);
         
         // Smooth scroll to next banner
-        const bannerWidth = 260 + 16; // banner width + gap
+        const bannerWidth = 320 + 16; // banner width + gap
         scrollRef.current.scrollTo({
           left: nextIndex * bannerWidth,
           behavior: 'smooth'
@@ -144,10 +103,21 @@ const MobilePromotionalBanners: React.FC = () => {
         {PROMOTIONAL_BANNERS.map((banner) => (
           <div
             key={banner.id}
-            className={`relative rounded-xl overflow-hidden ${banner.backgroundColor} w-[260px] h-32 flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity`}
+            className={`relative rounded-xl overflow-hidden ${banner.backgroundColor} w-[320px] h-32 flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity`}
+            style={banner.backgroundImage ? {
+              backgroundImage: `url(${banner.backgroundImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat'
+            } : {}}
             onClick={() => handleBannerClick(banner.cafeId)}
           >
-            {/* Badge */}
+            {/* Dark overlay for background images - Removed for offer banners */}
+            {banner.backgroundImage && banner.id !== 'chatkara' && banner.id !== 'cook-house' && (
+              <div className="absolute inset-0 bg-black/40" />
+            )}
+            
+            {/* Badge - Only show if badge exists */}
             {banner.badge && (
               <div className="absolute top-2 right-2 z-10">
                 <Badge className="bg-white/20 text-white border-white/30 text-xs px-2 py-1">
@@ -157,28 +127,32 @@ const MobilePromotionalBanners: React.FC = () => {
               </div>
             )}
 
-            {/* Content */}
-            <div className="p-3 h-full flex flex-col justify-between">
-              <div>
-                <h3 className={`text-base font-bold ${banner.textColor} mb-1`}>
-                  {banner.title}
-                </h3>
-                <p className={`text-xs ${banner.textColor} opacity-90 mb-2`}>
-                  {banner.subtitle}
-                </p>
+            {/* Content - Only show if title exists */}
+            {banner.title && (
+              <div className="relative z-10 p-3 h-full flex flex-col justify-between">
+                <div>
+                  <h3 className={`text-base font-bold ${banner.textColor} mb-1`}>
+                    {banner.title}
+                  </h3>
+                  <p className={`text-xs ${banner.textColor} opacity-90 mb-2`}>
+                    {banner.subtitle}
+                  </p>
+                </div>
+                
+                {banner.buttonText && (
+                  <Button
+                    size="sm"
+                    className="bg-white text-gray-900 hover:bg-gray-100 font-medium text-xs py-1 px-3 h-auto"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleBannerClick(banner.cafeId);
+                    }}
+                  >
+                    {banner.buttonText}
+                  </Button>
+                )}
               </div>
-              
-              <Button
-                size="sm"
-                className="bg-white text-gray-900 hover:bg-gray-100 font-medium text-xs py-1 px-3 h-auto"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleBannerClick(banner.cafeId);
-                }}
-              >
-                {banner.buttonText}
-              </Button>
-            </div>
+            )}
           </div>
         ))}
       </div>

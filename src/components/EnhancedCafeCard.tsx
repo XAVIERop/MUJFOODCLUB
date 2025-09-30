@@ -166,7 +166,6 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
         </div>
       )}
 
-
       {/* Closed Cafe Overlay */}
       {!cafe.accepting_orders && (
         <div className="absolute inset-0 bg-black/10 z-10 pointer-events-none" />
@@ -321,7 +320,6 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               }
             </Button>
           </div>
-
 
           {/* Contact Actions */}
           <div className="grid grid-cols-2 gap-2">

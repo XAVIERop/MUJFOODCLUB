@@ -453,7 +453,10 @@ const MenuModern = () => {
 
   return (
     <div className="min-h-screen pb-24 lg:pb-8">
-      <Header />
+      {/* Header hidden on mobile, shown on desktop */}
+      <div className="hidden lg:block">
+        <Header />
+      </div>
       <ModernMenuLayout
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
