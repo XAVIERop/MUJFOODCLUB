@@ -173,8 +173,8 @@ const Checkout = () => {
       return;
     }
 
-    // TEMPORARY RESTRICTION: Only Cook House and Chatkara accepting orders
-    if (cafe.name !== 'COOK HOUSE' && cafe.name !== 'CHATKARA') {
+    // Check if cafe is accepting orders from database
+    if (!cafe.accepting_orders) {
       setError('This cafe is temporarily not accepting orders. They will resume service in the next 2 days.');
       return;
     }
