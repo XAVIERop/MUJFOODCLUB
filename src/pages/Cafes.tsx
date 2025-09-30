@@ -245,10 +245,11 @@ const Cafes = () => {
   }
 
   return (
-    <MobileLayoutWrapper
-      selectedBlock={selectedBlock}
-      onBlockChange={setSelectedBlock}
-      mobileChildren={
+    <div className="block lg:hidden">
+      <MobileLayoutWrapper
+        selectedBlock={selectedBlock}
+        onBlockChange={setSelectedBlock}
+        mobileChildren={
         <div className="min-h-screen bg-white pb-32">
           <div className="container mx-auto px-4 pt-4">
         {/* Search Bar with Favorites Button */}
@@ -473,6 +474,7 @@ const Cafes = () => {
         </div>
       </div>
     </MobileLayoutWrapper>
+    </div>
   );
 };
 
