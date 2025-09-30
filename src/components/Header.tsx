@@ -138,7 +138,7 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
 
   const navItems = [
     { href: "/", label: "Home", icon: Home },
-    { href: "/cafes", label: "Cafes", icon: Coffee },
+    // Cafes removed from desktop navigation
   ];
 
   return (
