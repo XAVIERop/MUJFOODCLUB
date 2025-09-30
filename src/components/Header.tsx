@@ -374,14 +374,17 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
                     <span className="text-base">Home</span>
                   </a>
                   
-                  <a
-                    href="/cafes"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center space-x-3 text-muted-foreground hover:text-primary transition-smooth p-2 rounded-lg hover:bg-muted/50"
-                  >
-                    <Coffee className="w-5 h-5" />
-                    <span className="text-base">Cafes</span>
-                  </a>
+                  {/* Cafes link - hidden on desktop, visible on mobile */}
+                  <div className="block lg:hidden">
+                    <a
+                      href="/cafes"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center space-x-3 text-muted-foreground hover:text-primary transition-smooth p-2 rounded-lg hover:bg-muted/50"
+                    >
+                      <Coffee className="w-5 h-5" />
+                      <span className="text-base">Cafes</span>
+                    </a>
+                  </div>
                   
                   
                   {/* User Actions - Simplified */}
