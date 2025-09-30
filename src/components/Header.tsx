@@ -191,21 +191,9 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
             )}
           </div>
 
-          {/* Center Section - Navigation */}
+          {/* Center Section - Navigation - Hidden on desktop */}
           <nav className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  className="flex items-center space-x-2 transition-smooth story-link text-muted-foreground hover:text-primary"
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                </a>
-              );
-            })}
+            {/* Desktop navigation items hidden */}
           </nav>
 
           {/* Right Section - User Actions */}
