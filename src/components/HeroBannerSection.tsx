@@ -219,7 +219,7 @@ const HeroBannerSection: React.FC = () => {
       title: 'Authentic Indian',
       description: 'Biryani and curry specials',
       backgroundColor: 'bg-gradient-to-br from-orange-400 to-yellow-500',
-      imageUrl: '/indianfood.png',
+      imageUrl: '/authenticindian.png',
       ctaText: 'Order Now →',
       ctaAction: 'navigate_to_indian'
     }
@@ -254,6 +254,12 @@ const HeroBannerSection: React.FC = () => {
 
   const handleBannerClick = (index: number) => {
     setCurrentBannerIndex(index);
+    
+    // Navigate to respective cafe based on banner index
+    const cafeRoutes = ['chatkara', 'mini-meals', 'cook-house', 'food-court'];
+    if (cafeRoutes[index]) {
+      window.location.href = `/menu/${cafeRoutes[index]}`;
+    }
   };
 
   const handleCtaClick = (action: string) => {
@@ -301,100 +307,110 @@ const HeroBannerSection: React.FC = () => {
       {/* Desktop: Side-by-side layout, Mobile: Stacked layout */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Main Hero Banner - Left side on desktop */}
-        <div 
-          className={cn(
-            "relative overflow-hidden rounded-xl shadow-lg flex-1 lg:flex-[2]",
-            currentBanner.backgroundColor,
-            currentBanner.textColor
-          )}
-          style={{
-            backgroundImage: currentBanner.imageUrl 
+      <div 
+        className={cn(
+            "relative overflow-hidden rounded-xl shadow-lg flex-1 lg:flex-[2] cursor-pointer",
+          currentBanner.backgroundColor,
+          currentBanner.textColor
+        )}
+        style={{
+          backgroundImage: currentBanner.imageUrl 
               ? `url(${currentBanner.imageUrl})`
-              : undefined,
+            : undefined,
             backgroundSize: 'contain',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        >
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+          onClick={() => handleBannerClick(currentBannerIndex)}
+      >
           <div className="relative p-6 lg:p-8 h-full min-h-[400px] lg:min-h-[500px]">
-            {/* Navigation Arrows */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handlePrevious}
-              onMouseEnter={() => setIsAutoPlaying(false)}
-              onMouseLeave={() => setIsAutoPlaying(true)}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/20 w-8 h-8 p-0 z-10"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleNext}
-              onMouseEnter={() => setIsAutoPlaying(false)}
-              onMouseLeave={() => setIsAutoPlaying(true)}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/20 w-8 h-8 p-0 z-10"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+          {/* Navigation Arrows */}
+          <Button
+            variant="ghost"
+            size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrevious();
+              }}
+            onMouseEnter={() => setIsAutoPlaying(false)}
+            onMouseLeave={() => setIsAutoPlaying(true)}
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/20 w-8 h-8 p-0 z-10"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNext();
+              }}
+            onMouseEnter={() => setIsAutoPlaying(false)}
+            onMouseLeave={() => setIsAutoPlaying(true)}
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/20 w-8 h-8 p-0 z-10"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
 
             <div className="flex flex-col justify-between h-full">
-              {/* Content */}
+            {/* Content */}
               <div className="text-center lg:text-left">
               </div>
 
               {/* Navigation Dots - Bottom */}
               <div className="flex items-center justify-center pb-4 space-x-2">
-                {heroBanners.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleBannerClick(index)}
-                    className={cn(
-                      "w-2 h-2 rounded-full transition-all duration-200",
-                      index === currentBannerIndex
-                        ? "bg-white w-6"
-                        : "bg-white/40 hover:bg-white/60"
-                    )}
-                  />
-                ))}
+            {heroBanners.map((_, index) => (
+              <button
+                key={index}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBannerClick(index);
+                }}
+                className={cn(
+                  "w-2 h-2 rounded-full transition-all duration-200",
+                  index === currentBannerIndex
+                    ? "bg-white w-6"
+                    : "bg-white/40 hover:bg-white/60"
+                )}
+              />
+            ))}
               </div>
-            </div>
           </div>
         </div>
+      </div>
 
         {/* Promotional Cards - Right side on desktop, stacked vertically */}
         <div className="flex flex-col gap-4 lg:flex-1">
-          {promotionalCards.map((card) => (
-            <div
-              key={card.id}
-              className={cn(
+        {promotionalCards.map((card) => (
+          <div
+            key={card.id}
+            className={cn(
                 "rounded-lg shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer relative overflow-hidden",
-                card.backgroundColor
-              )}
-              style={{
+              card.backgroundColor
+            )}
+            style={{
                 width: '100%',
                 height: '150px',
-                backgroundImage: card.imageUrl 
+              backgroundImage: card.imageUrl 
                   ? `url(${card.imageUrl})`
-                  : undefined,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
-              }}
-              onClick={() => handleCtaClick(card.ctaAction)}
-            >
+                : undefined,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat'
+            }}
+            onClick={() => handleCtaClick(card.ctaAction)}
+          >
               {/* Only show discount badge - no overlay text */}
-              {card.discount && (
+                {card.discount && (
                 <div className="absolute top-2 right-2 z-10">
                   <Badge className="bg-red-500 text-white text-xs">
                     {card.discount}
                   </Badge>
-                </div>
+              </div>
               )}
             </div>
           ))}
-        </div>
+          </div>
       </div>
     </div>
   );

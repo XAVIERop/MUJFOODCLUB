@@ -456,7 +456,7 @@ const Auth = () => {
           <div 
             className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-90"
             style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='400' height='300' viewBox='0 0 400 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='foodGradient' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23f97316;stop-opacity:0.8' /%3E%3Cstop offset='50%25' style='stop-color:%23dc2626;stop-opacity:0.6' /%3E%3Cstop offset='100%25' style='stop-color:%23ea580c;stop-opacity:0.8' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23foodGradient)'/%3E%3Crect x='50' y='80' width='80' height='60' rx='8' fill='%23ffffff' opacity='0.9'/%3E%3Crect x='150' y='70' width='80' height='60' rx='8' fill='%23ffffff' opacity='0.8'/%3E%3Crect x='250' y='75' width='80' height='60' rx='8' fill='%23ffffff' opacity='0.7'/%3E%3Crect x='100' y='160' width='80' height='60' rx='8' fill='%23ffffff' opacity='0.6'/%3E%3Crect x='200' y='150' width='80' height='60' rx='8' fill='%23ffffff' opacity='0.5'/%3E%3C/svg%3E")`
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='400' height='300' viewBox='0 0 400 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='foodGradient' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23f97316;stop-opacity:0.8' /%3E%3Cstop offset='50%25' style='stop-color:%23dc2626;stop-opacity:0.6' /%3E%3Cstop offset='100%25' style='stop-color:%23ea580c;stop-opacity:0.8' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23foodGradient)'/%3E%3C/svg%3E")`
             }}
           ></div>
           
