@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Search, Star, Plus, Heart, Filter, ArrowUpDown, ArrowLeft, Clock, MapPin, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
+import { useCart } from '@/hooks/useCart';
 // import { supabase } from '@/integrations/supabase/client';
 
 interface GroceryProduct {
@@ -33,6 +34,7 @@ interface GroceryCategory {
 
 const Grocery: React.FC = () => {
   const navigate = useNavigate();
+  const { addToCart, setCafe } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [products, setProducts] = useState<GroceryProduct[]>([]);
@@ -391,7 +393,30 @@ const Grocery: React.FC = () => {
   });
 
   const handleAddToCart = (product: GroceryProduct) => {
-    // TODO: Implement add to cart functionality
+    // Set grocery store as the current cafe
+    const groceryStore = {
+      id: 'grocery-store',
+      name: 'Campus Grocery Store',
+      type: 'grocery',
+      location: 'B1 Ground Floor',
+      accepting_orders: true
+    };
+    
+    // Set the cafe context
+    setCafe(groceryStore);
+    
+    // Add product to cart using existing cart system
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      description: `${product.brand} - ${product.unit}`,
+      category: product.category,
+      image_url: product.image,
+      is_available: product.inStock
+    };
+    
+    addToCart(cartItem, 1, '');
     console.log('Added to cart:', product.name);
   };
 
