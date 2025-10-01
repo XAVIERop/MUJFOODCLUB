@@ -421,13 +421,6 @@ const Grocery: React.FC = () => {
       
       addToCart(cartItem, 1, '');
       
-      // Show success toast
-      toast({
-        title: "Added to Cart",
-        description: `${product.name} has been added to your cart`,
-        duration: 2000,
-      });
-      
       console.log('Added to cart:', product.name);
     } catch (error) {
       console.error('Error adding to cart:', error);
