@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { QrCode, User, LogOut, Settings, Menu, Home, Coffee, Utensils, Bell, Receipt, Store, Package, Heart, MapPin, ChevronDown } from 'lucide-react';
+import { QrCode, User, LogOut, Settings, Menu, Home, Coffee, Utensils, Bell, Receipt, Store, Package, Heart, MapPin, ChevronDown, ShoppingCart } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -191,9 +191,22 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
             )}
           </div>
 
-          {/* Center Section - Navigation - Hidden on desktop */}
+          {/* Center Section - Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            {/* Desktop navigation items hidden */}
+            <a
+              href="/cafes"
+              className="flex items-center space-x-2 transition-smooth story-link text-muted-foreground hover:text-primary"
+            >
+              <Store className="w-4 h-4" />
+              <span>Food</span>
+            </a>
+            <a
+              href="/grocery"
+              className="flex items-center space-x-2 transition-smooth story-link text-muted-foreground hover:text-primary"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span>Grocery</span>
+            </a>
           </nav>
 
           {/* Right Section - User Actions */}

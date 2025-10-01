@@ -10,8 +10,8 @@ const MobileFloatingCart: React.FC = () => {
   const itemCount = getItemCount();
   const totalAmount = getTotalAmount();
 
-  // Don't render if no items or not on a menu page
-  if (itemCount === 0 || !location.pathname.startsWith('/menu/')) return null;
+  // Don't render if no items or not on a menu/grocery page
+  if (itemCount === 0 || (!location.pathname.startsWith('/menu/') && !location.pathname.startsWith('/grocery'))) return null;
 
   const handleViewCart = () => {
     // Navigate to checkout with cart data, just like desktop
@@ -30,7 +30,7 @@ const MobileFloatingCart: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 bg-green-600 text-white p-3 rounded-lg shadow-lg z-40 lg:hidden">
+    <div className="fixed bottom-20 left-4 right-4 bg-green-600 text-white p-3 rounded-lg shadow-lg z-[60]">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <span className="font-medium text-sm">

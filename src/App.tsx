@@ -33,6 +33,8 @@ const OrderTracking = lazy(() => import("./pages/OrderTracking"));
 const MyOrders = lazy(() => import("./pages/MyOrders"));
 const OrderAnalyticsPage = lazy(() => import("./pages/OrderAnalyticsPage"));
 const Cafes = lazy(() => import("./pages/Cafes"));
+const Grocery = lazy(() => import("./pages/Grocery"));
+const GroceryCategory = lazy(() => import("./pages/GroceryCategory"));
 const QRCodePage = lazy(() => import("./pages/QRCodePage"));
 const Profile = lazy(() => import("./pages/Profile"));
 const CafeDashboard = lazy(() => import("./pages/CafeDashboard"));
@@ -67,6 +69,8 @@ const App = () => (
                       <Route path="/orders" element={<MyOrders />} />
                       <Route path="/order-analytics" element={<OrderAnalyticsPage />} />
                       <Route path="/cafes" element={<Cafes />} />
+                      <Route path="/grocery" element={<Grocery />} />
+                      <Route path="/grocery/category/:categoryId" element={<GroceryCategory />} />
                       {/* <Route path="/rewards" element={<CafeRewards />} /> */} {/* Disabled for simplified version */}
                       <Route path="/qr-code" element={<QRCodePage />} />
                       <Route path="/profile" element={<Profile />} />

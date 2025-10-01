@@ -561,11 +561,11 @@ class DirectPrinterService {
               </div>
               <div class="info-row">
                 <span>MUJ Food Club Discount:</span>
-                <span>-${Math.round(orderData.subtotal * 0.05)}</span>
+                <span>-${Math.round(orderData.subtotal * 0.10)}</span>
               </div>
               <div class="info-row" style="font-size: 12px; margin-top: 1mm; border-top: 1px solid #000; padding-top: 0.5mm;">
                 <span>Grand Total:</span>
-                <span>${Math.round(orderData.subtotal + 10 - orderData.subtotal * 0.05)}rs</span>
+                <span>${Math.round(orderData.subtotal + 10 - orderData.subtotal * 0.10)}rs</span>
               </div>
             </div>
             

@@ -415,13 +415,13 @@ MUJFOODCLUB!`;
     const isCookHouse = cafe_name?.toLowerCase().includes('cook house') || 
                         cafe_name === 'COOK HOUSE' ||
                         cafe_name?.toLowerCase() === 'cook house';
-    
-    // Calculate MUJ FOOD CLUB discount (5% on subtotal for Chatkara and Cook House)
-    const isEligibleForDiscount = isChatkara || isCookHouse;
-    const mujFoodClubDiscount = isEligibleForDiscount ? subtotal * 0.05 : 0;
     const isMiniMeals = cafe_name?.toLowerCase().includes('mini meals') || 
                         cafe_name === 'MINI MEALS' ||
                         cafe_name?.toLowerCase() === 'mini meals';
+    
+    // Calculate MUJ FOOD CLUB discount (10% on subtotal for Chatkara, Cook House, and Mini Meals)
+    const isEligibleForDiscount = isChatkara || isCookHouse || isMiniMeals;
+    const mujFoodClubDiscount = isEligibleForDiscount ? subtotal * 0.10 : 0;
     const isFoodCourt = cafe_name?.toLowerCase().includes('food court') || 
                         cafe_name === 'FOOD COURT' ||
                         cafe_name?.toLowerCase() === 'food court';
@@ -541,7 +541,7 @@ MUJFOODCLUB!`;
       
       // Show MUJ FOOD CLUB discount if applicable
       if (mujFoodClubDiscount > 0) {
-        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (5%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
+        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (10%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
       }
       
       receipt += `\n    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
@@ -568,7 +568,7 @@ MUJFOODCLUB!`;
       
       // Show MUJ FOOD CLUB discount if applicable
       if (mujFoodClubDiscount > 0) {
-        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (5%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
+        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (10%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
       }
       
       receipt += `\n    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
@@ -595,7 +595,7 @@ MUJFOODCLUB!`;
       
       // Show MUJ FOOD CLUB discount if applicable
       if (mujFoodClubDiscount > 0) {
-        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (5%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
+        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (10%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
       }
       
       receipt += `\n    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00

@@ -1180,8 +1180,8 @@ const POSDashboard = () => {
                   <div style="font-weight: bold;">Total Qty: ${orderItems.reduce((sum, item) => sum + item.quantity, 0)}</div>
                   <div style="font-weight: bold;">Sub Total: ${orderData.total_amount.toFixed(0)}</div>
                   <div style="font-weight: bold;">Delivery Charge: +10</div>
-                  <div style="font-weight: bold;">MUJ Food Club Discount: -${(orderData.total_amount * 0.05).toFixed(0)}</div>
-                  <div style="font-weight: bold; font-size: 16px; margin-top: 8px;">Grand Total: ${(orderData.total_amount + 10 - orderData.total_amount * 0.05).toFixed(0)}rs</div>
+                  <div style="font-weight: bold;">MUJ Food Club Discount: -${(orderData.total_amount * 0.10).toFixed(0)}</div>
+                  <div style="font-weight: bold; font-size: 16px; margin-top: 8px;">Grand Total: ${(orderData.total_amount + 10 - orderData.total_amount * 0.10).toFixed(0)}rs</div>
                 </div>
                 
                 <div class="footer">
