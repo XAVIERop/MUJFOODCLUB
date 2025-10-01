@@ -53,6 +53,7 @@ const HeroBannerSection: React.FC = () => {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(true);
+  const [preloadedImages, setPreloadedImages] = useState<Set<string>>(new Set());
 
   // Fetch cafes data
   useEffect(() => {
@@ -139,7 +140,7 @@ const HeroBannerSection: React.FC = () => {
         rating: 4.5,
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
-        imageUrl: '/chatkara_bb.png',
+        imageUrl: '/optimized_images/chatkara_bb.webp',
         cafeId: 'chatkara'
       },
       {
@@ -154,7 +155,7 @@ const HeroBannerSection: React.FC = () => {
         rating: 4.5,
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
-        imageUrl: '/minimeals_bb.png',
+        imageUrl: '/optimized_images/minimeals_bb.webp',
         cafeId: 'mini-meals'
       },
       {
@@ -169,7 +170,7 @@ const HeroBannerSection: React.FC = () => {
         rating: 4.5,
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
-        imageUrl: '/minimeals_bbb.png',
+        imageUrl: '/optimized_images/minimeals_bbb.webp',
         cafeId: 'mini-meals'
       },
       {
@@ -184,7 +185,7 @@ const HeroBannerSection: React.FC = () => {
         rating: 4.5,
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
-        imageUrl: '/cookhouse_bb.png',
+        imageUrl: '/optimized_images/cookhouse_bb.webp',
         cafeId: 'cook-house'
       },
       {
@@ -199,7 +200,7 @@ const HeroBannerSection: React.FC = () => {
         rating: 4.5,
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
-        imageUrl: '/fodcourt_bb.png',
+        imageUrl: '/optimized_images/fodcourt_bb.webp',
         cafeId: 'food-court'
       }
     ];
@@ -208,6 +209,24 @@ const HeroBannerSection: React.FC = () => {
   };
 
   const heroBanners: HeroBanner[] = createHeroBanners();
+
+  // Preload next banner image
+  useEffect(() => {
+    const preloadNextImage = () => {
+      const nextIndex = (currentBannerIndex + 1) % heroBanners.length;
+      const nextBanner = heroBanners[nextIndex];
+      
+      if (nextBanner?.imageUrl && !preloadedImages.has(nextBanner.imageUrl)) {
+        const img = new Image();
+        img.onload = () => {
+          setPreloadedImages(prev => new Set([...prev, nextBanner.imageUrl!]));
+        };
+        img.src = nextBanner.imageUrl;
+      }
+    };
+
+    preloadNextImage();
+  }, [currentBannerIndex, heroBanners, preloadedImages]);
 
   // Promotional cards data with background images
   const promotionalCards: PromotionalCard[] = [
@@ -328,16 +347,21 @@ const HeroBannerSection: React.FC = () => {
           currentBanner.backgroundColor,
           currentBanner.textColor
         )}
-        style={{
-          backgroundImage: currentBanner.imageUrl 
-              ? `url(${currentBanner.imageUrl})`
-            : undefined,
-            backgroundSize: 'contain',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
+               style={{
+                 backgroundImage: currentBanner.imageUrl 
+                   ? `url(${currentBanner.imageUrl})`
+                   : undefined,
+                 backgroundSize: 'contain',
+                 backgroundPosition: 'center',
+                 backgroundRepeat: 'no-repeat'
+               }}
+               loading="lazy"
           onClick={() => handleBannerClick(currentBannerIndex)}
       >
+          {/* Loading skeleton for banner image */}
+          {!currentBanner.imageUrl && (
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse" />
+          )}
           <div className="relative p-6 lg:p-8 h-full min-h-[400px] lg:min-h-[500px]">
           {/* Navigation Arrows */}
           <Button
