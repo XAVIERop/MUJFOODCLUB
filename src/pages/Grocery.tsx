@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Star, Plus, Heart, Filter, Sort } from 'lucide-react';
+import { Search, Star, Plus, Heart, Filter, ArrowUpDown } from 'lucide-react';
 // import { supabase } from '@/integrations/supabase/client';
 
 interface GroceryProduct {
@@ -524,7 +524,7 @@ const Grocery: React.FC = () => {
             </h2>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm">
-                <Sort className="w-4 h-4 mr-2" />
+                <ArrowUpDown className="w-4 h-4 mr-2" />
                 Sort
               </Button>
             </div>
