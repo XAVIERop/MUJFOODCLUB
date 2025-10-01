@@ -45,8 +45,8 @@ const BottomNavigation = () => {
           <span className="text-[11px] font-medium">Food</span>
         </button>
 
-        {/* Grocery Tab */}
-        <button
+        {/* Grocery Tab - HIDDEN */}
+        {/* <button
           onClick={() => navigate('/grocery')}
           className={`flex flex-col items-center py-1.5 px-2 rounded-lg transition-all duration-200 ${
             isActive('/grocery') 
@@ -56,7 +56,7 @@ const BottomNavigation = () => {
         >
           <ShoppingCart className={`w-5 h-5 mb-0.5 ${isActive('/grocery') ? 'text-primary' : ''}`} />
           <span className="text-[11px] font-medium">Grocery</span>
-        </button>
+        </button> */}
 
       </div>
       
