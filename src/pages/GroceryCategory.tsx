@@ -8,6 +8,7 @@ import { Search, Star, Plus, Heart, ArrowLeft, Clock, Filter, ArrowUpDown } from
 import Header from '@/components/Header';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface GroceryProduct {
   id: string;

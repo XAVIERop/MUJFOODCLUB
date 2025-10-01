@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/hooks/use-toast';
-// import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface GroceryProduct {
   id: string;
@@ -43,6 +43,60 @@ const Grocery: React.FC = () => {
   const [categories, setCategories] = useState<GroceryCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to get category icon
+  const getCategoryIcon = (category: string): string => {
+    const iconMap: { [key: string]: string } = {
+      'Snacks': '🍿',
+      'Dairy': '🥛',
+      'Beverages': '🥤',
+      'Frozen Food': '🧊',
+      'Bakery': '🍞',
+      'Fruits': '🍎',
+      'Vegetables': '🥬',
+      'Meat': '🥩',
+      'Seafood': '🐟',
+      'Spices': '🌶️',
+      'Grains': '🌾',
+      'Oils': '🫒',
+      'Sweets': '🍰',
+      'Chocolates': '🍫',
+      'Ice Cream': '🍦',
+      'Tea': '☕',
+      'Coffee': '☕',
+      'Juices': '🧃',
+      'Water': '💧',
+      'Cereals': '🥣',
+      'Biscuits': '🍪',
+      'Noodles': '🍝',
+      'Pasta': '🍝',
+      'Rice': '🍚',
+      'Atta': '🌾',
+      'Dal': '🫘',
+      'Masala': '🌶️',
+      'Sauces': '🍅',
+      'Pickles': '🥒',
+      'Dry Fruits': '🥜',
+      'Nuts': '🥜',
+      'Seeds': '🌰',
+      'Honey': '🍯',
+      'Jam': '🍓',
+      'Butter': '🧈',
+      'Cheese': '🧀',
+      'Yogurt': '🥛',
+      'Milk': '🥛',
+      'Eggs': '🥚',
+      'Bread': '🍞',
+      'Cakes': '🎂',
+      'Cookies': '🍪',
+      'Chips': '🍟',
+      'Namkeen': '🥜',
+      'Paan': '🌿',
+      'Tobacco': '🚬',
+      'Other': '📦'
+    };
+    return iconMap[category] || '📦';
+  };
+
   // Demo data for grocery categories - Swiggy style
   const demoCategories: GroceryCategory[] = [
     { id: '1', name: 'Fresh Vegetables', icon: '🥬', image: '/fresh-vegetables.jpg', itemCount: 45 },
@@ -71,7 +125,71 @@ const Grocery: React.FC = () => {
     { id: '20', name: 'Paan Corner', icon: '🌿', image: '/paan-corner.jpg', itemCount: 12 }
   ];
 
-  // Demo data for products
+  // Fetch real grocery products from database
+  const fetchGroceryProducts = async () => {
+    try {
+      setLoading(true);
+      
+      // Get 24 Seven Mart cafe ID
+      const { data: cafeData, error: cafeError } = await supabase
+        .from('cafes')
+        .select('id')
+        .eq('name', '24 Seven Mart')
+        .single();
+      
+      if (cafeError || !cafeData) {
+        console.error('Error fetching 24 Seven Mart:', cafeError);
+        return;
+      }
+      
+      // Fetch menu items for 24 Seven Mart
+      const { data: menuData, error: menuError } = await supabase
+        .from('menu_items')
+        .select('*')
+        .eq('cafe_id', cafeData.id)
+        .eq('is_available', true)
+        .order('category', { ascending: true });
+      
+      if (menuError) {
+        console.error('Error fetching grocery items:', menuError);
+        return;
+      }
+      
+      // Convert menu items to grocery products format
+      const groceryProducts: GroceryProduct[] = (menuData || []).map(item => ({
+        id: item.id,
+        name: item.name,
+        brand: '24 Seven Mart',
+        price: item.price,
+        mrp: item.price * 1.1, // 10% markup for MRP
+        discount: 0,
+        rating: 4.5,
+        reviews: Math.floor(Math.random() * 1000) + 100,
+        image: item.image_url || '/menu_hero.png',
+        category: item.category,
+        unit: '1 piece',
+        inStock: item.is_available
+      }));
+      
+      setProducts(groceryProducts);
+      
+      // Set categories from products
+      const uniqueCategories = [...new Set(groceryProducts.map(p => p.category))];
+      setCategories(uniqueCategories.map(cat => ({
+        id: cat.toLowerCase().replace(/\s+/g, '-'),
+        name: cat,
+        icon: getCategoryIcon(cat),
+        itemCount: groceryProducts.filter(p => p.category === cat).length
+      })));
+      
+    } catch (error) {
+      console.error('Error fetching grocery products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Demo data for products (fallback)
   const demoProducts: GroceryProduct[] = [
     // Snacks
     {
@@ -379,12 +497,8 @@ const Grocery: React.FC = () => {
   ];
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      setCategories(demoCategories);
-      setProducts(demoProducts);
-      setLoading(false);
-    }, 1000);
+    // Fetch real grocery products from database
+    fetchGroceryProducts();
   }, []);
 
   const filteredProducts = products.filter(product => {
