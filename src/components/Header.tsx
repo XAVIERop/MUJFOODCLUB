@@ -193,13 +193,14 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
 
           {/* Center Section - Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a
+            {/* Food Link - HIDDEN */}
+            {/* <a
               href="/cafes"
               className="flex items-center space-x-2 transition-smooth story-link text-muted-foreground hover:text-primary"
             >
               <Store className="w-4 h-4" />
               <span>Food</span>
-            </a>
+            </a> */}
             {/* Grocery Link - HIDDEN */}
             {/* <a
               href="/grocery"
