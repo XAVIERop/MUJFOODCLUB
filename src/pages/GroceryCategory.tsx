@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Search, Star, Plus, Heart, ArrowLeft, Clock, Filter, ArrowUpDown } from 'lucide-react';
 import Header from '@/components/Header';
 import { useCart } from '@/hooks/useCart';
+import { useToast } from '@/hooks/use-toast';
 
 interface GroceryProduct {
   id: string;
@@ -35,6 +36,7 @@ const GroceryCategory: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { addToCart, setCafe } = useCart();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState<GroceryProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -171,31 +173,48 @@ const GroceryCategory: React.FC = () => {
   });
 
   const handleAddToCart = (product: GroceryProduct) => {
-    // Set grocery store as the current cafe
-    const groceryStore = {
-      id: 'grocery-store',
-      name: 'Campus Grocery Store',
-      type: 'grocery',
-      location: 'B1 Ground Floor',
-      accepting_orders: true
-    };
-    
-    // Set the cafe context
-    setCafe(groceryStore);
-    
-    // Add product to cart using existing cart system
-    const cartItem = {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      description: `${product.brand} - ${product.unit}`,
-      category: product.category,
-      image_url: product.image,
-      is_available: product.inStock
-    };
-    
-    addToCart(cartItem, 1, '');
-    console.log('Added to cart:', product.name);
+    try {
+      // Set grocery store as the current cafe
+      const groceryStore = {
+        id: 'grocery-store',
+        name: 'Campus Grocery Store',
+        type: 'grocery',
+        location: 'B1 Ground Floor',
+        accepting_orders: true
+      };
+      
+      // Set the cafe context
+      setCafe(groceryStore);
+      
+      // Add product to cart using existing cart system
+      const cartItem = {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        description: `${product.brand} - ${product.unit}`,
+        category: product.category,
+        image_url: product.image,
+        is_available: product.inStock
+      };
+      
+      addToCart(cartItem, 1, '');
+      
+      // Show success toast
+      toast({
+        title: "Added to Cart",
+        description: `${product.name} has been added to your cart`,
+        duration: 2000,
+      });
+      
+      console.log('Added to cart:', product.name);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleBookmark = (product: GroceryProduct) => {
