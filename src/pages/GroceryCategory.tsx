@@ -43,6 +43,61 @@ const GroceryCategory: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState('All');
 
+  // Fetch real grocery products from database
+  const fetchGroceryProducts = async () => {
+    try {
+      setLoading(true);
+      
+      // Get 24 Seven Mart cafe ID
+      const { data: cafeData, error: cafeError } = await supabase
+        .from('cafes')
+        .select('id')
+        .eq('name', '24 Seven Mart')
+        .single();
+      
+      if (cafeError || !cafeData) {
+        console.error('Error fetching 24 Seven Mart:', cafeError);
+        return;
+      }
+      
+      // Fetch menu items for 24 Seven Mart
+      const { data: menuData, error: menuError } = await supabase
+        .from('menu_items')
+        .select('*')
+        .eq('cafe_id', cafeData.id)
+        .eq('is_available', true)
+        .order('category', { ascending: true });
+      
+      if (menuError) {
+        console.error('Error fetching grocery items:', menuError);
+        return;
+      }
+      
+      // Convert menu items to grocery products format
+      const groceryProducts: GroceryProduct[] = (menuData || []).map(item => ({
+        id: item.id,
+        name: item.name,
+        brand: '24 Seven Mart',
+        price: item.price,
+        mrp: item.price * 1.1, // 10% markup for MRP
+        discount: 0,
+        rating: 4.5,
+        reviews: Math.floor(Math.random() * 1000) + 100,
+        image: item.image_url || '/menu_hero.png',
+        category: item.category,
+        unit: '1 piece',
+        inStock: item.is_available
+      }));
+      
+      setProducts(groceryProducts);
+      
+    } catch (error) {
+      console.error('Error fetching grocery products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const categoryState = location.state as CategoryState;
 
   // Demo products for different categories
@@ -159,12 +214,11 @@ const GroceryCategory: React.FC = () => {
   ];
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      const categoryProducts = getCategoryProducts(categoryId || '');
-      setProducts(categoryProducts);
-      setLoading(false);
-    }, 1000);
+    // Clear any old grocery cart data first
+    setCafe(null);
+    
+    // Fetch real grocery products from database
+    fetchGroceryProducts();
   }, [categoryId]);
 
   const filteredProducts = products.filter(product => {

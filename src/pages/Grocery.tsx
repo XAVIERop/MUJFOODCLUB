@@ -497,6 +497,9 @@ const Grocery: React.FC = () => {
   ];
 
   useEffect(() => {
+    // Clear any old grocery cart data first
+    setCafe(null);
+    
     // Fetch real grocery products from database
     fetchGroceryProducts();
   }, []);
