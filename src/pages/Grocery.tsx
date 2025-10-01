@@ -404,10 +404,10 @@ const Grocery: React.FC = () => {
     try {
       // Set grocery store as the current cafe
       const groceryStore = {
-        id: 'grocery-store',
-        name: 'Campus Grocery Store',
+        id: '90796879-9f3e-4e82-a639-d30d6095735a', // 24 Seven Mart UUID
+        name: '24 Seven Mart',
         type: 'grocery',
-        location: 'B1 Ground Floor',
+        location: 'B1 Ground Floor, GHS',
         accepting_orders: true
       };
       
