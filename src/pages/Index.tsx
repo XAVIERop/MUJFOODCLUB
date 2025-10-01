@@ -154,10 +154,10 @@ const Index = () => {
           <HeroBannerSection />
         </div>
         
-        {/* Cafe Categories */}
-        {!loading && cafes.length > 0 && (
+        {/* Cafe Categories - HIDDEN */}
+        {/* {!loading && cafes.length > 0 && (
           <CafeCategories cafes={cafes} />
-        )}
+        )} */}
         
         <main className="m-0 p-0">
           {/* Unified Cafe Section - Merged Icon Grid + Cafe Cards */}
@@ -170,12 +170,12 @@ const Index = () => {
                 </h2>
               </div>
 
-              {/* Cafe Icon Grid with Slide Buttons */}
-              {!loading && cafes.length > 0 && (
+              {/* Cafe Icon Grid with Slide Buttons - HIDDEN */}
+              {/* {!loading && cafes.length > 0 && (
                 <div className="mb-12">
                   <CafeIconGrid cafes={cafes} />
                 </div>
-              )}
+              )} */}
 
               {/* Limited Cafe Grid - Show 6 cafes */}
               <div className="cafe-grid">
