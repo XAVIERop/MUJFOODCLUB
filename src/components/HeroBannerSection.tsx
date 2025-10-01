@@ -158,6 +158,21 @@ const HeroBannerSection: React.FC = () => {
         cafeId: 'mini-meals'
       },
       {
+        id: 'mini-meals-special-banner',
+        title: 'Discover Mini Meals Special',
+        subtitle: 'Delicious Food',
+        description: 'Fresh ingredients, authentic flavors, student-friendly prices.',
+        ctaText: 'Order Now',
+        ctaAction: 'menu_mini-meals',
+        backgroundColor: 'bg-gradient-to-r from-blue-600 to-purple-700',
+        textColor: 'text-white',
+        rating: 4.5,
+        ratingCount: 100,
+        features: ['Fresh Food', 'Fast Service', 'Great Prices'],
+        imageUrl: '/minimeals_bbb.png',
+        cafeId: 'mini-meals'
+      },
+      {
         id: 'cook-house-banner',
         title: 'Discover Cook House',
         subtitle: 'Delicious Food',
@@ -256,7 +271,7 @@ const HeroBannerSection: React.FC = () => {
     setCurrentBannerIndex(index);
     
     // Navigate to respective cafe based on banner index
-    const cafeRoutes = ['chatkara', 'mini-meals', 'cook-house', 'food-court'];
+    const cafeRoutes = ['chatkara', 'mini-meals', 'mini-meals', 'cook-house', 'food-court'];
     if (cafeRoutes[index]) {
       window.location.href = `/menu/${cafeRoutes[index]}`;
     }
