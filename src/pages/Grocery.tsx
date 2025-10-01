@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Star, Plus, Heart, Filter, Sort } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client';
 
 interface GroceryProduct {
   id: string;
@@ -48,6 +48,7 @@ const Grocery: React.FC = () => {
 
   // Demo data for products
   const demoProducts: GroceryProduct[] = [
+    // Snacks
     {
       id: '1',
       name: 'Maggi 2-Minute Noodles',
@@ -78,6 +79,50 @@ const Grocery: React.FC = () => {
     },
     {
       id: '3',
+      name: 'Parle-G Biscuits',
+      brand: 'Parle',
+      price: 5,
+      mrp: 5,
+      discount: 0,
+      rating: 4.8,
+      reviews: 3200,
+      image: '/parle-g.jpg',
+      category: 'Snacks',
+      unit: '100g',
+      inStock: true
+    },
+    {
+      id: '4',
+      name: 'Kurkure Masala Munch',
+      brand: 'Kurkure',
+      price: 15,
+      mrp: 18,
+      discount: 17,
+      rating: 4.2,
+      reviews: 650,
+      image: '/kurkure.jpg',
+      category: 'Snacks',
+      unit: '30g',
+      inStock: true
+    },
+    {
+      id: '5',
+      name: 'Oreo Cookies',
+      brand: 'Oreo',
+      price: 25,
+      mrp: 30,
+      discount: 17,
+      rating: 4.6,
+      reviews: 1800,
+      image: '/oreo.jpg',
+      category: 'Snacks',
+      unit: '100g',
+      inStock: true
+    },
+
+    // Fresh/Dairy
+    {
+      id: '6',
       name: 'Amul Butter',
       brand: 'Amul',
       price: 55,
@@ -91,7 +136,51 @@ const Grocery: React.FC = () => {
       inStock: true
     },
     {
-      id: '4',
+      id: '7',
+      name: 'Amul Fresh Milk',
+      brand: 'Amul',
+      price: 25,
+      mrp: 25,
+      discount: 0,
+      rating: 4.5,
+      reviews: 1500,
+      image: '/amul-milk.jpg',
+      category: 'Fresh',
+      unit: '500ml',
+      inStock: true
+    },
+    {
+      id: '8',
+      name: 'Britannia Bread',
+      brand: 'Britannia',
+      price: 30,
+      mrp: 35,
+      discount: 14,
+      rating: 4.4,
+      reviews: 950,
+      image: '/britannia-bread.jpg',
+      category: 'Fresh',
+      unit: '400g',
+      inStock: true
+    },
+    {
+      id: '9',
+      name: 'Amul Cheese Slices',
+      brand: 'Amul',
+      price: 45,
+      mrp: 50,
+      discount: 10,
+      rating: 4.3,
+      reviews: 750,
+      image: '/amul-cheese.jpg',
+      category: 'Fresh',
+      unit: '100g',
+      inStock: true
+    },
+
+    // Beauty & Personal Care
+    {
+      id: '10',
       name: 'Dove Soap',
       brand: 'Dove',
       price: 45,
@@ -105,7 +194,51 @@ const Grocery: React.FC = () => {
       inStock: true
     },
     {
-      id: '5',
+      id: '11',
+      name: 'Head & Shoulders Shampoo',
+      brand: 'Head & Shoulders',
+      price: 120,
+      mrp: 140,
+      discount: 14,
+      rating: 4.5,
+      reviews: 1200,
+      image: '/head-shoulders.jpg',
+      category: 'Beauty',
+      unit: '200ml',
+      inStock: true
+    },
+    {
+      id: '12',
+      name: 'Colgate Toothpaste',
+      brand: 'Colgate',
+      price: 35,
+      mrp: 40,
+      discount: 13,
+      rating: 4.6,
+      reviews: 2100,
+      image: '/colgate.jpg',
+      category: 'Beauty',
+      unit: '100g',
+      inStock: true
+    },
+    {
+      id: '13',
+      name: 'Lakme Face Cream',
+      brand: 'Lakme',
+      price: 85,
+      mrp: 100,
+      discount: 15,
+      rating: 4.2,
+      reviews: 680,
+      image: '/lakme.jpg',
+      category: 'Beauty',
+      unit: '50g',
+      inStock: true
+    },
+
+    // Beverages
+    {
+      id: '14',
       name: 'Coca Cola',
       brand: 'Coca Cola',
       price: 20,
@@ -119,7 +252,51 @@ const Grocery: React.FC = () => {
       inStock: true
     },
     {
-      id: '6',
+      id: '15',
+      name: 'Red Bull Energy Drink',
+      brand: 'Red Bull',
+      price: 95,
+      mrp: 100,
+      discount: 5,
+      rating: 4.1,
+      reviews: 850,
+      image: '/red-bull.jpg',
+      category: 'Beverages',
+      unit: '250ml',
+      inStock: true
+    },
+    {
+      id: '16',
+      name: 'Tata Tea Gold',
+      brand: 'Tata',
+      price: 45,
+      mrp: 50,
+      discount: 10,
+      rating: 4.7,
+      reviews: 1800,
+      image: '/tata-tea.jpg',
+      category: 'Beverages',
+      unit: '100g',
+      inStock: true
+    },
+    {
+      id: '17',
+      name: 'Nescafe Coffee',
+      brand: 'Nescafe',
+      price: 65,
+      mrp: 75,
+      discount: 13,
+      rating: 4.4,
+      reviews: 1200,
+      image: '/nescafe.jpg',
+      category: 'Beverages',
+      unit: '50g',
+      inStock: true
+    },
+
+    // Household
+    {
+      id: '18',
       name: 'Tide Detergent',
       brand: 'Tide',
       price: 120,
@@ -130,6 +307,48 @@ const Grocery: React.FC = () => {
       image: '/tide.jpg',
       category: 'Household',
       unit: '1kg',
+      inStock: true
+    },
+    {
+      id: '19',
+      name: 'Vim Dishwash Gel',
+      brand: 'Vim',
+      price: 35,
+      mrp: 40,
+      discount: 13,
+      rating: 4.3,
+      reviews: 750,
+      image: '/vim.jpg',
+      category: 'Household',
+      unit: '250ml',
+      inStock: true
+    },
+    {
+      id: '20',
+      name: 'Good Knight Mosquito Repellent',
+      brand: 'Good Knight',
+      price: 25,
+      mrp: 30,
+      discount: 17,
+      rating: 4.0,
+      reviews: 420,
+      image: '/good-knight.jpg',
+      category: 'Household',
+      unit: '45ml',
+      inStock: true
+    },
+    {
+      id: '21',
+      name: 'Harpic Toilet Cleaner',
+      brand: 'Harpic',
+      price: 55,
+      mrp: 65,
+      discount: 15,
+      rating: 4.5,
+      reviews: 680,
+      image: '/harpic.jpg',
+      category: 'Household',
+      unit: '500ml',
       inStock: true
     }
   ];
