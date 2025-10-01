@@ -456,11 +456,11 @@ class PrinterService {
               </div>
               <div class="info-row" style="font-weight: bold;">
                 <span>MUJ Food Club Discount:</span>
-                <span>-${(orderData.subtotal * 0.05).toFixed(0)}</span>
+                <span>-${(orderData.subtotal * 0.10).toFixed(0)}</span>
               </div>
               <div class="info-row" style="font-size: 16px; margin-top: 8px; font-weight: bold;">
                 <span>Grand Total:</span>
-                <span>${(orderData.subtotal + 10 - orderData.subtotal * 0.05).toFixed(0)}rs</span>
+                <span>${(orderData.subtotal + 10 - orderData.subtotal * 0.10).toFixed(0)}rs</span>
               </div>
             </div>
             
@@ -648,7 +648,7 @@ class PrinterService {
       return text;
     } else if (isChatkara) {
       const deliveryCharge = 10;
-      const discountAmount = orderData.subtotal * 0.05; // 5% discount
+      const discountAmount = orderData.subtotal * 0.10; // 10% discount
       const finalTotal = orderData.subtotal + deliveryCharge - discountAmount;
       
       let text = `CHATKARA\n`;

@@ -154,8 +154,8 @@ const Checkout = () => {
     const subtotal = totalAmount;
     const deliveryCharge = deliveryDetails.orderType === 'delivery' ? ORDER_CONSTANTS.DELIVERY_CHARGE : 0;
     
-    // Calculate MUJ FOOD CLUB discount (5% on subtotal)
-    const discount = isEligibleForDiscount ? subtotal * 0.05 : 0;
+    // Calculate MUJ FOOD CLUB discount (10% on subtotal)
+    const discount = isEligibleForDiscount ? subtotal * 0.10 : 0;
     
     // No CGST/SGST for Chatkara orders
     const finalAmountWithDelivery = subtotal + deliveryCharge - discount;
@@ -637,7 +637,7 @@ const Checkout = () => {
                     {/* MUJ FOOD CLUB Discount */}
                     {isEligibleForDiscount && discountAmount > 0 && (
                       <div className="flex justify-between items-center text-green-600">
-                        <span className="font-bold">MUJ FOOD CLUB DISCOUNT (5%)</span>
+                        <span className="font-bold">MUJ FOOD CLUB DISCOUNT (10%)</span>
                         <span className="font-bold">-₹{discountAmount.toFixed(2)}</span>
                       </div>
                     )}
