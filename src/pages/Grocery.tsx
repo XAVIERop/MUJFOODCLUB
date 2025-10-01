@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Star, Plus, Heart, Filter, ArrowUpDown } from 'lucide-react';
+import { Search, Star, Plus, Heart, Filter, ArrowUpDown, ArrowLeft, Clock, MapPin, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 // import { supabase } from '@/integrations/supabase/client';
 
 interface GroceryProduct {
@@ -30,20 +31,39 @@ interface GroceryCategory {
 }
 
 const Grocery: React.FC = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [products, setProducts] = useState<GroceryProduct[]>([]);
   const [categories, setCategories] = useState<GroceryCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Demo data for grocery categories
+  // Demo data for grocery categories - Swiggy style
   const demoCategories: GroceryCategory[] = [
-    { id: '1', name: 'All', icon: '🛒', image: '/grocery-all.jpg', itemCount: 150 },
-    { id: '2', name: 'Fresh', icon: '🥬', image: '/grocery-fresh.jpg', itemCount: 25 },
-    { id: '3', name: 'Snacks', icon: '🍪', image: '/grocery-snacks.jpg', itemCount: 40 },
-    { id: '4', name: 'Beauty', icon: '💄', image: '/grocery-beauty.jpg', itemCount: 30 },
-    { id: '5', name: 'Household', icon: '🧽', image: '/grocery-household.jpg', itemCount: 35 },
-    { id: '6', name: 'Beverages', icon: '🥤', image: '/grocery-beverages.jpg', itemCount: 20 }
+    { id: '1', name: 'Fresh Vegetables', icon: '🥬', image: '/fresh-vegetables.jpg', itemCount: 45 },
+    { id: '2', name: 'Fresh Fruits', icon: '🍎', image: '/fresh-fruits.jpg', itemCount: 32 },
+    { id: '3', name: 'Dairy, Bread and Eggs', icon: '🥛', image: '/dairy-bread.jpg', itemCount: 28 },
+    { id: '4', name: 'Cereals and Breakfast', icon: '🥣', image: '/cereals.jpg', itemCount: 35 },
+    { id: '5', name: 'Atta, Rice and Dal', icon: '🌾', image: '/atta-rice.jpg', itemCount: 42 },
+    { id: '6', name: 'Oils and Ghee', icon: '🫒', image: '/oils-ghee.jpg', itemCount: 18 },
+    { id: '7', name: 'Masalas', icon: '🌶️', image: '/masalas.jpg', itemCount: 25 },
+    { id: '8', name: 'Dry Fruits and Seeds Mix', icon: '🥜', image: '/dry-fruits.jpg', itemCount: 22 },
+    { id: '9', name: 'Biscuits and Cakes', icon: '🍪', image: '/biscuits-cakes.jpg', itemCount: 38 },
+    { id: '10', name: 'Tea, Coffee and Milk drinks', icon: '☕', image: '/tea-coffee.jpg', itemCount: 30 },
+    { id: '11', name: 'Sauces and Spreads', icon: '🍅', image: '/sauces-spreads.jpg', itemCount: 20 },
+    { id: '12', name: 'Meat and Seafood', icon: '🥩', image: '/meat-seafood.jpg', itemCount: 15 }
+  ];
+
+  // Snacks & drinks categories
+  const snacksCategories: GroceryCategory[] = [
+    { id: '13', name: 'Cold Drinks and Juices', icon: '🥤', image: '/cold-drinks.jpg', itemCount: 25 },
+    { id: '14', name: 'Ice Creams and Frozen Desserts', icon: '🍦', image: '/ice-cream.jpg', itemCount: 18 },
+    { id: '15', name: 'Chips and Namkeens', icon: '🍿', image: '/chips-namkeen.jpg', itemCount: 35 },
+    { id: '16', name: 'Chocolates', icon: '🍫', image: '/chocolates.jpg', itemCount: 28 },
+    { id: '17', name: 'Noodles, Pasta, Vermicelli', icon: '🍝', image: '/noodles-pasta.jpg', itemCount: 22 },
+    { id: '18', name: 'Frozen Food', icon: '🧊', image: '/frozen-food.jpg', itemCount: 20 },
+    { id: '19', name: 'Sweet Corner', icon: '🍰', image: '/sweet-corner.jpg', itemCount: 15 },
+    { id: '20', name: 'Paan Corner', icon: '🌿', image: '/paan-corner.jpg', itemCount: 12 }
   ];
 
   // Demo data for products
@@ -379,87 +399,137 @@ const Grocery: React.FC = () => {
     console.log('Bookmarked:', product.name);
   };
 
+  const handleCategoryClick = (category: GroceryCategory) => {
+    // Navigate to category page
+    navigate(`/grocery/category/${category.id}`, { 
+      state: { 
+        categoryName: category.name,
+        categoryIcon: category.icon,
+        itemCount: category.itemCount 
+      } 
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          {/* Search Bar */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+    <div className="min-h-screen bg-white">
+      {/* Swiggy-style Header */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Left: Delivery Info */}
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-gray-700">10 MINS</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-600">
+                <MapPin className="w-4 h-4" />
+                <span className="text-sm">Delivery to Block 11, Sector 10, Raj Nagar</span>
+              </div>
+            </div>
+            
+            {/* Right: Search and Menu */}
+            <div className="flex items-center space-x-3">
+              <Search className="w-5 h-5 text-gray-600" />
+              <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
+                <div className="w-4 h-4 bg-gray-400 rounded-sm"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Search Bar */}
+      <div className="bg-white px-4 py-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
               type="text"
-              placeholder="Search for 'Milk', 'Bread', 'Soap'..."
+              placeholder="Search for 'Cookies'"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-3 text-lg border-2 border-gray-200 rounded-xl focus:border-green-500"
+              className="pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-pink-500 w-full"
             />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2"
-            >
-              <Filter className="w-5 h-5 text-gray-500" />
-            </Button>
-          </div>
-
-          {/* Category Tabs */}
-          <div className="flex space-x-1 overflow-x-auto pb-2 scrollbar-hide">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.name)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedCategory === category.name
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                <span className="mr-2">{category.icon}</span>
-                {category.name}
-              </button>
-            ))}
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Hot Deals Section */}
+      <div className="max-w-7xl mx-auto px-4 pb-20">
+        {/* Grocery & Kitchen Section */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Grocery & Kitchen</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {demoCategories.map((category) => (
+              <Card 
+                key={category.id} 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-sm"
+                onClick={() => handleCategoryClick(category)}
+              >
+                <CardContent className="p-4 text-center">
+                  <div className="w-16 h-16 mx-auto mb-3 bg-gray-100 rounded-lg flex items-center justify-center text-3xl">
+                    {category.icon}
+                  </div>
+                  <div className="text-sm font-medium text-gray-900 text-center leading-tight">
+                    {category.name}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Snacks & drinks Section */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Snacks & drinks</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {snacksCategories.map((category) => (
+              <Card 
+                key={category.id} 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 border-0 shadow-sm"
+                onClick={() => handleCategoryClick(category)}
+              >
+                <CardContent className="p-4 text-center">
+                  <div className="w-16 h-16 mx-auto mb-3 bg-gray-100 rounded-lg flex items-center justify-center text-3xl">
+                    {category.icon}
+                  </div>
+                  <div className="text-sm font-medium text-gray-900 text-center leading-tight">
+                    {category.name}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Picks Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Hot Deals</h2>
-            <span className="text-sm text-green-600 font-medium">Upto 50% OFF</span>
+            <h2 className="text-xl font-bold text-gray-900">Hey there, your quick picks</h2>
+            <button className="text-pink-500 text-sm font-medium flex items-center">
+              See All <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {filteredProducts.slice(0, 6).map((product) => (
-              <Card key={product.id} className="relative overflow-hidden hover:shadow-lg transition-shadow">
+          <div className="flex space-x-4 overflow-x-auto pb-2 scrollbar-hide">
+            {filteredProducts.slice(0, 8).map((product) => (
+              <Card key={product.id} className="flex-shrink-0 w-48 relative overflow-hidden hover:shadow-lg transition-shadow border-0 shadow-sm">
                 <CardContent className="p-0">
                   {/* Product Image */}
                   <div className="relative h-32 bg-gray-100">
-                    <div className="absolute top-2 left-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleBookmark(product)}
-                        className="p-1 h-8 w-8 bg-white/80 hover:bg-white"
-                      >
-                        <Heart className="w-4 h-4 text-gray-500" />
-                      </Button>
-                    </div>
                     <div className="absolute top-2 right-2">
                       <Button
                         size="sm"
                         onClick={() => handleAddToCart(product)}
-                        className="h-8 w-8 bg-green-500 hover:bg-green-600 text-white p-0"
+                        className="h-8 w-8 bg-pink-500 hover:bg-pink-600 text-white p-0 rounded-full"
                       >
                         <Plus className="w-4 h-4" />
                       </Button>
                     </div>
                     {product.discount > 0 && (
-                      <div className="absolute top-2 left-1/2 transform -translate-x-1/2">
-                        <Badge className="bg-red-500 text-white text-xs">
+                      <div className="absolute top-2 left-2">
+                        <Badge className="bg-green-500 text-white text-xs">
                           {product.discount}% OFF
                         </Badge>
                       </div>
@@ -499,104 +569,14 @@ const Grocery: React.FC = () => {
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Shop by Category */}
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Shop by Category</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {categories.slice(1).map((category) => (
-              <Card key={category.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-                <CardContent className="p-4 text-center">
-                  <div className="text-4xl mb-2">{category.icon}</div>
-                  <div className="text-sm font-medium text-gray-900">{category.name}</div>
-                  <div className="text-xs text-gray-500">{category.itemCount} items</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+      {/* Free Delivery Banner */}
+      <div className="fixed bottom-0 left-0 right-0 bg-pink-500 text-white py-3 px-4 flex items-center justify-center space-x-2">
+        <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+          <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
         </div>
-
-        {/* All Products */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">
-              {selectedCategory === 'All' ? 'All Products' : selectedCategory}
-            </h2>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                <ArrowUpDown className="w-4 h-4 mr-2" />
-                Sort
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredProducts.map((product) => (
-              <Card key={product.id} className="relative overflow-hidden hover:shadow-lg transition-shadow">
-                <CardContent className="p-0">
-                  {/* Product Image */}
-                  <div className="relative h-40 bg-gray-100">
-                    <div className="absolute top-2 left-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleBookmark(product)}
-                        className="p-1 h-8 w-8 bg-white/80 hover:bg-white"
-                      >
-                        <Heart className="w-4 h-4 text-gray-500" />
-                      </Button>
-                    </div>
-                    <div className="absolute top-2 right-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleAddToCart(product)}
-                        className="h-8 w-8 bg-green-500 hover:bg-green-600 text-white p-0"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    {product.discount > 0 && (
-                      <div className="absolute top-2 left-1/2 transform -translate-x-1/2">
-                        <Badge className="bg-red-500 text-white text-xs">
-                          {product.discount}% OFF
-                        </Badge>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-center h-full text-5xl">
-                      {product.category === 'Snacks' && '🍜'}
-                      {product.category === 'Fresh' && '🧈'}
-                      {product.category === 'Beauty' && '🧼'}
-                      {product.category === 'Beverages' && '🥤'}
-                      {product.category === 'Household' && '🧽'}
-                    </div>
-                  </div>
-
-                  {/* Product Info */}
-                  <div className="p-4">
-                    <div className="text-xs text-gray-500 mb-1">{product.unit}</div>
-                    <div className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
-                      {product.name}
-                    </div>
-                    <div className="flex items-center mb-2">
-                      <Star className="w-3 h-3 text-yellow-400 fill-current mr-1" />
-                      <span className="text-xs text-gray-600">
-                        {product.rating} ({product.reviews})
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-sm font-bold text-gray-900">₹{product.price}</span>
-                        {product.mrp > product.price && (
-                          <span className="text-xs text-gray-500 line-through ml-1">₹{product.mrp}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        <span className="text-sm font-medium">FREE DELIVERY on orders above ₹99</span>
       </div>
     </div>
   );
