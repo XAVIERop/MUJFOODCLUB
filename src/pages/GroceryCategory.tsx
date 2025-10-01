@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Star, Plus, Heart, ArrowLeft, Clock, Filter, ArrowUpDown } from 'lucide-react';
+import Header from '@/components/Header';
 
 interface GroceryProduct {
   id: string;
@@ -188,8 +189,11 @@ const GroceryCategory: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      {/* Original Header Component */}
+      <Header />
+      
+      {/* Category Header */}
+      <div className="bg-white border-b border-gray-100 sticky top-16 z-10">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             {/* Left: Back button and category info */}

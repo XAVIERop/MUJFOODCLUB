@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Star, Plus, Heart, Filter, ArrowUpDown, ArrowLeft, Clock, MapPin, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Header from '@/components/Header';
 // import { supabase } from '@/integrations/supabase/client';
 
 interface GroceryProduct {
@@ -412,32 +413,8 @@ const Grocery: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Swiggy-style Header */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            {/* Left: Delivery Info */}
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-gray-700">10 MINS</span>
-              </div>
-              <div className="flex items-center space-x-2 text-gray-600">
-                <MapPin className="w-4 h-4" />
-                <span className="text-sm">Delivery to Block 11, Sector 10, Raj Nagar</span>
-              </div>
-            </div>
-            
-            {/* Right: Search and Menu */}
-            <div className="flex items-center space-x-3">
-              <Search className="w-5 h-5 text-gray-600" />
-              <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
-                <div className="w-4 h-4 bg-gray-400 rounded-sm"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Original Header Component */}
+      <Header />
 
       {/* Main Search Bar */}
       <div className="bg-white px-4 py-4">
