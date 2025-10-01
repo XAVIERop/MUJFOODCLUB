@@ -35,7 +35,7 @@ const GroceryCategory: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const { addToCart, setCafe } = useCart();
+  const { addToCart, setCafe, cart, removeFromCart } = useCart();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState<GroceryProduct[]>([]);
@@ -172,7 +172,13 @@ const GroceryCategory: React.FC = () => {
     return matchesSearch;
   });
 
-  const handleAddToCart = (product: GroceryProduct) => {
+  // Helper function to get item quantity in cart
+  const getItemQuantity = (productId: string): number => {
+    return cart[productId]?.quantity || 0;
+  };
+
+  // Helper function to handle quantity changes
+  const handleQuantityChange = (product: GroceryProduct, change: 'add' | 'remove') => {
     try {
       // Set grocery store as the current cafe
       const groceryStore = {
@@ -186,7 +192,6 @@ const GroceryCategory: React.FC = () => {
       // Set the cafe context
       setCafe(groceryStore);
       
-      // Add product to cart using existing cart system
       const cartItem = {
         id: product.id,
         name: product.name,
@@ -197,17 +202,25 @@ const GroceryCategory: React.FC = () => {
         is_available: product.inStock
       };
       
-      addToCart(cartItem, 1, '');
+      if (change === 'add') {
+        addToCart(cartItem, 1, '');
+      } else {
+        removeFromCart(product.id);
+      }
       
-      console.log('Added to cart:', product.name);
+      console.log(`${change === 'add' ? 'Added to' : 'Removed from'} cart:`, product.name);
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      console.error('Error updating cart:', error);
       toast({
         title: "Error",
-        description: "Failed to add item to cart",
+        description: "Failed to update cart",
         variant: "destructive",
       });
     }
+  };
+
+  const handleAddToCart = (product: GroceryProduct) => {
+    handleQuantityChange(product, 'add');
   };
 
   const handleBookmark = (product: GroceryProduct) => {
@@ -348,7 +361,8 @@ const GroceryCategory: React.FC = () => {
                           <span>10 MINS</span>
                         </div>
                       </div>
-                      <div className="absolute top-3 right-3">
+                    <div className="absolute top-3 right-3">
+                      {getItemQuantity(product.id) === 0 ? (
                         <Button
                           size="sm"
                           onClick={() => handleAddToCart(product)}
@@ -356,7 +370,28 @@ const GroceryCategory: React.FC = () => {
                         >
                           <Plus className="w-4 h-4" />
                         </Button>
-                      </div>
+                      ) : (
+                        <div className="flex items-center bg-white rounded-full shadow-lg">
+                          <Button
+                            size="sm"
+                            onClick={() => handleQuantityChange(product, 'remove')}
+                            className="h-8 w-8 bg-gray-100 hover:bg-gray-200 text-gray-700 p-0 rounded-full"
+                          >
+                            <span className="text-sm font-medium">-</span>
+                          </Button>
+                          <span className="px-3 text-sm font-medium text-gray-700">
+                            {getItemQuantity(product.id)}
+                          </span>
+                          <Button
+                            size="sm"
+                            onClick={() => handleQuantityChange(product, 'add')}
+                            className="h-8 w-8 bg-pink-500 hover:bg-pink-600 text-white p-0 rounded-full"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                       {product.discount > 0 && (
                         <div className="absolute bottom-3 left-3">
                           <Badge className="bg-green-500 text-white text-xs">
