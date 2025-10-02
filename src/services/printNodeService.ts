@@ -555,7 +555,7 @@ MUJFOODCLUB!`;
       // Mini Meals footer (using Chatkara template)
       const isDelivery = data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block);
       const deliveryCharge = isDelivery ? 10 : 0;
-      const finalTotal = final_amount; // Use actual final amount from database
+      const finalTotal = subtotal + deliveryCharge - mujFoodClubDiscount; // Calculate correct total with discount
       
       receipt += `\n    ----------------------------------------
     \x1B\x21\x08Total Qty: ${totalQty}\x1B\x21\x00
