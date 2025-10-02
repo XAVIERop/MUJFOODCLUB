@@ -213,28 +213,6 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
             {cafe.name}
           </h3>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1">
-              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-              <span className="text-xs font-semibold text-gray-800">
-                {cafe.average_rating ? cafe.average_rating.toFixed(1) : '0.0'}
-              </span>
-              {cafe.total_ratings && cafe.total_ratings > 0 && (
-                <span className="text-xs text-gray-500 ml-1">
-                  ({cafe.total_ratings})
-                </span>
-              )}
-            </div>
-            
-            {/* Cuisine Categories */}
-            {cafe.cuisine_categories && cafe.cuisine_categories.length > 0 && (
-              <div className="flex gap-1">
-                {cafe.cuisine_categories.slice(0, 2).map((category, index) => (
-                  <Badge key={index} variant="secondary" className="text-xs px-2 py-1 bg-white/90 text-gray-700">
-                    {category}
-                  </Badge>
-                ))}
-              </div>
-            )}
             
             {/* Discount Badge for Chatkara, Cook House, and Mini Meals */}
             {(cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals')) && (
