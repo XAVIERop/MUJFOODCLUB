@@ -125,6 +125,8 @@ const Checkout = () => {
   // MUJ FOOD CLUB discount
   const [discountAmount, setDiscountAmount] = useState(0);
   const isEligibleForDiscount = cafe?.name === 'CHATKARA' || cafe?.name === 'COOK HOUSE' || 
+                                cafe?.name?.toLowerCase().includes('mini meals') || 
+                                cafe?.name === 'MINI MEALS' ||
                                 cafe?.name?.toLowerCase().includes('food court') || 
                                 cafe?.name === 'FOOD COURT';
 
@@ -160,6 +162,8 @@ const Checkout = () => {
     let discountRate = 0;
     if (cafe?.name === 'CHATKARA' || cafe?.name === 'COOK HOUSE') {
       discountRate = 0.10; // 10% for Chatkara and Cook House
+    } else if (cafe?.name?.toLowerCase().includes('mini meals') || cafe?.name === 'MINI MEALS') {
+      discountRate = 0.10; // 10% for Mini Meals
     } else if (cafe?.name?.toLowerCase().includes('food court') || cafe?.name === 'FOOD COURT') {
       discountRate = 0.05; // 5% for Food Court
     }
