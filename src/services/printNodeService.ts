@@ -511,9 +511,9 @@ MUJFOODCLUB!`;
       const itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
       const qty = item.quantity.toString().padStart(2);
       
-      // Use different format for Chatkara and Mini Meals vs others
+      // Use different format for Chatkara, Mini Meals, and Cook House vs others
       let price, amount;
-      if (isChatkara || isMiniMeals) {
+      if (isChatkara || isMiniMeals || isCookHouse) {
         price = item.unit_price.toFixed(0).padStart(4);
         amount = item.total_price.toFixed(0).padStart(5);
       } else {
@@ -521,7 +521,7 @@ MUJFOODCLUB!`;
         amount = item.total_price.toFixed(0).padStart(5);
       }
       
-      if (isChatkara || isMiniMeals) {
+      if (isChatkara || isMiniMeals || isCookHouse) {
         // Keep normal size for item names in receipt
         receipt += `\n    \x1B\x21\x08${itemName}\x1B\x21\x00 ${qty}    ${price}    ${amount}`;
       } else {

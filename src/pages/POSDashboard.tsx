@@ -121,7 +121,15 @@ const POSDashboard = () => {
   const [activeTab, setActiveTab] = useState('orders');
   
   // Track printed orders to prevent duplicates
-  const [printedOrders, setPrintedOrders] = useState<Set<string>>(new Set());
+  const [printedOrders, setPrintedOrders] = useState<Set<string>>(() => {
+    // Initialize from localStorage if available
+    try {
+      const stored = localStorage.getItem('printedOrders');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
   
   // Cleanup printed orders tracking every hour to prevent memory issues
   useEffect(() => {
@@ -647,11 +655,17 @@ const POSDashboard = () => {
       return;
     }
     
-    // Check if order is too old (older than 10 minutes) to prevent printing stale orders
+    // Check if order is too old (older than 5 minutes) to prevent printing stale orders
     const orderAge = Date.now() - new Date(order.created_at).getTime();
-    const maxAge = 10 * 60 * 1000; // 10 minutes
+    const maxAge = 5 * 60 * 1000; // 5 minutes (reduced from 10)
     if (orderAge > maxAge) {
       console.log('🚫 AUTO-PRINT: Order too old, skipping auto-print:', order.order_number, 'Age:', Math.round(orderAge / 1000), 'seconds');
+      return;
+    }
+    
+    // Additional check: Only print orders that are in 'received' status
+    if (order.status !== 'received') {
+      console.log('🚫 AUTO-PRINT: Order not in received status, skipping:', order.order_number, 'Status:', order.status);
       return;
     }
     
@@ -737,6 +751,11 @@ const POSDashboard = () => {
         
         // Mark this order as printed to prevent duplicates
         setPrintedOrders(prev => new Set(prev).add(order.id));
+        
+        // Also store in localStorage for persistence across page refreshes
+        const printedOrdersArray = Array.from(printedOrders);
+        printedOrdersArray.push(order.id);
+        localStorage.setItem('printedOrders', JSON.stringify(printedOrdersArray));
         
         toast({
           title: "Receipt Printed",
