@@ -667,13 +667,16 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Determine cafe-specific format (Chatkara first, then Mini Meals, then Food Court)
+    // Determine cafe-specific format (Chatkara first, then Mini Meals, then Cook House, then Food Court)
     const isChatkara = cafe_name?.toLowerCase().includes('chatkara') || 
                        cafe_name === 'CHATKARA' ||
                        cafe_name?.toLowerCase() === 'chatkara';
     const isMiniMeals = cafe_name?.toLowerCase().includes('mini meals') || 
                         cafe_name === 'MINI MEALS' ||
                         cafe_name?.toLowerCase() === 'mini meals';
+    const isCookHouse = cafe_name?.toLowerCase().includes('cook house') || 
+                        cafe_name === 'COOK HOUSE' ||
+                        cafe_name?.toLowerCase() === 'cook house';
     const isFoodCourt = cafe_name?.toLowerCase().includes('food court') || 
                         cafe_name === 'FOOD COURT' ||
                         cafe_name?.toLowerCase() === 'food court';
@@ -681,14 +684,15 @@ MUJFOODCLUB!`;
     console.log('🔍 PrintNode KOT - Cafe name:', cafe_name);
     console.log('🔍 PrintNode KOT - Is Chatkara:', isChatkara);
     console.log('🔍 PrintNode KOT - Is Mini Meals:', isMiniMeals);
+    console.log('🔍 PrintNode KOT - Is Cook House:', isCookHouse);
     console.log('🔍 PrintNode KOT - Is Food Court:', isFoodCourt);
-    console.log('🔍 PrintNode KOT - Using format:', isChatkara ? 'CHATKARA' : isMiniMeals ? 'MINI MEALS' : isFoodCourt ? 'FOOD COURT' : 'MUJ FOOD CLUB');
+    console.log('🔍 PrintNode KOT - Using format:', isChatkara ? 'CHATKARA' : isMiniMeals ? 'MINI MEALS' : isCookHouse ? 'COOK HOUSE' : isFoodCourt ? 'FOOD COURT' : 'MUJ FOOD CLUB');
     
     // Proper center-aligned KOT format with bold formatting
     let kot = `    ----------------------------------------
     ${dateStr} ${timeStr}
     \x1B\x21\x30KOT - ${order_number}\x1B\x21\x00
-    \x1B\x21\x08${isChatkara || isFoodCourt ? 'DELIVERY' : 'PICK UP'}\x1B\x21\x00
+    \x1B\x21\x08${isChatkara || isCookHouse || isFoodCourt ? 'DELIVERY' : 'PICK UP'}\x1B\x21\x00
     ----------------------------------------
     \x1B\x21\x08ITEM                              QTY\x1B\x21\x00
     ----------------------------------------`;
@@ -698,7 +702,7 @@ MUJFOODCLUB!`;
       const itemName = item.name.toUpperCase();
       const qty = item.quantity.toString();
       
-      if (isChatkara || isMiniMeals || isFoodCourt) {
+      if (isChatkara || isMiniMeals || isCookHouse || isFoodCourt) {
         // Create proper two-column layout: item name (left) and quantity (right)
         const totalWidth = 40; // Total width of the line
         const qtyWidth = 4; // Width for quantity column
