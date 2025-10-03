@@ -88,6 +88,7 @@ const MenuModern = () => {
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedBrand, setSelectedBrand] = useState('all');
 
   // Helper function to determine if identifier is UUID or slug
   const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
@@ -379,9 +380,26 @@ const MenuModern = () => {
     });
   };
 
-  // Filter menu items based on search and category
+  // Filter menu items based on search, category, and brand
   const getFilteredMenuItems = () => {
     let filtered = groupedMenuItems;
+    
+    // Apply brand filter (only for Food Court)
+    if (selectedBrand !== 'all' && cafe?.name === 'FOOD COURT') {
+      filtered = filtered.filter(item => {
+        const category = item.category;
+        if (selectedBrand === 'gobblers') {
+          return category.startsWith('GOBBLERS');
+        } else if (selectedBrand === 'krispp') {
+          return category.startsWith('KRISPP');
+        } else if (selectedBrand === 'momo-street') {
+          return category.startsWith('MOMO STREET');
+        } else if (selectedBrand === 'waffles-more') {
+          return category.startsWith('WAFFLES');
+        }
+        return true;
+      });
+    }
     
     // Apply veg/non-veg filter
     if (selectedCategory === 'veg') {
@@ -463,6 +481,8 @@ const MenuModern = () => {
         categories={categories}
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
+        selectedBrand={selectedBrand}
+        onBrandChange={setSelectedBrand}
         menuItems={getFilteredMenuItems()}
         onAddToCart={addToCart}
         onRemoveFromCart={removeFromCart}

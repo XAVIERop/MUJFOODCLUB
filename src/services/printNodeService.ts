@@ -462,15 +462,15 @@ MUJFOODCLUB!`;
     \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
     ----------------------------------------`;
     } else if (isFoodCourt) {
-      // Food Court format with bold formatting
-      receipt = `\x1B\x21\x30        THE FOOD COURT CO\x1B\x21\x00
-  (MOMO STREET, GOBBLERS, KRISPP, TATA MYBRISTO)
-    GSTIN : 08ADNPG4024A1Z2
+      // Food Court format (using Chatkara template with Food Court branding)
+      receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'FOOD COURT'}\x1B\x21\x00
     ----------------------------------------
-    \x1B\x21\x08Name: ${customer_name || 'WALK-IN'} (M: ${customer_phone || '9999999999'})\x1B\x21\x00
-    Date: ${dateStr}    ${timeStr}    ${payment_method?.toUpperCase() === 'COD' ? 'Pick Up' : 'Delivery'}
-    Cashier: biller    \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
-    \x1B\x21\x08Token No.: ${order_number.slice(-2)}\x1B\x21\x00
+    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
+    \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
+    \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
+    \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
+    \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
     ----------------------------------------
     \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
     ----------------------------------------`;
@@ -733,8 +733,7 @@ MUJFOODCLUB!`;
     ----------------------------------------`;
     } else if (isFoodCourt) {
       kot += `\n    ----------------------------------------
-    \x1B\x21\x08THANKS FOR VISIT!!\x1B\x21\x00
-    \x1B\x21\x30THE FOOD COURT CO\x1B\x21\x00
+    \x1B\x21\x08Thanks\x1B\x21\x00
     ----------------------------------------
     ----------------------------------------
     ----------------------------------------`;

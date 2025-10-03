@@ -17,7 +17,7 @@ BEGIN
   -- Convert cafe name to uppercase and extract prefix
   CASE 
     WHEN UPPER(cafe_name) LIKE '%CHATKARA%' THEN RETURN 'CHA';
-    WHEN UPPER(cafe_name) LIKE '%FOOD COURT%' THEN RETURN 'FC';
+    WHEN UPPER(cafe_name) LIKE '%FOOD COURT%' THEN RETURN 'FOO';
     WHEN UPPER(cafe_name) LIKE '%COOK HOUSE%' THEN RETURN 'CH';
     WHEN UPPER(cafe_name) LIKE '%MOMO%' THEN RETURN 'MOM';
     WHEN UPPER(cafe_name) LIKE '%GOBBLERS%' THEN RETURN 'GOB';

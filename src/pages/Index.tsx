@@ -7,11 +7,13 @@ import { FeaturedCafeGrid } from '../components/FeaturedCafeGrid';
 import CafeIconGrid from '../components/CafeIconGrid';
 import MobileLayoutWrapper from '../components/MobileLayoutWrapper';
 import MobileLayout from '../components/MobileLayout';
+import ActiveOrderStatusBar from '../components/ActiveOrderStatusBar';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useActiveOrder } from '@/hooks/useActiveOrder';
 import { Star } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
@@ -37,6 +39,9 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBlock, setSelectedBlock] = useState("B1");
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  
+  // Active order status
+  const { activeOrders } = useActiveOrder();
 
   useEffect(() => {
     fetchCafes();
@@ -187,6 +192,9 @@ const Index = () => {
           {/* Rewards Section removed for simplified version */}
         </main>
       </div>
+      
+      {/* Active Order Status Bar - Only show if user has active orders */}
+      <ActiveOrderStatusBar activeOrders={activeOrders} />
     </MobileLayoutWrapper>
   );
 };

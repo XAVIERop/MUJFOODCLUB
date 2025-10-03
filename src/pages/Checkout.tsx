@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/hooks/use-toast';
 import { ORDER_CONSTANTS } from '@/lib/constants';
-import { isDineInTakeawayAllowed, isDeliveryAllowed, getDineInTakeawayMessage } from '@/utils/timeRestrictions';
+import { isDineInTakeawayAllowed, isDeliveryAllowed, getDineInTakeawayMessage, getDeliveryMessage } from '@/utils/timeRestrictions';
 import { generateDailyOrderNumber } from '@/utils/orderNumberGenerator';
 import { getCafeTableOptions } from '@/utils/tableMapping';
 import { WhatsAppService } from '@/services/whatsappService';
@@ -487,7 +487,16 @@ const Checkout = () => {
                       </div>
                         </div>
                     
-                    {!isDeliveryAllowed() && !isDineInTakeawayAllowed() && (
+                    {!isDeliveryAllowed() && (
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          {getDeliveryMessage()}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    {!isDineInTakeawayAllowed() && (
                       <Alert>
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>

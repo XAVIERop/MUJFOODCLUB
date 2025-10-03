@@ -16,6 +16,8 @@ interface ModernMenuLayoutProps {
   categories: string[];
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
+  selectedBrand?: string;
+  onBrandChange?: (brand: string) => void;
   
   // Menu items
   menuItems: any[];
@@ -43,6 +45,8 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
   categories,
   selectedCategory,
   onCategoryChange,
+  selectedBrand = 'all',
+  onBrandChange,
   menuItems,
   onAddToCart,
   onRemoveFromCart,
@@ -229,6 +233,36 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
               <Filter className="w-4 h-4 text-gray-500" />
             </Button>
           </div>
+
+          {/* Brand Filter - Only for Food Court */}
+          {cafe?.name === 'FOOD COURT' && onBrandChange && (
+            <div className="mb-4">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+                {[
+                  { id: 'all', name: 'All Brands' },
+                  { id: 'gobblers', name: 'GOBBLERS' },
+                  { id: 'krispp', name: 'KRISPP' },
+                  { id: 'momo-street', name: 'MOMO STREET' },
+                  { id: 'waffles-more', name: 'WAFFLES & MORE' }
+                ].map((brand) => (
+                  <Button
+                    key={brand.id}
+                    variant={selectedBrand === brand.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onBrandChange(brand.id)}
+                    className={cn(
+                      "whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all duration-200",
+                      selectedBrand === brand.id
+                        ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
+                        : "bg-white text-gray-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                    )}
+                  >
+                    {brand.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Category Filter Chips */}
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">

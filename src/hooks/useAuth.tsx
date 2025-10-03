@@ -153,7 +153,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
-            block: block
+            block: block,
+            phone: phone
           }
         }
       });
