@@ -72,6 +72,19 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
           return fallbackKey;
         }
         return apiKey;
+      } else if (cafe.name.toLowerCase().includes('cook house')) {
+        console.log('Using Cook House API key');
+        const apiKey = import.meta.env.VITE_COOKHOUSE_PRINTNODE_API_KEY;
+        if (!apiKey || apiKey === 'your-cookhouse-printnode-api-key') {
+          console.warn('VITE_COOKHOUSE_PRINTNODE_API_KEY not set, using main API key');
+          const fallbackKey = import.meta.env.VITE_PRINTNODE_API_KEY;
+          if (!fallbackKey) {
+            console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+            return '';
+          }
+          return fallbackKey;
+        }
+        return apiKey;
       } else if (cafe.name.toLowerCase().includes('food court')) {
         console.log('Using Food Court API key');
         const apiKey = import.meta.env.VITE_FOODCOURT_PRINTNODE_API_KEY;
