@@ -124,7 +124,9 @@ const Checkout = () => {
   
   // MUJ FOOD CLUB discount
   const [discountAmount, setDiscountAmount] = useState(0);
-  const isEligibleForDiscount = cafe?.name === 'CHATKARA' || cafe?.name === 'COOK HOUSE';
+  const isEligibleForDiscount = cafe?.name === 'CHATKARA' || cafe?.name === 'COOK HOUSE' || 
+                                cafe?.name?.toLowerCase().includes('food court') || 
+                                cafe?.name === 'FOOD COURT';
 
   // Minimum order amount validation
   const isMinimumOrderMet = totalAmount >= ORDER_CONSTANTS.MINIMUM_ORDER_AMOUNT;
@@ -154,18 +156,38 @@ const Checkout = () => {
     const subtotal = totalAmount;
     const deliveryCharge = deliveryDetails.orderType === 'delivery' ? ORDER_CONSTANTS.DELIVERY_CHARGE : 0;
     
-    // Calculate MUJ FOOD CLUB discount (10% on subtotal)
-    const discount = isEligibleForDiscount ? subtotal * 0.10 : 0;
+    // Calculate MUJ FOOD CLUB discount (different rates for different cafes)
+    let discountRate = 0;
+    if (cafe?.name === 'CHATKARA' || cafe?.name === 'COOK HOUSE') {
+      discountRate = 0.10; // 10% for Chatkara and Cook House
+    } else if (cafe?.name?.toLowerCase().includes('food court') || cafe?.name === 'FOOD COURT') {
+      discountRate = 0.05; // 5% for Food Court
+    }
+    const discount = isEligibleForDiscount ? subtotal * discountRate : 0;
     
-    // No CGST/SGST for Chatkara orders
-    const finalAmountWithDelivery = subtotal + deliveryCharge - discount;
+    // Check if this is Food Court order for GST calculation
+    const isFoodCourt = cafe?.name?.toLowerCase().includes('food court') || 
+                       cafe?.name === 'FOOD COURT' ||
+                       cafe?.name?.toLowerCase() === 'food court';
     
-    setCgst(0);
-    setSgst(0);
+    // Calculate GST for Food Court orders only
+    let cgstAmount = 0;
+    let sgstAmount = 0;
+    
+    if (isFoodCourt) {
+      // GST is calculated on subtotal (before discount and delivery)
+      cgstAmount = subtotal * 0.025; // 2.5% CGST
+      sgstAmount = subtotal * 0.025; // 2.5% SGST
+    }
+    
+    const finalAmountWithDelivery = subtotal + cgstAmount + sgstAmount + deliveryCharge - discount;
+    
+    setCgst(cgstAmount);
+    setSgst(sgstAmount);
     setDeliveryFee(deliveryCharge);
     setDiscountAmount(discount);
     setFinalAmount(Math.max(0, finalAmountWithDelivery));
-  }, [totalAmount, deliveryDetails.orderType, isEligibleForDiscount]);
+  }, [totalAmount, deliveryDetails.orderType, isEligibleForDiscount, cafe?.name]);
 
   const handlePlaceOrder = async () => {
     if (!user || !profile) {
@@ -636,6 +658,26 @@ const Checkout = () => {
                       <span>₹{totalAmount}</span>
                     </div>
                     
+                    {/* CGST and SGST for Food Court orders only */}
+                    {(cafe?.name?.toLowerCase().includes('food court') || 
+                      cafe?.name === 'FOOD COURT' ||
+                      cafe?.name?.toLowerCase() === 'food court') && (
+                      <>
+                        {cgst > 0 && (
+                          <div className="flex justify-between items-center text-black">
+                            <span>CGST @2.5%</span>
+                            <span>+₹{cgst.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {sgst > 0 && (
+                          <div className="flex justify-between items-center text-black">
+                            <span>SGST @2.5%</span>
+                            <span>+₹{sgst.toFixed(2)}</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    
                     {deliveryDetails.orderType === 'delivery' && (
                       <div className="flex justify-between items-center text-black">
                         <span>Delivery Charge</span>
@@ -646,7 +688,9 @@ const Checkout = () => {
                     {/* MUJ FOOD CLUB Discount */}
                     {isEligibleForDiscount && discountAmount > 0 && (
                       <div className="flex justify-between items-center text-green-600">
-                        <span className="font-bold">MUJ FOOD CLUB DISCOUNT (10%)</span>
+                        <span className="font-bold">
+                          MUJ FOOD CLUB DISCOUNT ({cafe?.name?.toLowerCase().includes('food court') || cafe?.name === 'FOOD COURT' ? '5%' : '10%'})
+                        </span>
                         <span className="font-bold">-₹{discountAmount.toFixed(2)}</span>
                       </div>
                     )}

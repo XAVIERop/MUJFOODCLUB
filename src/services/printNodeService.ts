@@ -418,13 +418,19 @@ MUJFOODCLUB!`;
     const isMiniMeals = cafe_name?.toLowerCase().includes('mini meals') || 
                         cafe_name === 'MINI MEALS' ||
                         cafe_name?.toLowerCase() === 'mini meals';
-    
-    // Calculate MUJ FOOD CLUB discount (10% on subtotal for Chatkara, Cook House, and Mini Meals)
-    const isEligibleForDiscount = isChatkara || isCookHouse || isMiniMeals;
-    const mujFoodClubDiscount = isEligibleForDiscount ? subtotal * 0.10 : 0;
     const isFoodCourt = cafe_name?.toLowerCase().includes('food court') || 
                         cafe_name === 'FOOD COURT' ||
                         cafe_name?.toLowerCase() === 'food court';
+    
+    // Calculate MUJ FOOD CLUB discount (different rates for different cafes)
+    const isEligibleForDiscount = isChatkara || isCookHouse || isMiniMeals || isFoodCourt;
+    let discountRate = 0;
+    if (isChatkara || isCookHouse || isMiniMeals) {
+      discountRate = 0.10; // 10% for Chatkara, Cook House, and Mini Meals
+    } else if (isFoodCourt) {
+      discountRate = 0.05; // 5% for Food Court
+    }
+    const mujFoodClubDiscount = isEligibleForDiscount ? subtotal * discountRate : 0;
     
     console.log('🔍 PrintNode Service - Cafe name:', cafe_name);
     console.log('🔍 PrintNode Service - Is Chatkara:', isChatkara);
@@ -541,7 +547,7 @@ MUJFOODCLUB!`;
       
       // Show MUJ FOOD CLUB discount if applicable
       if (mujFoodClubDiscount > 0) {
-        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (10%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
+        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (${(discountRate * 100).toFixed(0)}%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
       }
       
       receipt += `\n    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
@@ -568,7 +574,7 @@ MUJFOODCLUB!`;
       
       // Show MUJ FOOD CLUB discount if applicable
       if (mujFoodClubDiscount > 0) {
-        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (10%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
+        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (${(discountRate * 100).toFixed(0)}%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
       }
       
       receipt += `\n    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
@@ -595,7 +601,7 @@ MUJFOODCLUB!`;
       
       // Show MUJ FOOD CLUB discount if applicable
       if (mujFoodClubDiscount > 0) {
-        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (10%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
+        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (${(discountRate * 100).toFixed(0)}%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
       }
       
       receipt += `\n    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
@@ -606,13 +612,29 @@ MUJFOODCLUB!`;
     ----------------------------------------
     ----------------------------------------`;
     } else if (isFoodCourt) {
+      // Food Court receipt with GST and delivery charge
+      const isDelivery = data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block);
+      const deliveryCharge = isDelivery ? 10 : 0;
+      const finalTotal = subtotal + cgst + sgst + deliveryCharge - mujFoodClubDiscount;
+      
       receipt += `\n    ----------------------------------------
     Total Qty: ${totalQty}
-    Sub Total                        ${subtotal.toFixed(0)}
-    CGST@2.5 2.5%                   ${cgst.toFixed(0)}
-    SGST@2.5 2.5%                   ${sgst.toFixed(0)}
-    ----------------------------------------
-    \x1B\x21\x30Grand Total                     ${final_amount.toFixed(0)}\x1B\x21\x00
+    Sub Total                         ${subtotal.toFixed(0)}
+    CGST@2.5 2.5%                     ${cgst.toFixed(0)}
+    SGST@2.5 2.5%                     ${sgst.toFixed(0)}`;
+      
+      // Only show delivery charge if it's a delivery order
+      if (deliveryCharge > 0) {
+        receipt += `\n    Delivery Charge                 ${deliveryCharge}`;
+      }
+      
+      // Show MUJ FOOD CLUB discount if applicable
+      if (mujFoodClubDiscount > 0) {
+        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (${(discountRate * 100).toFixed(0)}%)             -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
+      }
+      
+      receipt += `\n    ----------------------------------------
+    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}\x1B\x21\x00
     Paid via ${payment_method?.toUpperCase() || 'COD'}
     ----------------------------------------
     \x1B\x21\x08Thanks For Visit!!\x1B\x21\x00
@@ -666,7 +688,7 @@ MUJFOODCLUB!`;
     let kot = `    ----------------------------------------
     ${dateStr} ${timeStr}
     \x1B\x21\x30KOT - ${order_number}\x1B\x21\x00
-    \x1B\x21\x08${isChatkara ? 'DELIVERY' : 'PICK UP'}\x1B\x21\x00
+    \x1B\x21\x08${isChatkara || isFoodCourt ? 'DELIVERY' : 'PICK UP'}\x1B\x21\x00
     ----------------------------------------
     \x1B\x21\x08ITEM                              QTY\x1B\x21\x00
     ----------------------------------------`;
@@ -676,7 +698,7 @@ MUJFOODCLUB!`;
       const itemName = item.name.toUpperCase();
       const qty = item.quantity.toString();
       
-      if (isChatkara || isMiniMeals) {
+      if (isChatkara || isMiniMeals || isFoodCourt) {
         // Create proper two-column layout: item name (left) and quantity (right)
         const totalWidth = 40; // Total width of the line
         const qtyWidth = 4; // Width for quantity column
