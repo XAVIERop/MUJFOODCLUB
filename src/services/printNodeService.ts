@@ -244,7 +244,7 @@ export class PrintNodeService {
   }
 
   /**
-   * Print both KOT and Order Receipt using PrintNode
+   * Print Order Receipt only using PrintNode
    */
   async printReceipt(receiptData: ReceiptData, printerId?: number): Promise<PrintJobResult> {
     try {
@@ -262,29 +262,7 @@ export class PrintNodeService {
         targetPrinterId = defaultPrinter.id;
       }
 
-      // Print KOT first with paper cut commands
-      const kotContent = this.formatKOTForThermal(receiptData) + '\n\n\x1D\x56\x00';
-      const kotJob = {
-        printer: targetPrinterId,
-        content: this.unicodeToBase64(kotContent),
-        contentType: 'raw_base64',
-        source: 'MUJFOODCLUB',
-        title: `KOT ${receiptData.order_number}`
-      };
-
-      const kotResponse = await this.makeRequest('/printjobs', {
-        method: 'POST',
-        body: JSON.stringify(kotJob)
-      });
-
-      if (!kotResponse.ok) {
-        throw new Error(`KOT print failed: HTTP ${kotResponse.status}: ${kotResponse.statusText}`);
-      }
-
-      // Add a small delay to ensure separate printing
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Print Order Receipt with paper cut commands
+      // Print Order Receipt only with paper cut commands
       const receiptContent = this.formatReceiptForThermal(receiptData) + '\n\n\x1D\x56\x00';
       const receiptJob = {
         printer: targetPrinterId,
@@ -303,12 +281,11 @@ export class PrintNodeService {
         throw new Error(`Receipt print failed: HTTP ${receiptResponse.status}: ${receiptResponse.statusText}`);
       }
 
-      const kotResult = await kotResponse.json();
       const receiptResult = await receiptResponse.json();
 
       return {
         success: true,
-        jobId: receiptResult.id // Return the receipt job ID as primary
+        jobId: receiptResult.id
       };
 
     } catch (error) {

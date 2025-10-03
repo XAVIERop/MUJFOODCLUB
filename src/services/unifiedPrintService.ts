@@ -265,7 +265,7 @@ class UnifiedPrintService {
           console.log(`🖨️ Using direct PrintNode for KOT (Printer ID: ${targetPrinterId || 'default'})`);
           const result = await this.printNodeService.printKOT(formattedReceiptData, targetPrinterId);
           if (result.success) {
-            return { ...result, method: 'printnode-direct' };
+            return { ...result, method: 'printnode-direct', jobId: result.jobId?.toString() };
           }
         }
         return { 
@@ -306,7 +306,7 @@ class UnifiedPrintService {
         console.log(`🖨️ Using PrintNode for KOT (Printer ID: ${config.printnode_printer_id})`);
         const result = await this.printNodeService.printKOT(formattedReceiptData, config.printnode_printer_id);
         if (result.success) {
-          return { ...result, method: 'printnode' };
+          return { ...result, method: 'printnode', jobId: result.jobId?.toString() };
         }
         console.log('⚠️ PrintNode KOT failed, falling back to browser printing');
       }
@@ -362,7 +362,7 @@ class UnifiedPrintService {
           console.log(`🖨️ Using direct PrintNode for Receipt (Printer ID: ${targetPrinterId || 'default'})`);
           const result = await this.printNodeService.printOrderReceipt(formattedReceiptData, targetPrinterId);
           if (result.success) {
-            return { ...result, method: 'printnode-direct' };
+            return { ...result, method: 'printnode-direct', jobId: result.jobId?.toString() };
           }
         }
         return { 
@@ -403,7 +403,7 @@ class UnifiedPrintService {
         console.log(`🖨️ Using PrintNode for Receipt (Printer ID: ${config.printnode_printer_id})`);
         const result = await this.printNodeService.printOrderReceipt(formattedReceiptData, config.printnode_printer_id);
         if (result.success) {
-          return { ...result, method: 'printnode' };
+          return { ...result, method: 'printnode', jobId: result.jobId?.toString() };
         }
         console.log('⚠️ PrintNode Receipt failed, falling back to browser printing');
       }
