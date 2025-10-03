@@ -109,6 +109,14 @@ class UnifiedPrintService {
         } else {
           console.log('✅ Unified Print Service: Using Chatkara API key');
         }
+      } else if (cafe.name.toLowerCase().includes('cook house')) {
+        apiKey = import.meta.env.VITE_COOKHOUSE_PRINTNODE_API_KEY || '';
+        if (!apiKey || apiKey === 'your-cookhouse-printnode-api-key') {
+          console.warn('⚠️ Unified Print Service: VITE_COOKHOUSE_PRINTNODE_API_KEY not set, using main API key');
+          apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+        } else {
+          console.log('✅ Unified Print Service: Using Cook House API key');
+        }
       } else if (cafe.name.toLowerCase().includes('food court')) {
         apiKey = import.meta.env.VITE_FOODCOURT_PRINTNODE_API_KEY || '';
         if (!apiKey || apiKey === 'your-foodcourt-printnode-api-key') {
@@ -248,6 +256,8 @@ class UnifiedPrintService {
             targetPrinterId = 74692682; // Food Court EPSON TM-T82 Receipt
           } else if (cafeName.toLowerCase().includes('mini meals')) {
             targetPrinterId = 74756354; // Mini Meals Printer
+          } else if (cafeName.toLowerCase().includes('cook house')) {
+            targetPrinterId = 74781013; // Cook House POS 80 C
           } else if (cafeName.toLowerCase().includes('punjabi') && cafeName.toLowerCase().includes('tadka')) {
             targetPrinterId = 74760016; // Punjabi Tadka Printer
           }
@@ -343,6 +353,8 @@ class UnifiedPrintService {
             targetPrinterId = 74692682; // Food Court EPSON TM-T82 Receipt
           } else if (cafeName.toLowerCase().includes('mini meals')) {
             targetPrinterId = 74756354; // Mini Meals Printer
+          } else if (cafeName.toLowerCase().includes('cook house')) {
+            targetPrinterId = 74781013; // Cook House POS 80 C
           } else if (cafeName.toLowerCase().includes('punjabi') && cafeName.toLowerCase().includes('tadka')) {
             targetPrinterId = 74760016; // Punjabi Tadka Printer
           }
