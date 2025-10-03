@@ -141,12 +141,12 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
               <Button
                 size="sm"
                 className={`w-full text-white text-xs font-medium ${
-                  cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals')
+                  cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court')
                     ? "bg-orange-600 hover:bg-orange-700"
                     : "bg-gray-500 hover:bg-gray-600"
                 }`}
               >
-                {cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals')
+                {cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court')
                   ? "Order Now"
                   : "Coming Soon"
                 }
