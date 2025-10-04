@@ -386,7 +386,7 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Determine cafe-specific format (Chatkara first, then Mini Meals, then Food Court)
+    // Determine cafe-specific format (Chatkara first, then Mini Meals, then Food Court, then Punjabi Tadka)
     const isChatkara = cafe_name?.toLowerCase().includes('chatkara') || 
                        cafe_name === 'CHATKARA' ||
                        cafe_name?.toLowerCase() === 'chatkara';
@@ -399,12 +399,15 @@ MUJFOODCLUB!`;
     const isFoodCourt = cafe_name?.toLowerCase().includes('food court') || 
                         cafe_name === 'FOOD COURT' ||
                         cafe_name?.toLowerCase() === 'food court';
+    const isPunjabiTadka = cafe_name?.toLowerCase().includes('punjabi tadka') || 
+                           cafe_name === 'PUNJABI TADKA' ||
+                           cafe_name?.toLowerCase() === 'punjabi tadka';
     
     // Calculate MUJ FOOD CLUB discount (different rates for different cafes and order types)
-    const isEligibleForDiscount = isChatkara || isCookHouse || isMiniMeals || isFoodCourt;
+    const isEligibleForDiscount = isChatkara || isCookHouse || isMiniMeals || isFoodCourt || isPunjabiTadka;
     let discountRate = 0;
-    if (isChatkara || isMiniMeals) {
-      discountRate = 0.10; // 10% for Chatkara and Mini Meals
+    if (isChatkara || isMiniMeals || isPunjabiTadka) {
+      discountRate = 0.10; // 10% for Chatkara, Mini Meals, and Punjabi Tadka
     } else if (isCookHouse) {
       // Cook House: Different rates based on order type
       const orderType = data.delivery_block === 'DINE_IN' ? 'dine_in' : 
@@ -424,73 +427,87 @@ MUJFOODCLUB!`;
     console.log('🔍 PrintNode Service - Is Cook House:', isCookHouse);
     console.log('🔍 PrintNode Service - Is Mini Meals:', isMiniMeals);
     console.log('🔍 PrintNode Service - Is Food Court:', isFoodCourt);
-    console.log('🔍 PrintNode Service - Using format:', isChatkara ? 'CHATKARA' : isCookHouse ? 'COOK HOUSE' : isMiniMeals ? 'MINI MEALS' : isFoodCourt ? 'FOOD COURT' : 'MUJ FOOD CLUB');
+    console.log('🔍 PrintNode Service - Is Punjabi Tadka:', isPunjabiTadka);
+    console.log('🔍 PrintNode Service - Using format:', isChatkara ? 'CHATKARA' : isCookHouse ? 'COOK HOUSE' : isMiniMeals ? 'MINI MEALS' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : 'MUJ FOOD CLUB');
     
     let receipt;
     
     if (isChatkara) {
       // Chatkara format (compact, thermal printer optimized with bold text)
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'CHATKARA'}\x1B\x21\x00
-    ----------------------------------------
+    ---------------------------------------
     \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
     \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
     \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
     \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
     \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
-    ----------------------------------------
+    ---------------------------------------
     \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
-    ----------------------------------------`;
+    ---------------------------------------`;
     } else if (isMiniMeals) {
       // Mini Meals format (using Chatkara template with Mini Meals branding)
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'MINI MEALS'}\x1B\x21\x00
-    ----------------------------------------
+    ---------------------------------------
     \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
     \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
     \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
     \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
     \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
-    ----------------------------------------
+    ---------------------------------------
     \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
-    ----------------------------------------`;
+    ---------------------------------------`;
     } else if (isFoodCourt) {
       // Food Court format (using Chatkara template with Food Court branding)
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'FOOD COURT'}\x1B\x21\x00
-    ----------------------------------------
+    ---------------------------------------
     \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
     \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
     \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
     \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
     \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
-    ----------------------------------------
+    ---------------------------------------
     \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
-    ----------------------------------------`;
+    ---------------------------------------`;
     } else if (isCookHouse) {
       // Cook House format (using Chatkara template with Cook House branding)
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'COOK HOUSE'}\x1B\x21\x00
-    ----------------------------------------
+    ---------------------------------------
     \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
     \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
     \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
     \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
     \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
-    ----------------------------------------
+    ---------------------------------------
     \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
-    ----------------------------------------`;
+    ---------------------------------------`;
+    } else if (isPunjabiTadka) {
+      // Punjabi Tadka format (using Chatkara template with Punjabi Tadka branding)
+      receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'PUNJABI TADKA'}\x1B\x21\x00
+    ---------------------------------------
+    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
+    \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
+    \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
+    \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
+    \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
+    ---------------------------------------
+    \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
+    ---------------------------------------`;
     } else {
       // Default MUJ Food Club format with bold formatting
       receipt = `\x1B\x21\x30        MUJ FOOD CLUB\x1B\x21\x00
-    ----------------------------------------
+    ---------------------------------------
     \x1B\x21\x08Name: ${customer_name || 'WALK-IN'} (M: ${customer_phone || '9999999999'})\x1B\x21\x00
     Date: ${dateStr}    ${timeStr}    ${payment_method?.toUpperCase() === 'COD' ? 'Pick Up' : 'Delivery'}
     Cashier: biller    \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Token No.: ${order_number.slice(-2)}\x1B\x21\x00
-    ----------------------------------------
+    ---------------------------------------
     \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
-    ----------------------------------------`;
+    ---------------------------------------`;
     }
 
     // Add items with proper center-aligned formatting
@@ -498,9 +515,9 @@ MUJFOODCLUB!`;
       const itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
       const qty = item.quantity.toString().padStart(2);
       
-      // Use different format for Chatkara, Mini Meals, and Cook House vs others
+      // Use different format for Chatkara, Mini Meals, Cook House, and Punjabi Tadka vs others
       let price, amount;
-      if (isChatkara || isMiniMeals || isCookHouse) {
+      if (isChatkara || isMiniMeals || isCookHouse || isPunjabiTadka) {
         price = item.unit_price.toFixed(0).padStart(4);
         amount = item.total_price.toFixed(0).padStart(5);
       } else {
@@ -508,7 +525,7 @@ MUJFOODCLUB!`;
         amount = item.total_price.toFixed(0).padStart(5);
       }
       
-      if (isChatkara || isMiniMeals || isCookHouse) {
+      if (isChatkara || isMiniMeals || isCookHouse || isPunjabiTadka) {
         // Keep normal size for item names in receipt
         receipt += `\n    \x1B\x21\x08${itemName}\x1B\x21\x00 ${qty}    ${price}    ${amount}`;
       } else {
@@ -654,7 +671,7 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Determine cafe-specific format (Chatkara first, then Mini Meals, then Cook House, then Food Court)
+    // Determine cafe-specific format (Chatkara first, then Mini Meals, then Cook House, then Food Court, then Punjabi Tadka)
     const isChatkara = cafe_name?.toLowerCase().includes('chatkara') || 
                        cafe_name === 'CHATKARA' ||
                        cafe_name?.toLowerCase() === 'chatkara';
@@ -667,13 +684,17 @@ MUJFOODCLUB!`;
     const isFoodCourt = cafe_name?.toLowerCase().includes('food court') || 
                         cafe_name === 'FOOD COURT' ||
                         cafe_name?.toLowerCase() === 'food court';
+    const isPunjabiTadka = cafe_name?.toLowerCase().includes('punjabi tadka') || 
+                           cafe_name === 'PUNJABI TADKA' ||
+                           cafe_name?.toLowerCase() === 'punjabi tadka';
     
     console.log('🔍 PrintNode KOT - Cafe name:', cafe_name);
     console.log('🔍 PrintNode KOT - Is Chatkara:', isChatkara);
     console.log('🔍 PrintNode KOT - Is Mini Meals:', isMiniMeals);
     console.log('🔍 PrintNode KOT - Is Cook House:', isCookHouse);
     console.log('🔍 PrintNode KOT - Is Food Court:', isFoodCourt);
-    console.log('🔍 PrintNode KOT - Using format:', isChatkara ? 'CHATKARA' : isMiniMeals ? 'MINI MEALS' : isCookHouse ? 'COOK HOUSE' : isFoodCourt ? 'FOOD COURT' : 'MUJ FOOD CLUB');
+    console.log('🔍 PrintNode KOT - Is Punjabi Tadka:', isPunjabiTadka);
+    console.log('🔍 PrintNode KOT - Using format:', isChatkara ? 'CHATKARA' : isMiniMeals ? 'MINI MEALS' : isCookHouse ? 'COOK HOUSE' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : 'MUJ FOOD CLUB');
     
     // Determine location display for KOT
     let locationDisplay = '';
@@ -684,24 +705,23 @@ MUJFOODCLUB!`;
     } else if (data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block)) {
       locationDisplay = data.delivery_block; // B1, B2, etc.
     } else {
-      locationDisplay = isChatkara || isCookHouse || isFoodCourt ? 'DELIVERY' : 'PICK UP';
+      locationDisplay = isChatkara || isCookHouse || isFoodCourt || isPunjabiTadka ? 'DELIVERY' : 'PICK UP';
     }
 
     // Proper center-aligned KOT format with bold formatting
-    let kot = `    ----------------------------------------
-    ${dateStr} ${timeStr}
+    let kot = `${dateStr} ${timeStr}
     \x1B\x21\x30KOT - ${order_number}\x1B\x21\x00
     \x1B\x21\x08${locationDisplay}\x1B\x21\x00
-    ----------------------------------------
+    ---------------------------------------
     \x1B\x21\x08ITEM                              QTY\x1B\x21\x00
-    ----------------------------------------`;
+    ---------------------------------------`;
 
     // Add items with proper two-column layout
     items.forEach(item => {
       const itemName = item.name.toUpperCase();
       const qty = item.quantity.toString();
       
-      if (isChatkara || isMiniMeals || isCookHouse || isFoodCourt) {
+      if (isChatkara || isMiniMeals || isCookHouse || isFoodCourt || isPunjabiTadka) {
         // Create proper two-column layout: item name (left) and quantity (right)
         const totalWidth = 40; // Total width of the line
         const qtyWidth = 4; // Width for quantity column
