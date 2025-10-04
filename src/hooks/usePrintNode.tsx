@@ -58,6 +58,11 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
         return apiKey;
       }
 
+      console.log('🔍 usePrintNode - Cafe name from database:', cafe.name);
+      console.log('🔍 usePrintNode - Cafe name lowercase:', cafe.name.toLowerCase());
+      console.log('🔍 usePrintNode - Contains punjabi:', cafe.name.toLowerCase().includes('punjabi'));
+      console.log('🔍 usePrintNode - Contains tadka:', cafe.name.toLowerCase().includes('tadka'));
+
       // Return cafe-specific API key
       if (cafe.name.toLowerCase().includes('chatkara')) {
         console.log('Using Chatkara API key');
@@ -112,7 +117,8 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
         }
         return apiKey;
       } else if (cafe.name.toLowerCase().includes('punjabi') && cafe.name.toLowerCase().includes('tadka')) {
-        console.log('Using Punjabi Tadka API key');
+        console.log('✅ usePrintNode - Using Punjabi Tadka API key');
+        console.log('✅ usePrintNode - Punjabi Tadka API key value:', import.meta.env.VITE_PUNJABI_TADKA_PRINTNODE_API_KEY);
         const apiKey = import.meta.env.VITE_PUNJABI_TADKA_PRINTNODE_API_KEY;
         if (!apiKey || apiKey === 'your-punjabi-tadka-printnode-api-key') {
           console.warn('VITE_PUNJABI_TADKA_PRINTNODE_API_KEY not set, using main API key');
