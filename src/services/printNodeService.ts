@@ -401,7 +401,9 @@ MUJFOODCLUB!`;
                         cafe_name?.toLowerCase() === 'food court';
     const isPunjabiTadka = cafe_name?.toLowerCase().includes('punjabi tadka') || 
                            cafe_name === 'PUNJABI TADKA' ||
-                           cafe_name?.toLowerCase() === 'punjabi tadka';
+                           cafe_name?.toLowerCase() === 'punjabi tadka' ||
+                           cafe_name?.toLowerCase().includes('punjabi') ||
+                           cafe_name?.toLowerCase().includes('tadka');
     
     // Calculate MUJ FOOD CLUB discount (different rates for different cafes and order types)
     const isEligibleForDiscount = isChatkara || isCookHouse || isMiniMeals || isFoodCourt || isPunjabiTadka;
@@ -428,6 +430,8 @@ MUJFOODCLUB!`;
     console.log('🔍 PrintNode Service - Is Mini Meals:', isMiniMeals);
     console.log('🔍 PrintNode Service - Is Food Court:', isFoodCourt);
     console.log('🔍 PrintNode Service - Is Punjabi Tadka:', isPunjabiTadka);
+    console.log('🔍 PrintNode Service - Cafe name exact:', `"${cafe_name}"`);
+    console.log('🔍 PrintNode Service - Cafe name length:', cafe_name?.length);
     console.log('🔍 PrintNode Service - Using format:', isChatkara ? 'CHATKARA' : isCookHouse ? 'COOK HOUSE' : isMiniMeals ? 'MINI MEALS' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : 'MUJ FOOD CLUB');
     
     let receipt;
@@ -686,7 +690,9 @@ MUJFOODCLUB!`;
                         cafe_name?.toLowerCase() === 'food court';
     const isPunjabiTadka = cafe_name?.toLowerCase().includes('punjabi tadka') || 
                            cafe_name === 'PUNJABI TADKA' ||
-                           cafe_name?.toLowerCase() === 'punjabi tadka';
+                           cafe_name?.toLowerCase() === 'punjabi tadka' ||
+                           cafe_name?.toLowerCase().includes('punjabi') ||
+                           cafe_name?.toLowerCase().includes('tadka');
     
     console.log('🔍 PrintNode KOT - Cafe name:', cafe_name);
     console.log('🔍 PrintNode KOT - Is Chatkara:', isChatkara);
