@@ -675,11 +675,23 @@ MUJFOODCLUB!`;
     console.log('🔍 PrintNode KOT - Is Food Court:', isFoodCourt);
     console.log('🔍 PrintNode KOT - Using format:', isChatkara ? 'CHATKARA' : isMiniMeals ? 'MINI MEALS' : isCookHouse ? 'COOK HOUSE' : isFoodCourt ? 'FOOD COURT' : 'MUJ FOOD CLUB');
     
+    // Determine location display for KOT
+    let locationDisplay = '';
+    if (data.delivery_block === 'DINE_IN' && data.table_number) {
+      locationDisplay = `Table ${data.table_number}`;
+    } else if (data.delivery_block === 'TAKEAWAY') {
+      locationDisplay = 'TAKEAWAY';
+    } else if (data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block)) {
+      locationDisplay = data.delivery_block; // B1, B2, etc.
+    } else {
+      locationDisplay = isChatkara || isCookHouse || isFoodCourt ? 'DELIVERY' : 'PICK UP';
+    }
+
     // Proper center-aligned KOT format with bold formatting
     let kot = `    ----------------------------------------
     ${dateStr} ${timeStr}
     \x1B\x21\x30KOT - ${order_number}\x1B\x21\x00
-    \x1B\x21\x08${isChatkara || isCookHouse || isFoodCourt ? 'DELIVERY' : 'PICK UP'}\x1B\x21\x00
+    \x1B\x21\x08${locationDisplay}\x1B\x21\x00
     ----------------------------------------
     \x1B\x21\x08ITEM                              QTY\x1B\x21\x00
     ----------------------------------------`;
