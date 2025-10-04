@@ -489,18 +489,18 @@ MUJFOODCLUB!`;
     \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
     ---------------------------------------`;
     } else if (isPunjabiTadka) {
-      // Punjabi Tadka format (using Chatkara template with Punjabi Tadka branding)
-      receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'PUNJABI TADKA'}\x1B\x21\x00
-    ---------------------------------------
+      // Punjabi Tadka format (60mm printer optimized)
+      receipt = `\x1B\x21\x30    ${cafe_name?.toUpperCase() || 'PUNJABI TADKA'}\x1B\x21\x00
+    ------------------------------
     \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
-    \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
+    \x1B\x21\x30Token: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
     \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
     \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
-    \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
-    ---------------------------------------
-    \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
-    ---------------------------------------`;
+    \x1B\x21\x08Bill: ${order_number}\x1B\x21\x00
+    ------------------------------
+    \x1B\x21\x08Item            Qty Price Amount\x1B\x21\x00
+    ------------------------------`;
     } else {
       // Default MUJ Food Club format with bold formatting
       receipt = `\x1B\x21\x30        MUJ FOOD CLUB\x1B\x21\x00
@@ -516,24 +516,35 @@ MUJFOODCLUB!`;
 
     // Add items with proper center-aligned formatting
     items.forEach(item => {
-      const itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
-      const qty = item.quantity.toString().padStart(2);
+      let itemName, qty, price, amount;
       
-      // Use different format for Chatkara, Mini Meals, Cook House, and Punjabi Tadka vs others
-      let price, amount;
-      if (isChatkara || isMiniMeals || isCookHouse || isPunjabiTadka) {
+      if (isPunjabiTadka) {
+        // 60mm printer format - shorter names and compact layout
+        itemName = item.name.toUpperCase().substring(0, 15).padEnd(15);
+        qty = item.quantity.toString().padStart(2);
         price = item.unit_price.toFixed(0).padStart(4);
         amount = item.total_price.toFixed(0).padStart(5);
+        receipt += `\n    \x1B\x21\x08${itemName}\x1B\x21\x00 ${qty}  ${price}  ${amount}`;
       } else {
-        price = item.unit_price.toFixed(0).padStart(4);
-        amount = item.total_price.toFixed(0).padStart(5);
-      }
-      
-      if (isChatkara || isMiniMeals || isCookHouse || isPunjabiTadka) {
-        // Keep normal size for item names in receipt
-        receipt += `\n    \x1B\x21\x08${itemName}\x1B\x21\x00 ${qty}    ${price}    ${amount}`;
-      } else {
-        receipt += `\n    ${itemName} ${qty}    ${price}    ${amount}`;
+        // 80mm printer format for other cafes
+        itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
+        qty = item.quantity.toString().padStart(2);
+        
+        // Use different format for Chatkara, Mini Meals, Cook House vs others
+        if (isChatkara || isMiniMeals || isCookHouse) {
+          price = item.unit_price.toFixed(0).padStart(4);
+          amount = item.total_price.toFixed(0).padStart(5);
+        } else {
+          price = item.unit_price.toFixed(0).padStart(4);
+          amount = item.total_price.toFixed(0).padStart(5);
+        }
+        
+        if (isChatkara || isMiniMeals || isCookHouse) {
+          // Keep normal size for item names in receipt
+          receipt += `\n    \x1B\x21\x08${itemName}\x1B\x21\x00 ${qty}    ${price}    ${amount}`;
+        } else {
+          receipt += `\n    ${itemName} ${qty}    ${price}    ${amount}`;
+        }
       }
     });
 
