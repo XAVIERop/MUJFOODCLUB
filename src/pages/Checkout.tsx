@@ -158,10 +158,17 @@ const Checkout = () => {
     const subtotal = totalAmount;
     const deliveryCharge = deliveryDetails.orderType === 'delivery' ? ORDER_CONSTANTS.DELIVERY_CHARGE : 0;
     
-    // Calculate MUJ FOOD CLUB discount (different rates for different cafes)
+    // Calculate MUJ FOOD CLUB discount (different rates for different cafes and order types)
     let discountRate = 0;
-    if (cafe?.name === 'CHATKARA' || cafe?.name === 'COOK HOUSE') {
-      discountRate = 0.10; // 10% for Chatkara and Cook House
+    if (cafe?.name === 'CHATKARA') {
+      discountRate = 0.10; // 10% for Chatkara (all order types)
+    } else if (cafe?.name === 'COOK HOUSE') {
+      // Cook House: Different rates based on order type
+      if (deliveryDetails.orderType === 'delivery') {
+        discountRate = 0.10; // 10% for delivery
+      } else if (deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') {
+        discountRate = 0.05; // 5% for dine-in and takeaway
+      }
     } else if (cafe?.name?.toLowerCase().includes('mini meals') || cafe?.name === 'MINI MEALS') {
       discountRate = 0.10; // 10% for Mini Meals
     } else if (cafe?.name?.toLowerCase().includes('food court') || cafe?.name === 'FOOD COURT') {
@@ -693,7 +700,8 @@ const Checkout = () => {
                     {isEligibleForDiscount && discountAmount > 0 && (
                       <div className="flex justify-between items-center text-green-600">
                         <span className="font-bold">
-                          MUJ FOOD CLUB DISCOUNT ({cafe?.name?.toLowerCase().includes('food court') || cafe?.name === 'FOOD COURT' ? '5%' : '10%'})
+                          MUJ FOOD CLUB DISCOUNT ({cafe?.name?.toLowerCase().includes('food court') || cafe?.name === 'FOOD COURT' ? '5%' : 
+                            cafe?.name === 'COOK HOUSE' ? (deliveryDetails.orderType === 'delivery' ? '10%' : '5%') : '10%'})
                         </span>
                         <span className="font-bold">-₹{discountAmount.toFixed(2)}</span>
                       </div>

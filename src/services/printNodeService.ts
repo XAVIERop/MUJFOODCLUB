@@ -6,6 +6,7 @@ interface ReceiptData {
   customer_name: string;
   customer_phone: string;
   delivery_block: string;
+  table_number?: string;
   items: {
     id: string;
     name: string;
@@ -399,11 +400,20 @@ MUJFOODCLUB!`;
                         cafe_name === 'FOOD COURT' ||
                         cafe_name?.toLowerCase() === 'food court';
     
-    // Calculate MUJ FOOD CLUB discount (different rates for different cafes)
+    // Calculate MUJ FOOD CLUB discount (different rates for different cafes and order types)
     const isEligibleForDiscount = isChatkara || isCookHouse || isMiniMeals || isFoodCourt;
     let discountRate = 0;
-    if (isChatkara || isCookHouse || isMiniMeals) {
-      discountRate = 0.10; // 10% for Chatkara, Cook House, and Mini Meals
+    if (isChatkara || isMiniMeals) {
+      discountRate = 0.10; // 10% for Chatkara and Mini Meals
+    } else if (isCookHouse) {
+      // Cook House: Different rates based on order type
+      const orderType = data.delivery_block === 'DINE_IN' ? 'dine_in' : 
+                       data.delivery_block === 'TAKEAWAY' ? 'takeaway' : 'delivery';
+      if (orderType === 'delivery') {
+        discountRate = 0.10; // 10% for delivery
+      } else if (orderType === 'dine_in' || orderType === 'takeaway') {
+        discountRate = 0.05; // 5% for dine-in and takeaway
+      }
     } else if (isFoodCourt) {
       discountRate = 0.05; // 5% for Food Court
     }
@@ -422,7 +432,7 @@ MUJFOODCLUB!`;
       // Chatkara format (compact, thermal printer optimized with bold text)
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'CHATKARA'}\x1B\x21\x00
     ----------------------------------------
-    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
     \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
     \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
@@ -435,7 +445,7 @@ MUJFOODCLUB!`;
       // Mini Meals format (using Chatkara template with Mini Meals branding)
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'MINI MEALS'}\x1B\x21\x00
     ----------------------------------------
-    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
     \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
     \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
@@ -448,7 +458,7 @@ MUJFOODCLUB!`;
       // Food Court format (using Chatkara template with Food Court branding)
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'FOOD COURT'}\x1B\x21\x00
     ----------------------------------------
-    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
     \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
     \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
@@ -461,7 +471,7 @@ MUJFOODCLUB!`;
       // Cook House format (using Chatkara template with Cook House branding)
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'COOK HOUSE'}\x1B\x21\x00
     ----------------------------------------
-    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
     \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
     \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00

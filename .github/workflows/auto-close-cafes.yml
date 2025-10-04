@@ -1,0 +1,26 @@
+name: Auto Close Cafes at 2 AM
+
+on:
+  schedule:
+    # Run at 2:00 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual triggering for testing
+
+jobs:
+  close-cafes:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Close all cafes at 2 AM
+        run: |
+          # Get the Supabase URL and Edge Function URL
+          SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
+          EDGE_FUNCTION_URL="${SUPABASE_URL}/functions/v1/auto-close-cafes"
+          
+          # Call the Edge Function
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            "$EDGE_FUNCTION_URL"
+          
+          echo "Cafes auto-close job completed at $(date)"
