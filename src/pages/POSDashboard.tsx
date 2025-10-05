@@ -1532,11 +1532,13 @@ const POSDashboard = () => {
     
     switch (dateRange) {
       case 'today':
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
+        // Use UTC to avoid timezone issues
+        const todayUTC = new Date(today.getTime() - today.getTimezoneOffset() * 60000);
+        const tomorrowUTC = new Date(todayUTC);
+        tomorrowUTC.setDate(tomorrowUTC.getDate() + 1);
         return {
-          startDate: today.toISOString(),
-          endDate: tomorrow.toISOString()
+          startDate: todayUTC.toISOString(),
+          endDate: tomorrowUTC.toISOString()
         };
       
       case 'yesterday':
