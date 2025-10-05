@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Plus, 
   Minus, 
@@ -17,13 +20,17 @@ import {
   Phone,
   MapPin,
   Percent,
-  X
+  X,
+  AlertCircle,
+  Search
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 // import { useLocalPrint } from '@/hooks/useLocalPrint'; // Disabled - using cafe-specific PrintNode service
 import { usePrintNode } from '@/hooks/usePrintNode';
+import { isDineInTakeawayAllowed, isDeliveryAllowed, getDineInTakeawayMessage, getDeliveryMessage } from '@/utils/timeRestrictions';
+import { getCafeTableOptions } from '@/utils/tableMapping';
 
 interface MenuItem {
   id: string;
@@ -74,12 +81,43 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
     name: '',
     phone: '',
     block: '',
-    specialInstructions: ''
+    specialInstructions: '',
+    orderType: 'delivery' // Default to delivery
   });
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponCode, setCouponCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [cafeName, setCafeName] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Load cafe name
+  useEffect(() => {
+    const fetchCafeName = async () => {
+      if (!cafeId) return;
+      
+      try {
+        const { data: cafe, error } = await supabase
+          .from('cafes')
+          .select('name')
+          .eq('id', cafeId)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching cafe name:', error);
+          return;
+        }
+        
+        if (cafe) {
+          setCafeName(cafe.name);
+        }
+      } catch (error) {
+        console.error('Error fetching cafe name:', error);
+      }
+    };
+
+    fetchCafeName();
+  }, [cafeId]);
 
   // Load menu items
   useEffect(() => {
@@ -122,8 +160,104 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
     fetchMenuItems();
   }, [cafeId, toast]);
 
-  // Get filtered menu items by category
-  const filteredMenuItems = menuItems.filter(item => item.category === selectedCategory);
+  // Filter menu items based on search term and selected category
+  const getFilteredMenuItems = () => {
+    let filtered = menuItems.filter(item => item.is_available);
+    
+    // Filter by selected category
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(item => item.category === selectedCategory);
+    }
+    
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(item => 
+        item.name.toLowerCase().includes(searchLower) ||
+        item.description.toLowerCase().includes(searchLower) ||
+        item.category.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    return filtered;
+  };
+
+  // Get filtered menu items by category and search
+  const filteredMenuItems = React.useMemo(() => getFilteredMenuItems(), [menuItems, selectedCategory, searchTerm]);
+
+  // Helper function to get dropdown options based on order type and cafe
+  const getLocationOptions = (orderType: string, cafeName: string) => {
+    if (orderType === 'dine_in') {
+      // For dine-in, show table numbers
+      const tableOptions = getCafeTableOptions(cafeName);
+      return tableOptions.map(table => ({
+        value: table.label, // "Table 1", "Table 2", etc.
+        label: table.label
+      }));
+    } else if (orderType === 'delivery') {
+      // For delivery, show blocks
+      return [
+        { value: 'B1', label: 'B1' },
+        { value: 'B2', label: 'B2' },
+        { value: 'B3', label: 'B3' },
+        { value: 'B4', label: 'B4' },
+        { value: 'B5', label: 'B5' },
+        { value: 'B6', label: 'B6' },
+        { value: 'B7', label: 'B7' },
+        { value: 'B8', label: 'B8' },
+        { value: 'B9', label: 'B9' },
+        { value: 'B10', label: 'B10' },
+        { value: 'B11', label: 'B11' },
+        { value: 'B12', label: 'B12' },
+        { value: 'G1', label: 'G1' },
+        { value: 'G2', label: 'G2' },
+        { value: 'G3', label: 'G3' },
+        { value: 'G4', label: 'G4' },
+        { value: 'G5', label: 'G5' },
+        { value: 'G6', label: 'G6' },
+        { value: 'G7', label: 'G7' },
+        { value: 'G8', label: 'G8' },
+        { value: 'G9', label: 'G9' },
+        { value: 'G10', label: 'G10' },
+        { value: 'G11', label: 'G11' },
+        { value: 'G12', label: 'G12' }
+      ];
+    } else {
+      // For takeaway, show blocks
+      return [
+        { value: 'B1', label: 'B1' },
+        { value: 'B2', label: 'B2' },
+        { value: 'B3', label: 'B3' },
+        { value: 'B4', label: 'B4' },
+        { value: 'B5', label: 'B5' },
+        { value: 'B6', label: 'B6' },
+        { value: 'B7', label: 'B7' },
+        { value: 'B8', label: 'B8' },
+        { value: 'B9', label: 'B9' },
+        { value: 'B10', label: 'B10' },
+        { value: 'B11', label: 'B11' },
+        { value: 'B12', label: 'B12' },
+        { value: 'G1', label: 'G1' },
+        { value: 'G2', label: 'G2' },
+        { value: 'G3', label: 'G3' },
+        { value: 'G4', label: 'G4' },
+        { value: 'G5', label: 'G5' },
+        { value: 'G6', label: 'G6' },
+        { value: 'G7', label: 'G7' },
+        { value: 'G8', label: 'G8' },
+        { value: 'G9', label: 'G9' },
+        { value: 'G10', label: 'G10' },
+        { value: 'G11', label: 'G11' },
+        { value: 'G12', label: 'G12' }
+      ];
+    }
+  };
+
+  // Get cart quantity for a specific menu item
+  const getCartQuantity = (menuItemId: string) => {
+    const cartItem = cart.find(item => item.menu_item_id === menuItemId);
+    return cartItem ? cartItem.quantity : 0;
+  };
 
   // Add item to cart
   const addToCart = (item: MenuItem) => {
@@ -166,6 +300,36 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
   // Remove item from cart
   const removeFromCart = (cartItemId: string) => {
     setCart(cart.filter(item => item.id !== cartItemId));
+  };
+
+  // Handle quantity change from menu item
+  const handleMenuQuantityChange = (item: MenuItem, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      // Remove from cart if quantity is 0 or less
+      const cartItem = cart.find(cartItem => cartItem.menu_item_id === item.id);
+      if (cartItem) {
+        removeFromCart(cartItem.id);
+      }
+    } else {
+      // Update or add to cart
+      const existingItem = cart.find(cartItem => cartItem.menu_item_id === item.id);
+      
+      if (existingItem) {
+        updateQuantity(existingItem.id, newQuantity);
+      } else {
+        // Add new item to cart with specified quantity
+        const newCartItem: CartItem = {
+          id: `${item.id}-${Date.now()}`,
+          menu_item_id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: newQuantity,
+          total: newQuantity * item.price,
+          special_instructions: ''
+        };
+        setCart([...cart, newCartItem]);
+      }
+    }
   };
 
   // Calculate totals
@@ -271,7 +435,11 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
           user_id: user?.id || '00000000-0000-0000-0000-000000000001', // Use system user ID
           status: 'received',
           total_amount: total,
-          delivery_block: customerInfo.block || 'Counter',
+          order_type: customerInfo.orderType,
+          delivery_block: customerInfo.orderType === 'dine_in' ? 'DINE_IN' : 
+                          customerInfo.orderType === 'takeaway' ? 'TAKEAWAY' : 
+                          customerInfo.block || 'Counter',
+          table_number: customerInfo.orderType === 'dine_in' ? customerInfo.block : null,
           payment_method: 'cod',
           points_earned: Math.floor(total / 10),
           estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
@@ -477,11 +645,50 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
         {/* Center Panel - Menu Items */}
         <div className="flex-1 bg-white overflow-y-auto">
           <div className="p-4">
+            {/* Search Bar */}
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  type="text"
+                  placeholder="Search menu items..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-10 py-2 w-full"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+            
             <h3 className="font-semibold text-gray-900 mb-4">
-              {selectedCategory} ({filteredMenuItems.length} items)
+              {searchTerm ? `Search results for "${searchTerm}"` : selectedCategory} ({filteredMenuItems.length} items)
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredMenuItems.map((item) => (
+            
+            {filteredMenuItems.length === 0 ? (
+              <div className="text-center py-8">
+                <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg font-medium">
+                  {searchTerm ? 'No items found matching your search' : 'No items available in this category'}
+                </p>
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="mt-2 text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Clear search
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredMenuItems.map((item) => (
                 <Card key={item.id} className="cursor-pointer hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="space-y-2">
@@ -491,25 +698,182 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
                         <span className="font-bold text-lg text-green-600">
                           {formatCurrency(item.price)}
                         </span>
-                        <Button
-                          size="sm"
-                          onClick={() => addToCart(item)}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
+                        {getCartQuantity(item.id) > 0 ? (
+                          // Show quantity selector when item is in cart
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleMenuQuantityChange(item, getCartQuantity(item.id) - 1)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="text-sm font-medium min-w-[20px] text-center">
+                              {getCartQuantity(item.id)}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleMenuQuantityChange(item, getCartQuantity(item.id) + 1)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          // Show green + button when item is not in cart
+                          <Button
+                            size="sm"
+                            onClick={() => addToCart(item)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Right Panel - Order Cart */}
         <div className="w-96 bg-white border-l overflow-y-auto">
           <div className="p-4 space-y-4">
+            {/* Order Type Selection */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Order Type
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="delivery"
+                        name="orderType"
+                        value="delivery"
+                        checked={customerInfo.orderType === 'delivery'}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
+                        disabled={!isDeliveryAllowed()}
+                      />
+                      <Label htmlFor="delivery" className="flex items-center">
+                        <MapPin className="w-4 h-4 mr-2" />
+                        Delivery
+                        {!isDeliveryAllowed() && (
+                          <Badge variant="secondary" className="ml-2">Not Available</Badge>
+                        )}
+                      </Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="takeaway"
+                        name="orderType"
+                        value="takeaway"
+                        checked={customerInfo.orderType === 'takeaway'}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
+                        disabled={!isDineInTakeawayAllowed()}
+                      />
+                      <Label htmlFor="takeaway" className="flex items-center">
+                        <Clock className="w-4 h-4 mr-2" />
+                        Takeaway
+                        {!isDineInTakeawayAllowed() && (
+                          <Badge variant="secondary" className="ml-2">Not Available</Badge>
+                        )}
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="dine_in"
+                        name="orderType"
+                        value="dine_in"
+                        checked={customerInfo.orderType === 'dine_in'}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
+                        disabled={!isDineInTakeawayAllowed()}
+                      />
+                      <Label htmlFor="dine_in" className="flex items-center">
+                        <Clock className="w-4 h-4 mr-2" />
+                        Dine In
+                        {!isDineInTakeawayAllowed() && (
+                          <Badge variant="secondary" className="ml-2">Not Available</Badge>
+                        )}
+                      </Label>
+                    </div>
+                  </div>
+                
+                  {!isDeliveryAllowed() && (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        {getDeliveryMessage()}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  {!isDineInTakeawayAllowed() && (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        {getDineInTakeawayMessage()}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Delivery Details */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  {customerInfo.orderType === 'delivery' ? 'Delivery Details' : 
+                   customerInfo.orderType === 'dine_in' ? 'Dine In Details' : 
+                   'Takeaway Details'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="location">
+                    {customerInfo.orderType === 'delivery' ? 'Block' : 
+                     customerInfo.orderType === 'dine_in' ? 'Table Number *' : 
+                     'Location'}
+                  </Label>
+                  <Select 
+                    value={customerInfo.block} 
+                    onValueChange={(value) => setCustomerInfo(prev => ({ ...prev, block: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={
+                        customerInfo.orderType === 'delivery' ? 'Select your block' :
+                        customerInfo.orderType === 'dine_in' ? 'Select table number' :
+                        'Select location'
+                      } />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getLocationOptions(customerInfo.orderType, cafeName).map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Customer Info */}
             <Card>
               <CardHeader className="pb-3">
@@ -528,11 +892,6 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
                   placeholder="Phone Number"
                   value={customerInfo.phone}
                   onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
-                />
-                <Input
-                  placeholder="Block/Delivery Address"
-                  value={customerInfo.block}
-                  onChange={(e) => setCustomerInfo({...customerInfo, block: e.target.value})}
                 />
                 <Input
                   placeholder="Special Instructions"

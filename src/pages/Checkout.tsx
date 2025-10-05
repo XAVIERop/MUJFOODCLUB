@@ -212,6 +212,25 @@ const Checkout = () => {
       return;
     }
 
+    // Check if the selected order type is currently available
+    if (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed()) {
+      toast({
+        title: "Delivery Unavailable",
+        description: getDeliveryMessage(),
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed()) {
+      toast({
+        title: "Dine-in/Takeaway Unavailable", 
+        description: getDineInTakeawayMessage(),
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Validate phone number
     if (!deliveryDetails.phoneNumber || deliveryDetails.phoneNumber.length !== 10) {
       setError('Please enter a valid 10-digit phone number');
@@ -749,13 +768,18 @@ const Checkout = () => {
                   {/* Place Order Button */}
               <Button 
                 onClick={handlePlaceOrder}
-                    disabled={isLoading || !isMinimumOrderMet}
+                disabled={isLoading || !isMinimumOrderMet || 
+                  (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed()) ||
+                  ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed())
+                }
                 className="w-full"
                 size="lg"
                 variant="hero"
               >
                     {isLoading ? 'Placing Order...' :
                      !isMinimumOrderMet ? `Minimum Order ₹${ORDER_CONSTANTS.MINIMUM_ORDER_AMOUNT} Required` :
+                     (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed()) ? 'Delivery Unavailable' :
+                     ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed()) ? 'Dine-in/Takeaway Unavailable' :
                      `Place Order - ₹${finalAmount.toFixed(2)}`}
               </Button>
 

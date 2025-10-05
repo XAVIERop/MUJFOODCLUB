@@ -30,9 +30,17 @@ export const getTableOptions = (cafeName: string): number[] => {
     'munch box': Array.from({ length: 12 }, (_, i) => i + 1),
     'MUNCH BOX': Array.from({ length: 12 }, (_, i) => i + 1),
     'Munch Box': Array.from({ length: 12 }, (_, i) => i + 1),
+    
+    // Mini Meals: Tables 1-10
+    'mini meals': Array.from({ length: 10 }, (_, i) => i + 1),
+    'MINI MEALS': Array.from({ length: 10 }, (_, i) => i + 1),
+    'Mini Meals': Array.from({ length: 10 }, (_, i) => i + 1),
+    
+    // Default fallback for any cafe not specifically mapped
+    'default': Array.from({ length: 10 }, (_, i) => i + 1),
   };
 
-  const result = tableRanges[cafeName] || [];
+  const result = tableRanges[cafeName] || tableRanges['default'] || [];
   console.log('🔍 TableMapping: Available keys:', Object.keys(tableRanges));
   console.log('🔍 TableMapping: Result for', cafeName, ':', result);
   
@@ -40,8 +48,8 @@ export const getTableOptions = (cafeName: string): number[] => {
 };
 
 // Helper function to get table options for a cafe
-export const getCafeTableOptions = (cafeId: string): { value: string; label: string }[] => {
-  const tables = getTableOptions(cafeId);
+export const getCafeTableOptions = (cafeName: string): { value: string; label: string }[] => {
+  const tables = getTableOptions(cafeName);
   return tables.map(table => ({
     value: table.toString(),
     label: `Table ${table}`
