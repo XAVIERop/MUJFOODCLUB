@@ -190,7 +190,9 @@ const POSDashboard = () => {
       
       // Debug: Log the cafeId being used
       console.log('🔍 POS Dashboard: Fetching orders for cafeId:', cafeId);
-      console.log('🔍 POS Dashboard: Expected Chatkara cafeId: 25d0b247-0731-4e52-a0fb-023526adfa34');
+      console.log('🔍 POS Dashboard: CafeId type:', typeof cafeId);
+      console.log('🔍 POS Dashboard: CafeId length:', cafeId?.length);
+      console.log('🔍 POS Dashboard: Expected Munch Box cafeId: fecc62c0-2995-4376-8303-59c544d2c3e0');
       
       if (!cafeId) {
         console.error('❌ POS Dashboard: No cafeId available, cannot fetch orders');
@@ -1628,7 +1630,9 @@ const POSDashboard = () => {
         if (profile.user_type === 'cafe_owner') {
           // Cafe owners get cafe_id directly from their profile
           console.log('POS Dashboard: User is cafe_owner, using profile.cafe_id:', profile.cafe_id);
-      setCafeId(profile.cafe_id);
+          console.log('POS Dashboard: Profile cafe_id type:', typeof profile.cafe_id);
+          console.log('POS Dashboard: Profile cafe_id length:', profile.cafe_id?.length);
+          setCafeId(profile.cafe_id);
         } else if (profile.user_type === 'cafe_staff') {
           // Cafe staff get cafe_id from cafe_staff table
           console.log('POS Dashboard: User is cafe_staff, fetching from cafe_staff table');
