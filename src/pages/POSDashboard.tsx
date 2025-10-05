@@ -111,6 +111,9 @@ const POSDashboard = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [orderItems, setOrderItems] = useState<{[key: string]: OrderItem[]}>({});
+  
+  // Calculate completed orders for metrics
+  const completedOrders = filteredOrders.filter(order => order.status === 'completed');
   const [loading, setLoading] = useState(true);
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -1993,7 +1996,7 @@ const POSDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{filteredOrders.length}</div>
+              <div className="text-2xl font-bold text-gray-900">{completedOrders.length}</div>
             </CardContent>
           </Card>
           <Card>
@@ -2004,7 +2007,7 @@ const POSDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                ₹{filteredOrders.reduce((sum, order) => sum + order.total_amount, 0)}
+                ₹{completedOrders.reduce((sum, order) => sum + order.total_amount, 0)}
               </div>
             </CardContent>
           </Card>
@@ -2557,7 +2560,7 @@ const POSDashboard = () => {
                         <div className="flex justify-between">
                           <span>Completed Orders:</span>
                           <Badge variant="secondary">
-                            {filteredOrders.filter(o => o.status === 'completed').length}
+                            {completedOrders.length}
                           </Badge>
                         </div>
                         <div className="flex justify-between">
