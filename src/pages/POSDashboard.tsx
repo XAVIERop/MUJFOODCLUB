@@ -654,6 +654,20 @@ const POSDashboard = () => {
   const autoPrintReceiptWithCafeService = async (order: Order) => {
     console.log('🚀 UNIFIED PRINT: Using Unified Print Service!');
     
+    // Check if this is Pizza Bakers - skip automatic printing
+    if (order.cafe_id && cafeId) {
+      const { data: cafeData } = await supabase
+        .from('cafes')
+        .select('name')
+        .eq('id', order.cafe_id)
+        .single();
+      
+      if (cafeData && cafeData.name.toLowerCase().includes('pizza bakers')) {
+        console.log('🚫 AUTO-PRINT: Pizza Bakers - skipping automatic printing:', order.order_number);
+        return;
+      }
+    }
+    
     // Check if this order has already been auto-printed to prevent duplicates
     if (printedOrders.has(order.id)) {
       console.log('🚫 AUTO-PRINT: Order already printed, skipping duplicate:', order.order_number);
