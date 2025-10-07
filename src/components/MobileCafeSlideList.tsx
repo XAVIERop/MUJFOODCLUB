@@ -24,11 +24,11 @@ interface MobileCafeSlideListProps {
 const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Get first 6 cafes (the ones accepting orders) for the slide list
+  // Get first 10 cafes (the ones accepting orders) for the slide list
   const featuredCafes = cafes
     .filter(cafe => cafe.accepting_orders)
     .sort((a, b) => (a.priority || 99) - (b.priority || 99))
-    .slice(0, 6);
+    .slice(0, 10);
 
   if (featuredCafes.length === 0) {
     return null;
@@ -51,6 +51,7 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
       'The Kitchen Curry': '/thekitchencurry_logo.png',
       'The Kitchen & Curry': '/thekitchencurry_logo.png',
       'Havmor': '/havmor_card.jpg',
+      'Pizza Bakers': '/pizz.png',
       'Stardom': '/stardom_card.webp',
       'STARDOM Café & Lounge': '/stardom_card.webp',
       'Waffle Fit & Fresh': '/wafflefitnfresh_card.jpeg',

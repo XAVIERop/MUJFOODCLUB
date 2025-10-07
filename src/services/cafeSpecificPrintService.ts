@@ -148,6 +148,12 @@ export class CafeSpecificPrintService {
     } else if (cafeName.toLowerCase().includes('punjabi') && cafeName.toLowerCase().includes('tadka')) {
       console.log('✅ Using Punjabi Tadka API key');
       return import.meta.env.VITE_PUNJABI_TADKA_PRINTNODE_API_KEY || '';
+    } else if (cafeName.toLowerCase().includes('munch') && cafeName.toLowerCase().includes('box')) {
+      console.log('✅ Using Munch Box API key');
+      return import.meta.env.VITE_MUNCHBOX_PRINTNODE_API_KEY || '';
+    } else if (cafeName.toLowerCase().includes('pizza') && cafeName.toLowerCase().includes('bakers')) {
+      console.log('✅ Using Pizza Bakers API key');
+      return import.meta.env.VITE_PIZZA_BAKERS_PRINTNODE_API_KEY || '';
     }
     
     // Fallback to general API key
@@ -642,3 +648,6 @@ Thanks`;
 export const createCafePrintService = (cafeId: string): CafeSpecificPrintService => {
   return new CafeSpecificPrintService(cafeId);
 };
+  return new CafeSpecificPrintService(cafeId);
+};
+

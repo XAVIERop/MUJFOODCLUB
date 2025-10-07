@@ -60,6 +60,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
       'Taste of India': '/tasteofindia_card.jpg',
       'Food Court': '/foodcourt_card.jpg',
       'The Kitchen Curry': '/thekitchencurry_logo.png',
+      'Pizza Bakers': '/pizz.png',
       'The Kitchen & Curry': '/thekitchencurry_logo.png',
       'Havmor': '/havmor_card.jpg',
       'Stardom': '/stardom_card.webp',
@@ -351,3 +352,4 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
     prevProps.cafe.accepting_orders === nextProps.cafe.accepting_orders
   );
 });
+

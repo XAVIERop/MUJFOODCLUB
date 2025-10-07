@@ -133,6 +133,14 @@ class UnifiedPrintService {
         } else {
           console.log('✅ Unified Print Service: Using Punjabi Tadka API key');
         }
+      } else if (cafe.name.toLowerCase().includes('pizza') && cafe.name.toLowerCase().includes('bakers')) {
+        apiKey = import.meta.env.VITE_PIZZA_BAKERS_PRINTNODE_API_KEY || '';
+        if (!apiKey || apiKey === 'your-pizza-bakers-printnode-api-key') {
+          console.warn('⚠️ Unified Print Service: VITE_PIZZA_BAKERS_PRINTNODE_API_KEY not set, using main API key');
+          apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+        } else {
+          console.log('✅ Unified Print Service: Using Pizza Bakers API key');
+        }
       } else {
         apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
         if (!apiKey) {

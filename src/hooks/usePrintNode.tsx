@@ -130,6 +130,27 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
           return fallbackKey;
         }
         return apiKey;
+      } else if (cafe.name.toLowerCase().includes('pizza') && cafe.name.toLowerCase().includes('bakers')) {
+        console.log('✅ usePrintNode - Using Pizza Bakers API key');
+        console.log('✅ usePrintNode - Pizza Bakers API key value:', import.meta.env.VITE_PIZZA_BAKERS_PRINTNODE_API_KEY);
+        console.log('✅ usePrintNode - Pizza Bakers API key length:', import.meta.env.VITE_PIZZA_BAKERS_PRINTNODE_API_KEY?.length);
+        console.log('✅ usePrintNode - Pizza Bakers API key type:', typeof import.meta.env.VITE_PIZZA_BAKERS_PRINTNODE_API_KEY);
+        const apiKey = import.meta.env.VITE_PIZZA_BAKERS_PRINTNODE_API_KEY;
+        if (!apiKey || apiKey === 'your-pizza-bakers-printnode-api-key') {
+          console.warn('❌ VITE_PIZZA_BAKERS_PRINTNODE_API_KEY not set or invalid, using main API key');
+          console.warn('❌ API Key value:', apiKey);
+          console.warn('❌ API Key is undefined:', apiKey === undefined);
+          console.warn('❌ API Key is null:', apiKey === null);
+          console.warn('❌ API Key is empty string:', apiKey === '');
+          const fallbackKey = import.meta.env.VITE_PRINTNODE_API_KEY;
+          if (!fallbackKey) {
+            console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+            return '';
+          }
+          return fallbackKey;
+        }
+        console.log('✅ usePrintNode - Pizza Bakers API key is valid, using it');
+        return apiKey;
       }
 
       // Fallback to general API key

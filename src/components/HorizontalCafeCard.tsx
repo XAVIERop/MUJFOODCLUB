@@ -50,6 +50,7 @@ export const HorizontalCafeCard: React.FC<HorizontalCafeCardProps> = memo(({ caf
       'Food Court': '/foodcourt_card.jpg',
       'The Kitchen Curry': '/thekitchencurry_logo.png',
       'The Kitchen & Curry': '/thekitchencurry_logo.png',
+      'Pizza Bakers': '/pizz.png',
       'Havmor': '/havmor_card.jpg',
       'Stardom': '/stardom_card.webp',
       'STARDOM Café & Lounge': '/stardom_card.webp',
@@ -196,3 +197,4 @@ export const HorizontalCafeCard: React.FC<HorizontalCafeCardProps> = memo(({ caf
     prevProps.cafe.accepting_orders === nextProps.cafe.accepting_orders
   );
 });
+

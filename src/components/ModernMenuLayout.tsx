@@ -135,6 +135,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
       'Dev Sweets & Snacks': '/devsweets_card.png',
       'Taste of India': '/tasteofindia_card.jpg',
       'Havmor': '/havmor_card.jpg',
+      'Pizza Bakers': '/pizz.png',
       'Stardom': '/stardom_card.webp',
       'Waffle Fit & Fresh': '/wafflefitnfresh_card.jpeg',
       'The Crazy Chef': '/crazychef_logo.png',
@@ -540,7 +541,7 @@ const ModernFoodCard: React.FC<{
         {/* Size Selector - Only show if multiple sizes available */}
         {hasMultipleSizes && (
           <div className="mb-3">
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {item.portions.map((portion: any) => (
                 <Button
                   key={portion.id}
@@ -548,7 +549,7 @@ const ModernFoodCard: React.FC<{
                   size="sm"
                   onClick={() => setSelectedSize(portion.id)}
                   className={cn(
-                    "text-xs px-3 py-1 rounded-full transition-all duration-200",
+                    "text-xs px-2 py-1 rounded-full transition-all duration-200 flex-shrink-0",
                     selectedSize === portion.id
                       ? "bg-orange-500 text-white shadow-sm"
                       : "bg-white text-gray-600 border-orange-200 hover:bg-orange-50"
@@ -736,3 +737,4 @@ const ModernCartPanel: React.FC<{
 };
 
 export default ModernMenuLayout;
+

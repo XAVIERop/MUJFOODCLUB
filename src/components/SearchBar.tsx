@@ -26,8 +26,8 @@ const SearchBar = () => {
           .order('priority', { ascending: true });
 
         if (!cafesError && cafesData) {
-          // Show only first 6 cafes
-          const limitedCafes = cafesData.slice(0, 6);
+          // Show only first 10 cafes
+          const limitedCafes = cafesData.slice(0, 10);
           setCafes(limitedCafes);
         }
 

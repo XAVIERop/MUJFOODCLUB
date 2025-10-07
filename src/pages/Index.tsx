@@ -119,11 +119,11 @@ const Index = () => {
       const cafesData = Array.isArray(data) ? data : [];
       
       if (cafesData.length > 0) {
-        // Show only first 6 cafes
-        const limitedCafes = cafesData.slice(0, 6);
+        // Show only first 10 cafes
+        const limitedCafes = cafesData.slice(0, 10);
         setCafes(limitedCafes);
         setLastFetchTime(now);
-        console.log('✅ Homepage: Set cafes (limited to first 6):', limitedCafes.map(c => c.name));
+        console.log('✅ Homepage: Set cafes (limited to first 10):', limitedCafes.map(c => c.name));
       } else {
         console.warn('⚠️ Homepage: No cafes found');
         setCafes([]);
@@ -184,7 +184,7 @@ const Index = () => {
 
               {/* Limited Cafe Grid - Show 6 cafes */}
               <div className="cafe-grid">
-                <FeaturedCafeGrid showAll={false} maxCafes={6} cafes={cafes} loading={loading} />
+                <FeaturedCafeGrid showAll={false} maxCafes={10} cafes={cafes} loading={loading} />
               </div>
             </div>
           </section>

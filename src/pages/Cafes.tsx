@@ -175,9 +175,9 @@ const Cafes = () => {
       console.log('Cafes page: Cafes already ordered by priority:', filteredCafes);
       console.log('Cafes page: Final cafe names:', filteredCafes.map(c => c.name));
       
-      // Show only first 6 cafes
-      const limitedCafes = filteredCafes.slice(0, 6);
-      console.log('Cafes page: Limited to first 6 cafes:', limitedCafes.map(c => c.name));
+      // Show only first 10 cafes
+      const limitedCafes = filteredCafes.slice(0, 10);
+      console.log('Cafes page: Limited to first 10 cafes:', limitedCafes.map(c => c.name));
       
       setCafes(limitedCafes || []);
       
@@ -245,7 +245,7 @@ const Cafes = () => {
   }
 
   return (
-    <div className="block lg:hidden">
+    <div className="block">
       <MobileLayoutWrapper
         selectedBlock={selectedBlock}
         onBlockChange={setSelectedBlock}
