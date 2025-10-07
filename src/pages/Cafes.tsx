@@ -175,9 +175,14 @@ const Cafes = () => {
       console.log('Cafes page: Cafes already ordered by priority:', filteredCafes);
       console.log('Cafes page: Final cafe names:', filteredCafes.map(c => c.name));
       
-      // Show only first 10 cafes
-      const limitedCafes = filteredCafes.slice(0, 10);
-      console.log('Cafes page: Limited to first 10 cafes:', limitedCafes.map(c => c.name));
+      // Sort cafes: open cafes first (by priority), then closed cafes (by priority)
+      const openCafes = filteredCafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+      const closedCafes = filteredCafes.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+      
+      // Combine: open cafes first, then closed cafes, then limit to 10
+      const sortedCafes = [...openCafes, ...closedCafes];
+      const limitedCafes = sortedCafes.slice(0, 10);
+      console.log('Cafes page: Open first, closed last, limited to 10:', limitedCafes.map(c => `${c.name} (${c.accepting_orders ? 'OPEN' : 'CLOSED'})`));
       
       setCafes(limitedCafes || []);
       

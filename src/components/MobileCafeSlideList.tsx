@@ -24,11 +24,10 @@ interface MobileCafeSlideListProps {
 const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Get first 10 cafes (the ones accepting orders) for the slide list
-  const featuredCafes = cafes
-    .filter(cafe => cafe.accepting_orders)
-    .sort((a, b) => (a.priority || 99) - (b.priority || 99))
-    .slice(0, 10);
+  // Sort cafes: open cafes first (by priority), then closed cafes (by priority), limit to 10
+  const openCafes = cafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+  const closedCafes = cafes.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+  const featuredCafes = [...openCafes, ...closedCafes].slice(0, 10);
 
   if (featuredCafes.length === 0) {
     return null;
@@ -142,12 +141,12 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
               <Button
                 size="sm"
                 className={`w-full text-white text-xs font-medium ${
-                  cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court')
+                  cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box')
                     ? "bg-orange-600 hover:bg-orange-700"
                     : "bg-gray-500 hover:bg-gray-600"
                 }`}
               >
-                {cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court')
+                {cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box')
                   ? "Order Now"
                   : "Coming Soon"
                 }

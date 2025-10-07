@@ -176,6 +176,18 @@ const MenuModern = () => {
         baseName = item.name.replace(' (Fried)', '');
         portionType = 'Fried';
         hasVariant = true;
+      } else if (item.name.includes(' (Regular 7")')) {
+        baseName = item.name.replace(' (Regular 7")', '');
+        portionType = 'Regular';
+        hasVariant = true;
+      } else if (item.name.includes(' (Medium 10")')) {
+        baseName = item.name.replace(' (Medium 10")', '');
+        portionType = 'Medium';
+        hasVariant = true;
+      } else if (item.name.includes(' (Large 12")')) {
+        baseName = item.name.replace(' (Large 12")', '');
+        portionType = 'Large';
+        hasVariant = true;
       }
       
       // Only group items that have variants, otherwise treat as individual items
@@ -202,11 +214,11 @@ const MenuModern = () => {
       return acc;
     }, {} as {[key: string]: GroupedMenuItem});
     
-    // Sort portions by price (Half first, then Full, then Veg, then Non-veg, then Chicken, then Mutton, then Regular, then Medium, then Dry, then Gravy)
+    // Sort portions by price (Half first, then Full, then Veg, then Non-veg, then Chicken, then Mutton, then Regular, then Medium, then Large, then Dry, then Gravy)
     Object.values(grouped).forEach(item => {
       item.portions.sort((a, b) => {
         // First sort by type priority, then by price
-        const typeOrder = { 'Half': 1, 'Full': 2, 'Veg': 3, 'Non-veg': 4, 'Chicken': 5, 'Mutton': 6, 'Regular': 7, 'Medium': 8, 'Dry': 9, 'Gravy': 10, 'Plain': 11, 'Butter': 12, 'Roasted': 13, 'Fried': 14 };
+        const typeOrder = { 'Half': 1, 'Full': 2, 'Veg': 3, 'Non-veg': 4, 'Chicken': 5, 'Mutton': 6, 'Regular': 7, 'Medium': 8, 'Large': 9, 'Dry': 10, 'Gravy': 11, 'Plain': 12, 'Butter': 13, 'Roasted': 14, 'Fried': 15 };
         const aOrder = typeOrder[a.name as keyof typeof typeOrder] || 15;
         const bOrder = typeOrder[b.name as keyof typeof typeOrder] || 15;
         
@@ -498,3 +510,4 @@ const MenuModern = () => {
 };
 
 export default MenuModern;
+

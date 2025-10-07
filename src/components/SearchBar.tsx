@@ -26,8 +26,13 @@ const SearchBar = () => {
           .order('priority', { ascending: true });
 
         if (!cafesError && cafesData) {
-          // Show only first 10 cafes
-          const limitedCafes = cafesData.slice(0, 10);
+          // Sort cafes: open cafes first (by priority), then closed cafes (by priority)
+          const openCafes = cafesData.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+          const closedCafes = cafesData.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+          
+          // Combine: open cafes first, then closed cafes, then limit to 10
+          const sortedCafes = [...openCafes, ...closedCafes];
+          const limitedCafes = sortedCafes.slice(0, 10);
           setCafes(limitedCafes);
         }
 

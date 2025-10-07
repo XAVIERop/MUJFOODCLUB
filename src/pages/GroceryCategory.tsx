@@ -43,6 +43,18 @@ const GroceryCategory: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState('All');
 
+  // Map category IDs to database category names
+  const getCategoryMapping = (categoryId: string): string | null => {
+    const categoryMap: { [key: string]: string } = {
+      '13': 'Beverages',           // Cold Drinks and Juices
+      '14': 'Snacks',              // Ice Creams and Frozen Desserts (mapped to Snacks)
+      '15': 'Snacks',              // Chips and Namkeens
+      '16': 'Snacks',              // Chocolates
+      '17': 'Snacks'               // Noodles, Pasta, Vermicelli
+    };
+    return categoryMap[categoryId] || null;
+  };
+
   // Fetch real grocery products from database
   const fetchGroceryProducts = async () => {
     try {
@@ -60,13 +72,23 @@ const GroceryCategory: React.FC = () => {
         return;
       }
       
-      // Fetch menu items for 24 Seven Mart
+      // Get the database category name for this category ID
+      const databaseCategory = getCategoryMapping(categoryId || '');
+      
+      if (!databaseCategory) {
+        console.error('Invalid category ID:', categoryId);
+        setProducts([]);
+        return;
+      }
+      
+      // Fetch menu items for 24 Seven Mart filtered by category
       const { data: menuData, error: menuError } = await supabase
         .from('menu_items')
         .select('*')
         .eq('cafe_id', cafeData.id)
         .eq('is_available', true)
-        .order('category', { ascending: true });
+        .eq('category', databaseCategory)
+        .order('name', { ascending: true });
       
       if (menuError) {
         console.error('Error fetching grocery items:', menuError);
@@ -86,10 +108,39 @@ const GroceryCategory: React.FC = () => {
         image: item.image_url || '/menu_hero.png',
         category: item.category,
         unit: '1 piece',
-        inStock: item.is_available
+        inStock: item.is_available,
+        description: item.description || `${item.name} - ${item.category}`
       }));
       
       setProducts(groceryProducts);
+      
+      // Generate dynamic filter options based on actual products
+      const brandCounts: { [key: string]: number } = {};
+      const subcategoryCounts: { [key: string]: number } = {};
+      
+      groceryProducts.forEach(product => {
+        // Count by brand (extracted from product name)
+        const brand = product.name.split(' ')[0]; // First word is usually brand
+        brandCounts[brand] = (brandCounts[brand] || 0) + 1;
+        
+        // Count by subcategory if available (we can add this logic later)
+        // For now, we'll use brand-based filtering
+      });
+      
+      // Create filter options
+      const dynamicFilters = [
+        { id: 'all', name: 'All', count: groceryProducts.length },
+        ...Object.entries(brandCounts)
+          .sort(([,a], [,b]) => b - a) // Sort by count descending
+          .slice(0, 6) // Limit to top 6 brands
+          .map(([brand, count]) => ({
+            id: brand.toLowerCase().replace(/\s+/g, '-'),
+            name: brand,
+            count: count
+          }))
+      ];
+      
+      setFilterOptions(dynamicFilters);
       
     } catch (error) {
       console.error('Error fetching grocery products:', error);
@@ -202,16 +253,10 @@ const GroceryCategory: React.FC = () => {
     return allProducts[categoryId] || [];
   };
 
-  // Filter options
-  const filterOptions = [
-    { id: 'all', name: 'All', count: 0 },
-    { id: 'crazy-deals', name: 'Crazy Deals', count: 12 },
-    { id: 'muesli', name: 'Muesli & Granola', count: 8 },
-    { id: 'oats', name: 'Oats', count: 15 },
-    { id: 'kids', name: 'Kids Cereals', count: 6 },
-    { id: 'flakes', name: 'Flakes', count: 10 },
-    { id: 'new', name: 'Newly Added', count: 5 }
-  ];
+  // Dynamic filter options based on actual products
+  const [filterOptions, setFilterOptions] = useState([
+    { id: 'all', name: 'All', count: 0 }
+  ]);
 
   useEffect(() => {
     // Clear any old grocery cart data first
@@ -224,7 +269,12 @@ const GroceryCategory: React.FC = () => {
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          product.brand.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
+    
+    // Apply brand filter if not "All"
+    const matchesFilter = selectedFilter === 'all' || 
+                         product.name.toLowerCase().startsWith(selectedFilter.toLowerCase());
+    
+    return matchesSearch && matchesFilter;
   });
 
   // Helper function to get item quantity in cart
@@ -387,7 +437,7 @@ const GroceryCategory: React.FC = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">
-                  {filteredProducts.length} items in {selectedFilter === 'all' ? 'All' : filterOptions.find(f => f.id === selectedFilter)?.name}
+                  {filteredProducts.length} items in {selectedFilter === 'all' ? 'All' : filterOptions.find(f => f.id === selectedFilter)?.name || 'All'}
                 </h2>
               </div>
               <div className="flex items-center space-x-2">
@@ -505,3 +555,4 @@ const GroceryCategory: React.FC = () => {
 };
 
 export default GroceryCategory;
+

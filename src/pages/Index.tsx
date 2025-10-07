@@ -119,11 +119,17 @@ const Index = () => {
       const cafesData = Array.isArray(data) ? data : [];
       
       if (cafesData.length > 0) {
-        // Show only first 10 cafes
-        const limitedCafes = cafesData.slice(0, 10);
+        // Sort cafes: open cafes first (by priority), then closed cafes (by priority)
+        const openCafes = cafesData.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+        const closedCafes = cafesData.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+        
+        // Combine: open cafes first, then closed cafes, then limit to 10
+        const sortedCafes = [...openCafes, ...closedCafes];
+        const limitedCafes = sortedCafes.slice(0, 10);
+        
         setCafes(limitedCafes);
         setLastFetchTime(now);
-        console.log('✅ Homepage: Set cafes (limited to first 10):', limitedCafes.map(c => c.name));
+        console.log('✅ Homepage: Set cafes (open first, closed last, limited to 10):', limitedCafes.map(c => `${c.name} (${c.accepting_orders ? 'OPEN' : 'CLOSED'})`));
       } else {
         console.warn('⚠️ Homepage: No cafes found');
         setCafes([]);

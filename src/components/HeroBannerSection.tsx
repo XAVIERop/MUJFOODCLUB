@@ -79,8 +79,13 @@ const HeroBannerSection: React.FC = () => {
             setCafes(fallbackData || []);
           }
         } else {
-          // Show only first 10 cafes
-          const limitedCafes = (data || []).slice(0, 10);
+          // Sort cafes: open cafes first (by priority), then closed cafes (by priority)
+          const openCafes = (data || []).filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+          const closedCafes = (data || []).filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+          
+          // Combine: open cafes first, then closed cafes, then limit to 10
+          const sortedCafes = [...openCafes, ...closedCafes];
+          const limitedCafes = sortedCafes.slice(0, 10);
           setCafes(limitedCafes);
         }
       } catch (error) {
