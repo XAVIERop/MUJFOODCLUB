@@ -41,6 +41,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
                      cafe.name.toLowerCase().includes('punjabi tadka') ||
                      cafe.name.toLowerCase().includes('munch box') ||
                      cafe.name.toLowerCase().includes('cook house') ||
+                     cafe.name.toLowerCase().includes('pizza bakers') ||
                      cafe.name.toLowerCase().includes('havmor') ||
                      cafe.name.toLowerCase().includes('china town');
 
@@ -289,12 +290,12 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               onClick={() => handleOrderNow(cafe.id)}
               disabled={!cafe.accepting_orders}
               className={`text-xs font-medium ${
-                cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box')
+                cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers')
                   ? "bg-orange-600 hover:bg-orange-700"
                   : "bg-gray-500 hover:bg-gray-600"
               } disabled:bg-gray-300 disabled:cursor-not-allowed`}
             >
-              {cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box')
+              {cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers')
                 ? "Order Now"
                 : "Coming Soon"
               }

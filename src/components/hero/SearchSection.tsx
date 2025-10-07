@@ -30,14 +30,16 @@ const SearchSection: React.FC<SearchSectionProps> = ({ selectedBlock, onBlockCha
           .order('priority', { ascending: true });
 
         if (!cafesError && cafesData) {
-          // Sort cafes: open cafes first (by priority), then closed cafes (by priority)
-          const openCafes = cafesData.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
-          const closedCafes = cafesData.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+          // First, get the top 10 cafes by priority (regardless of open/closed status)
+          const top10Cafes = cafesData.sort((a, b) => (a.priority || 99) - (b.priority || 99)).slice(0, 10);
           
-          // Combine: open cafes first, then closed cafes, then limit to 10
-          const sortedCafes = [...openCafes, ...closedCafes];
-          const limitedCafes = sortedCafes.slice(0, 10);
-          setCafes(limitedCafes);
+          // Then reorder within those 10: open cafes first, then closed cafes
+          const openCafes = top10Cafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+          const closedCafes = top10Cafes.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+          
+          // Combine: open cafes first, then closed cafes (all within the top 10)
+          const reorderedCafes = [...openCafes, ...closedCafes];
+          setCafes(reorderedCafes);
         }
 
         // Fetch menu items

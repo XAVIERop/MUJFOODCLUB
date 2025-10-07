@@ -24,10 +24,13 @@ interface MobileCafeSlideListProps {
 const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Sort cafes: open cafes first (by priority), then closed cafes (by priority), limit to 10
-  const openCafes = cafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
-  const closedCafes = cafes.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
-  const featuredCafes = [...openCafes, ...closedCafes].slice(0, 10);
+  // First, get the top 10 cafes by priority (regardless of open/closed status)
+  const top10Cafes = cafes.sort((a, b) => (a.priority || 99) - (b.priority || 99)).slice(0, 10);
+  
+  // Then reorder within those 10: open cafes first, then closed cafes
+  const openCafes = top10Cafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+  const closedCafes = top10Cafes.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+  const featuredCafes = [...openCafes, ...closedCafes];
 
   if (featuredCafes.length === 0) {
     return null;
@@ -141,12 +144,12 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
               <Button
                 size="sm"
                 className={`w-full text-white text-xs font-medium ${
-                  cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box')
+                  cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers')
                     ? "bg-orange-600 hover:bg-orange-700"
                     : "bg-gray-500 hover:bg-gray-600"
                 }`}
               >
-                {cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box')
+                {cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers')
                   ? "Order Now"
                   : "Coming Soon"
                 }

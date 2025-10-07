@@ -175,16 +175,18 @@ const Cafes = () => {
       console.log('Cafes page: Cafes already ordered by priority:', filteredCafes);
       console.log('Cafes page: Final cafe names:', filteredCafes.map(c => c.name));
       
-      // Sort cafes: open cafes first (by priority), then closed cafes (by priority)
-      const openCafes = filteredCafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
-      const closedCafes = filteredCafes.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+      // First, get the top 10 cafes by priority (regardless of open/closed status)
+      const top10Cafes = filteredCafes.sort((a, b) => (a.priority || 99) - (b.priority || 99)).slice(0, 10);
       
-      // Combine: open cafes first, then closed cafes, then limit to 10
-      const sortedCafes = [...openCafes, ...closedCafes];
-      const limitedCafes = sortedCafes.slice(0, 10);
-      console.log('Cafes page: Open first, closed last, limited to 10:', limitedCafes.map(c => `${c.name} (${c.accepting_orders ? 'OPEN' : 'CLOSED'})`));
+      // Then reorder within those 10: open cafes first, then closed cafes
+      const openCafes = top10Cafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+      const closedCafes = top10Cafes.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
       
-      setCafes(limitedCafes || []);
+      // Combine: open cafes first, then closed cafes (all within the top 10)
+      const reorderedCafes = [...openCafes, ...closedCafes];
+      console.log('Cafes page: Top 10 by priority, reordered: open first, closed last:', reorderedCafes.map(c => `${c.name} (${c.accepting_orders ? 'OPEN' : 'CLOSED'})`));
+      
+      setCafes(reorderedCafes || []);
       
     } catch (error) {
       console.error('Cafes page: Error fetching cafes:', error);
