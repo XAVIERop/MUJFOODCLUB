@@ -176,16 +176,20 @@ const Checkout = () => {
     }
     const discount = isEligibleForDiscount ? subtotal * discountRate : 0;
     
-    // Check if this is Food Court order for GST calculation
+    // Check if this is Food Court or Pizza Bakers order for GST calculation
     const isFoodCourt = cafe?.name?.toLowerCase().includes('food court') || 
                        cafe?.name === 'FOOD COURT' ||
                        cafe?.name?.toLowerCase() === 'food court';
     
-    // Calculate GST for Food Court orders only
+    const isPizzaBakers = cafe?.name?.toLowerCase().includes('pizza bakers') || 
+                         cafe?.name?.toLowerCase().includes('crazy chef');
+    
+    
+    // Calculate GST for Food Court and Pizza Bakers orders
     let cgstAmount = 0;
     let sgstAmount = 0;
     
-    if (isFoodCourt) {
+    if (isFoodCourt || isPizzaBakers) {
       // GST is calculated on subtotal (before discount and delivery)
       cgstAmount = subtotal * 0.025; // 2.5% CGST
       sgstAmount = subtotal * 0.025; // 2.5% SGST
@@ -688,10 +692,12 @@ const Checkout = () => {
                       <span>₹{totalAmount}</span>
                     </div>
                     
-                    {/* CGST and SGST for Food Court orders only */}
-                    {(cafe?.name?.toLowerCase().includes('food court') || 
+                    {/* CGST and SGST for Food Court and Pizza Bakers orders */}
+                    {((cafe?.name?.toLowerCase().includes('food court') || 
                       cafe?.name === 'FOOD COURT' ||
-                      cafe?.name?.toLowerCase() === 'food court') && (
+                      cafe?.name?.toLowerCase() === 'food court') ||
+                      cafe?.name?.toLowerCase().includes('pizza bakers') ||
+                      cafe?.name?.toLowerCase().includes('crazy chef')) && (
                       <>
                         {cgst > 0 && (
                           <div className="flex justify-between items-center text-black">
