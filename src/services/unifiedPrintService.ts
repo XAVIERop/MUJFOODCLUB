@@ -141,6 +141,14 @@ class UnifiedPrintService {
         } else {
           console.log('✅ Unified Print Service: Using Pizza Bakers API key');
         }
+      } else if (cafe.name.toLowerCase().includes('munch') && cafe.name.toLowerCase().includes('box')) {
+        apiKey = import.meta.env.VITE_MUNCHBOX_PRINTNODE_API_KEY || '';
+        if (!apiKey || apiKey === 'your-munchbox-printnode-api-key') {
+          console.warn('⚠️ Unified Print Service: VITE_MUNCHBOX_PRINTNODE_API_KEY not set, using main API key');
+          apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+        } else {
+          console.log('✅ Unified Print Service: Using Munch Box API key');
+        }
       } else {
         apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
         if (!apiKey) {

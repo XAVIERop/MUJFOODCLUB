@@ -151,6 +151,21 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
         }
         console.log('✅ usePrintNode - Pizza Bakers API key is valid, using it');
         return apiKey;
+      } else if (cafe.name.toLowerCase().includes('munch') && cafe.name.toLowerCase().includes('box')) {
+        console.log('✅ usePrintNode - Using Munch Box API key');
+        console.log('✅ usePrintNode - Munch Box API key value:', import.meta.env.VITE_MUNCHBOX_PRINTNODE_API_KEY);
+        const apiKey = import.meta.env.VITE_MUNCHBOX_PRINTNODE_API_KEY;
+        if (!apiKey || apiKey === 'your-munchbox-printnode-api-key') {
+          console.warn('VITE_MUNCHBOX_PRINTNODE_API_KEY not set, using main API key');
+          const fallbackKey = import.meta.env.VITE_PRINTNODE_API_KEY;
+          if (!fallbackKey) {
+            console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+            return '';
+          }
+          return fallbackKey;
+        }
+        console.log('✅ usePrintNode - Munch Box API key is valid, using it');
+        return apiKey;
       }
 
       // Fallback to general API key
