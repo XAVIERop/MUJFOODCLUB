@@ -307,7 +307,7 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
             } else if (cafe.name.toLowerCase().includes('mini meals')) {
               targetPrinterId = 74756354; // Mini Meals Printer
             } else if (cafe.name.toLowerCase().includes('punjabi') && cafe.name.toLowerCase().includes('tadka')) {
-              targetPrinterId = 74760016; // Punjabi Tadka Printer
+              targetPrinterId = 74782622; // Punjabi Tadka Printer (POS-60C)
             }
           }
         } catch (error) {
@@ -360,7 +360,7 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
             } else if (cafe.name.toLowerCase().includes('mini meals')) {
               targetPrinterId = 74756354; // Mini Meals Printer
             } else if (cafe.name.toLowerCase().includes('punjabi') && cafe.name.toLowerCase().includes('tadka')) {
-              targetPrinterId = 74760016; // Punjabi Tadka Printer
+              targetPrinterId = 74782622; // Punjabi Tadka Printer (POS-60C)
             }
           }
         } catch (error) {

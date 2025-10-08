@@ -275,7 +275,7 @@ class UnifiedPrintService {
           } else if (cafeName.toLowerCase().includes('cook house')) {
             targetPrinterId = 74781013; // Cook House POS 80 C
           } else if (cafeName.toLowerCase().includes('punjabi') && cafeName.toLowerCase().includes('tadka')) {
-            targetPrinterId = 74760016; // Punjabi Tadka Printer
+            targetPrinterId = 74782622; // Punjabi Tadka Printer (POS-60C)
           }
           
           console.log(`🖨️ Using direct PrintNode for KOT (Printer ID: ${targetPrinterId || 'default'})`);
@@ -372,7 +372,7 @@ class UnifiedPrintService {
           } else if (cafeName.toLowerCase().includes('cook house')) {
             targetPrinterId = 74781013; // Cook House POS 80 C
           } else if (cafeName.toLowerCase().includes('punjabi') && cafeName.toLowerCase().includes('tadka')) {
-            targetPrinterId = 74760016; // Punjabi Tadka Printer
+            targetPrinterId = 74782622; // Punjabi Tadka Printer (POS-60C)
           }
           
           console.log(`🖨️ Using direct PrintNode for Receipt (Printer ID: ${targetPrinterId || 'default'})`);
