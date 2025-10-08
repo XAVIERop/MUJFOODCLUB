@@ -912,10 +912,9 @@ MUJFOODCLUB!`;
    */
   private unicodeToBase64(str: string): string {
     try {
-      // First encode to UTF-8 bytes, then to base64
-      const utf8Bytes = new TextEncoder().encode(str);
-      const base64 = btoa(String.fromCharCode(...utf8Bytes));
-      return base64;
+      // Use the standard btoa for simple ASCII content
+      // This is more reliable for thermal printer content
+      return btoa(str);
     } catch (error) {
       console.error('Base64 encoding error:', error);
       // Fallback: remove non-ASCII characters and encode
