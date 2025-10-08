@@ -489,18 +489,18 @@ MUJFOODCLUB!`;
     \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
     ---------------------------------------`;
     } else if (isPunjabiTadka) {
-      // Punjabi Tadka format (using exact Chatkara template)
-      receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'PUNJABI TADKA'}\x1B\x21\x00
-    ---------------------------------------
-    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
-    \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
+      // Punjabi Tadka format (POS-60C - 60mm paper width)
+      receipt = `\x1B\x21\x30    ${cafe_name?.toUpperCase() || 'PUNJABI TADKA'}\x1B\x21\x00
+    ------------------------------
+    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `T${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30Token: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
     \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
     \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
-    \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
-    ---------------------------------------
-    \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
-    ---------------------------------------`;
+    \x1B\x21\x08Bill: ${order_number}\x1B\x21\x00
+    ------------------------------
+    \x1B\x21\x08Item            Qty Price\x1B\x21\x00
+    ------------------------------`;
     } else {
       // Default MUJ Food Club format with bold formatting
       receipt = `\x1B\x21\x30        MUJ FOOD CLUB\x1B\x21\x00
@@ -519,12 +519,12 @@ MUJFOODCLUB!`;
       let itemName, qty, price, amount;
       
       if (isPunjabiTadka) {
-        // Use exact Chatkara item formatting
-        itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
+        // POS-60C formatting for Punjabi Tadka (narrower paper)
+        itemName = item.name.toUpperCase().substring(0, 12).padEnd(12);
         qty = item.quantity.toString().padStart(2);
         price = item.unit_price.toFixed(0).padStart(4);
         amount = item.total_price.toFixed(0).padStart(5);
-        receipt += `\n    \x1B\x21\x08${itemName}\x1B\x21\x00 ${qty}    ${price}    ${amount}`;
+        receipt += `\n    \x1B\x21\x08${itemName}\x1B\x21\x00 ${qty}  ${price}  ${amount}`;
       } else {
         // 80mm printer format for other cafes
         itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
@@ -661,32 +661,32 @@ MUJFOODCLUB!`;
     ----------------------------------------
     ----------------------------------------`;
     } else if (isPunjabiTadka) {
-      // Punjabi Tadka footer (using exact Chatkara template)
+      // Punjabi Tadka footer (POS-60C - 60mm paper width)
       const isDelivery = data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block);
       const deliveryCharge = isDelivery ? 10 : 0;
       const finalTotal = final_amount; // Use actual final amount from database
       
-      receipt += `\n    ----------------------------------------
+      receipt += `\n    ------------------------------
     \x1B\x21\x08Total Qty: ${totalQty}\x1B\x21\x00
     \x1B\x21\x08Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00`;
       
       // Only show delivery charge if it's a delivery order
       if (deliveryCharge > 0) {
-        receipt += `\n    \x1B\x21\x08Delivery Charge: +${deliveryCharge}\x1B\x21\x00`;
+        receipt += `\n    \x1B\x21\x08Delivery: +${deliveryCharge}\x1B\x21\x00`;
       }
       
       // Show MUJ FOOD CLUB discount if applicable
       if (mujFoodClubDiscount > 0) {
-        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (${(discountRate * 100).toFixed(0)}%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
+        receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB (${(discountRate * 100).toFixed(0)}%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
       }
       
       receipt += `\n    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
-    ----------------------------------------
+    ------------------------------
     \x1B\x21\x08Thanks Order Again\x1B\x21\x00
     \x1B\x21\x08mujfoodclub.in\x1B\x21\x00
-    ----------------------------------------
-    ----------------------------------------
-    ----------------------------------------`;
+    ------------------------------
+    ------------------------------
+    ------------------------------`;
     } else {
       receipt += `\n    ----------------------------------------
     Total Qty: ${totalQty}
@@ -753,19 +753,61 @@ MUJFOODCLUB!`;
     }
 
     // Proper center-aligned KOT format with bold formatting
-    let kot = `${dateStr} ${timeStr}
+    let kot;
+    if (isPunjabiTadka) {
+      // POS-60C KOT format for Punjabi Tadka
+      kot = `${dateStr} ${timeStr}
+    \x1B\x21\x30KOT - ${order_number}\x1B\x21\x00
+    \x1B\x21\x08${locationDisplay}\x1B\x21\x00
+    ------------------------------
+    \x1B\x21\x08ITEM                    QTY\x1B\x21\x00
+    ------------------------------`;
+    } else {
+      // 80mm KOT format for other cafes
+      kot = `${dateStr} ${timeStr}
     \x1B\x21\x30KOT - ${order_number}\x1B\x21\x00
     \x1B\x21\x08${locationDisplay}\x1B\x21\x00
     ---------------------------------------
     \x1B\x21\x08ITEM                              QTY\x1B\x21\x00
     ---------------------------------------`;
+    }
 
     // Add items with proper two-column layout
     items.forEach(item => {
       const itemName = item.name.toUpperCase();
       const qty = item.quantity.toString();
       
-      if (isChatkara || isMiniMeals || isCookHouse || isFoodCourt || isPunjabiTadka) {
+      if (isPunjabiTadka) {
+        // POS-60C KOT formatting for Punjabi Tadka
+        const totalWidth = 28; // Total width for 60mm paper
+        const qtyWidth = 4; // Width for quantity column
+        const itemWidth = totalWidth - qtyWidth - 1; // Width for item name column (minus 1 for space)
+        
+        // Truncate very long item names to prevent excessive wrapping
+        const truncatedName = itemName.length > itemWidth ? itemName.substring(0, itemWidth - 3) + '...' : itemName;
+        
+        // Split long item names into multiple lines
+        const words = truncatedName.split(' ');
+        let currentLine = '';
+        let lines = [];
+        
+        for (const word of words) {
+          if ((currentLine + ' ' + word).length <= itemWidth) {
+            currentLine = currentLine ? currentLine + ' ' + word : word;
+          } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+        
+        // Add each line with proper spacing
+        lines.forEach((line, index) => {
+          const paddedLine = line.padEnd(itemWidth);
+          const paddedQty = index === 0 ? qty.padStart(qtyWidth) : ' '.repeat(qtyWidth);
+          kot += `\n    \x1B\x21\x08${paddedLine} ${paddedQty}\x1B\x21\x00`;
+        });
+      } else if (isChatkara || isMiniMeals || isCookHouse || isFoodCourt) {
         // Create proper two-column layout: item name (left) and quantity (right)
         const totalWidth = 40; // Total width of the line
         const qtyWidth = 4; // Width for quantity column
@@ -808,7 +850,14 @@ MUJFOODCLUB!`;
     });
 
     // Add cafe-specific footer
-    if (isChatkara) {
+    if (isPunjabiTadka) {
+      // POS-60C KOT footer for Punjabi Tadka
+      kot += `\n    ------------------------------
+    \x1B\x21\x08Thanks\x1B\x21\x00
+    ------------------------------
+    ------------------------------
+    ------------------------------`;
+    } else if (isChatkara) {
       kot += `\n    ----------------------------------------
     \x1B\x21\x08Thanks\x1B\x21\x00
     ----------------------------------------
