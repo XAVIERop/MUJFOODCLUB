@@ -404,12 +404,17 @@ MUJFOODCLUB!`;
                            cafe_name?.toLowerCase() === 'punjabi tadka' ||
                            cafe_name?.toLowerCase().includes('punjabi') ||
                            cafe_name?.toLowerCase().includes('tadka');
+    const isMunchBox = cafe_name?.toLowerCase().includes('munch box') || 
+                       cafe_name === 'MUNCH BOX' ||
+                       cafe_name?.toLowerCase() === 'munch box' ||
+                       cafe_name?.toLowerCase().includes('munch') ||
+                       cafe_name?.toLowerCase().includes('box');
     
     // Calculate MUJ FOOD CLUB discount (different rates for different cafes and order types)
-    const isEligibleForDiscount = isChatkara || isCookHouse || isMiniMeals || isFoodCourt || isPunjabiTadka;
+    const isEligibleForDiscount = isChatkara || isCookHouse || isMiniMeals || isFoodCourt || isPunjabiTadka || isMunchBox;
     let discountRate = 0;
-    if (isChatkara || isMiniMeals || isPunjabiTadka) {
-      discountRate = 0.10; // 10% for Chatkara, Mini Meals, and Punjabi Tadka
+    if (isChatkara || isMiniMeals || isPunjabiTadka || isMunchBox) {
+      discountRate = 0.10; // 10% for Chatkara, Mini Meals, Punjabi Tadka, and Munch Box
     } else if (isCookHouse) {
       // Cook House: Different rates based on order type
       const orderType = data.delivery_block === 'DINE_IN' ? 'dine_in' : 
@@ -488,9 +493,10 @@ MUJFOODCLUB!`;
     ---------------------------------------
     \x1B\x21\x08Item                    Qty. Price Amount\x1B\x21\x00
     ---------------------------------------`;
-    } else if (isPunjabiTadka) {
-      // Punjabi Tadka format (POS-60C - 60mm paper width)
-      receipt = `\x1B\x21\x30    ${cafe_name?.toUpperCase() || 'PUNJABI TADKA'}\x1B\x21\x00
+    } else if (isPunjabiTadka || isMunchBox) {
+      // Punjabi Tadka and Munch Box format (POS-60C - 60mm paper width)
+      const cafeDisplayName = isMunchBox ? (cafe_name?.toUpperCase() || 'MUNCH BOX') : (cafe_name?.toUpperCase() || 'PUNJABI TADKA');
+      receipt = `\x1B\x21\x30    ${cafeDisplayName}\x1B\x21\x00
     ------------------------------
     \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `T${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
     \x1B\x21\x30Token: ${order_number}\x1B\x21\x00
@@ -518,8 +524,8 @@ MUJFOODCLUB!`;
     items.forEach(item => {
       let itemName, qty, price, amount;
       
-      if (isPunjabiTadka) {
-        // POS-60C formatting for Punjabi Tadka (narrower paper)
+      if (isPunjabiTadka || isMunchBox) {
+        // POS-60C formatting for Punjabi Tadka and Munch Box (narrower paper)
         itemName = item.name.toUpperCase().substring(0, 12).padEnd(12);
         qty = item.quantity.toString().padStart(2);
         price = item.unit_price.toFixed(0).padStart(4);
@@ -660,15 +666,15 @@ MUJFOODCLUB!`;
     ----------------------------------------
     ----------------------------------------
     ----------------------------------------`;
-    } else if (isPunjabiTadka) {
-      // Punjabi Tadka footer (POS-60C - 60mm paper width)
+    } else if (isPunjabiTadka || isMunchBox) {
+      // Punjabi Tadka and Munch Box footer (POS-60C - 60mm paper width)
       const isDelivery = data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block);
       const deliveryCharge = isDelivery ? 10 : 0;
       const finalTotal = final_amount; // Use actual final amount from database
       
       receipt += `\n    ------------------------------
-    \x1B\x21\x08Total Qty: ${totalQty}\x1B\x21\x00
-    \x1B\x21\x08Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00`;
+      \x1B\x21\x08Total Qty: ${totalQty}\x1B\x21\x00
+      \x1B\x21\x08Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00`;
       
       // Only show delivery charge if it's a delivery order
       if (deliveryCharge > 0) {
@@ -731,6 +737,11 @@ MUJFOODCLUB!`;
                            cafe_name?.toLowerCase() === 'punjabi tadka' ||
                            cafe_name?.toLowerCase().includes('punjabi') ||
                            cafe_name?.toLowerCase().includes('tadka');
+    const isMunchBox = cafe_name?.toLowerCase().includes('munch box') || 
+                       cafe_name === 'MUNCH BOX' ||
+                       cafe_name?.toLowerCase() === 'munch box' ||
+                       cafe_name?.toLowerCase().includes('munch') ||
+                       cafe_name?.toLowerCase().includes('box');
     
     console.log('🔍 PrintNode KOT - Cafe name:', cafe_name);
     console.log('🔍 PrintNode KOT - Is Chatkara:', isChatkara);
@@ -738,7 +749,8 @@ MUJFOODCLUB!`;
     console.log('🔍 PrintNode KOT - Is Cook House:', isCookHouse);
     console.log('🔍 PrintNode KOT - Is Food Court:', isFoodCourt);
     console.log('🔍 PrintNode KOT - Is Punjabi Tadka:', isPunjabiTadka);
-    console.log('🔍 PrintNode KOT - Using format:', isChatkara ? 'CHATKARA' : isMiniMeals ? 'MINI MEALS' : isCookHouse ? 'COOK HOUSE' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : 'MUJ FOOD CLUB');
+    console.log('🔍 PrintNode KOT - Is Munch Box:', isMunchBox);
+    console.log('🔍 PrintNode KOT - Using format:', isChatkara ? 'CHATKARA' : isMiniMeals ? 'MINI MEALS' : isCookHouse ? 'COOK HOUSE' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : isMunchBox ? 'MUNCH BOX' : 'MUJ FOOD CLUB');
     
     // Determine location display for KOT
     let locationDisplay = '';
@@ -754,8 +766,8 @@ MUJFOODCLUB!`;
 
     // Proper center-aligned KOT format with bold formatting
     let kot;
-    if (isPunjabiTadka) {
-      // POS-60C KOT format for Punjabi Tadka
+    if (isPunjabiTadka || isMunchBox) {
+      // POS-60C KOT format for Punjabi Tadka and Munch Box
       kot = `${dateStr} ${timeStr}
     \x1B\x21\x30KOT - ${order_number}\x1B\x21\x00
     \x1B\x21\x08${locationDisplay}\x1B\x21\x00
@@ -777,8 +789,8 @@ MUJFOODCLUB!`;
       const itemName = item.name.toUpperCase();
       const qty = item.quantity.toString();
       
-      if (isPunjabiTadka) {
-        // POS-60C KOT formatting for Punjabi Tadka
+      if (isPunjabiTadka || isMunchBox) {
+        // POS-60C KOT formatting for Punjabi Tadka and Munch Box
         const totalWidth = 28; // Total width for 60mm paper
         const qtyWidth = 4; // Width for quantity column
         const itemWidth = totalWidth - qtyWidth - 1; // Width for item name column (minus 1 for space)
@@ -850,8 +862,8 @@ MUJFOODCLUB!`;
     });
 
     // Add cafe-specific footer
-    if (isPunjabiTadka) {
-      // POS-60C KOT footer for Punjabi Tadka
+    if (isPunjabiTadka || isMunchBox) {
+      // POS-60C KOT footer for Punjabi Tadka and Munch Box
       kot += `\n    ------------------------------
     \x1B\x21\x08Thanks\x1B\x21\x00
     ------------------------------
