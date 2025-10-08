@@ -171,8 +171,7 @@ export class PrintNodeService {
         },
         content: this.unicodeToBase64(kotContent),
         contentType: 'raw_base64',
-        source: 'MUJFOODCLUB',
-        title: `KOT ${receiptData.order_number}`
+        source: 'MUJFOODCLUB'
       };
 
       const kotResponse = await this.makeRequest('/printjobs', {
@@ -228,7 +227,6 @@ export class PrintNodeService {
         content: this.unicodeToBase64(receiptContent),
         contentType: 'raw_base64',
         source: 'MUJFOODCLUB',
-        title: `Receipt ${receiptData.order_number}`
       };
 
       const receiptResponse = await this.makeRequest('/printjobs', {
@@ -284,7 +282,6 @@ export class PrintNodeService {
         content: this.unicodeToBase64(receiptContent),
         contentType: 'raw_base64',
         source: 'MUJFOODCLUB',
-        title: `Receipt ${receiptData.order_number}`
       };
 
       const receiptResponse = await this.makeRequest('/printjobs', {
@@ -354,7 +351,6 @@ MUJFOODCLUB!`;
         content: this.unicodeToBase64(testReceipt + '\n\n\x1D\x56\x00'),
         contentType: 'raw_base64',
         source: 'MUJFOODCLUB',
-        title: 'Test Print'
       };
 
       // Send test print job
