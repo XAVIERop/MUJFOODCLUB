@@ -69,6 +69,14 @@ export class PrintNodeService {
       ...options.headers
     };
 
+    console.log('🔍 PrintNode API Request:', {
+      url,
+      method: options.method || 'GET',
+      apiKeyLength: this.apiKey.length,
+      apiKeyPrefix: this.apiKey.substring(0, 8) + '...',
+      bodyLength: options.body ? JSON.stringify(options.body).length : 0
+    });
+
     return fetch(url, {
       ...options,
       headers
