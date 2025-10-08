@@ -263,12 +263,11 @@ const MenuModern = () => {
         
         setCafe(cafeData);
 
-        // Fetch menu items
+        // Fetch menu items (including out-of-stock items)
         const { data: menuData, error: menuError } = await supabase
           .from('menu_items')
           .select('*')
           .eq('cafe_id', cafeId)
-          .eq('is_available', true)
           .order('category', { ascending: true });
 
         if (menuError) {
@@ -277,6 +276,18 @@ const MenuModern = () => {
         }
         
         setMenuItems(menuData || []);
+        
+        // Debug logging for out-of-stock items
+        const outOfStockItems = menuData?.filter(item => item.out_of_stock === true) || [];
+        if (outOfStockItems.length > 0) {
+          console.log('🔍 Found out-of-stock items in database:', outOfStockItems.map(item => ({
+            name: item.name,
+            out_of_stock: item.out_of_stock,
+            is_available: item.is_available
+          })));
+        } else {
+          console.log('✅ No out-of-stock items found in database');
+        }
         
         // Group menu items by name and portion
         const grouped = groupMenuItems(menuData || []);

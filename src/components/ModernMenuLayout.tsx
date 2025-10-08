@@ -501,8 +501,20 @@ const ModernFoodCard: React.FC<{
   const cartQuantity = getCartQuantity(selectedPortion?.id || item.id);
   const hasMultipleSizes = item.portions && item.portions.length > 1;
 
+  const isOutOfStock = item.out_of_stock || (selectedPortion && selectedPortion.out_of_stock);
+  
+  // Debug logging for out-of-stock items
+  if (item.out_of_stock || (selectedPortion && selectedPortion.out_of_stock)) {
+    console.log('🔍 Out of Stock Item:', {
+      itemName: item.baseName || item.name,
+      itemOutOfStock: item.out_of_stock,
+      selectedPortionOutOfStock: selectedPortion?.out_of_stock,
+      isOutOfStock
+    });
+  }
+
   return (
-    <Card className="group bg-white border border-orange-100 shadow-sm hover:shadow-md transition-all duration-300">
+    <Card className={`group bg-white border border-orange-100 shadow-sm hover:shadow-md transition-all duration-300 ${isOutOfStock ? 'opacity-60' : ''}`}>
       <CardContent className="p-4">
         {/* Food Details Header */}
         <div className="flex items-start justify-between mb-3">
@@ -511,6 +523,11 @@ const ModernFoodCard: React.FC<{
               <h3 className="font-semibold text-gray-900 text-lg">
                 {item.baseName || item.name}
               </h3>
+              {isOutOfStock && (
+                <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
+                  Out of Stock
+                </span>
+              )}
             </div>
             <p className={`text-sm text-gray-600 ${item.category === 'Thali' ? 'whitespace-normal leading-relaxed' : 'line-clamp-2'}`}>
               {item.description}
@@ -542,22 +559,28 @@ const ModernFoodCard: React.FC<{
         {hasMultipleSizes && (
           <div className="mb-3">
             <div className="flex flex-wrap gap-2">
-              {item.portions.map((portion: any) => (
-                <Button
-                  key={portion.id}
-                  variant={selectedSize === portion.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedSize(portion.id)}
-                  className={cn(
-                    "text-xs px-2 py-1 rounded-full transition-all duration-200 flex-shrink-0",
-                    selectedSize === portion.id
-                      ? "bg-orange-500 text-white shadow-sm"
-                      : "bg-white text-gray-600 border-orange-200 hover:bg-orange-50"
-                  )}
-                >
-                  {portion.name} - ₹{portion.price}
-                </Button>
-              ))}
+              {item.portions.map((portion: any) => {
+                const isPortionOutOfStock = portion.out_of_stock;
+                return (
+                  <Button
+                    key={portion.id}
+                    variant={selectedSize === portion.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => !isPortionOutOfStock && setSelectedSize(portion.id)}
+                    disabled={isPortionOutOfStock}
+                    className={cn(
+                      "text-xs px-2 py-1 rounded-full transition-all duration-200 flex-shrink-0",
+                      isPortionOutOfStock
+                        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                        : selectedSize === portion.id
+                        ? "bg-orange-500 text-white shadow-sm"
+                        : "bg-white text-gray-600 border-orange-200 hover:bg-orange-50"
+                    )}
+                  >
+                    {portion.name} - ₹{portion.price} {isPortionOutOfStock && "(Out of Stock)"}
+                  </Button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -578,7 +601,14 @@ const ModernFoodCard: React.FC<{
           
           {/* Quantity Controls */}
           <div className="flex items-center gap-2">
-            {cartQuantity > 0 ? (
+            {isOutOfStock ? (
+              <Button
+                disabled
+                className="bg-gray-300 text-gray-500 px-6 py-2 rounded-full text-sm font-medium cursor-not-allowed"
+              >
+                Out of Stock
+              </Button>
+            ) : cartQuantity > 0 ? (
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -594,7 +624,7 @@ const ModernFoodCard: React.FC<{
                         price: selectedPortion?.price || item.price,
                         category: item.category,
                         preparation_time: item.preparation_time,
-                        is_available: true
+                        is_available: !selectedPortion?.out_of_stock && !item.out_of_stock
                       },
                       selectedPortion: selectedPortion?.id || item.id,
                       quantity: cartQuantity,
