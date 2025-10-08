@@ -158,7 +158,9 @@ export class PrintNodeService {
       // Print KOT only with paper cut commands
       const kotContent = this.formatKOTForThermal(receiptData) + '\n\n\x1D\x56\x00';
       const kotJob = {
-        printer: targetPrinterId,
+        printer: {
+          id: targetPrinterId
+        },
         content: this.unicodeToBase64(kotContent),
         contentType: 'raw_base64',
         source: 'MUJFOODCLUB',
@@ -212,7 +214,9 @@ export class PrintNodeService {
       // Print Order Receipt only with paper cut commands
       const receiptContent = this.formatReceiptForThermal(receiptData) + '\n\n\x1D\x56\x00';
       const receiptJob = {
-        printer: targetPrinterId,
+        printer: {
+          id: targetPrinterId
+        },
         content: this.unicodeToBase64(receiptContent),
         contentType: 'raw_base64',
         source: 'MUJFOODCLUB',
@@ -266,7 +270,9 @@ export class PrintNodeService {
       // Print Order Receipt only with paper cut commands
       const receiptContent = this.formatReceiptForThermal(receiptData) + '\n\n\x1D\x56\x00';
       const receiptJob = {
-        printer: targetPrinterId,
+        printer: {
+          id: targetPrinterId
+        },
         content: this.unicodeToBase64(receiptContent),
         contentType: 'raw_base64',
         source: 'MUJFOODCLUB',
@@ -334,7 +340,9 @@ MUJFOODCLUB!`;
 
       // Create test print job with paper cut commands
       const printJob = {
-        printer: targetPrinterId,
+        printer: {
+          id: targetPrinterId
+        },
         content: this.unicodeToBase64(testReceipt + '\n\n\x1D\x56\x00'),
         contentType: 'raw_base64',
         source: 'MUJFOODCLUB',
