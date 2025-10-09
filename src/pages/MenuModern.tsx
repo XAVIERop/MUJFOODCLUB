@@ -73,10 +73,15 @@ const MenuModern = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [groupedMenuItems, setGroupedMenuItems] = useState<GroupedMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cart, setCart] = useState<{[key: string]: CartItem}>({});
-  const { setCart: setGlobalCart, setCafe: setGlobalCafe } = useCart();
+  const { cart: globalCart, setCart: setGlobalCart, setCafe: setGlobalCafe } = useCart();
+  const [cart, setCart] = useState<{[key: string]: CartItem}>(globalCart);
   
-  // Sync local cart and cafe with global cart context
+  // Load cart from global context when component mounts
+  useEffect(() => {
+    setCart(globalCart);
+  }, [globalCart]);
+  
+  // Sync local cart changes to global cart context
   useEffect(() => {
     setGlobalCart(cart);
   }, [cart, setGlobalCart]);
@@ -394,13 +399,8 @@ const MenuModern = () => {
       return;
     }
 
-    navigate('/checkout', { 
-      state: { 
-        cart, 
-        cafe, 
-        totalAmount: getTotalAmount() 
-      } 
-    });
+    // Navigate to checkout - cart data will come from global context
+    navigate('/checkout');
   };
 
   // Filter menu items based on search, category, and brand
