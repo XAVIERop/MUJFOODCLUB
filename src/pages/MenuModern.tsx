@@ -326,6 +326,26 @@ const MenuModern = () => {
     return firstItem.item.cafe_name || 'Previous Cafe';
   };
 
+  // Helper function to get cart's cafe ID
+  const getCartCafeId = () => {
+    const cartItems = Object.values(cart);
+    if (cartItems.length === 0) return null;
+    
+    // Get the first item's cafe ID (assuming all items are from same cafe)
+    const firstItem = cartItems[0];
+    return firstItem.item.cafe_id || null;
+  };
+
+  // Helper function to get cart's cafe name
+  const getCartCafeName = () => {
+    const cartItems = Object.values(cart);
+    if (cartItems.length === 0) return '';
+    
+    // Get the first item's cafe name (assuming all items are from same cafe)
+    const firstItem = cartItems[0];
+    return firstItem.item.cafe_name || '';
+  };
+
   // Cart functions
   const addToCart = (item: GroupedMenuItem, selectedPortion?: string) => {
     const portionId = selectedPortion || item.portions[0]?.id;
@@ -441,7 +461,7 @@ const MenuModern = () => {
     return cart[itemId]?.quantity || 0;
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!user) {
       navigate('/auth');
       return;
@@ -456,8 +476,63 @@ const MenuModern = () => {
       return;
     }
 
-    // Navigate to checkout - cart data will come from global context
-    navigate('/checkout');
+    // Get the cafe that the cart items belong to
+    const cartCafeId = getCartCafeId();
+    const cartCafeName = getCartCafeName();
+    
+    if (!cartCafeId) {
+      toast({
+        title: "Invalid Cart",
+        description: "Cart items don't have valid cafe information",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log('🛒 Checkout - Cart belongs to cafe:', cartCafeName, 'ID:', cartCafeId);
+    console.log('🛒 Checkout - Current page cafe:', cafe?.name, 'ID:', cafe?.id);
+
+    // If cart belongs to different cafe than current page, fetch that cafe's data
+    if (cartCafeId !== cafe?.id) {
+      try {
+        console.log('🔄 Checkout - Fetching cart cafe data...');
+        const { data: cartCafeData, error: cartCafeError } = await supabase
+          .from('cafes')
+          .select('*')
+          .eq('id', cartCafeId)
+          .single();
+
+        if (cartCafeError || !cartCafeData) {
+          toast({
+            title: "Cafe Not Found",
+            description: "The cafe for your cart items could not be found",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Set the cart's cafe as the global cafe context
+        console.log('✅ Checkout - Setting global cafe to cart cafe:', cartCafeData.name);
+        setGlobalCafe(cartCafeData);
+        
+        // Small delay to ensure context is updated
+        setTimeout(() => {
+          navigate('/checkout');
+        }, 100);
+      } catch (error) {
+        console.error('Error fetching cart cafe:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load cafe information",
+          variant: "destructive"
+        });
+        return;
+      }
+    } else {
+      // Cart belongs to current cafe, proceed normally
+      console.log('✅ Checkout - Cart belongs to current cafe, proceeding normally');
+      navigate('/checkout');
+    }
   };
 
   // Filter menu items based on search, category, and brand

@@ -683,6 +683,23 @@ const ModernCartPanel: React.FC<{
           <h3 className="text-lg font-semibold text-gray-900">My Orders</h3>
         </div>
         
+        {/* Cart Cafe Info */}
+        {cartItems.length > 0 && (
+          <div className="mt-2 p-2 bg-orange-50 rounded-lg border border-orange-200">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+              <span className="text-orange-700 font-medium">
+                Items from {(cartItems[0] as any)?.item?.cafe_name || 'Previous Cafe'}
+              </span>
+            </div>
+            {(cartItems[0] as any)?.item?.cafe_name !== cafe?.name && (
+              <p className="text-xs text-orange-600 mt-1">
+                Checkout will be for {(cartItems[0] as any)?.item?.cafe_name || 'Previous Cafe'}
+              </p>
+            )}
+          </div>
+        )}
+        
         {/* Delivery Info */}
         <div className="mt-3 text-sm text-gray-600">
           <div className="flex items-center gap-1 mb-1">
