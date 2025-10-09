@@ -11,18 +11,33 @@ const CART_STORAGE_KEY = 'muj_food_club_cart';
 const CAFE_STORAGE_KEY = 'muj_food_club_cafe';
 
 // Helper functions for localStorage
-const saveCartToStorage = (cart: { [key: string]: CartItem }) => {
+const getCafeSpecificCartKey = (cafeId: string) => `muj_food_club_cart_${cafeId}`;
+
+const saveCartToStorage = (cart: { [key: string]: CartItem }, cafeId?: string) => {
   try {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    if (cafeId) {
+      // Save cafe-specific cart
+      localStorage.setItem(getCafeSpecificCartKey(cafeId), JSON.stringify(cart));
+    } else {
+      // Fallback to global cart (for backward compatibility)
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    }
   } catch (error) {
     console.error('Error saving cart to localStorage:', error);
   }
 };
 
-const loadCartFromStorage = (): { [key: string]: CartItem } => {
+const loadCartFromStorage = (cafeId?: string): { [key: string]: CartItem } => {
   try {
-    const saved = localStorage.getItem(CART_STORAGE_KEY);
-    return saved ? JSON.parse(saved) : {};
+    if (cafeId) {
+      // Load cafe-specific cart
+      const saved = localStorage.getItem(getCafeSpecificCartKey(cafeId));
+      return saved ? JSON.parse(saved) : {};
+    } else {
+      // Fallback to global cart (for backward compatibility)
+      const saved = localStorage.getItem(CART_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : {};
+    }
   } catch (error) {
     console.error('Error loading cart from localStorage:', error);
     return {};
@@ -95,6 +110,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [cafe, isInitialized]);
 
   const addToCart = (item: any, quantity: number = 1, notes: string = '') => {
+    console.log('✅ Adding item to cart:', {
+      itemName: item.name,
+      cafeName: cafe?.name,
+      quantity,
+      notes
+    });
+    
     setCart(prev => ({
       ...prev,
       [item.id]: {
@@ -131,6 +153,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const getTotalAmount = () => {
     return Object.values(cart).reduce((total, item) => total + (item.item.price * item.quantity), 0);
   };
+
 
   return (
     <CartContext.Provider value={{

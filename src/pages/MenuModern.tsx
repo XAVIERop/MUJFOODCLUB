@@ -6,6 +6,7 @@ import { useCart } from '@/hooks/useCart';
 import { supabase } from '@/integrations/supabase/client';
 import ModernMenuLayout from '@/components/ModernMenuLayout';
 import Header from '@/components/Header';
+import { CafeSwitchDialog } from '@/components/CafeSwitchDialog';
 
 interface MenuItem {
   id: string;
@@ -73,18 +74,11 @@ const MenuModern = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [groupedMenuItems, setGroupedMenuItems] = useState<GroupedMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const { cart: globalCart, setCart: setGlobalCart, setCafe: setGlobalCafe } = useCart();
-  const [cart, setCart] = useState<{[key: string]: CartItem}>(globalCart);
+  const { cart, setCart, setCafe: setGlobalCafe, clearCart } = useCart();
   
-  // Load cart from global context when component mounts
-  useEffect(() => {
-    setCart(globalCart);
-  }, [globalCart]);
-  
-  // Sync local cart changes to global cart context
-  useEffect(() => {
-    setGlobalCart(cart);
-  }, [cart, setGlobalCart]);
+  // Dialog state
+  const [showCafeSwitchDialog, setShowCafeSwitchDialog] = useState(false);
+  const [pendingItem, setPendingItem] = useState<{item: GroupedMenuItem, selectedPortion?: string} | null>(null);
   
   useEffect(() => {
     setGlobalCafe(cafe);
@@ -315,10 +309,51 @@ const MenuModern = () => {
     }
   }, [cafeIdentifier, navigate, toast]);
 
+  // Helper function to check if cart has items from different cafe
+  const hasItemsFromDifferentCafe = (currentCafeId: string) => {
+    return Object.values(cart).some(cartItem => 
+      cartItem.item.cafe_id && cartItem.item.cafe_id !== currentCafeId
+    );
+  };
+
+  // Helper function to get current cafe name from cart
+  const getCurrentCafeName = () => {
+    const cartItems = Object.values(cart);
+    if (cartItems.length === 0) return '';
+    
+    // Get the first item's cafe name (assuming all items are from same cafe)
+    const firstItem = cartItems[0];
+    return firstItem.item.cafe_name || 'Previous Cafe';
+  };
+
   // Cart functions
   const addToCart = (item: GroupedMenuItem, selectedPortion?: string) => {
     const portionId = selectedPortion || item.portions[0]?.id;
-    if (!portionId) return;
+    if (!portionId || !cafe) return;
+
+    // Check if cart has items from different cafe
+    if (hasItemsFromDifferentCafe(cafe.id)) {
+      console.log('🔄 Cafe mismatch detected, showing dialog');
+      setPendingItem({ item, selectedPortion });
+      setShowCafeSwitchDialog(true);
+      return;
+    }
+
+    // Proceed with normal add to cart
+    addItemToCart(item, selectedPortion);
+  };
+
+  // Function to actually add item to cart
+  const addItemToCart = (item: GroupedMenuItem, selectedPortion?: string) => {
+    const portionId = selectedPortion || item.portions[0]?.id;
+    if (!portionId || !cafe) return;
+
+    console.log('🛒 Adding to cart:', {
+      itemName: item.baseName,
+      cafeName: cafe.name,
+      cafeId: cafe.id,
+      portionId
+    });
 
     const cartKey = portionId;
     const existingItem = cart[cartKey];
@@ -345,7 +380,9 @@ const MenuModern = () => {
             price: portion.price,
             category: item.category,
             preparation_time: item.preparation_time,
-            is_available: portion.is_available
+            is_available: portion.is_available,
+            cafe_id: cafe.id,
+            cafe_name: cafe.name
           },
           selectedPortion: portionId,
           quantity: 1,
@@ -353,6 +390,26 @@ const MenuModern = () => {
         }
       }));
     }
+  };
+
+  // Handle dialog confirmation
+  const handleDialogConfirm = () => {
+    if (pendingItem) {
+      // Clear cart and add new item
+      clearCart();
+      // Add the pending item after clearing
+      setTimeout(() => {
+        addItemToCart(pendingItem.item, pendingItem.selectedPortion);
+      }, 100);
+    }
+    setShowCafeSwitchDialog(false);
+    setPendingItem(null);
+  };
+
+  // Handle dialog cancellation
+  const handleDialogCancel = () => {
+    setShowCafeSwitchDialog(false);
+    setPendingItem(null);
   };
 
   const removeFromCart = (cartItem: CartItem) => {
@@ -515,6 +572,16 @@ const MenuModern = () => {
         getCartItemCount={getCartItemCount}
         onCheckout={handleCheckout}
         cafe={cafe}
+      />
+      
+      {/* Cafe Switch Dialog */}
+      <CafeSwitchDialog
+        isOpen={showCafeSwitchDialog}
+        onClose={handleDialogCancel}
+        onConfirm={handleDialogConfirm}
+        currentCafeName={getCurrentCafeName()}
+        newCafeName={cafe?.name || ''}
+        currentCartItems={Object.keys(cart).length}
       />
     </div>
   );
