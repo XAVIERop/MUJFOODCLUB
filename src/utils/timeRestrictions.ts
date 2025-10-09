@@ -58,27 +58,57 @@ export function getDineInTakeawayMessage(): string {
 
 /**
  * Check if delivery orders are allowed based on current time
- * Delivery is only allowed from 11 PM to 2:30 AM
+ * For specific cafes: 11 AM to 2 AM (next day)
+ * For other cafes: 11 PM to 2:30 AM
+ * @param cafeName - Name of the cafe to check restrictions for
  * @returns {boolean} true if delivery is allowed, false otherwise
  */
-export function isDeliveryAllowed(): boolean {
+export function isDeliveryAllowed(cafeName?: string): boolean {
   const now = new Date();
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
   const currentTime = currentHour * 60 + currentMinute; // Convert to minutes for easier comparison
   
-  // Delivery window: 11 PM (23:00) to 2:30 AM (02:30)
-  const deliveryStart = 23 * 60; // 11 PM in minutes
-  const deliveryEnd = 2 * 60 + 30; // 2:30 AM in minutes
+  // Check if this cafe has extended delivery hours (11 AM to 2 AM)
+  const extendedDeliveryCafes = [
+    'cook house', 'taste of india', 'pizza bakers', 'food court', 
+    'punjabi tadka', 'munch box', 'mini meals'
+  ];
   
-  // Check if current time is within delivery window
-  // Handle the case where delivery window crosses midnight
-  if (currentHour >= 23) {
-    // After 11 PM, delivery is allowed until 2:30 AM next day
-    return currentTime >= deliveryStart || currentTime <= deliveryEnd;
+  const isExtendedDeliveryCafe = cafeName && extendedDeliveryCafes.some(cafe => 
+    cafeName.toLowerCase().includes(cafe)
+  );
+  
+  if (isExtendedDeliveryCafe) {
+    // Extended delivery window: 11 AM (11:00) to 2 AM (02:00) next day
+    const extendedStart = 11 * 60; // 11 AM in minutes
+    const extendedEnd = 2 * 60; // 2 AM in minutes
+    
+    // Check if current time is within extended delivery window
+    if (currentHour >= 11 && currentHour < 24) {
+      // Between 11 AM and midnight, delivery is allowed
+      return currentTime >= extendedStart;
+    } else if (currentHour >= 0 && currentHour < 2) {
+      // Between midnight and 2 AM, delivery is allowed
+      return currentTime <= extendedEnd;
+    } else {
+      // Outside extended window (2 AM to 11 AM)
+      return false;
+    }
   } else {
-    // Before 11 PM, check if it's in the early morning window (12 AM - 2:30 AM)
-    return currentTime <= deliveryEnd;
+    // Standard delivery window: 11 PM (23:00) to 2:30 AM (02:30)
+    const deliveryStart = 23 * 60; // 11 PM in minutes
+    const deliveryEnd = 2 * 60 + 30; // 2:30 AM in minutes
+    
+    // Check if current time is within delivery window
+    // Handle the case where delivery window crosses midnight
+    if (currentHour >= 23) {
+      // After 11 PM, delivery is allowed until 2:30 AM next day
+      return currentTime >= deliveryStart || currentTime <= deliveryEnd;
+    } else {
+      // Before 11 PM, check if it's in the early morning window (12 AM - 2:30 AM)
+      return currentTime <= deliveryEnd;
+    }
   }
 }
 
@@ -101,10 +131,11 @@ export function getNextDeliveryTime(): string {
 
 /**
  * Get a user-friendly message about delivery availability
+ * @param cafeName - Name of the cafe to check restrictions for
  * @returns {string} Message about delivery availability
  */
-export function getDeliveryMessage(): string {
-  if (isDeliveryAllowed()) {
+export function getDeliveryMessage(cafeName?: string): string {
+  if (isDeliveryAllowed(cafeName)) {
     return "Delivery orders are currently available";
   } else {
     return `Delivery orders are currently unavailable. Available from ${getNextDeliveryTime()}`;

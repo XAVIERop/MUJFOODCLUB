@@ -721,32 +721,50 @@ const ModernCartPanel: React.FC<{
           </div>
         ) : (
           <div className="space-y-3">
-            {cartItems.map((cartItem: any, index) => (
-              <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-red-100 rounded-lg flex items-center justify-center">
-                  <span className="text-lg">🍽️</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-medium text-gray-900 line-clamp-1">
-                    {cartItem.item.baseName || cartItem.item.name}
-                  </h4>
-                  <p className="text-xs text-gray-500">Qty: {cartItem.quantity}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
-                    ₹{(cartItem.item.price || cartItem.item.portions?.[0]?.price) * cartItem.quantity}
-                  </p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onRemoveFromCart(cartItem)}
-                    className="text-red-500 hover:text-red-600 p-1 h-auto"
-                  >
-                    Remove
-                  </Button>
-                </div>
-              </div>
-            ))}
+       {cartItems.map((cartItem: any, index) => {
+         const isFreeBogoItem = (cartItem.item.baseName || cartItem.item.name).startsWith('FREE ') && (cartItem.item.price || cartItem.item.portions?.[0]?.price) === 0;
+         
+         return (
+           <div 
+             key={index} 
+             className={`flex items-center gap-3 p-3 rounded-lg ${
+               isFreeBogoItem 
+                 ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-sm' 
+                 : 'bg-gray-50'
+             }`}
+           >
+             <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gradient-to-br from-orange-100 to-red-100">
+               <span className="text-lg">🍽️</span>
+             </div>
+             <div className="flex-1 min-w-0">
+               <div className="flex items-center gap-2">
+                 <h4 className={`text-sm font-medium line-clamp-1 ${
+                   isFreeBogoItem ? 'text-green-800' : 'text-gray-900'
+                 }`}>
+                   {cartItem.item.baseName || cartItem.item.name}
+                 </h4>
+                 {/* Removed FREE BOGO Badge */}
+               </div>
+               <p className="text-xs text-gray-500">Qty: {cartItem.quantity}</p>
+             </div>
+             <div className="text-right">
+               <p className={`text-sm font-medium ${
+                 isFreeBogoItem ? 'text-green-600' : 'text-gray-900'
+               }`}>
+                 {isFreeBogoItem ? 'FREE' : `₹${(cartItem.item.price || cartItem.item.portions?.[0]?.price) * cartItem.quantity}`}
+               </p>
+               <Button
+                 variant="ghost"
+                 size="sm"
+                 onClick={() => onRemoveFromCart(cartItem)}
+                 className="text-red-500 hover:text-red-600 p-1 h-auto"
+               >
+                 Remove
+               </Button>
+             </div>
+           </div>
+         );
+       })}
           </div>
         )}
       </div>

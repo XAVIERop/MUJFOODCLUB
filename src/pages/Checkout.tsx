@@ -219,10 +219,10 @@ const Checkout = () => {
     }
 
     // Check if the selected order type is currently available
-    if (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed()) {
+    if (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) {
       toast({
         title: "Delivery Unavailable",
-        description: getDeliveryMessage(),
+        description: getDeliveryMessage(cafe?.name),
         variant: "destructive"
       });
       return;
@@ -495,12 +495,12 @@ const Checkout = () => {
                           value="delivery"
                           checked={deliveryDetails.orderType === 'delivery'}
                           onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
-                          disabled={!isDeliveryAllowed()}
+                          disabled={!isDeliveryAllowed(cafe?.name)}
                         />
                         <Label htmlFor="delivery" className="flex items-center">
                           <MapPin className="w-4 h-4 mr-2" />
                           Delivery
-                          {!isDeliveryAllowed() && (
+                          {!isDeliveryAllowed(cafe?.name) && (
                             <Badge variant="secondary" className="ml-2">Not Available</Badge>
                           )}
                         </Label>
@@ -545,11 +545,11 @@ const Checkout = () => {
                       </div>
                         </div>
                     
-                    {!isDeliveryAllowed() && (
+                    {!isDeliveryAllowed(cafe?.name) && (
                       <Alert>
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
-                          {getDeliveryMessage()}
+                          {getDeliveryMessage(cafe?.name)}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -665,6 +665,7 @@ const Checkout = () => {
               </Card>
             </div>
 
+
             {/* Order Summary */}
             <div className="space-y-6">
               <Card>
@@ -674,44 +675,64 @@ const Checkout = () => {
                 <CardContent className="space-y-4">
                   {/* Order Items */}
                   <div className="space-y-3">
-                    {Object.values(cart).map((cartItem) => (
-                      <div key={cartItem.item.id} className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <p className="font-medium">{cartItem.item.name}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <p className="text-sm text-muted-foreground">Qty:</p>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-6 w-6 p-0"
-                                onClick={() => removeFromCart(cartItem.item.id)}
-                              >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <span className="text-sm font-medium min-w-[20px] text-center">
-                                {cartItem.quantity}
-                              </span>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-6 w-6 p-0"
-                                onClick={() => addToCart(cartItem.item, 1, cartItem.notes)}
-                              >
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                          {cartItem.notes && (
-                            <p className="text-xs text-muted-foreground mt-1">Note: {cartItem.notes}</p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">₹{(cartItem.item.price * cartItem.quantity).toFixed(2)}</p>
-                          <p className="text-xs text-muted-foreground">₹{cartItem.item.price} each</p>
-                        </div>
-                      </div>
-                    ))}
+                    {Object.values(cart).map((cartItem) => {
+                      const isFreeBogoItem = cartItem.item.name.startsWith('FREE ') && cartItem.item.price === 0;
+                      
+                      return (
+           <div 
+             key={cartItem.item.id} 
+             className={`flex justify-between items-start p-3 rounded-lg border ${
+               isFreeBogoItem 
+                 ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 shadow-sm' 
+                 : 'bg-gray-50 border-gray-200'
+             }`}
+           >
+             <div className="flex-1">
+               <div className="flex items-center gap-2">
+                 <p className={`font-medium ${isFreeBogoItem ? 'text-green-800' : 'text-gray-900'}`}>
+                   {cartItem.item.name}
+                 </p>
+                 {/* Removed FREE BOGO Badge */}
+               </div>
+               <div className="flex items-center gap-2 mt-1">
+                 <p className="text-sm text-muted-foreground">Qty:</p>
+                 <div className="flex items-center gap-1">
+                   <Button
+                     size="sm"
+                     variant="outline"
+                     className="h-6 w-6 p-0"
+                     onClick={() => removeFromCart(cartItem.item.id)}
+                   >
+                     <Minus className="h-3 w-3" />
+                   </Button>
+                   <span className="text-sm font-medium min-w-[20px] text-center">
+                     {cartItem.quantity}
+                   </span>
+                   <Button
+                     size="sm"
+                     variant="outline"
+                     className="h-6 w-6 p-0"
+                     onClick={() => addToCart(cartItem.item, 1, cartItem.notes)}
+                   >
+                     <Plus className="h-3 w-3" />
+                   </Button>
+                 </div>
+               </div>
+               {cartItem.notes && (
+                 <p className="text-xs text-muted-foreground mt-1">Note: {cartItem.notes}</p>
+               )}
+             </div>
+             <div className="text-right">
+               <p className={`font-medium ${isFreeBogoItem ? 'text-green-600' : 'text-gray-900'}`}>
+                 {isFreeBogoItem ? 'FREE' : `₹${(cartItem.item.price * cartItem.quantity).toFixed(2)}`}
+               </p>
+               {!isFreeBogoItem && (
+                 <p className="text-xs text-muted-foreground">₹{cartItem.item.price} each</p>
+               )}
+             </div>
+           </div>
+                      );
+                    })}
                   </div>
 
                   <div className="border-t pt-4 space-y-2">
@@ -804,7 +825,7 @@ const Checkout = () => {
               <Button 
                 onClick={handlePlaceOrder}
                 disabled={isLoading || !isMinimumOrderMet || 
-                  (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed()) ||
+                  (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) ||
                   ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed())
                 }
                 className="w-full"
@@ -813,7 +834,7 @@ const Checkout = () => {
               >
                     {isLoading ? 'Placing Order...' :
                      !isMinimumOrderMet ? `Minimum Order ₹${ORDER_CONSTANTS.MINIMUM_ORDER_AMOUNT} Required` :
-                     (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed()) ? 'Delivery Unavailable' :
+                     (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) ? 'Delivery Unavailable' :
                      ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed()) ? 'Dine-in/Takeaway Unavailable' :
                      `Place Order - ₹${finalAmount.toFixed(2)}`}
               </Button>

@@ -74,7 +74,7 @@ const MenuModern = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [groupedMenuItems, setGroupedMenuItems] = useState<GroupedMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const { cart, setCart, setCafe: setGlobalCafe, clearCart } = useCart();
+  const { cart, setCart, setCafe: setGlobalCafe, clearCart, setMenuItems: setGlobalMenuItems, addToCart: addToGlobalCart, removeFromCart: removeFromGlobalCart, getTotalAmount: getGlobalTotalAmount, getItemCount: getGlobalItemCount } = useCart();
   
   // Dialog state
   const [showCafeSwitchDialog, setShowCafeSwitchDialog] = useState(false);
@@ -83,6 +83,10 @@ const MenuModern = () => {
   useEffect(() => {
     setGlobalCafe(cafe);
   }, [cafe, setGlobalCafe]);
+
+  useEffect(() => {
+    setGlobalMenuItems(menuItems);
+  }, [menuItems, setGlobalMenuItems]);
   
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -375,41 +379,34 @@ const MenuModern = () => {
       portionId
     });
 
-    const cartKey = portionId;
-    const existingItem = cart[cartKey];
-    
-    if (existingItem) {
-      setCart(prev => ({
-        ...prev,
-        [cartKey]: {
-          ...prev[cartKey],
-          quantity: prev[cartKey].quantity + 1
-        }
-      }));
-    } else {
-      const portion = item.portions.find(p => p.id === portionId);
-      if (!portion) return;
+    const portion = item.portions.find(p => p.id === portionId);
+    if (!portion) return;
 
-      setCart(prev => ({
-        ...prev,
-        [cartKey]: {
-          item: {
-            id: portion.id,
-            name: item.baseName,
-            description: item.description,
-            price: portion.price,
-            category: item.category,
-            preparation_time: item.preparation_time,
-            is_available: portion.is_available,
-            cafe_id: cafe.id,
-            cafe_name: cafe.name
-          },
-          selectedPortion: portionId,
-          quantity: 1,
-          notes: ''
-        }
-      }));
+    // Create the menu item object for the global cart
+    // Use the portion name to determine the full pizza name with size
+    let fullName = item.baseName;
+    if (portion.name === 'Regular') {
+      fullName = `${item.baseName} (Regular 7")`;
+    } else if (portion.name === 'Medium') {
+      fullName = `${item.baseName} (Medium 10")`;
+    } else if (portion.name === 'Large') {
+      fullName = `${item.baseName} (Large 12")`;
     }
+
+    const menuItem = {
+      id: portion.id,
+      name: fullName,
+      description: item.description,
+      price: portion.price,
+      category: item.category,
+      preparation_time: item.preparation_time,
+      is_available: portion.is_available,
+      cafe_id: cafe.id,
+      cafe_name: cafe.name
+    };
+
+    // Use the global cart context which includes BOGO logic
+    addToGlobalCart(menuItem, 1, '');
   };
 
   // Handle dialog confirmation
@@ -433,28 +430,18 @@ const MenuModern = () => {
   };
 
   const removeFromCart = (cartItem: CartItem) => {
-    const cartKey = cartItem.selectedPortion;
-    setCart(prev => {
-      const newCart = { ...prev };
-      if (newCart[cartKey]) {
-        if (newCart[cartKey].quantity > 1) {
-          newCart[cartKey].quantity -= 1;
-        } else {
-          delete newCart[cartKey];
-        }
-      }
-      return newCart;
-    });
+    // Extract the item ID from the cart item
+    const itemId = cartItem.item.id;
+    // Use the global cart context which includes BOGO logic
+    removeFromGlobalCart(itemId);
   };
 
   const getTotalAmount = () => {
-    return Object.values(cart).reduce((total, cartItem) => {
-      return total + cartItem.item.price * cartItem.quantity;
-    }, 0);
+    return getGlobalTotalAmount();
   };
 
   const getCartItemCount = () => {
-    return Object.values(cart).reduce((total, cartItem) => total + cartItem.quantity, 0);
+    return getGlobalItemCount();
   };
 
   const getCartQuantity = (itemId: string) => {

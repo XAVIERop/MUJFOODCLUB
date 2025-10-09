@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { applyPizzaBogoLogic } from '@/utils/pizzaBogoLogic';
 
 interface CartItem {
   item: any; // MenuItem type
@@ -71,6 +72,8 @@ interface CartContextType {
   setCart: (cart: { [key: string]: CartItem }) => void;
   cafe: any | null;
   setCafe: (cafe: any | null) => void;
+  menuItems: any[];
+  setMenuItems: (items: any[]) => void;
   addToCart: (item: any, quantity?: number, notes?: string) => void;
   removeFromCart: (itemId: string) => void;
   clearCart: () => void;
@@ -83,6 +86,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<{ [key: string]: CartItem }>({});
   const [cafe, setCafe] = useState<any | null>(null);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Load cart and cafe from localStorage on mount
@@ -117,14 +121,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       notes
     });
     
-    setCart(prev => ({
-      ...prev,
-      [item.id]: {
-        item,
-        quantity: (prev[item.id]?.quantity || 0) + quantity,
-        notes: notes || prev[item.id]?.notes || ''
-      }
-    }));
+    setCart(prev => {
+      const newCart = {
+        ...prev,
+        [item.id]: {
+          item,
+          quantity: (prev[item.id]?.quantity || 0) + quantity,
+          notes: notes || prev[item.id]?.notes || ''
+        }
+      };
+      
+      // Apply BOGO logic for Pizza Bakers
+      return applyPizzaBogoLogic(newCart, menuItems, cafe?.name);
+    });
   };
 
   const removeFromCart = (itemId: string) => {
@@ -137,7 +146,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           delete newCart[itemId];
         }
       }
-      return newCart;
+      
+      // Apply BOGO logic for Pizza Bakers
+      return applyPizzaBogoLogic(newCart, menuItems, cafe?.name);
     });
   };
 
@@ -161,6 +172,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       setCart,
       cafe,
       setCafe,
+      menuItems,
+      setMenuItems,
       addToCart,
       removeFromCart,
       clearCart,
