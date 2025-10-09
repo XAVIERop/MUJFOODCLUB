@@ -8,9 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, MapPin, Clock, Banknote, AlertCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Banknote, AlertCircle, Plus, Minus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useCart } from '@/hooks/useCart';
 import { useLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/hooks/use-toast';
 import { ORDER_CONSTANTS } from '@/lib/constants';
@@ -93,17 +94,15 @@ const Checkout = () => {
   const navigate = useNavigate();
   const location = useRouterLocation();
   const { user, profile, refreshProfile } = useAuth();
+  const { cart, cafe, getTotalAmount, addToCart, removeFromCart } = useCart();
   const { selectedBlock } = useLocation();
   const { toast } = useToast();
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
-  
-  // Get cart data from navigation state
-  const cart: {[key: string]: CartItem} = location.state?.cart || {};
-  const cafe: Cafe = location.state?.cafe;
-  const totalAmount: number = location.state?.totalAmount || 0;
+  // Calculate total amount from global cart
+  const totalAmount = getTotalAmount();
 
   // Form states
   const [deliveryDetails, setDeliveryDetails] = useState({
@@ -144,7 +143,7 @@ const Checkout = () => {
       navigate('/cafes');
       return;
     }
-  }, [cart, cafe, navigate]);
+  }, [cart, cafe, navigate, totalAmount]);
 
   // Update phone number when profile changes
   useEffect(() => {
@@ -459,11 +458,11 @@ const Checkout = () => {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate(`/menu/${cafe?.slug || cafe?.id}`)}
               className="mr-4"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              Back to Menu
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Checkout</h1>
@@ -676,12 +675,38 @@ const Checkout = () => {
                       <div key={cartItem.item.id} className="flex justify-between items-start">
                         <div className="flex-1">
                           <p className="font-medium">{cartItem.item.name}</p>
-                          <p className="text-sm text-muted-foreground">Qty: {cartItem.quantity}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <p className="text-sm text-muted-foreground">Qty:</p>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 w-6 p-0"
+                                onClick={() => removeFromCart(cartItem.item.id)}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="text-sm font-medium min-w-[20px] text-center">
+                                {cartItem.quantity}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 w-6 p-0"
+                                onClick={() => addToCart(cartItem.item, 1, cartItem.notes)}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
                           {cartItem.notes && (
-                            <p className="text-xs text-muted-foreground">Note: {cartItem.notes}</p>
+                            <p className="text-xs text-muted-foreground mt-1">Note: {cartItem.notes}</p>
                           )}
                         </div>
-                        <p className="font-medium">₹{cartItem.item.price * cartItem.quantity}</p>
+                        <div className="text-right">
+                          <p className="font-medium">₹{(cartItem.item.price * cartItem.quantity).toFixed(2)}</p>
+                          <p className="text-xs text-muted-foreground">₹{cartItem.item.price} each</p>
+                        </div>
                       </div>
                     ))}
                   </div>
