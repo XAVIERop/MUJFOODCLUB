@@ -128,6 +128,30 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
                 <h4 className="font-bold text-gray-900 text-sm truncate">
                   {cafe.name}
                 </h4>
+                
+                {/* Discount Badges for Mobile Layout */}
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {/* Flat 10% Off Badge */}
+                  {(cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('taste of india')) && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm">
+                      Flat 10% Off
+                    </span>
+                  )}
+                  
+                  {/* Flat 5% Off Badge */}
+                  {(cafe.name.toLowerCase().includes('food court') || cafe.name === 'FOOD COURT') && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm">
+                      Flat 5% Off
+                    </span>
+                  )}
+                  
+                  {/* BOGO Offers Badge */}
+                  {(cafe.name.toLowerCase().includes('pizza bakers') || cafe.name === 'Pizza Bakers') && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-sm">
+                      🍕 BOGO Offers
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1 mb-3">

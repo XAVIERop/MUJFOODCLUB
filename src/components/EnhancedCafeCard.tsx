@@ -229,6 +229,12 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
                 Flat 5% Off
               </Badge>
             )}
+            {/* BOGO Offers Badge for Pizza Bakers */}
+            {(cafe.name.toLowerCase().includes('pizza bakers') || cafe.name === 'Pizza Bakers') && (
+              <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-xs px-2 py-1 shadow-lg border border-orange-400 hover:shadow-orange-400/60 hover:scale-110 transition-all duration-200 hover:bg-gradient-to-r hover:from-orange-600 hover:to-red-600">
+                🍕 BOGO Offers
+              </Badge>
+            )}
           </div>
         </div>
       </div>
