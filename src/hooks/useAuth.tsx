@@ -176,6 +176,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Create profile for student
         await createProfile(data.user.id, email, fullName, block, phone);
         
+        // Update user metadata to include phone number
+        const { error: updateError } = await supabase.auth.updateUser({
+          data: {
+            full_name: fullName,
+            block: block,
+            phone: phone
+          }
+        });
+        
+        if (updateError) {
+          console.error('Error updating user metadata:', updateError);
+        }
+        
         // User will receive confirmation email
         // They must click the link to verify before they can log in
       }
@@ -251,6 +264,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq('id', user.id);
       
       if (error) throw error;
+      
+      // Update user metadata if phone number is being updated
+      if (updates.phone !== undefined) {
+        const { error: updateError } = await supabase.auth.updateUser({
+          data: {
+            full_name: updates.full_name || profile?.full_name,
+            block: updates.block || profile?.block,
+            phone: updates.phone
+          }
+        });
+        
+        if (updateError) {
+          console.error('Error updating user metadata:', updateError);
+        }
+      }
       
       // Refresh profile data
       await fetchProfile(user.id);

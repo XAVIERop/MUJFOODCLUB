@@ -129,7 +129,6 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
           .from('menu_items')
           .select('*')
           .eq('cafe_id', cafeId)
-          .eq('is_available', true)
           .order('category', { ascending: true })
           .order('name', { ascending: true });
 
