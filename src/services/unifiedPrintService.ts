@@ -149,6 +149,14 @@ class UnifiedPrintService {
         } else {
           console.log('✅ Unified Print Service: Using Munch Box API key');
         }
+      } else if (cafe.name.toLowerCase().includes('taste') && cafe.name.toLowerCase().includes('india')) {
+        // Taste of India: PrintNode service disabled
+        console.log('🚫 Unified Print Service: PrintNode service disabled for Taste of India');
+        return {
+          success: false,
+          error: 'PrintNode service is disabled for Taste of India',
+          method: 'disabled'
+        };
       } else {
         apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
         if (!apiKey) {
@@ -251,11 +259,22 @@ class UnifiedPrintService {
     console.log(`🔄 Unified Print Service: Printing KOT for cafe ${cafeId}`);
     
     try {
+      // Get proper cafe name for formatting
+      const cafeName = await this.getCafeName(cafeId);
+      
+      // Taste of India: PrintNode service disabled
+      if (cafeName.toLowerCase().includes('taste') && cafeName.toLowerCase().includes('india')) {
+        console.log('🚫 Unified Print Service: PrintNode service disabled for Taste of India');
+        return {
+          success: false,
+          error: 'PrintNode service is disabled for Taste of India',
+          method: 'disabled'
+        };
+      }
+      
       // Reinitialize PrintNode service with cafe-specific API key
       await this.initializePrintNode(cafeId);
       
-      // Get proper cafe name for formatting
-      const cafeName = await this.getCafeName(cafeId);
       const formattedReceiptData = { ...receiptData, cafe_name: cafeName };
       
       // Get cafe printer configuration
@@ -348,11 +367,22 @@ class UnifiedPrintService {
     console.log(`🔄 Unified Print Service: Printing Receipt for cafe ${cafeId}`);
     
     try {
+      // Get proper cafe name for formatting
+      const cafeName = await this.getCafeName(cafeId);
+      
+      // Taste of India: PrintNode service disabled
+      if (cafeName.toLowerCase().includes('taste') && cafeName.toLowerCase().includes('india')) {
+        console.log('🚫 Unified Print Service: PrintNode service disabled for Taste of India');
+        return {
+          success: false,
+          error: 'PrintNode service is disabled for Taste of India',
+          method: 'disabled'
+        };
+      }
+      
       // Reinitialize PrintNode service with cafe-specific API key
       await this.initializePrintNode(cafeId);
       
-      // Get proper cafe name for formatting
-      const cafeName = await this.getCafeName(cafeId);
       const formattedReceiptData = { ...receiptData, cafe_name: cafeName };
       
       // Get cafe printer configuration

@@ -126,6 +126,7 @@ const Checkout = () => {
   const isEligibleForDiscount = cafe?.name === 'CHATKARA' || cafe?.name === 'COOK HOUSE' || 
                                 cafe?.name?.toLowerCase().includes('mini meals') || 
                                 cafe?.name === 'MINI MEALS' ||
+                                cafe?.name?.toLowerCase().includes('taste of india') ||
                                 cafe?.name?.toLowerCase().includes('food court') || 
                                 cafe?.name === 'FOOD COURT';
 
@@ -170,6 +171,8 @@ const Checkout = () => {
       }
     } else if (cafe?.name?.toLowerCase().includes('mini meals') || cafe?.name === 'MINI MEALS') {
       discountRate = 0.10; // 10% for Mini Meals
+    } else if (cafe?.name?.toLowerCase().includes('taste of india')) {
+      discountRate = 0.10; // 10% for Taste of India
     } else if (cafe?.name?.toLowerCase().includes('food court') || cafe?.name === 'FOOD COURT') {
       discountRate = 0.05; // 5% for Food Court
     }
@@ -751,7 +754,8 @@ const Checkout = () => {
                       <div className="flex justify-between items-center text-green-600">
                         <span className="font-bold">
                           MUJ FOOD CLUB DISCOUNT ({cafe?.name?.toLowerCase().includes('food court') || cafe?.name === 'FOOD COURT' ? '5%' : 
-                            cafe?.name === 'COOK HOUSE' ? (deliveryDetails.orderType === 'delivery' ? '10%' : '5%') : '10%'})
+                            cafe?.name === 'COOK HOUSE' ? (deliveryDetails.orderType === 'delivery' ? '10%' : '5%') : 
+                            cafe?.name?.toLowerCase().includes('taste of india') ? '10%' : '10%'})
                         </span>
                         <span className="font-bold">-₹{discountAmount.toFixed(2)}</span>
                       </div>

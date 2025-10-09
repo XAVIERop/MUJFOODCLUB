@@ -42,6 +42,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
                      cafe.name.toLowerCase().includes('munch box') ||
                      cafe.name.toLowerCase().includes('cook house') ||
                      cafe.name.toLowerCase().includes('pizza bakers') ||
+                     cafe.name.toLowerCase().includes('taste of india') ||
                      cafe.name.toLowerCase().includes('havmor') ||
                      cafe.name.toLowerCase().includes('china town');
 
@@ -217,10 +218,15 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
           </h3>
           <div className="flex items-center gap-2">
             
-            {/* Discount Badge for Chatkara, Cook House, and Mini Meals */}
-            {(cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals')) && (
+            {/* Discount Badge for Chatkara, Cook House, Mini Meals, Taste of India, and Food Court */}
+            {(cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('taste of india')) && (
               <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-xs px-2 py-1 shadow-lg border border-green-400 hover:shadow-green-400/60 hover:scale-110 transition-all duration-200 hover:bg-gradient-to-r hover:from-green-600 hover:to-green-700">
                 Flat 10% Off
+              </Badge>
+            )}
+            {(cafe.name.toLowerCase().includes('food court') || cafe.name === 'FOOD COURT') && (
+              <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-xs px-2 py-1 shadow-lg border border-green-400 hover:shadow-green-400/60 hover:scale-110 transition-all duration-200 hover:bg-gradient-to-r hover:from-green-600 hover:to-green-700">
+                Flat 5% Off
               </Badge>
             )}
           </div>
@@ -292,14 +298,14 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               className={`text-xs font-medium ${
                 !cafe.accepting_orders
                   ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed text-gray-600"
-                  : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers')
+                  : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india')
                     ? "bg-orange-600 hover:bg-orange-700 text-white"
                     : "bg-gray-500 hover:bg-gray-600 text-white"
               } disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-600`}
             >
               {!cafe.accepting_orders
                 ? "Closed"
-                : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers')
+                : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india')
                   ? "Order Now"
                   : "Coming Soon"
               }
