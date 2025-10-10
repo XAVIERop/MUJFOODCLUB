@@ -31,6 +31,7 @@ const GroceryCategory: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [brands, setBrands] = useState<string[]>([]);
+  const [selectedBrandName, setSelectedBrandName] = useState<string>('All Brands');
 
   useEffect(() => {
     if (categoryId) {
@@ -82,7 +83,7 @@ const GroceryCategory: React.FC = () => {
         if (name.includes('LAYS')) brand = 'Lays';
         else if (name.includes('BINGO')) brand = 'Bingo';
         else if (name.includes('CORNITOS')) brand = 'Cornitos';
-        else if (name.includes('CREX')) brand = 'Crex';
+        else if (name.includes('CRAX')) brand = 'Crax';
         else if (name.includes('BALAJI')) brand = 'Balaji';
         else if (name.includes('ACT2')) brand = 'Act2';
         else if (name.includes('POPZ')) brand = 'Popz';
@@ -134,6 +135,11 @@ const GroceryCategory: React.FC = () => {
     setFilteredItems(filtered);
   };
 
+  const handleBrandSelect = (brand: string, brandName: string) => {
+    setSelectedBrand(brand);
+    setSelectedBrandName(brandName);
+  };
+
   const handleAddToCart = (item: GroceryItem) => {
     addToCart(item, 1);
   };
@@ -145,10 +151,8 @@ const GroceryCategory: React.FC = () => {
   const getCategoryTitle = () => {
     const titles: { [key: string]: string } = {
       'CHIPS': 'Chips & Snacks',
-      'COLDDRINK': 'Cold Drinks',
-      'BEVERAGES': 'Beverages',
-      'CAKES': 'Cakes & Desserts',
-      'SNACKS': 'Snacks'
+      'DRINKS': 'Drinks',
+      'CAKES': 'Cakes & Desserts'
     };
     return titles[categoryId || ''] || categoryId || 'Category';
   };
@@ -156,12 +160,34 @@ const GroceryCategory: React.FC = () => {
   const getCategoryIcon = () => {
     const icons: { [key: string]: string } = {
       'CHIPS': '🍟',
-      'COLDDRINK': '🥤',
-      'BEVERAGES': '🧃',
-      'CAKES': '🍰',
-      'SNACKS': '🍿'
+      'DRINKS': '🥤',
+      'CAKES': '🍰'
     };
     return icons[categoryId || ''] || '🛒';
+  };
+
+  const getBrandIcon = (brand: string) => {
+    const icons: { [key: string]: string } = {
+      'Lays': '🍟',
+      'Bingo': '🥨',
+      'Cornitos': '🌽',
+      'Crax': '🍿',
+      'Balaji': '🥔',
+      'Act2': '🍿',
+      'Popz': '🍫',
+      'Pepsi': '🥤',
+      'Coca Cola': '🥤',
+      'Thums Up': '🥤',
+      'Sprite': '🥤',
+      'Fanta': '🥤',
+      'Mirinda': '🥤',
+      'Mountain Dew': '🥤',
+      'Paperboat': '🧃',
+      'Winkies': '🍰',
+      'Monster': '⚡',
+      'Predator': '⚡'
+    };
+    return icons[brand] || '🛒';
   };
 
   if (loading) {
@@ -186,156 +212,174 @@ const GroceryCategory: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/grocery')}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </Button>
                 <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
                   <span className="text-2xl">{getCategoryIcon()}</span>
                   {getCategoryTitle()}
                   </h1>
                 <p className="text-sm text-gray-600">{filteredItems.length} items available</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5 text-gray-600" />
-              <span className="text-sm text-gray-600">Cart</span>
+            <div className="flex items-center gap-2 text-gray-600">
+              <ShoppingCart className="h-5 w-5" />
+              <span className="text-sm">Cart</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Search Bar */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-          <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-                  placeholder="Search items..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            
-            {/* Brand Filter */}
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-500" />
-              <select
-                value={selectedBrand}
-                onChange={(e) => setSelectedBrand(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="all">All Brands</option>
-                {brands.map(brand => (
-                  <option key={brand} value={brand}>{brand}</option>
-                ))}
-              </select>
-            </div>
+              placeholder="Search items..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+            />
           </div>
         </div>
       </div>
 
-      {/* Items Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {filteredItems.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No items found</h3>
-            <p className="text-gray-600">Try adjusting your search or filter criteria</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredItems.map((item) => {
-              const cartCount = cart[item.id]?.quantity || 0;
-              const isOutOfStock = item.out_of_stock || !item.is_available;
-              
-              return (
-                <Card 
-                  key={item.id}
-                  className={`group cursor-pointer hover:shadow-lg transition-all duration-300 border-0 shadow-md hover:scale-105 ${
-                    isOutOfStock ? 'opacity-60' : ''
+      {/* Two Column Layout */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Sidebar - Brands */}
+          <div className="w-full lg:w-64 flex-shrink-0">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Brands</h3>
+              <div className="space-y-2">
+                <button
+                  onClick={() => handleBrandSelect('all', 'All Brands')}
+                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    selectedBrand === 'all'
+                      ? 'bg-orange-100 text-orange-700 border-l-4 border-orange-500'
+                      : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-orange-600 transition-colors">
-                          {item.name}
-                        </CardTitle>
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{item.description}</p>
-                      </div>
-                      {item.brand && item.brand !== 'Other' && (
-                        <Badge variant="outline" className="ml-2 text-xs">
-                          {item.brand}
-                        </Badge>
-                      )}
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">🛒</span>
+                    <span>All Brands</span>
+                  </div>
+                </button>
+                {brands.map((brand) => {
+                  const brandIcon = getBrandIcon(brand);
+                  return (
+                  <button
+                      key={brand}
+                      onClick={() => handleBrandSelect(brand, brand)}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        selectedBrand === brand
+                          ? 'bg-orange-100 text-orange-700 border-l-4 border-orange-500'
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">{brandIcon}</span>
+                        <span>{brand}</span>
                     </div>
-                  </CardHeader>
-                  
-                  <CardContent className="pt-0">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="text-2xl font-bold text-orange-600">
-                        ₹{item.price.toFixed(2)}
-                      </div>
-                      {isOutOfStock && (
-                        <Badge variant="destructive" className="text-xs">
-                          Out of Stock
-                        </Badge>
-                      )}
-                        </div>
-                    
-                    {isOutOfStock ? (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full"
-                        disabled
-                      >
-                        Out of Stock
-                      </Button>
-                    ) : cartCount > 0 ? (
-                      <div className="flex items-center justify-between">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRemoveFromCart(item.id)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="text-sm font-medium">{cartCount}</span>
-                          <Button
-                          variant="outline"
-                            size="sm"
-                          onClick={() => handleAddToCart(item)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Plus className="h-4 w-4" />
-                          </Button>
-                      </div>
-                    ) : (
-                      <Button 
-                        variant="default" 
-                        size="sm" 
-                        className="w-full bg-orange-500 hover:bg-orange-600"
-                        onClick={() => handleAddToCart(item)}
-                      >
-                        Add to Cart
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
+                  </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Right Content - Products */}
+          <div className="flex-1">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {filteredItems.length} items in {selectedBrandName}
+                </h2>
+              </div>
+
+            {filteredItems.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No items found</h3>
+                <p className="text-gray-600">Try adjusting your search or filter criteria</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filteredItems.map((item) => {
+                  const cartCount = cart[item.id]?.quantity || 0;
+                  const isOutOfStock = item.out_of_stock || !item.is_available;
+                  
+                  return (
+                    <div 
+                      key={item.id}
+                      className={`bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 ${
+                        isOutOfStock ? 'opacity-60' : ''
+                      }`}
+                    >
+                      <div className="p-4">
+                        {/* Product Name */}
+                        <div className="mb-2">
+                          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight">
+                            {item.name}
+                          </h3>
+                        </div>
+                        
+                        {/* Description */}
+                        <p className="text-xs text-gray-500 mb-3 line-clamp-2">
+                          {item.description}
+                        </p>
+                        
+                        {/* Price and Add Button */}
+                        <div className="flex items-center justify-between">
+                          <div className="text-lg font-bold text-gray-900">
+                            ₹{item.price.toFixed(2)}
+                      </div>
+                          {isOutOfStock ? (
+                            <span className="text-xs text-red-600 font-medium">
+                              Out of Stock
+                            </span>
+                          ) : cartCount > 0 ? (
+                            <div className="flex items-center gap-2">
+                        <Button
+                                variant="outline"
+                          size="sm"
+                                onClick={() => handleRemoveFromCart(item.id)}
+                                className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400"
+                        >
+                                <Minus className="h-4 w-4" />
+                        </Button>
+                              <span className="text-sm font-medium text-gray-900">{cartCount}</span>
+                          <Button
+                                variant="outline"
+                            size="sm"
+                                onClick={() => handleAddToCart(item)}
+                                className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400"
+                          >
+                                <Plus className="h-4 w-4" />
+                          </Button>
+                            </div>
+                          ) : (
+                          <Button
+                              variant="default" 
+                            size="sm"
+                              className="bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-full h-8 w-8 p-0"
+                              onClick={() => handleAddToCart(item)}
+                          >
+                              <Plus className="h-4 w-4" />
+                          </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
