@@ -23,7 +23,7 @@ interface GroceryItem {
 const GroceryCategory: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
-  const { addToCart, removeFromCart, getCartItemCount } = useCart();
+  const { addToCart, removeFromCart, getItemCount, cart } = useCart();
   
   const [items, setItems] = useState<GroceryItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<GroceryItem[]>([]);
@@ -52,12 +52,12 @@ const GroceryCategory: React.FC = () => {
         .select('id, name')
         .ilike('name', '%24 seven mart%')
         .single();
-
+      
       if (cafeError || !cafeData) {
         console.error('Cafe not found:', cafeError);
         return;
       }
-
+      
       // Get items for the category
       const { data: itemsData, error: itemsError } = await supabase
         .from('menu_items')
@@ -66,12 +66,12 @@ const GroceryCategory: React.FC = () => {
         .eq('category', categoryId)
         .eq('is_available', true)
         .order('name');
-
+      
       if (itemsError) {
         console.error('Error fetching items:', itemsError);
         return;
       }
-
+      
       // Extract brands from item names
       const extractedBrands = new Set<string>();
       const processedItems = itemsData.map((item: any) => {
@@ -191,11 +191,11 @@ const GroceryCategory: React.FC = () => {
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </Button>
-              <div>
+                <div>
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                   <span className="text-2xl">{getCategoryIcon()}</span>
                   {getCategoryTitle()}
-                </h1>
+                  </h1>
                 <p className="text-sm text-gray-600">{filteredItems.length} items available</p>
               </div>
             </div>
@@ -213,9 +213,9 @@ const GroceryCategory: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Search */}
             <div className="flex-1">
-              <div className="relative">
+          <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
+            <Input
                   placeholder="Search items..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -253,7 +253,7 @@ const GroceryCategory: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredItems.map((item) => {
-              const cartCount = getCartItemCount(item.id);
+              const cartCount = cart[item.id]?.quantity || 0;
               const isOutOfStock = item.out_of_stock || !item.is_available;
               
               return (
@@ -289,7 +289,7 @@ const GroceryCategory: React.FC = () => {
                           Out of Stock
                         </Badge>
                       )}
-                    </div>
+                        </div>
                     
                     {isOutOfStock ? (
                       <Button 
@@ -311,14 +311,14 @@ const GroceryCategory: React.FC = () => {
                           <Minus className="h-4 w-4" />
                         </Button>
                         <span className="text-sm font-medium">{cartCount}</span>
-                        <Button
+                          <Button
                           variant="outline"
-                          size="sm"
+                            size="sm"
                           onClick={() => handleAddToCart(item)}
                           className="h-8 w-8 p-0"
                         >
                           <Plus className="h-4 w-4" />
-                        </Button>
+                          </Button>
                       </div>
                     ) : (
                       <Button 
