@@ -37,6 +37,9 @@ const Grocery = lazy(() => import("./pages/Grocery"));
 const GroceryCategory = lazy(() => import("./pages/GroceryCategory"));
 const QRCodePage = lazy(() => import("./pages/QRCodePage"));
 const Profile = lazy(() => import("./pages/Profile"));
+const ReferralTest = lazy(() => import("./pages/ReferralTest"));
+const DatabaseTest = lazy(() => import("./pages/DatabaseTest"));
+const AdminReferrals = lazy(() => import("./pages/AdminReferrals"));
 const CafeDashboard = lazy(() => import("./pages/CafeDashboard"));
 const CafeManagement = lazy(() => import("./pages/CafeManagement"));
 const EnhancedCafeCardDemo = lazy(() => import("./components/EnhancedCafeCardDemo"));
@@ -74,6 +77,9 @@ const App = () => (
                       {/* <Route path="/rewards" element={<CafeRewards />} /> */} {/* Disabled for simplified version */}
                       <Route path="/qr-code" element={<QRCodePage />} />
                       <Route path="/profile" element={<Profile />} />
+                      <Route path="/referral-test" element={<ReferralTest />} />
+                      <Route path="/database-test" element={<DatabaseTest />} />
+                      <Route path="/admin/referrals" element={<AdminReferrals />} />
 
                       <Route path="/cafe-dashboard" element={<CafeDashboard />} />
                       <Route path="/cafe-management" element={<CafeManagement />} />

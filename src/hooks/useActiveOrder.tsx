@@ -14,7 +14,16 @@ interface ActiveOrder {
 export const useActiveOrder = () => {
   const [activeOrders, setActiveOrders] = useState<ActiveOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  
+  // Safely get user from auth context
+  let user = null;
+  try {
+    const auth = useAuth();
+    user = auth?.user || null;
+  } catch (error) {
+    // AuthProvider not ready yet, user will be null
+    user = null;
+  }
 
   useEffect(() => {
     if (!user) {

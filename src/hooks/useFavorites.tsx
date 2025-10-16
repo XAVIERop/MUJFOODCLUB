@@ -3,7 +3,16 @@ import { supabase } from '../integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 export const useFavorites = () => {
-  const { user } = useAuth();
+  // Safely get user from auth context
+  let user = null;
+  try {
+    const auth = useAuth();
+    user = auth?.user || null;
+  } catch (error) {
+    // AuthProvider not ready yet, user will be null
+    user = null;
+  }
+  
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
