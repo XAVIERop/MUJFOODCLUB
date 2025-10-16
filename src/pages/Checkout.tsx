@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, MapPin, Clock, Banknote, AlertCircle, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Banknote, AlertCircle, Plus, Minus, Gift } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
@@ -20,6 +20,8 @@ import { generateDailyOrderNumber } from '@/utils/orderNumberGenerator';
 import { getCafeTableOptions } from '@/utils/tableMapping';
 import { WhatsAppService } from '@/services/whatsappService';
 import Header from '@/components/Header';
+import ReferralCodeInput from '@/components/ReferralCodeInput';
+import { ReferralValidation } from '@/services/referralService';
 
 // Helper function to get dropdown options based on order type and cafe
 const getLocationOptions = (orderType: string, cafeName: string) => {
@@ -130,6 +132,14 @@ const Checkout = () => {
                                 cafe?.name?.toLowerCase().includes('food court') || 
                                 cafe?.name === 'FOOD COURT';
 
+  // Referral system states
+  const [referralCode, setReferralCode] = useState('');
+  const [referralDiscount, setReferralDiscount] = useState(0);
+  const [referralValidation, setReferralValidation] = useState<ReferralValidation | null>(null);
+  
+  // Check if user is verified (email confirmed)
+  const isUserVerified = user?.email_confirmed_at !== null;
+
   // Minimum order amount validation
   const isMinimumOrderMet = totalAmount >= ORDER_CONSTANTS.MINIMUM_ORDER_AMOUNT;
 
@@ -200,14 +210,26 @@ const Checkout = () => {
       sgstAmount = subtotal * 0.025; // 2.5% SGST
     }
     
-    const finalAmountWithDelivery = subtotal + cgstAmount + sgstAmount + deliveryCharge - discount;
+    const finalAmountWithDelivery = subtotal + cgstAmount + sgstAmount + deliveryCharge - discount - referralDiscount;
     
     setCgst(cgstAmount);
     setSgst(sgstAmount);
     setDeliveryFee(deliveryCharge);
     setDiscountAmount(discount);
     setFinalAmount(Math.max(0, finalAmountWithDelivery));
-  }, [totalAmount, deliveryDetails.orderType, isEligibleForDiscount, cafe?.name]);
+  }, [totalAmount, deliveryDetails.orderType, isEligibleForDiscount, cafe?.name, referralDiscount]);
+
+  // Handle referral code validation
+  const handleReferralValidation = async (validation: ReferralValidation | null) => {
+    setReferralValidation(validation);
+
+    // Only allow referral discount for verified users
+    if (validation?.isValid && isUserVerified) {
+      setReferralDiscount(5); // Apply ₹5 referral discount
+    } else {
+      setReferralDiscount(0);
+    }
+  };
 
   const handlePlaceOrder = async () => {
     if (!user || !profile) {
@@ -327,7 +349,10 @@ const Checkout = () => {
           customer_name: profile?.full_name || '',
           points_earned: 0, // No points in simplified version
           status: 'received',
-          estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString()
+          estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+          referral_code_used: referralCode || null,
+          discount_amount: referralDiscount,
+          team_member_credit: referralValidation?.isValid ? 0.50 : 0 // ₹0.50 per order for team member
         })
         .select(`
           id,
@@ -366,6 +391,27 @@ const Checkout = () => {
       if (itemsError) {
         console.error('Order items creation error:', itemsError);
         throw itemsError;
+      }
+
+      // Track referral usage if referral code was used
+      if (referralCode && referralValidation?.isValid) {
+        try {
+          const { referralService } = await import('@/services/referralService');
+
+          await referralService.trackReferralUsage({
+            user_id: user.id,
+            referral_code_used: referralCode,
+            usage_type: 'checkout',
+            order_id: order.id,
+            discount_applied: referralDiscount,
+            team_member_credit: 0.50 // ₹0.50 per order for team member
+          });
+
+          console.log('Referral usage tracked successfully:', referralCode);
+        } catch (error) {
+          console.error('Error tracking referral usage:', error);
+          // Don't throw error - referral tracking is optional
+        }
       }
 
       toast({
@@ -637,9 +683,46 @@ const Checkout = () => {
                         rows={3}
                       />
                     </div>
+
                   </CardContent>
                 </Card>
                   )}
+
+              {/* Referral Code Input - Always Visible */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Gift className="w-5 h-5 mr-2" />
+                    Referral Code
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="referral-code" className="text-sm font-medium text-gray-700">
+                      Referral Code (Optional)
+                    </Label>
+                    <ReferralCodeInput
+                      value={referralCode}
+                      onChange={setReferralCode}
+                      onValidation={handleReferralValidation}
+                      placeholder="Enter referral code (e.g., TEAM123)"
+                      className="w-full"
+                    />
+                    {referralValidation?.isValid && (
+                      <div className="text-sm text-green-600 flex items-center gap-1">
+                        <span>✅</span>
+                        Valid code! You'll get ₹5 off your order
+                      </div>
+                    )}
+                    {!isUserVerified && referralCode && (
+                      <div className="text-sm text-orange-600 flex items-center gap-1">
+                        <span>⚠️</span>
+                        Please verify your email to use referral codes
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
 
               {/* Payment Method */}
@@ -784,6 +867,14 @@ const Checkout = () => {
                             cafe?.name?.toLowerCase().includes('taste of india') ? '10%' : '10%'})
                         </span>
                         <span className="font-bold">-₹{discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Referral Discount Display */}
+                    {referralDiscount > 0 && (
+                      <div className="flex justify-between items-center text-green-600">
+                        <span className="font-bold">Referral Discount</span>
+                        <span className="font-bold">-₹{referralDiscount.toFixed(2)}</span>
                       </div>
                     )}
                     

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { QrCode, User, LogOut, Settings, Menu, Home, Coffee, Utensils, Bell, Receipt, Store, Package, Heart, MapPin, ChevronDown, ShoppingCart } from 'lucide-react';
+import { QrCode, User, LogOut, Settings, Menu, Home, Coffee, Utensils, Bell, Receipt, Store, Package, Heart, MapPin, ChevronDown, ShoppingCart, BarChart3 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -273,6 +273,12 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
                       <Heart className="mr-2 h-4 w-4" />
                       <span>My Favorites</span>
                     </DropdownMenuItem>
+                    {user?.email === 'pulkit.229302047@muj.manipal.edu' && (
+                      <DropdownMenuItem onClick={() => navigate('/admin/referrals')}>
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        <span>Referral Dashboard</span>
+                      </DropdownMenuItem>
+                    )}
                     {isCafeOwner && (
                       <>
                         <DropdownMenuItem onClick={() => navigate('/cafe-dashboard')}>

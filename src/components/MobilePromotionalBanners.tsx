@@ -31,6 +31,18 @@ const PROMOTIONAL_BANNERS: PromotionalBanner[] = [
     backgroundImage: '/chatkara_offer.jpeg',
   },
   {
+    id: 'food-court',
+    title: '',
+    subtitle: '',
+    buttonText: '',
+    backgroundColor: 'bg-blue-600',
+    textColor: 'text-white',
+    badge: '',
+    badgeIcon: '',
+    cafeId: 'FOOD COURT',
+    backgroundImage: '/foodcourt.png',
+  },
+  {
     id: 'cook-house',
     title: '',
     subtitle: '',
@@ -113,7 +125,7 @@ const MobilePromotionalBanners: React.FC = () => {
             onClick={() => handleBannerClick(banner.cafeId)}
           >
             {/* Dark overlay for background images - Removed for offer banners */}
-            {banner.backgroundImage && banner.id !== 'chatkara' && banner.id !== 'cook-house' && (
+            {banner.backgroundImage && banner.id !== 'chatkara' && banner.id !== 'cook-house' && banner.id !== 'food-court' && (
               <div className="absolute inset-0 bg-black/40" />
             )}
             

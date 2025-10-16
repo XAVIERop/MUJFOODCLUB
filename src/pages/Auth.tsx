@@ -27,6 +27,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
+import ReferralCodeInput from '@/components/ReferralCodeInput';
+import { ReferralValidation } from '@/services/referralService';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -68,13 +70,17 @@ const Auth = () => {
     confirmPassword: '',
     fullName: '', 
     block: 'B1',
-    phone: ''
+    phone: '',
+    referralCode: ''
   });
 
   // OTP form
   const [otpForm, setOtpForm] = useState({
     email: ''
   });
+
+  // Referral validation
+  const [referralValidation, setReferralValidation] = useState<ReferralValidation | null>(null);
 
 
   // Scroll to top hook
@@ -210,7 +216,8 @@ const Auth = () => {
         signupForm.password,
         signupForm.fullName,
         signupForm.block,
-        signupForm.phone
+        signupForm.phone,
+        signupForm.referralCode
       );
       
       if (error) {
@@ -850,6 +857,26 @@ const Auth = () => {
                       </div>
                       {signupForm.confirmPassword && signupForm.password !== signupForm.confirmPassword && (
                         <p className="text-sm text-red-500">Passwords do not match</p>
+                      )}
+                    </div>
+
+                    {/* Referral Code Input */}
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-referral" className="text-sm font-medium text-gray-700">
+                        Referral Code (Optional)
+                      </Label>
+                      <ReferralCodeInput
+                        value={signupForm.referralCode}
+                        onChange={(code) => setSignupForm({ ...signupForm, referralCode: code })}
+                        onValidation={setReferralValidation}
+                        placeholder="Enter referral code (e.g., TEAM123)"
+                        className="w-full"
+                      />
+                      {referralValidation?.isValid && (
+                        <div className="text-sm text-green-600 flex items-center gap-1">
+                          <CheckCircle className="h-4 w-4" />
+                          Valid code! You'll get ₹10 off your first order
+                        </div>
                       )}
                     </div>
 

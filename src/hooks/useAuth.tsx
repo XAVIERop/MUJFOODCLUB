@@ -8,7 +8,7 @@ interface AuthContextType {
   session: Session | null;
   profile: any | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, block: string, phone: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, block: string, phone: string, referralCode?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: any) => Promise<{ error: any }>;
@@ -72,6 +72,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         total_spent: 0,
         qr_code: qrCode
       });
+
+      // Process referral code if provided
+      if (referralCode && referralCode.trim()) {
+        try {
+          // Import referral service
+          const { referralService } = await import('@/services/referralService');
+
+          // Validate referral code
+          const validation = await referralService.validateReferralCode(referralCode);
+
+          if (validation.isValid) {
+            // Update user with referral code
+            await supabase
+              .from('profiles')
+              .update({
+                referral_code_used: referralCode.toUpperCase(),
+                referred_by: referralCode.toUpperCase()
+              })
+              .eq('id', userId);
+
+            // Track referral usage
+            await referralService.trackReferralUsage({
+              user_id: userId,
+              referral_code_used: referralCode.toUpperCase(),
+              usage_type: 'signup',
+              discount_applied: 10, // ₹10 for new signup
+              team_member_credit: 0 // No credit for signup, only for orders
+            });
+
+            console.log('Referral code processed successfully:', referralCode);
+          }
+        } catch (error) {
+          console.error('Error processing referral code:', error);
+          // Don't throw error - referral code is optional
+        }
+      }
     } catch (error) {
       console.error('Error creating profile:', error);
       throw error;
@@ -136,7 +172,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   );
 
-  const signUp = async (email: string, password: string, fullName: string, block: string, phone: string) => {
+  const signUp = async (email: string, password: string, fullName: string, block: string, phone: string, referralCode?: string) => {
     try {
       // Validate email domain
       if (!email.endsWith('@muj.manipal.edu')) {
@@ -173,20 +209,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       if (data.user && !error) {
-        // Create profile for student
+        // Create profile for student (without referral processing yet)
         await createProfile(data.user.id, email, fullName, block, phone);
         
-        // Update user metadata to include phone number
-        const { error: updateError } = await supabase.auth.updateUser({
-          data: {
-            full_name: fullName,
-            block: block,
-            phone: phone
+        // Store referral code in user metadata for processing after verification
+        if (referralCode) {
+          const { error: updateError } = await supabase.auth.updateUser({
+            data: {
+              full_name: fullName,
+              block: block,
+              phone: phone,
+              pending_referral_code: referralCode // Store for later processing
+            }
+          });
+          
+          if (updateError) {
+            console.error('Error updating user metadata:', updateError);
           }
-        });
-        
-        if (updateError) {
-          console.error('Error updating user metadata:', updateError);
+        } else {
+          // Update user metadata without referral code
+          const { error: updateError } = await supabase.auth.updateUser({
+            data: {
+              full_name: fullName,
+              block: block,
+              phone: phone
+            }
+          });
+          
+          if (updateError) {
+            console.error('Error updating user metadata:', updateError);
+          }
         }
         
         // User will receive confirmation email
@@ -323,12 +375,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error;
 
-      // If verification successful, create profile
+      // If verification successful, create profile and process referral code
       if (data.user) {
         const fullName = data.user.user_metadata?.full_name || email.split('@')[0];
         const block = data.user.user_metadata?.block || 'B1';
+        const phone = data.user.user_metadata?.phone || '';
+        const pendingReferralCode = data.user.user_metadata?.pending_referral_code;
         
-        await createProfile(data.user.id, email, fullName, block, '');
+        await createProfile(data.user.id, email, fullName, block, phone);
+        
+        // Process referral code only after email verification
+        if (pendingReferralCode) {
+          try {
+            const { referralService } = await import('@/services/referralService');
+            const validation = await referralService.validateReferralCode(pendingReferralCode);
+            
+            if (validation.isValid) {
+              // Update profile with referral code
+              await supabase
+                .from('profiles')
+                .update({
+                  referral_code_used: pendingReferralCode,
+                  referred_by: pendingReferralCode
+                })
+                .eq('id', data.user.id);
+              
+              // Track referral usage for signup
+              await referralService.trackReferralUsage({
+                user_id: data.user.id,
+                referral_code_used: pendingReferralCode,
+                usage_type: 'signup',
+                discount_applied: 0, // No discount for signup, only for orders
+                team_member_credit: 0.50 // ₹0.50 credit for team member
+              });
+              
+              console.log('Referral code processed after email verification:', pendingReferralCode);
+            }
+          } catch (error) {
+            console.error('Error processing referral code after verification:', error);
+            // Don't throw error - referral processing is optional
+          }
+          
+          // Clear pending referral code from metadata
+          await supabase.auth.updateUser({
+            data: {
+              pending_referral_code: null
+            }
+          });
+        }
       }
 
       return { error: null };
