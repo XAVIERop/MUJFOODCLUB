@@ -45,8 +45,7 @@ export const useOptimizedMenuItems = (cafeId: string) => {
         .eq('cafe_id', cafeId)
         .eq('is_available', true)
         .order('category', { ascending: true })
-        .order('name', { ascending: true })
-        .limit(50);
+        .order('name', { ascending: true });
       
       PERFORMANCE_MONITORING.trackQuery('getMenuItems', startTime);
       

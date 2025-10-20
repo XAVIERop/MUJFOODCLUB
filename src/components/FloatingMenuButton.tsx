@@ -71,9 +71,7 @@ const FloatingMenuButton: React.FC<FloatingMenuButtonProps> = ({
 
   return (
     <div className={cn(
-      "floating-menu-container fixed right-6 z-50 transition-all duration-300",
-      // Move up when cart is visible on menu page - increased spacing
-      isOnMenuPage && hasCartItems ? "bottom-36" : "bottom-6"
+      "floating-menu-container fixed right-6 bottom-6 z-50 transition-all duration-300"
     )}>
       {/* Floating Menu Button */}
       <Button

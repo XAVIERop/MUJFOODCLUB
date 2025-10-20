@@ -568,8 +568,8 @@ const MenuModern = () => {
     return filtered;
   };
 
-  // Get categories for filter
-  const categories = ['all', 'veg', 'non-veg', ...Array.from(new Set(groupedMenuItems.map(item => item.category)))];
+  // Get categories for filter (use original menuItems, not filtered groupedMenuItems)
+  const categories = ['all', 'veg', 'non-veg', ...Array.from(new Set(menuItems.map(item => item.category)))];
 
   // Loading state
   if (loading) {

@@ -56,7 +56,7 @@ const Cafes = () => {
     'Waffles',
     'Ice Cream',
     'Beverages',
-    'Fast Food'
+    'Chaat'
   ];
 
   useEffect(() => {
@@ -209,9 +209,47 @@ const Cafes = () => {
 
     // Filter by category
     if (selectedCategory !== 'All') {
-      filtered = filtered.filter(cafe => 
-        cafe.cuisine_categories?.includes(selectedCategory)
-      );
+      if (selectedCategory === 'Desserts') {
+        // For Desserts category, show both Food Court and Pizza Bakers
+        console.log('Desserts filter - All cafes before filter:', filtered.map(c => c.name));
+        filtered = filtered.filter(cafe => {
+          const isMatch = cafe.name === 'FOOD COURT' || cafe.name === 'Pizza Bakers';
+          console.log(`Checking cafe: ${cafe.name}, isMatch: ${isMatch}`);
+          return isMatch;
+        });
+        console.log('Desserts filter - Filtered cafes:', filtered.map(c => c.name));
+      } else if (selectedCategory === 'Waffles') {
+        // For Waffles category, show Food Court cafe
+        console.log('Waffles filter - All cafes before filter:', filtered.map(c => c.name));
+        filtered = filtered.filter(cafe => {
+          const isMatch = cafe.name === 'FOOD COURT';
+          console.log(`Checking cafe: ${cafe.name}, isMatch: ${isMatch}`);
+          return isMatch;
+        });
+        console.log('Waffles filter - Filtered cafes:', filtered.map(c => c.name));
+      } else if (selectedCategory === 'Ice Cream') {
+        // For Ice Cream category, show Mini Meals cafe
+        console.log('Ice Cream filter - All cafes before filter:', filtered.map(c => c.name));
+        filtered = filtered.filter(cafe => {
+          const isMatch = cafe.name === 'Mini Meals';
+          console.log(`Checking cafe: ${cafe.name}, isMatch: ${isMatch}`);
+          return isMatch;
+        });
+        console.log('Ice Cream filter - Filtered cafes:', filtered.map(c => c.name));
+      } else if (selectedCategory === 'Chaat') {
+        // For Chaat category, show Mini Meals cafe
+        console.log('Chaat filter - All cafes before filter:', filtered.map(c => c.name));
+        filtered = filtered.filter(cafe => {
+          const isMatch = cafe.name === 'Mini Meals';
+          console.log(`Checking cafe: ${cafe.name}, isMatch: ${isMatch}`);
+          return isMatch;
+        });
+        console.log('Chaat filter - Filtered cafes:', filtered.map(c => c.name));
+      } else {
+        filtered = filtered.filter(cafe => 
+          cafe.cuisine_categories?.includes(selectedCategory)
+        );
+      }
     }
 
     // Filter by search query

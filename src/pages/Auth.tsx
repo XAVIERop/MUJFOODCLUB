@@ -217,12 +217,15 @@ const Auth = () => {
         signupForm.fullName,
         signupForm.block,
         signupForm.phone,
-        signupForm.referralCode
+        signupForm.referralCode || undefined // Ensure it's undefined if empty
       );
       
       if (error) {
-        // Handle specific error cases
-        if (error.code === 'user_already_exists') {
+        // Handle specific error cases - check both code and message
+        if (error.code === 'user_already_exists' || 
+            error.message?.includes('already registered') ||
+            error.message?.includes('already exists') ||
+            error.message?.includes('User already registered')) {
           toast({
             title: "Email Already Registered",
             description: "This email is already registered. Please try signing in instead.",
@@ -242,6 +245,9 @@ const Auth = () => {
             });
           }, 2000);
         } else {
+          // Log the error for debugging
+          console.error('Signup error:', error);
+          
           toast({
             title: "Sign Up Failed",
             description: error.message || "Please try again with different credentials.",
@@ -656,7 +662,7 @@ const Auth = () => {
                         disabled={!signinForm.email || isLoading}
                         className="text-sm h-10 rounded-lg border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors"
                       >
-                        Reset Password
+                        Send Login Link
                       </Button>
                     </div>
                   </div>
