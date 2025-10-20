@@ -121,15 +121,22 @@ const SearchSection: React.FC<SearchSectionProps> = ({ selectedBlock, onBlockCha
           </div>
         </div>
         
-        <Select value={searchMode} onValueChange={(value: 'dishes' | 'cafes') => setSearchMode(value)}>
-          <SelectTrigger className="w-full sm:w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="dishes">Dishes</SelectItem>
-            <SelectItem value="cafes">Cafes</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex rounded-full border border-orange-200 overflow-hidden h-12">
+          <button
+            type="button"
+            onClick={() => setSearchMode('dishes')}
+            className={`px-4 text-sm font-medium whitespace-nowrap ${searchMode === 'dishes' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-white text-orange-600 hover:bg-orange-50'}`}
+          >
+            Dishes
+          </button>
+          <button
+            type="button"
+            onClick={() => setSearchMode('cafes')}
+            className={`px-4 text-sm font-medium whitespace-nowrap border-l border-orange-200 ${searchMode === 'cafes' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-white text-orange-600 hover:bg-orange-50'}`}
+          >
+            Cafes
+          </button>
+        </div>
       </div>
 
       {/* Block Selection */}
