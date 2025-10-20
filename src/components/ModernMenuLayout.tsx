@@ -490,19 +490,28 @@ const ModernFoodCard: React.FC<{
 }> = ({ item, onAddToCart, onRemoveFromCart, getCartQuantity, onToggleFavorite, isFavorite }) => {
   const [selectedSize, setSelectedSize] = useState<string>('');
 
-  // Dedupe portions by size name + price to avoid duplicate Half/Full pills
+  // Dedupe portions by size name (e.g., multiple "Half" variants) keeping the cheapest
   const uniquePortions = useMemo(() => {
     if (!item.portions || item.portions.length === 0) return [] as any[];
-    const seen = new Set<string>();
-    const result: any[] = [];
+    const map = new Map<string, any>();
     for (const p of item.portions) {
-      const key = `${(p.name || '').toLowerCase()}::${p.price}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        result.push(p);
+      const key = (p.name || '').toLowerCase().trim();
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, p);
+      } else {
+        // Keep the cheaper available option for the same size name
+        const pick = (() => {
+          if (existing.out_of_stock && !p.out_of_stock) return p;
+          if (!existing.out_of_stock && p.out_of_stock) return existing;
+          return (p.price ?? Number.MAX_SAFE_INTEGER) < (existing.price ?? Number.MAX_SAFE_INTEGER)
+            ? p
+            : existing;
+        })();
+        map.set(key, pick);
       }
     }
-    return result;
+    return Array.from(map.values());
   }, [item.portions]);
   
   // Initialize selected size to the first available portion
