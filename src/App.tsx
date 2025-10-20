@@ -40,7 +40,6 @@ const Profile = lazy(() => import("./pages/Profile"));
 const ReferralTest = lazy(() => import("./pages/ReferralTest"));
 const DatabaseTest = lazy(() => import("./pages/DatabaseTest"));
 const AdminReferrals = lazy(() => import("./pages/AdminReferrals"));
-const ImageKitTest = lazy(() => import("./pages/ImageKitTest"));
 const CafeDashboard = lazy(() => import("./pages/CafeDashboard"));
 const CafeManagement = lazy(() => import("./pages/CafeManagement"));
 const EnhancedCafeCardDemo = lazy(() => import("./components/EnhancedCafeCardDemo"));
@@ -80,7 +79,6 @@ const App = () => (
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/referral-test" element={<ReferralTest />} />
                       <Route path="/database-test" element={<DatabaseTest />} />
-                      <Route path="/imagekit-test" element={<ImageKitTest />} />
                       <Route path="/admin/referrals" element={<AdminReferrals />} />
 
                       <Route path="/cafe-dashboard" element={<CafeDashboard />} />
