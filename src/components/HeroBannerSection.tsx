@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Star, Truck, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { getImageUrl } from '@/utils/imageSource';
 
 interface Cafe {
   id: string;
@@ -147,7 +148,7 @@ const HeroBannerSection: React.FC = () => {
         rating: 4.5,
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
-        imageUrl: '/optimized_images/chatkara_bb.webp',
+        imageUrl: getImageUrl('/optimized_images/chatkara_bb.webp'),
         cafeId: 'chatkara'
       },
       {
@@ -162,7 +163,7 @@ const HeroBannerSection: React.FC = () => {
         rating: 4.5,
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
-        imageUrl: '/optimized_images/minimeals_bb.webp',
+        imageUrl: getImageUrl('/optimized_images/minimeals_bb.webp'),
         cafeId: 'mini-meals'
       },
       {
@@ -177,7 +178,7 @@ const HeroBannerSection: React.FC = () => {
         rating: 4.5,
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
-        imageUrl: '/optimized_images/minimeals_bbb.webp',
+        imageUrl: getImageUrl('/optimized_images/minimeals_bbb.webp'),
         cafeId: 'mini-meals'
       },
       {
@@ -192,7 +193,7 @@ const HeroBannerSection: React.FC = () => {
         rating: 4.5,
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
-        imageUrl: '/optimized_images/cookhouse_bb.webp',
+        imageUrl: getImageUrl('/optimized_images/cookhouse_bb.webp'),
         cafeId: 'cook-house'
       },
       {
@@ -207,7 +208,7 @@ const HeroBannerSection: React.FC = () => {
         rating: 4.5,
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
-        imageUrl: '/optimized_images/fodcourt_bb.webp',
+        imageUrl: getImageUrl('/optimized_images/fodcourt_bb.webp'),
         cafeId: 'food-court'
       }
     ];
@@ -242,7 +243,7 @@ const HeroBannerSection: React.FC = () => {
       title: 'Pizza Lovers Special',
       description: 'Buy 2 Get 1 Free on all pizzas',
       backgroundColor: 'bg-gradient-to-br from-yellow-400 to-red-500',
-      imageUrl: '/pizzalover.png',
+      imageUrl: getImageUrl('/pizzalover.png'),
       ctaText: 'Order Now →',
       ctaAction: 'navigate_to_pizza'
     },
@@ -251,7 +252,7 @@ const HeroBannerSection: React.FC = () => {
       title: 'Chinese Delight',
       description: 'Hot momos and noodles',
       backgroundColor: 'bg-gradient-to-br from-red-400 to-orange-500',
-      imageUrl: '/chinesedelight.png',
+      imageUrl: getImageUrl('/chinesedelight.png'),
       ctaText: 'Order Now →',
       ctaAction: 'navigate_to_chinese'
     },
@@ -260,7 +261,7 @@ const HeroBannerSection: React.FC = () => {
       title: 'Authentic Indian',
       description: 'Biryani and curry specials',
       backgroundColor: 'bg-gradient-to-br from-orange-400 to-yellow-500',
-      imageUrl: '/authenticindian.png',
+      imageUrl: getImageUrl('/authenticindian.png'),
       ctaText: 'Order Now →',
       ctaAction: 'navigate_to_indian'
     }
@@ -362,7 +363,6 @@ const HeroBannerSection: React.FC = () => {
                  backgroundPosition: 'center',
                  backgroundRepeat: 'no-repeat'
                }}
-               loading="lazy"
           onClick={() => handleBannerClick(currentBannerIndex)}
       >
           {/* Loading skeleton for banner image */}
