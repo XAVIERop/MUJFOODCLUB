@@ -550,10 +550,8 @@ const MenuModern = () => {
       filtered = filtered.filter(item => item.is_vegetarian === false);
     }
     
-    // Apply menu category filter (use selectedCategory for menu categories too)
-    if (selectedCategory !== 'all' && selectedCategory !== 'veg' && selectedCategory !== 'non-veg') {
-      filtered = filtered.filter(item => item.category === selectedCategory);
-    }
+    // REMOVED: Menu category filtering - now we show all categories and scroll to selected one
+    // The scroll behavior is handled in MenuCategorySections component
     
     // Apply search filter
     if (searchQuery.trim()) {
@@ -568,8 +566,8 @@ const MenuModern = () => {
     return filtered;
   };
 
-  // Get categories for filter
-  const categories = ['all', 'veg', 'non-veg', ...Array.from(new Set(groupedMenuItems.map(item => item.category)))];
+  // Get categories for filter (use original menuItems, not filtered groupedMenuItems)
+  const categories = ['all', 'veg', 'non-veg', ...Array.from(new Set(menuItems.map(item => item.category)))];
 
   // Loading state
   if (loading) {

@@ -135,8 +135,17 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
   };
 
   const handleWhatsApp = (phone: string, cafeName: string) => {
+    // Normalize phone for wa.me: must be international format without '+' or symbols
+    let normalized = (phone || '').replace(/\D/g, '');
+    // If 10-digit Indian mobile, prefix country code
+    if (normalized.length === 10) {
+      normalized = `91${normalized}`;
+    }
+    // Fallback: if still empty, do nothing
+    if (!normalized) return;
+
     const message = `Hi! I'd like to place an order from ${cafeName}. Can you help me?`;
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 
@@ -323,7 +332,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleCall(cafe.phone)}
+              onClick={(e) => { e.stopPropagation(); handleCall(cafe.phone); }}
               className="text-xs text-gray-600 hover:text-orange-600 hover:bg-orange-50"
             >
               <Phone className="w-3 h-3 mr-1" />
@@ -347,7 +356,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleWhatsApp(cafe.phone, cafe.name)}
+                onClick={(e) => { e.stopPropagation(); handleWhatsApp(cafe.phone, cafe.name); }}
                 className="text-xs text-gray-600 hover:text-green-600 hover:bg-green-50"
               >
                 <MessageCircle className="w-3 h-3 mr-1" />

@@ -2,8 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Mic } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const SearchBar = () => {
@@ -225,24 +224,22 @@ const SearchBar = () => {
             className="pl-10 pr-4 py-2 h-10 bg-gray-50 border-gray-200 focus:bg-white focus:border-orange-300 focus:ring-orange-200"
           />
         </div>
-        <Select value={searchMode} onValueChange={(value: 'dishes' | 'cafes') => setSearchMode(value)}>
-          <SelectTrigger className="w-20 h-10">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="dishes">Dishes</SelectItem>
-            <SelectItem value="cafes">Cafes</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={handleVoiceSearch}
-          className="h-10 w-10 p-0 hover:bg-gray-100"
-        >
-          <Mic className="h-4 w-4 text-gray-500" />
-        </Button>
+        <div className="flex rounded-full border border-orange-200 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setSearchMode('dishes')}
+            className={`px-3 h-10 text-sm font-medium whitespace-nowrap ${searchMode === 'dishes' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-white text-orange-600 hover:bg-orange-50'}`}
+          >
+            Dishes
+          </button>
+          <button
+            type="button"
+            onClick={() => setSearchMode('cafes')}
+            className={`px-3 h-10 text-sm font-medium whitespace-nowrap border-l border-orange-200 ${searchMode === 'cafes' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-white text-orange-600 hover:bg-orange-50'}`}
+          >
+            Cafes
+          </button>
+        </div>
       </form>
 
       {/* Search Results Dropdown */}

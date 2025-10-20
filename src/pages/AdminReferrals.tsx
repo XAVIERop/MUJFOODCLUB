@@ -12,12 +12,14 @@ import {
   Trash2, 
   Eye,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  FileText
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
+import OrderHistoryModal from '@/components/OrderHistoryModal';
 
 interface ReferralCode {
   id: string;
@@ -61,6 +63,9 @@ const AdminReferrals = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newCode, setNewCode] = useState('');
   const [newTeamMember, setNewTeamMember] = useState('');
+  const [showOrderHistory, setShowOrderHistory] = useState(false);
+  const [selectedCode, setSelectedCode] = useState('');
+  const [selectedTeamMember, setSelectedTeamMember] = useState('');
   const { toast } = useToast();
 
   // Fetch all referral data
@@ -196,9 +201,47 @@ const AdminReferrals = () => {
     }
   };
 
+  // Delete referral code permanently
+  const deleteReferralCode = async (id: string, code: string) => {
+    if (!confirm(`Are you sure you want to permanently delete referral code "${code}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('referral_codes')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Referral code ${code} deleted successfully`,
+      });
+
+      fetchReferralData();
+
+    } catch (error: any) {
+      console.error('Error deleting referral code:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete referral code",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Get usage data for a specific code
   const getUsageForCode = (code: string): ReferralUsage | undefined => {
     return usageData.find(item => item.referral_code_used === code);
+  };
+
+  // Open order history modal
+  const openOrderHistory = (code: string, teamMember: string) => {
+    setSelectedCode(code);
+    setSelectedTeamMember(teamMember);
+    setShowOrderHistory(true);
   };
 
   useEffect(() => {
@@ -371,24 +414,44 @@ const AdminReferrals = () => {
                           {new Date(code.created_at).toLocaleDateString()}
                         </td>
                         <td className="p-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleReferralCode(code.id, code.is_active)}
-                            className={code.is_active ? "text-red-600" : "text-green-600"}
-                          >
-                            {code.is_active ? (
-                              <>
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Deactivate
-                              </>
-                            ) : (
-                              <>
-                                <RefreshCw className="h-4 w-4 mr-1" />
-                                Activate
-                              </>
-                            )}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openOrderHistory(code.code, code.team_member_name)}
+                              className="text-blue-600"
+                            >
+                              <FileText className="h-4 w-4 mr-1" />
+                              Orders
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleReferralCode(code.id, code.is_active)}
+                              className={code.is_active ? "text-orange-600" : "text-green-600"}
+                            >
+                              {code.is_active ? (
+                                <>
+                                  <AlertTriangle className="h-4 w-4 mr-1" />
+                                  Deactivate
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCw className="h-4 w-4 mr-1" />
+                                  Activate
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => deleteReferralCode(code.id, code.code)}
+                              className="text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -406,6 +469,14 @@ const AdminReferrals = () => {
             Refresh Data
           </Button>
         </div>
+
+        {/* Order History Modal */}
+        <OrderHistoryModal
+          isOpen={showOrderHistory}
+          onClose={() => setShowOrderHistory(false)}
+          referralCode={selectedCode}
+          teamMemberName={selectedTeamMember}
+        />
       </div>
     </div>
   );

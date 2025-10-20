@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const createProfile = async (userId: string, email: string, fullName: string, block: string, phone: string) => {
+  const createProfile = async (userId: string, email: string, fullName: string, block: string, phone: string, referralCode?: string) => {
     try {
       // Extract name from email if fullName is not provided
       const displayName = fullName || email.split('@')[0];
@@ -73,8 +73,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         qr_code: qrCode
       });
 
-      // Process referral code if provided
-      if (referralCode && referralCode.trim()) {
+      // Process referral code if provided (OPTIONAL)
+      if (referralCode && typeof referralCode === 'string' && referralCode.trim()) {
         try {
           // Import referral service
           const { referralService } = await import('@/services/referralService');
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               user_id: userId,
               referral_code_used: referralCode.toUpperCase(),
               usage_type: 'signup',
-              discount_applied: 10, // ₹10 for new signup
+              discount_applied: 5, // ₹5 for new signup (updated amount)
               team_member_credit: 0 // No credit for signup, only for orders
             });
 
@@ -179,6 +179,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error: { message: 'Please use a valid MUJ email address (@muj.manipal.edu)' } };
       }
 
+      // Ensure referralCode is properly handled (optional)
+      const cleanReferralCode = referralCode && referralCode.trim() ? referralCode.trim() : undefined;
+
+      // Check if user already exists in profiles table BEFORE attempting signup
+      const { data: existingProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('email', email)
+        .single();
+      
+      console.log('Checking existing profile:', { existingProfile, profileError });
+      
+      if (existingProfile) {
+        console.log('User already exists in profiles table');
+        return { 
+        error: { 
+          message: 'This email is already registered. Please try signing in instead.',
+          code: 'user_already_exists'
+        } 
+      };
+      }
+
       const redirectUrl = `${window.location.origin}/auth`;
       
       // PROPER EMAIL CONFIRMATION: User must verify email before login
@@ -195,9 +217,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       });
       
+      console.log('Signup result:', { data, error });
+      console.log('Data user:', data?.user);
+      console.log('Data session:', data?.session);
+      
       if (error) {
-        // Handle specific error cases
-        if (error.code === 'user_already_exists') {
+        // Handle specific error cases - check both code and message
+        if (error.code === 'user_already_exists' || 
+            error.message?.includes('already registered') ||
+            error.message?.includes('already exists') ||
+            error.message?.includes('User already registered') ||
+            error.message?.includes('User already signed up') ||
+            error.message?.includes('already signed up')) {
           return { 
             error: { 
               message: 'This email is already registered. Please try signing in instead.',
@@ -205,21 +236,92 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } 
           };
         }
+        
+        // Log the error for debugging
+        console.error('Supabase signup error:', error);
         return { error };
       }
       
+      // Check if user is null (might happen for existing users)
+      if (!data.user && !error) {
+        console.log('No user returned but no error - might be existing user');
+        return { 
+          error: { 
+            message: 'This email is already registered. Please try signing in instead.',
+            code: 'user_already_exists'
+          } 
+        };
+      }
+      
       if (data.user && !error) {
+        // CRITICAL CHECK: If session is null, user already exists
+        if (!data.session) {
+          console.log('User already exists - session is null');
+          return { 
+            error: { 
+              message: 'This email is already registered. Please try signing in instead.',
+              code: 'user_already_exists'
+            } 
+          };
+        }
+        
+        // Double-check: Verify this is actually a new user
+        const { data: checkProfile, error: checkError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', email)
+          .single();
+        
+        console.log('Double-check profile:', { checkProfile, checkError });
+        
+        if (checkProfile) {
+          console.log('User already exists in profiles after signup - this is unexpected');
+          // User already exists in profiles, this shouldn't happen but handle it
+          return { 
+            error: { 
+              message: 'This email is already registered. Please try signing in instead.',
+              code: 'user_already_exists'
+            } 
+          };
+        }
+        
         // Create profile for student (without referral processing yet)
-        await createProfile(data.user.id, email, fullName, block, phone);
+        console.log('Creating profile for new user:', data.user.id);
+        await createProfile(data.user.id, email, fullName, block, phone, cleanReferralCode);
+        console.log('Profile created successfully for:', email);
+        
+        // Final check: Make sure we actually created a new user
+        const { data: finalCheck } = await supabase
+          .from('profiles')
+          .select('id, email, created_at')
+          .eq('email', email)
+          .single();
+        
+        if (finalCheck) {
+          const createdAt = new Date(finalCheck.created_at);
+          const now = new Date();
+          const timeDiff = now.getTime() - createdAt.getTime();
+          
+          // If profile was created more than 1 minute ago, it's an existing user
+          if (timeDiff > 60000) {
+            console.log('Profile was created long ago - this is an existing user');
+            return { 
+              error: { 
+                message: 'This email is already registered. Please try signing in instead.',
+                code: 'user_already_exists'
+              } 
+            };
+          }
+        }
         
         // Store referral code in user metadata for processing after verification
-        if (referralCode) {
+        if (cleanReferralCode) {
           const { error: updateError } = await supabase.auth.updateUser({
             data: {
               full_name: fullName,
               block: block,
               phone: phone,
-              pending_referral_code: referralCode // Store for later processing
+              pending_referral_code: cleanReferralCode // Store for later processing
             }
           });
           

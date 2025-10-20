@@ -680,7 +680,7 @@ const ModernCartPanel: React.FC<{
       {/* Cart Header */}
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">My Orders</h3>
+          <h3 className="text-lg font-semibold text-gray-900">My Cart</h3>
         </div>
         
         {/* Cart Cafe Info */}
@@ -700,16 +700,7 @@ const ModernCartPanel: React.FC<{
           </div>
         )}
         
-        {/* Delivery Info */}
-        <div className="mt-3 text-sm text-gray-600">
-          <div className="flex items-center gap-1 mb-1">
-            <MapPin className="w-4 h-4" />
-            <span>Delivery Address</span>
-          </div>
-          <div className="flex items-center gap-4 text-xs text-gray-500">
-            <span>40 mins</span>
-          </div>
-        </div>
+        {/* Delivery Info removed as per UX decision to avoid noise in cart panel */}
       </div>
 
       {/* Cart Items */}
