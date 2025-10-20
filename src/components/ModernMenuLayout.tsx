@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Filter, Heart, ShoppingCart, MapPin, Clock, Star, Plus, Minus, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -489,17 +489,32 @@ const ModernFoodCard: React.FC<{
   isFavorite?: (itemId: string) => boolean;
 }> = ({ item, onAddToCart, onRemoveFromCart, getCartQuantity, onToggleFavorite, isFavorite }) => {
   const [selectedSize, setSelectedSize] = useState<string>('');
+
+  // Dedupe portions by size name + price to avoid duplicate Half/Full pills
+  const uniquePortions = useMemo(() => {
+    if (!item.portions || item.portions.length === 0) return [] as any[];
+    const seen = new Set<string>();
+    const result: any[] = [];
+    for (const p of item.portions) {
+      const key = `${(p.name || '').toLowerCase()}::${p.price}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(p);
+      }
+    }
+    return result;
+  }, [item.portions]);
   
   // Initialize selected size to the first available portion
   useEffect(() => {
-    if (item.portions && item.portions.length > 0 && !selectedSize) {
-      setSelectedSize(item.portions[0].id);
+    if (uniquePortions.length > 0 && !selectedSize) {
+      setSelectedSize(uniquePortions[0].id);
     }
-  }, [item.portions, selectedSize]);
+  }, [uniquePortions, selectedSize]);
 
-  const selectedPortion = item.portions?.find((p: any) => p.id === selectedSize) || item.portions?.[0];
+  const selectedPortion = (item.portions || []).find((p: any) => p.id === selectedSize) || uniquePortions[0];
   const cartQuantity = getCartQuantity(selectedPortion?.id || item.id);
-  const hasMultipleSizes = item.portions && item.portions.length > 1;
+  const hasMultipleSizes = uniquePortions && uniquePortions.length > 1;
 
   const isOutOfStock = item.out_of_stock || (selectedPortion && selectedPortion.out_of_stock);
   
@@ -559,7 +574,7 @@ const ModernFoodCard: React.FC<{
         {hasMultipleSizes && (
           <div className="mb-3">
             <div className="flex flex-wrap gap-2">
-              {item.portions.map((portion: any) => {
+              {uniquePortions.map((portion: any) => {
                 const isPortionOutOfStock = portion.out_of_stock;
                 return (
                   <Button
