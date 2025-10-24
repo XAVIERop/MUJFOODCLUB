@@ -18,6 +18,7 @@ import BottomNavigation from "./components/BottomNavigation";
 import ScrollToTop from "./components/ScrollToTop";
 import MobileFloatingCart from "./components/MobileFloatingCart";
 import { PerformanceMonitor } from "./components/PerformanceMonitor";
+import { usePerformanceMonitor } from "./components/PerformanceMonitor";
 import LoadingSpinner from "./components/LoadingSpinner";
 import ErrorBoundary from "./components/ErrorBoundary";
 // import MobileErrorHandler from "./components/MobileErrorHandler";
@@ -50,20 +51,23 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Using optimized query client from lib/queryClient.ts
 
-const App = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <SecurityProvider>
-            <LocationProvider>
-              <CartProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                <ScrollToTop>
-                  <Suspense fallback={<LoadingSpinner size="lg" text="Loading page..." />}>
-                    <Routes>
+const App = () => {
+  const { isEnabled: performanceMonitorEnabled } = usePerformanceMonitor();
+  
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <SecurityProvider>
+              <LocationProvider>
+                <CartProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                  <ScrollToTop>
+                    <Suspense fallback={<LoadingSpinner size="lg" text="Loading page..." />}>
+                      <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/menu/:cafeIdentifier" element={<MenuModern />} />
@@ -118,5 +122,6 @@ const App = () => (
       </QueryClientProvider>
     </ErrorBoundary>
   );
+};
 
 export default App;

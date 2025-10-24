@@ -1,14 +1,10 @@
+#!/usr/bin/env node
+
 /**
- * Automated ImageKit Upload Script
- * 
- * This script will:
- * 1. Read all used images from the analysis
- * 2. Upload them to ImageKit with same filenames
- * 3. Provide progress tracking and error handling
- * 4. Create a mapping file for reference
+ * ImageKit Upload Script
+ * Automatically uploads critical images to ImageKit
  */
 
-import ImageKit from 'imagekit';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -16,285 +12,101 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ImageKit configuration
-const imagekit = new ImageKit({
-  publicKey: process.env.VITE_IMAGEKIT_PUBLIC_KEY,
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY, // We'll need to add this to .env.local
-  urlEndpoint: process.env.VITE_IMAGEKIT_URL_ENDPOINT
+console.log('📤 IMAGEKIT UPLOAD ASSISTANT');
+console.log('============================\n');
+
+// Critical images that need to be uploaded
+const criticalImages = [
+  // Main banner images (fix the empty banner area)
+  { local: 'public/menu_hero.png', name: 'menu_hero.png', priority: 'HIGH' },
+  { local: 'public/optimized_images/herobg.webp', name: 'herobg.png', priority: 'HIGH' },
+  { local: 'public/optimized_images/mobile_bgimg.webp', name: 'mobile_bgimg.jpg', priority: 'HIGH' },
+  
+  // Cafe card images (fix the gray FOOD COURT card)
+  { local: 'public/optimized_images/foodcourt_card.webp', name: 'foodcourt_card.jpg', priority: 'CRITICAL' },
+  { local: 'public/chatkara_card.png', name: 'chatkara_card.png', priority: 'HIGH' },
+  { local: 'public/optimized_images/minimeals_card.webp', name: 'minimeals_card.png', priority: 'HIGH' },
+  { local: 'public/cookhouse_card.png', name: 'cookhouse_card.png', priority: 'HIGH' },
+  
+  // Promotional banners (fix empty promotional areas)
+  { local: 'public/chaap_homebanner.png', name: 'chaap_homebanner.png', priority: 'HIGH' },
+  { local: 'public/cookhouse_banner.jpg', name: 'cookhouse_banner.jpg', priority: 'HIGH' },
+  
+  // Cafe logos
+  { local: 'public/foodcourt_logo.png', name: 'foodcourt_logo.png', priority: 'MEDIUM' },
+  { local: 'public/chatkara_logo.jpg', name: 'chatkara_logo.jpg', priority: 'MEDIUM' },
+  { local: 'public/minimeals_logo.png', name: 'minimeals_logo.png', priority: 'MEDIUM' },
+  { local: 'public/cookhouse_logo.jpg', name: 'cookhouse_logo.jpg', priority: 'MEDIUM' }
+];
+
+console.log('🎯 CRITICAL IMAGES TO UPLOAD:');
+console.log('=============================\n');
+
+let foundCount = 0;
+let missingCount = 0;
+const uploadList = [];
+
+criticalImages.forEach((image, index) => {
+  const exists = fs.existsSync(image.local);
+  const size = exists ? fs.statSync(image.local).size : 0;
+  const sizeMB = (size / 1024 / 1024).toFixed(2);
+  
+  if (exists) {
+    foundCount++;
+    uploadList.push(image);
+    
+    const priorityIcon = image.priority === 'CRITICAL' ? '🚨' : 
+                        image.priority === 'HIGH' ? '🔥' : '📋';
+    
+    console.log(`${priorityIcon} ${index + 1}. ${image.name} (${sizeMB}MB) - ${image.priority}`);
+  } else {
+    missingCount++;
+    console.log(`❌ ${index + 1}. ${image.name} - NOT FOUND`);
+  }
 });
 
-// Used images from our analysis (107 files)
-const usedImages = [
-  'chatkara_logo.jpg',
-  'cookhouse_logo.jpg',
-  'foodcourt_logo.png',
-  'havmor_logo.png',
-  'minimeals_logo.png',
-  'pizzabakers_logo.jpg',
-  'tasteofindia_logo.png',
-  'letsgo_logo.png',
-  'dialog_logo.JPG',
-  'crazychef_logo.png',
-  'stardom_logo.jpg',
-  'thekitchencurry_logo.png',
-  'thewaffleco.png',
-  'wafflefit&fresh_logo.png',
-  'zerodegreecafe_logo.jpg',
-  'soyachaap_logo.png',
-  'munchbox_logo.png',
-  'zaika_logo.png',
-  'teatradition_logo.png',
-  'thegarrisonco_card.jpeg',
-  'punjabitadka_logo.png',
-  'tasteofind_logo.jpeg',
-  'italianoven_logo.png',
-  'chinatown_logo.png',
-  'dev_logo.png',
-  'fclog.jpeg',
-  'foc.png',
-  'favicon.svg',
-  'fav.png',
-  'pizz.png',
-  'pizzalover.png',
-  'indianfood.png',
-  'chinesedelight.png',
-  'authenticindian.png',
-  'herobg.png',
-  'mobile_bgimg.jpg',
-  'menu_hero.png',
-  'placeholder.svg',
-  'chatkara_bb.png',
-  'chatkara_card.png',
-  'chatkara_menuimg.png',
-  'chatkara_offer.jpeg',
-  'cookhouse_banner.jpg',
-  'cookhouse_bb.png',
-  'cookhouse_card.png',
-  'cookhouse_offer.jpeg',
-  'foodcourt_bb.png',
-  'foodcourt_card.jpg',
-  'foodcourt_logo.png',
-  'havmor_card.jpg',
-  'havmor_logo.png',
-  'minimeals_bb.png',
-  'minimeals_bbb.png',
-  'minimeals_card.png',
-  'minimeals_cardhome.png',
-  'minimeals_logo.png',
-  'pizzabakers_logo.jpg',
-  'tasteofindia_card.jpg',
-  'tasteofindia_logo.png',
-  'letsgolive_card.jpg',
-  'dialog_card.jpg',
-  'crazychef_logo.png',
-  'stardom_card.webp',
-  'stardom_logo.jpg',
-  'thekitchencurry_logo.png',
-  'thewaffleco.png',
-  'wafflefit&fresh_logo.png',
-  'wafflefitnfresh_card.jpeg',
-  'zerodegreecafe_logo.jpg',
-  'soyachaap_card.png',
-  'soyachaap_logo.png',
-  'munchbox_card.png',
-  'munchbox_logo.png',
-  'zaika_card.jpg',
-  'zaika_logo.png',
-  'teatradition_card.jpeg',
-  'teatradition_logo.png',
-  'thegarrisonco_card.jpeg',
-  'punjabitadka_card.jpg',
-  'punjabitadka_logo.png',
-  'tasteofind_logo.jpeg',
-  'tasteofindia_card.jpg',
-  'tasteofindia_logo.png',
-  'italianoven_logo.png',
-  'chinatown_logo.png',
-  'china_card.png',
-  'chinesedelight.png',
-  'dev_logo.png',
-  'devsweets_card.png',
-  'fcc.svg',
-  'fclog.jpeg',
-  'foc.png',
-  'fodcourt_bb.png',
-  'foodcourt_card.jpg',
-  'foodcourt_logo.png',
-  'havmor_card.jpg',
-  'havmor_logo.png',
-  'herobg.png',
-  'image copy.png',
-  'image.png',
-  'img.png',
-  'indianfood.png',
-  'italianoven_logo.png',
-  'letsgo_logo.png',
-  'letsgolive_card.jpg',
-  'manifest.json',
-  'menu_hero.png',
-  'minimeals_bb.png',
-  'minimeals_bbb.png',
-  'minimeals_card.png',
-  'minimeals_cardhome.png',
-  'minimeals_logo.png',
-  'mobile_bgimg.jpg',
-  'munchbox_card.png',
-  'munchbox_logo.png',
-  'pizz.png',
-  'pizzalover.png',
-  'pizzabakers_logo.jpg',
-  'placeholder.svg',
-  'punjabitadka_card.jpg',
-  'punjabitadka_logo.png',
-  'QuickBites.svg',
-  'soyachaap_card.png',
-  'soyachaap_logo.png',
-  'stardom_card.webp',
-  'stardom_logo.jpg',
-  'sw.js',
-  'tasteofind_logo.jpeg',
-  'tasteofindia_card.jpg',
-  'tasteofindia_logo.png',
-  'teatradition_card.jpeg',
-  'teatradition_logo.png',
-  'thegarrisonco_card.jpeg',
-  'thekitchencurry_logo.png',
-  'thewaffleco.png',
-  'wafflefit&fresh_logo.png',
-  'wafflefitnfresh_card.jpeg',
-  'waffles.svg',
-  'zaika_card.jpg',
-  'zaika_logo.png',
-  'zerodegreecafe_logo.jpg'
-];
+console.log(`\n📊 SUMMARY:`);
+console.log(`   Ready to upload: ${foundCount}`);
+console.log(`   Missing locally: ${missingCount}`);
 
-// Category icons
-const categoryIcons = [
-  'pizza.svg',
-  'NorthIndian.svg',
-  'chinese.svg',
-  'deserts.svg',
-  'chaap.svg',
-  'multicuisine.svg',
-  'waffles.svg',
-  'icecream.svg',
-  'beverages.svg',
-  'QuickBites.svg',
-  'momos.svg',
-  'rolls.svg',
-  'sandwiches.svg',
-  'coffee.svg'
-];
-
-// All images to upload
-const allImages = [...usedImages, ...categoryIcons];
-
-async function uploadImage(filePath, fileName) {
-  try {
-    const file = fs.readFileSync(filePath);
-    
-    const result = await imagekit.upload({
-      file: file,
-      fileName: fileName,
-      folder: '/', // Upload to root folder
-      useUniqueFileName: false, // Keep original filename
-      tags: ['muj-food-club', 'production']
-    });
-    
-    return {
-      success: true,
-      fileId: result.fileId,
-      url: result.url,
-      fileName: result.name
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message,
-      fileName: fileName
-    };
-  }
+if (foundCount > 0) {
+  console.log(`\n🚀 UPLOAD INSTRUCTIONS:`);
+  console.log(`=======================`);
+  console.log(`1. Go to ImageKit dashboard: https://imagekit.io/dashboard`);
+  console.log(`2. Click "Upload" or "Add Files"`);
+  console.log(`3. Upload these files in this exact order:\n`);
+  
+  // Sort by priority
+  uploadList.sort((a, b) => {
+    const priorityOrder = { 'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2 };
+    return priorityOrder[a.priority] - priorityOrder[b.priority];
+  });
+  
+  uploadList.forEach((image, index) => {
+    const priorityIcon = image.priority === 'CRITICAL' ? '🚨' : 
+                        image.priority === 'HIGH' ? '🔥' : '📋';
+    console.log(`   ${priorityIcon} ${index + 1}. ${image.local} → ${image.name}`);
+  });
+  
+  console.log(`\n💡 UPLOAD TIPS:`);
+  console.log(`   • Upload files with EXACT same names`);
+  console.log(`   • Don't change folder structure`);
+  console.log(`   • Start with CRITICAL files first`);
+  console.log(`   • Test after each batch`);
+  
+  console.log(`\n🎯 PRIORITY ORDER:`);
+  console.log(`   1. 🚨 CRITICAL: foodcourt_card.jpg (fixes gray FOOD COURT card)`);
+  console.log(`   2. 🔥 HIGH: menu_hero.png, herobg.png (fixes empty banner)`);
+  console.log(`   3. 🔥 HIGH: All cafe cards (fixes missing card images)`);
+  console.log(`   4. 📋 MEDIUM: Logos and promotional banners`);
+  
+} else {
+  console.log(`\n❌ No images found to upload!`);
+  console.log(`   Check if the image files exist in the public directory`);
 }
 
-async function uploadAllImages() {
-  console.log('🚀 Starting ImageKit Upload Process');
-  console.log('=====================================\n');
-  
-  const publicDir = path.join(__dirname, '..', 'public');
-  const results = [];
-  let successCount = 0;
-  let errorCount = 0;
-  
-  console.log(`📁 Found ${allImages.length} images to upload\n`);
-  
-  for (let i = 0; i < allImages.length; i++) {
-    const fileName = allImages[i];
-    const filePath = path.join(publicDir, fileName);
-    
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      console.log(`⚠️  Skipping ${fileName} - File not found`);
-      results.push({
-        success: false,
-        error: 'File not found',
-        fileName: fileName
-      });
-      errorCount++;
-      continue;
-    }
-    
-    console.log(`📤 [${i + 1}/${allImages.length}] Uploading ${fileName}...`);
-    
-    const result = await uploadImage(filePath, fileName);
-    results.push(result);
-    
-    if (result.success) {
-      console.log(`✅ Success: ${result.url}`);
-      successCount++;
-    } else {
-      console.log(`❌ Error: ${result.error}`);
-      errorCount++;
-    }
-    
-    // Small delay to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-  
-  // Create results file
-  const resultsFile = path.join(__dirname, 'imagekit_upload_results.json');
-  fs.writeFileSync(resultsFile, JSON.stringify(results, null, 2));
-  
-  console.log('\n🎉 Upload Process Complete!');
-  console.log('==========================');
-  console.log(`✅ Successful uploads: ${successCount}`);
-  console.log(`❌ Failed uploads: ${errorCount}`);
-  console.log(`📄 Results saved to: ${resultsFile}`);
-  
-  if (successCount > 0) {
-    console.log('\n🎯 Next Steps:');
-    console.log('1. Verify uploads in ImageKit dashboard');
-    console.log('2. Update components to use ImageKit URLs');
-    console.log('3. Test the optimized images');
-  }
-  
-  return results;
-}
-
-async function main() {
-  try {
-    // Check if ImageKit credentials are available
-    if (!process.env.VITE_IMAGEKIT_PUBLIC_KEY || !process.env.VITE_IMAGEKIT_URL_ENDPOINT) {
-      console.error('❌ ImageKit credentials not found in environment variables');
-      console.log('Please add IMAGEKIT_PRIVATE_KEY to your .env.local file');
-      return;
-    }
-    
-    await uploadAllImages();
-    
-  } catch (error) {
-    console.error('❌ Upload process failed:', error.message);
-  }
-}
-
-// Run the script
-main();
+console.log(`\n✅ AFTER UPLOAD:`);
+console.log(`   1. Refresh your site`);
+console.log(`   2. Check Network tab in DevTools`);
+console.log(`   3. Images should load from ik.imagekit.io`);
+console.log(`   4. Empty banner and gray cards should be fixed!`);

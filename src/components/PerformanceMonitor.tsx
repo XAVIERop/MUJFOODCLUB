@@ -1,302 +1,266 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Activity, Database, Users, Clock, AlertTriangle } from 'lucide-react';
-import { withSupabaseClient } from '@/lib/supabasePool';
-import { supabasePool } from '@/lib/supabasePool';
+import { 
+  Activity, 
+  Zap, 
+  Clock, 
+  Database, 
+  Wifi, 
+  AlertTriangle,
+  CheckCircle,
+  X
+} from 'lucide-react';
 
 interface PerformanceMetrics {
-  totalOrdersToday: number;
-  activeCafes: number;
-  avgOrderValue: number;
-  peakHour: number;
-  connectionPoolStatus: {
-    totalClients: number;
-    availableClients: number;
-    inUseClients: number;
-    waitingRequests: number;
-  };
-  systemHealth: 'healthy' | 'warning' | 'critical';
+  fcp: number; // First Contentful Paint
+  lcp: number; // Largest Contentful Paint
+  fid: number; // First Input Delay
+  cls: number; // Cumulative Layout Shift
+  ttfb: number; // Time to First Byte
+  bundleSize: number;
+  imageCount: number;
+  queryCount: number;
+  renderTime: number;
 }
 
-export const PerformanceMonitor: React.FC = () => {
+interface PerformanceMonitorProps {
+  showDetails?: boolean;
+  onClose?: () => void;
+}
+
+export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
+  showDetails = false,
+  onClose
+}) => {
   const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchMetrics = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Get system performance metrics
-      const { data: systemMetrics, error: systemError } = await withSupabaseClient(
-        async (client) => {
-          const { data, error } = await client.rpc('get_system_performance_metrics');
-          return { data, error };
-        }
-      );
-
-      if (systemError) {
-        console.warn('System metrics RPC function not available, using fallback data:', systemError);
-        // Use fallback data instead of throwing error
-        const fallbackMetrics = {
-          total_orders_today: 0,
-          active_cafes: 0,
-          avg_order_value: 0,
-          peak_hour: 0
-        };
-        setMetrics({
-          totalOrdersToday: fallbackMetrics.total_orders_today,
-          activeCafes: fallbackMetrics.active_cafes,
-          avgOrderValue: fallbackMetrics.avg_order_value,
-          peakHour: fallbackMetrics.peak_hour,
-          connectionPoolStatus: supabasePool.getPoolStatus(),
-          systemHealth: 'healthy',
-        });
-        return;
-      }
-
-      // Handle both table and JSON response formats
-      let metricsData;
-      if (Array.isArray(systemMetrics) && systemMetrics.length > 0) {
-        // Table format response
-        metricsData = systemMetrics[0];
-      } else if (systemMetrics && typeof systemMetrics === 'object') {
-        // JSON format response
-        metricsData = systemMetrics;
-      } else {
-        // Fallback to default values
-        metricsData = {
-          total_orders_today: 0,
-          active_cafes: 0,
-          avg_order_value: 0,
-          peak_hour: 0
-        };
-      }
-
-      // Get connection pool status
-      const connectionPoolStatus = supabasePool.getPoolStatus();
-
-      // Determine system health
-      let systemHealth: 'healthy' | 'warning' | 'critical' = 'healthy';
-      
-      if (connectionPoolStatus.waitingRequests > 5) {
-        systemHealth = 'critical';
-      } else if (connectionPoolStatus.waitingRequests > 2 || connectionPoolStatus.availableClients < 2) {
-        systemHealth = 'warning';
-      }
-
-      setMetrics({
-        totalOrdersToday: metricsData?.total_orders_today || 0,
-        activeCafes: metricsData?.active_cafes || 0,
-        avgOrderValue: metricsData?.avg_order_value || 0,
-        peakHour: metricsData?.peak_hour || 0,
-        connectionPoolStatus,
-        systemHealth,
-      });
-    } catch (err) {
-      console.error('Error fetching performance metrics:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [isVisible, setIsVisible] = useState(showDetails);
 
   useEffect(() => {
-    fetchMetrics();
-    
-    // Refresh metrics every 30 seconds
-    const interval = setInterval(fetchMetrics, 30000);
-    
-    return () => clearInterval(interval);
-  }, []);
+    if (!isVisible) return;
 
-  if (isLoading) {
-    return (
-      <Card className="w-full max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="w-5 h-5" />
-            Performance Monitor
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-4">Loading performance metrics...</div>
-        </CardContent>
-      </Card>
-    );
-  }
+    const collectMetrics = () => {
+      const newMetrics: PerformanceMetrics = {
+        fcp: 0,
+        lcp: 0,
+        fid: 0,
+        cls: 0,
+        ttfb: 0,
+        bundleSize: 0,
+        imageCount: 0,
+        queryCount: 0,
+        renderTime: 0,
+      };
 
-  if (error) {
-    return (
-      <Card className="w-full max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="w-5 h-5" />
-            Performance Monitor
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-4 text-red-500">
-            Error loading metrics: {error}
-          </div>
-          <Button onClick={fetchMetrics} className="mt-2">
-            Retry
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
+      // Get Web Vitals
+      if ('performance' in window) {
+        const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+        newMetrics.ttfb = navigation.responseStart - navigation.requestStart;
 
-  if (!metrics) return null;
+        // Get FCP
+        const fcpEntry = performance.getEntriesByName('first-contentful-paint')[0];
+        if (fcpEntry) {
+          newMetrics.fcp = fcpEntry.startTime;
+        }
 
-  const getHealthColor = (health: string) => {
-    switch (health) {
-      case 'healthy': return 'bg-green-500';
-      case 'warning': return 'bg-yellow-500';
-      case 'critical': return 'bg-red-500';
-      default: return 'bg-gray-500';
+        // Get LCP
+        const lcpEntries = performance.getEntriesByType('largest-contentful-paint');
+        if (lcpEntries.length > 0) {
+          newMetrics.lcp = lcpEntries[lcpEntries.length - 1].startTime;
+        }
+      }
+
+      // Count images
+      newMetrics.imageCount = document.querySelectorAll('img').length;
+
+      // Estimate bundle size (rough calculation)
+      const scripts = document.querySelectorAll('script[src]');
+      let totalSize = 0;
+      scripts.forEach(script => {
+        const src = script.getAttribute('src');
+        if (src && !src.includes('node_modules')) {
+          totalSize += 50; // Rough estimate
+        }
+      });
+      newMetrics.bundleSize = totalSize;
+
+      // Count network requests
+      const resources = performance.getEntriesByType('resource');
+      newMetrics.queryCount = resources.filter(r => 
+        r.name.includes('supabase') || r.name.includes('api')
+      ).length;
+
+      setMetrics(newMetrics);
+    };
+
+    // Collect metrics after page load
+    if (document.readyState === 'complete') {
+      collectMetrics();
+    } else {
+      window.addEventListener('load', collectMetrics);
     }
+
+    return () => {
+      window.removeEventListener('load', collectMetrics);
+    };
+  }, [isVisible]);
+
+  const getPerformanceScore = (metric: number, thresholds: [number, number]) => {
+    if (metric <= thresholds[0]) return { score: 'Good', color: 'green' };
+    if (metric <= thresholds[1]) return { score: 'Needs Improvement', color: 'yellow' };
+    return { score: 'Poor', color: 'red' };
   };
 
-  const getHealthIcon = (health: string) => {
-    switch (health) {
-      case 'healthy': return '✅';
-      case 'warning': return '⚠️';
-      case 'critical': return '🚨';
-      default: return '❓';
-    }
-  };
+  const getFCPScore = (fcp: number) => getPerformanceScore(fcp, [1800, 3000]);
+  const getLCPScore = (lcp: number) => getPerformanceScore(lcp, [2500, 4000]);
+  const getTTFBScore = (ttfb: number) => getPerformanceScore(ttfb, [800, 1800]);
+
+  if (!isVisible || !metrics) return null;
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Activity className="w-5 h-5" />
+    <Card className="fixed bottom-4 right-4 w-80 z-50 bg-white/95 backdrop-blur-sm border shadow-lg">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Activity className="w-4 h-4" />
             Performance Monitor
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge 
-              className={`${getHealthColor(metrics.systemHealth)} text-white`}
+          </CardTitle>
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-6 w-6 p-0"
             >
-              {getHealthIcon(metrics.systemHealth)} {metrics.systemHealth.toUpperCase()}
-            </Badge>
-            <Button 
-              onClick={fetchMetrics} 
-              size="sm" 
-              variant="outline"
-            >
-              Refresh
+              <X className="w-3 h-3" />
             </Button>
-          </div>
-        </CardTitle>
+          )}
+        </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* System Metrics */}
-          <div className="space-y-2">
-            <h3 className="font-semibold text-sm text-muted-foreground">System Metrics</h3>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <span className="text-sm">Orders Today:</span>
-                <span className="font-mono text-sm">{metrics.totalOrdersToday}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Active Cafes:</span>
-                <span className="font-mono text-sm">{metrics.activeCafes}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Avg Order Value:</span>
-                <span className="font-mono text-sm">₹{metrics.avgOrderValue.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Peak Hour:</span>
-                <span className="font-mono text-sm">{metrics.peakHour}:00</span>
-              </div>
+      <CardContent className="space-y-3">
+        {/* Core Web Vitals */}
+        <div className="space-y-2">
+          <h4 className="text-xs font-semibold text-gray-600">Core Web Vitals</h4>
+          
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="flex items-center justify-between">
+              <span>FCP:</span>
+              <Badge 
+                variant={getFCPScore(metrics.fcp).color === 'green' ? 'default' : 'destructive'}
+                className="text-xs"
+              >
+                {Math.round(metrics.fcp)}ms
+              </Badge>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span>LCP:</span>
+              <Badge 
+                variant={getLCPScore(metrics.lcp).color === 'green' ? 'default' : 'destructive'}
+                className="text-xs"
+              >
+                {Math.round(metrics.lcp)}ms
+              </Badge>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span>TTFB:</span>
+              <Badge 
+                variant={getTTFBScore(metrics.ttfb).color === 'green' ? 'default' : 'destructive'}
+                className="text-xs"
+              >
+                {Math.round(metrics.ttfb)}ms
+              </Badge>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span>Images:</span>
+              <Badge variant="outline" className="text-xs">
+                {metrics.imageCount}
+              </Badge>
             </div>
           </div>
+        </div>
 
-          {/* Connection Pool Status */}
-          <div className="space-y-2">
-            <h3 className="font-semibold text-sm text-muted-foreground">Connection Pool</h3>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <span className="text-sm">Total Clients:</span>
-                <span className="font-mono text-sm">{metrics.connectionPoolStatus.totalClients}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Available:</span>
-                <span className="font-mono text-sm text-green-600">
-                  {metrics.connectionPoolStatus.availableClients}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">In Use:</span>
-                <span className="font-mono text-sm text-blue-600">
-                  {metrics.connectionPoolStatus.inUseClients}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Waiting:</span>
-                <span className={`font-mono text-sm ${
-                  metrics.connectionPoolStatus.waitingRequests > 0 ? 'text-red-600' : 'text-gray-600'
-                }`}>
-                  {metrics.connectionPoolStatus.waitingRequests}
-                </span>
-              </div>
+        {/* Resource Analysis */}
+        <div className="space-y-2">
+          <h4 className="text-xs font-semibold text-gray-600">Resources</h4>
+          
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="flex items-center justify-between">
+              <span>Queries:</span>
+              <Badge variant="outline" className="text-xs">
+                {metrics.queryCount}
+              </Badge>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span>Bundle:</span>
+              <Badge variant="outline" className="text-xs">
+                ~{metrics.bundleSize}KB
+              </Badge>
             </div>
           </div>
+        </div>
 
-          {/* Performance Indicators */}
-          <div className="space-y-2">
-            <h3 className="font-semibold text-sm text-muted-foreground">Performance</h3>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <span className="text-sm">Pool Utilization:</span>
-                <span className="font-mono text-sm">
-                  {Math.round((metrics.connectionPoolStatus.inUseClients / metrics.connectionPoolStatus.totalClients) * 100)}%
-                </span>
+        {/* Performance Tips */}
+        <div className="space-y-1">
+          <h4 className="text-xs font-semibold text-gray-600">Optimization Tips</h4>
+          <div className="text-xs text-gray-500 space-y-1">
+            {metrics.fcp > 1800 && (
+              <div className="flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3 text-yellow-500" />
+                <span>Optimize FCP - reduce render blocking</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Queue Status:</span>
-                <span className={`text-sm ${
-                  metrics.connectionPoolStatus.waitingRequests === 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {metrics.connectionPoolStatus.waitingRequests === 0 ? 'Clear' : 'Backed Up'}
-                </span>
+            )}
+            {metrics.lcp > 2500 && (
+              <div className="flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3 text-yellow-500" />
+                <span>Optimize LCP - compress images</span>
               </div>
-            </div>
-          </div>
-
-          {/* Alerts */}
-          <div className="space-y-2">
-            <h3 className="font-semibold text-sm text-muted-foreground">Alerts</h3>
-            <div className="space-y-1">
-              {metrics.systemHealth === 'critical' && (
-                <div className="flex items-center gap-1 text-red-600 text-xs">
-                  <AlertTriangle className="w-3 h-3" />
-                  <span>High load detected</span>
-                </div>
-              )}
-              {metrics.connectionPoolStatus.waitingRequests > 0 && (
-                <div className="flex items-center gap-1 text-yellow-600 text-xs">
-                  <Clock className="w-3 h-3" />
-                  <span>Connection queue active</span>
-                </div>
-              )}
-              {metrics.systemHealth === 'healthy' && (
-                <div className="flex items-center gap-1 text-green-600 text-xs">
-                  <Database className="w-3 h-3" />
-                  <span>All systems normal</span>
-                </div>
-              )}
-            </div>
+            )}
+            {metrics.imageCount > 20 && (
+              <div className="flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3 text-yellow-500" />
+                <span>Too many images - implement lazy loading</span>
+              </div>
+            )}
+            {metrics.queryCount > 10 && (
+              <div className="flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3 text-yellow-500" />
+                <span>Too many queries - add caching</span>
+              </div>
+            )}
+            {metrics.fcp <= 1800 && metrics.lcp <= 2500 && metrics.imageCount <= 20 && (
+              <div className="flex items-center gap-1">
+                <CheckCircle className="w-3 h-3 text-green-500" />
+                <span>Performance looks good!</span>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
     </Card>
   );
+};
+
+// Hook for performance monitoring
+export const usePerformanceMonitor = () => {
+  const [isEnabled, setIsEnabled] = useState(false);
+
+  useEffect(() => {
+    // Enable in development or when performance monitoring is requested
+    const shouldEnable = import.meta.env.DEV || 
+      localStorage.getItem('performance-monitor') === 'true';
+    setIsEnabled(shouldEnable);
+  }, []);
+
+  const toggleMonitor = () => {
+    const newState = !isEnabled;
+    setIsEnabled(newState);
+    localStorage.setItem('performance-monitor', newState.toString());
+  };
+
+  return { isEnabled, toggleMonitor };
 };

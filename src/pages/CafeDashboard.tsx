@@ -954,7 +954,7 @@ const CafeDashboard = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/cafe-management')}
+              onClick={() => navigate('/cafe-management?from=cafe-dashboard')}
             >
               <Settings className="w-4 h-4 mr-2" />
               Management

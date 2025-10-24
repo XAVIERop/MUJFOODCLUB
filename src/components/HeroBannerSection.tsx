@@ -178,7 +178,7 @@ const HeroBannerSection: React.FC = () => {
         rating: 4.5,
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
-        imageUrl: getImageUrl('/optimized_images/minimeals_bbb.webp'),
+        imageUrl: getImageUrl('/optimized_images/minimeals_bbb.png'),
         cafeId: 'mini-meals'
       },
       {

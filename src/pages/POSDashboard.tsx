@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -106,6 +107,7 @@ interface OrderItem {
 }
 
 const POSDashboard = () => {
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -144,6 +146,8 @@ const POSDashboard = () => {
     return () => clearInterval(cleanupInterval);
   }, []);
   const [cafeId, setCafeId] = useState<string | null>(null);
+  const [cafeName, setCafeName] = useState<string>('');
+  const [showNoOrdersNotification, setShowNoOrdersNotification] = useState(true);
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -1548,28 +1552,40 @@ const POSDashboard = () => {
     
     switch (dateRange) {
       case 'today':
-        // Use UTC to avoid timezone issues
-        const todayUTC = new Date(today.getTime() - today.getTimezoneOffset() * 60000);
-        const tomorrowUTC = new Date(todayUTC);
-        tomorrowUTC.setDate(tomorrowUTC.getDate() + 1);
+        // Fixed timezone handling - use local time boundaries
+        const startOfToday = new Date(today);
+        startOfToday.setHours(0, 0, 0, 0);
+        
+        const endOfToday = new Date(today);
+        endOfToday.setHours(23, 59, 59, 999);
+        
         return {
-          startDate: todayUTC.toISOString(),
-          endDate: tomorrowUTC.toISOString()
+          startDate: startOfToday.toISOString(),
+          endDate: endOfToday.toISOString()
         };
       
       case 'yesterday':
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
+        
+        const endOfYesterday = new Date(today);
+        endOfYesterday.setHours(0, 0, 0, 0);
+        
         return {
           startDate: yesterday.toISOString(),
-          endDate: today.toISOString()
+          endDate: endOfYesterday.toISOString()
         };
       
       case 'this_week':
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - today.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 7);
+        endOfWeek.setHours(0, 0, 0, 0);
+        
         return {
           startDate: startOfWeek.toISOString(),
           endDate: endOfWeek.toISOString()
@@ -1630,6 +1646,36 @@ const POSDashboard = () => {
         return 'Today';
     }
   };
+
+  // Fetch cafe name when cafeId changes
+  useEffect(() => {
+    const fetchCafeName = async () => {
+      if (!cafeId) {
+        setCafeName('');
+        return;
+      }
+
+      try {
+        const { data: cafe, error } = await supabase
+          .from('cafes')
+          .select('name')
+          .eq('id', cafeId)
+          .single();
+
+        if (error) {
+          console.error('Error fetching cafe name:', error);
+          setCafeName('');
+        } else if (cafe) {
+          setCafeName(cafe.name);
+        }
+      } catch (error) {
+        console.error('Error fetching cafe name:', error);
+        setCafeName('');
+      }
+    };
+
+    fetchCafeName();
+  }, [cafeId]);
 
   useEffect(() => {
     const fetchCafeId = async () => {
@@ -1894,80 +1940,111 @@ const POSDashboard = () => {
     <div className="min-h-screen bg-gray-50 pb-24 lg:pb-6">
       <Header />
       <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">POS Dashboard</h1>
-              <p className="text-gray-600 mt-2">Professional Point of Sale System for High-Volume Operations</p>
+        {/* Enhanced Header */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          {/* Main Header Row */}
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              {/* Title Section */}
+              <div className="flex items-center space-x-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">POS Dashboard</h1>
+                  <p className="text-sm text-gray-600 mt-1">Professional Point of Sale System</p>
+                </div>
+                
+                {/* Status Badge */}
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <span className={`text-sm font-medium ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
+                    {isConnected ? 'Connected' : 'Disconnected'}
+                  </span>
+                </div>
+              </div>
+
+              {/* User Profile & Actions */}
+              <div className="flex items-center space-x-3">
+                {/* User Info */}
+                <div className="text-right">
+                  <div className="text-sm font-medium text-gray-900">
+                    {cafeName || 'Cafe'}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {profile?.user_type?.replace('_', ' ').toUpperCase() || 'STAFF'}
+                  </div>
+                </div>
+
+                {/* Primary Actions */}
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/cafe-management?from=pos-dashboard')}
+                  >
+                    <Settings className="w-4 h-4 mr-1" />
+                    <span className="hidden sm:inline">Management</span>
+                  </Button>
+                  
+                  <Button 
+                    onClick={handleManualRefresh} 
+                    variant="outline" 
+                    size="sm"
+                    disabled={isRefreshing}
+                  >
+                    <RefreshCw className={`w-4 h-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <span className="hidden sm:inline">{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+                  </Button>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center space-x-4">
-              {/* Connection Status */}
-              <div className="flex items-center text-sm">
-                <div className={`w-2 h-2 rounded-full mr-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                <span className={isConnected ? 'text-green-600' : 'text-red-600'}>
-                  {isConnected ? 'Connected' : 'Disconnected'}
-                </span>
-              </div>
-              
-              {/* Refresh Indicator */}
-              {isRefreshing && (
-                <div className="flex items-center text-sm text-blue-600">
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Updating...
+          </div>
+
+          {/* Secondary Actions Row */}
+          <div className="px-6 py-4 bg-gray-50 border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              {/* Automation Controls */}
+              <div className="flex items-center space-x-3">
+                <span className="text-sm font-medium text-gray-700">Automation:</span>
+                <div className="flex items-center space-x-2">
+                  <Button 
+                    onClick={handleManualAutoCancellation}
+                    variant="outline"
+                    size="sm"
+                    className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                  >
+                    <AlertCircle className="w-4 h-4 mr-1" />
+                    Check Auto-Cancel
+                  </Button>
+                  <Button 
+                    onClick={toggleAutoCancellation}
+                    variant={autoCancelStatus.isRunning ? "destructive" : "outline"}
+                    size="sm"
+                    className={autoCancelStatus.isRunning ? "" : "text-green-600 border-green-200 hover:bg-green-50"}
+                  >
+                    <Clock className="w-4 h-4 mr-1" />
+                    {autoCancelStatus.isRunning ? 'Stop Auto-Cancel' : 'Start Auto-Cancel'}
+                  </Button>
+                  {autoCancelStatus.isRunning && (
+                    <Badge variant="secondary" className="text-xs">
+                      Running (2min intervals)
+                    </Badge>
+                  )}
                 </div>
-              )}
-              
-              <Button
-                variant="outline"
-                onClick={() => setIsNotificationOpen(true)}
-                className="relative"
-              >
-                <Bell className="w-4 h-4 mr-2" />
-                Notifications
-                {unreadNotifications > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-500">
-                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                  </Badge>
+              </div>
+
+              {/* System Info */}
+              <div className="flex items-center space-x-4 text-sm text-gray-500">
+                {isRefreshing && (
+                  <div className="flex items-center text-blue-600">
+                    <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                    Updating...
+                  </div>
                 )}
-              </Button>
-              <Button onClick={handleManualRefresh} variant="outline" disabled={isRefreshing}>
-                <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-                {isRefreshing ? 'Refreshing...' : 'Refresh'}
-              </Button>
-              
-              {/* Auto-Cancellation Controls */}
-              <div className="flex items-center gap-2">
-                <Button 
-                  onClick={handleManualAutoCancellation}
-                  variant="outline"
-                  size="sm"
-                  className="text-orange-600 border-orange-200 hover:bg-orange-50"
-                >
-                  <AlertCircle className="w-4 h-4 mr-2" />
-                  Check Auto-Cancel
-                </Button>
-                <Button 
-                  onClick={toggleAutoCancellation}
-                  variant={autoCancelStatus.isRunning ? "destructive" : "outline"}
-                  size="sm"
-                  className={autoCancelStatus.isRunning ? "" : "text-green-600 border-green-200 hover:bg-green-50"}
-                >
-                  <Clock className="w-4 h-4 mr-2" />
-                  {autoCancelStatus.isRunning ? 'Stop Auto-Cancel' : 'Start Auto-Cancel'}
-                </Button>
-                {autoCancelStatus.isRunning && (
-                  <Badge variant="secondary" className="text-xs">
-                    Running (2min intervals)
-                  </Badge>
+                {cafeName && (
+                  <div className="hidden lg:block">
+                    {cafeName}
+                  </div>
                 )}
               </div>
-              
-              {cafeId && (
-                <div className="text-sm text-gray-500">
-                  Cafe ID: {cafeId}
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -2271,55 +2348,113 @@ const POSDashboard = () => {
               )}
             </div>
 
-            {/* Search and Filter Controls */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search orders..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+            {/* Enhanced Search and Filter Controls */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                {/* Search Bar */}
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search orders, customers, or items..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-10"
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="absolute right-3 top-3 h-4 w-4 text-muted-foreground hover:text-foreground"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+
+                {/* Filter Controls */}
+                <div className="flex flex-wrap gap-2 items-center">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="received">Received</SelectItem>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="preparing">Preparing</SelectItem>
+                      <SelectItem value="on_the_way">Out for Delivery</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="created_at">Date</SelectItem>
+                      <SelectItem value="order_number">Order Number</SelectItem>
+                      <SelectItem value="total_amount">Amount</SelectItem>
+                      <SelectItem value="user">Customer</SelectItem>
+                      <SelectItem value="status">Status</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Order" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="desc">Newest First</SelectItem>
+                      <SelectItem value="asc">Oldest First</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Quick Actions */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setStatusFilter('all');
+                      setSortBy('created_at');
+                      setSortOrder('desc');
+                    }}
+                    className="text-xs"
+                  >
+                    Clear All
+                  </Button>
+                </div>
               </div>
+            </div>
 
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="received">Received</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="preparing">Preparing</SelectItem>
-                  <SelectItem value="on_the_way">Out for Delivery</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="created_at">Date</SelectItem>
-                  <SelectItem value="order_number">Order Number</SelectItem>
-                  <SelectItem value="total_amount">Amount</SelectItem>
-                  <SelectItem value="user">Customer</SelectItem>
-                  <SelectItem value="status">Status</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort order" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="desc">Newest First</SelectItem>
-                  <SelectItem value="asc">Oldest First</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Quick Stats Bar */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span className="text-sm font-medium text-gray-700">
+                      Active: <span className="text-orange-600 font-semibold">{filteredOrders.filter(o => ['received', 'confirmed', 'preparing', 'on_the_way'].includes(o.status)).length}</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm font-medium text-gray-700">
+                      Completed: <span className="text-green-600 font-semibold">{filteredOrders.filter(o => o.status === 'completed').length}</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-sm font-medium text-gray-700">
+                      Revenue: <span className="text-blue-600 font-semibold">₹{filteredOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0).toFixed(2)}</span>
+                    </span>
+                  </div>
+                </div>
+                <div className="text-sm text-gray-500">
+                  {filteredOrders.length} orders found
+                </div>
+              </div>
             </div>
 
             {/* Enhanced Grid View */}
@@ -2518,6 +2653,14 @@ const POSDashboard = () => {
               orders={orders}
               orderItems={orderItems}
               loading={loading}
+              dateRange={dateRange}
+              customDateRange={customDateRange}
+              onDateRangeChange={(newDateRange, newCustomRange) => {
+                setDateRange(newDateRange as any);
+                if (newCustomRange) {
+                  setCustomDateRange(newCustomRange);
+                }
+              }}
             />
           </TabsContent>
 
@@ -2786,44 +2929,55 @@ const POSDashboard = () => {
         )}
 
         {/* Manual Fetch Orders Button for Testing */}
-        {cafeId && orders.length === 0 && (
-          <div className="fixed top-4 right-4 z-50 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
-            <p className="font-bold">No Orders Found</p>
-            <p className="text-sm">Cafe ID: {cafeId}</p>
-            <div className="flex gap-2 mt-2">
+        {cafeId && orders.length === 0 && showNoOrdersNotification && (
+          <div className="fixed top-4 right-4 z-50 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded shadow-lg">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-bold">No Orders Found</p>
+                <p className="text-sm">Cafe ID: {cafeId}</p>
+                <div className="flex gap-2 mt-2">
+                  <button 
+                    onClick={() => {
+                      console.log('🔧 Manual fetch: Triggering fetchOrders manually');
+                      fetchOrders(true);
+                    }}
+                    className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                  >
+                    Force Fetch Orders
+                  </button>
+                  <button 
+                    onClick={() => {
+                      console.log('🔧 SIMPLE TEST: Querying orders with user data for', cafeId);
+                      supabase
+                        .from('orders')
+                        .select(`
+                          *,
+                          user:profiles(full_name, phone, block)
+                        `)
+                        .eq('cafe_id', cafeId)
+                        .order('created_at', { ascending: false })
+                        .then(({ data, error }) => {
+                          if (error) {
+                            console.error('❌ Test error:', error);
+                          } else {
+                            console.log('✅ Test result:', data?.length || 0, 'orders');
+                            console.log('✅ Sample order with user data:', data?.[0]);
+                            setOrders(data as Order[] || []);
+                          }
+                        });
+                    }}
+                    className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+                  >
+                    Simple Test
+                  </button>
+                </div>
+              </div>
               <button 
-                onClick={() => {
-                  console.log('🔧 Manual fetch: Triggering fetchOrders manually');
-                  fetchOrders(true);
-                }}
-                className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                onClick={() => setShowNoOrdersNotification(false)}
+                className="ml-2 text-blue-700 hover:text-blue-900 text-xl font-bold leading-none"
+                title="Close notification"
               >
-                Force Fetch Orders
-              </button>
-              <button 
-                onClick={() => {
-                  console.log('🔧 SIMPLE TEST: Querying orders with user data for', cafeId);
-                  supabase
-                    .from('orders')
-                    .select(`
-                      *,
-                      user:profiles(full_name, phone, block)
-                    `)
-                    .eq('cafe_id', cafeId)
-                    .order('created_at', { ascending: false })
-                    .then(({ data, error }) => {
-                      if (error) {
-                        console.error('❌ Test error:', error);
-                      } else {
-                        console.log('✅ Test result:', data?.length || 0, 'orders');
-                        console.log('✅ Sample order with user data:', data?.[0]);
-                        setOrders(data as Order[] || []);
-                      }
-                    });
-                }}
-                className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
-              >
-                Simple Test
+                ×
               </button>
             </div>
           </div>
