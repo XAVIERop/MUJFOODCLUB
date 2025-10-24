@@ -30,9 +30,16 @@ const SearchSection: React.FC<SearchSectionProps> = ({ selectedBlock, onBlockCha
           .order('priority', { ascending: true });
 
         if (!cafesError && cafesData) {
-          // Show only first 6 cafes
-          const limitedCafes = cafesData.slice(0, 6);
-          setCafes(limitedCafes);
+          // First, get the top 10 cafes by priority (regardless of open/closed status)
+          const top10Cafes = cafesData.sort((a, b) => (a.priority || 99) - (b.priority || 99)).slice(0, 10);
+          
+          // Then reorder within those 10: open cafes first, then closed cafes
+          const openCafes = top10Cafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+          const closedCafes = top10Cafes.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+          
+          // Combine: open cafes first, then closed cafes (all within the top 10)
+          const reorderedCafes = [...openCafes, ...closedCafes];
+          setCafes(reorderedCafes);
         }
 
         // Fetch menu items
@@ -114,15 +121,22 @@ const SearchSection: React.FC<SearchSectionProps> = ({ selectedBlock, onBlockCha
           </div>
         </div>
         
-        <Select value={searchMode} onValueChange={(value: 'dishes' | 'cafes') => setSearchMode(value)}>
-          <SelectTrigger className="w-full sm:w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="dishes">Dishes</SelectItem>
-            <SelectItem value="cafes">Cafes</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex rounded-full border border-orange-200 overflow-hidden h-12">
+          <button
+            type="button"
+            onClick={() => setSearchMode('dishes')}
+            className={`px-4 text-sm font-medium whitespace-nowrap ${searchMode === 'dishes' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-white text-orange-600 hover:bg-orange-50'}`}
+          >
+            Dishes
+          </button>
+          <button
+            type="button"
+            onClick={() => setSearchMode('cafes')}
+            className={`px-4 text-sm font-medium whitespace-nowrap border-l border-orange-200 ${searchMode === 'cafes' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-white text-orange-600 hover:bg-orange-50'}`}
+          >
+            Cafes
+          </button>
+        </div>
       </div>
 
       {/* Block Selection */}

@@ -56,7 +56,7 @@ const Cafes = () => {
     'Waffles',
     'Ice Cream',
     'Beverages',
-    'Fast Food'
+    'Chaat'
   ];
 
   useEffect(() => {
@@ -175,11 +175,18 @@ const Cafes = () => {
       console.log('Cafes page: Cafes already ordered by priority:', filteredCafes);
       console.log('Cafes page: Final cafe names:', filteredCafes.map(c => c.name));
       
-      // Show only first 6 cafes
-      const limitedCafes = filteredCafes.slice(0, 6);
-      console.log('Cafes page: Limited to first 6 cafes:', limitedCafes.map(c => c.name));
+      // First, get the top 10 cafes by priority (regardless of open/closed status)
+      const top10Cafes = filteredCafes.sort((a, b) => (a.priority || 99) - (b.priority || 99)).slice(0, 10);
       
-      setCafes(limitedCafes || []);
+      // Then reorder within those 10: open cafes first, then closed cafes
+      const openCafes = top10Cafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+      const closedCafes = top10Cafes.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+      
+      // Combine: open cafes first, then closed cafes (all within the top 10)
+      const reorderedCafes = [...openCafes, ...closedCafes];
+      console.log('Cafes page: Top 10 by priority, reordered: open first, closed last:', reorderedCafes.map(c => `${c.name} (${c.accepting_orders ? 'OPEN' : 'CLOSED'})`));
+      
+      setCafes(reorderedCafes || []);
       
     } catch (error) {
       console.error('Cafes page: Error fetching cafes:', error);
@@ -202,9 +209,47 @@ const Cafes = () => {
 
     // Filter by category
     if (selectedCategory !== 'All') {
-      filtered = filtered.filter(cafe => 
-        cafe.cuisine_categories?.includes(selectedCategory)
-      );
+      if (selectedCategory === 'Desserts') {
+        // For Desserts category, show both Food Court and Pizza Bakers
+        console.log('Desserts filter - All cafes before filter:', filtered.map(c => c.name));
+        filtered = filtered.filter(cafe => {
+          const isMatch = cafe.name === 'FOOD COURT' || cafe.name === 'Pizza Bakers';
+          console.log(`Checking cafe: ${cafe.name}, isMatch: ${isMatch}`);
+          return isMatch;
+        });
+        console.log('Desserts filter - Filtered cafes:', filtered.map(c => c.name));
+      } else if (selectedCategory === 'Waffles') {
+        // For Waffles category, show Food Court cafe
+        console.log('Waffles filter - All cafes before filter:', filtered.map(c => c.name));
+        filtered = filtered.filter(cafe => {
+          const isMatch = cafe.name === 'FOOD COURT';
+          console.log(`Checking cafe: ${cafe.name}, isMatch: ${isMatch}`);
+          return isMatch;
+        });
+        console.log('Waffles filter - Filtered cafes:', filtered.map(c => c.name));
+      } else if (selectedCategory === 'Ice Cream') {
+        // For Ice Cream category, show Mini Meals cafe
+        console.log('Ice Cream filter - All cafes before filter:', filtered.map(c => c.name));
+        filtered = filtered.filter(cafe => {
+          const isMatch = cafe.name === 'Mini Meals';
+          console.log(`Checking cafe: ${cafe.name}, isMatch: ${isMatch}`);
+          return isMatch;
+        });
+        console.log('Ice Cream filter - Filtered cafes:', filtered.map(c => c.name));
+      } else if (selectedCategory === 'Chaat') {
+        // For Chaat category, show Mini Meals cafe
+        console.log('Chaat filter - All cafes before filter:', filtered.map(c => c.name));
+        filtered = filtered.filter(cafe => {
+          const isMatch = cafe.name === 'Mini Meals';
+          console.log(`Checking cafe: ${cafe.name}, isMatch: ${isMatch}`);
+          return isMatch;
+        });
+        console.log('Chaat filter - Filtered cafes:', filtered.map(c => c.name));
+      } else {
+        filtered = filtered.filter(cafe => 
+          cafe.cuisine_categories?.includes(selectedCategory)
+        );
+      }
     }
 
     // Filter by search query
@@ -245,7 +290,7 @@ const Cafes = () => {
   }
 
   return (
-    <div className="block lg:hidden">
+    <div className="block">
       <MobileLayoutWrapper
         selectedBlock={selectedBlock}
         onBlockChange={setSelectedBlock}

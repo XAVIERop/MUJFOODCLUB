@@ -18,6 +18,7 @@ import BottomNavigation from "./components/BottomNavigation";
 import ScrollToTop from "./components/ScrollToTop";
 import MobileFloatingCart from "./components/MobileFloatingCart";
 import { PerformanceMonitor } from "./components/PerformanceMonitor";
+import { usePerformanceMonitor } from "./components/PerformanceMonitor";
 import LoadingSpinner from "./components/LoadingSpinner";
 import ErrorBoundary from "./components/ErrorBoundary";
 // import MobileErrorHandler from "./components/MobileErrorHandler";
@@ -37,6 +38,9 @@ const Grocery = lazy(() => import("./pages/Grocery"));
 const GroceryCategory = lazy(() => import("./pages/GroceryCategory"));
 const QRCodePage = lazy(() => import("./pages/QRCodePage"));
 const Profile = lazy(() => import("./pages/Profile"));
+const ReferralTest = lazy(() => import("./pages/ReferralTest"));
+const DatabaseTest = lazy(() => import("./pages/DatabaseTest"));
+const AdminReferrals = lazy(() => import("./pages/AdminReferrals"));
 const CafeDashboard = lazy(() => import("./pages/CafeDashboard"));
 const CafeManagement = lazy(() => import("./pages/CafeManagement"));
 const EnhancedCafeCardDemo = lazy(() => import("./components/EnhancedCafeCardDemo"));
@@ -47,20 +51,23 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Using optimized query client from lib/queryClient.ts
 
-const App = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <SecurityProvider>
-            <LocationProvider>
-              <CartProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                <ScrollToTop>
-                  <Suspense fallback={<LoadingSpinner size="lg" text="Loading page..." />}>
-                    <Routes>
+const App = () => {
+  const { isEnabled: performanceMonitorEnabled } = usePerformanceMonitor();
+  
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <SecurityProvider>
+              <LocationProvider>
+                <CartProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                  <ScrollToTop>
+                    <Suspense fallback={<LoadingSpinner size="lg" text="Loading page..." />}>
+                      <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/menu/:cafeIdentifier" element={<MenuModern />} />
@@ -74,6 +81,9 @@ const App = () => (
                       {/* <Route path="/rewards" element={<CafeRewards />} /> */} {/* Disabled for simplified version */}
                       <Route path="/qr-code" element={<QRCodePage />} />
                       <Route path="/profile" element={<Profile />} />
+                      <Route path="/referral-test" element={<ReferralTest />} />
+                      <Route path="/database-test" element={<DatabaseTest />} />
+                      <Route path="/admin/referrals" element={<AdminReferrals />} />
 
                       <Route path="/cafe-dashboard" element={<CafeDashboard />} />
                       <Route path="/cafe-management" element={<CafeManagement />} />
@@ -112,5 +122,6 @@ const App = () => (
       </QueryClientProvider>
     </ErrorBoundary>
   );
+};
 
 export default App;

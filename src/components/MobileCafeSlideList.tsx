@@ -24,11 +24,13 @@ interface MobileCafeSlideListProps {
 const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Get first 6 cafes (the ones accepting orders) for the slide list
-  const featuredCafes = cafes
-    .filter(cafe => cafe.accepting_orders)
-    .sort((a, b) => (a.priority || 99) - (b.priority || 99))
-    .slice(0, 6);
+  // First, get the top 10 cafes by priority (regardless of open/closed status)
+  const top10Cafes = cafes.sort((a, b) => (a.priority || 99) - (b.priority || 99)).slice(0, 10);
+  
+  // Then reorder within those 10: open cafes first, then closed cafes
+  const openCafes = top10Cafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+  const closedCafes = top10Cafes.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+  const featuredCafes = [...openCafes, ...closedCafes];
 
   if (featuredCafes.length === 0) {
     return null;
@@ -51,6 +53,7 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
       'The Kitchen Curry': '/thekitchencurry_logo.png',
       'The Kitchen & Curry': '/thekitchencurry_logo.png',
       'Havmor': '/havmor_card.jpg',
+      'Pizza Bakers': '/pizz.png',
       'Stardom': '/stardom_card.webp',
       'STARDOM Café & Lounge': '/stardom_card.webp',
       'Waffle Fit & Fresh': '/wafflefitnfresh_card.jpeg',
@@ -117,14 +120,6 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/20" />
-              {cafe.average_rating && (
-                <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                  <span className="text-xs font-medium text-gray-800">
-                    {cafe.average_rating.toFixed(1)}
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Cafe Info */}
@@ -133,6 +128,30 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
                 <h4 className="font-bold text-gray-900 text-sm truncate">
                   {cafe.name}
                 </h4>
+                
+                {/* Discount Badges for Mobile Layout */}
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {/* Flat 10% Off Badge */}
+                  {(cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('taste of india')) && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm">
+                      Flat 10% Off
+                    </span>
+                  )}
+                  
+                  {/* Flat 5% Off Badge */}
+                  {(cafe.name.toLowerCase().includes('food court') || cafe.name === 'FOOD COURT') && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm">
+                      Flat 5% Off
+                    </span>
+                  )}
+                  
+                  {/* BOGO Offers Badge */}
+                  {(cafe.name.toLowerCase().includes('pizza bakers') || cafe.name === 'Pizza Bakers') && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-sm">
+                      🍕 BOGO Offers
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1 mb-3">
@@ -149,12 +168,16 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
               <Button
                 size="sm"
                 className={`w-full text-white text-xs font-medium ${
-                  cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house')
+                  cafe.name.toLowerCase().includes('chatkara')
+                    ? "bg-gray-500 hover:bg-gray-600"
+                    : cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india')
                     ? "bg-orange-600 hover:bg-orange-700"
                     : "bg-gray-500 hover:bg-gray-600"
                 }`}
               >
-                {cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house')
+                {cafe.name.toLowerCase().includes('chatkara')
+                  ? "Closed"
+                  : cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india')
                   ? "Order Now"
                   : "Coming Soon"
                 }

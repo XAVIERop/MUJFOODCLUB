@@ -7,11 +7,13 @@ import { FeaturedCafeGrid } from '../components/FeaturedCafeGrid';
 import CafeIconGrid from '../components/CafeIconGrid';
 import MobileLayoutWrapper from '../components/MobileLayoutWrapper';
 import MobileLayout from '../components/MobileLayout';
+import ActiveOrderStatusBar from '../components/ActiveOrderStatusBar';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useActiveOrder } from '@/hooks/useActiveOrder';
 import { Star } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
@@ -37,6 +39,9 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBlock, setSelectedBlock] = useState("B1");
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  
+  // Active order status
+  const { activeOrders } = useActiveOrder();
 
   useEffect(() => {
     fetchCafes();
@@ -114,11 +119,19 @@ const Index = () => {
       const cafesData = Array.isArray(data) ? data : [];
       
       if (cafesData.length > 0) {
-        // Show only first 6 cafes
-        const limitedCafes = cafesData.slice(0, 6);
-        setCafes(limitedCafes);
+        // First, get the top 10 cafes by priority (regardless of open/closed status)
+        const top10Cafes = cafesData.sort((a, b) => (a.priority || 99) - (b.priority || 99)).slice(0, 10);
+        
+        // Then reorder within those 10: open cafes first, then closed cafes
+        const openCafes = top10Cafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+        const closedCafes = top10Cafes.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+        
+        // Combine: open cafes first, then closed cafes (all within the top 10)
+        const reorderedCafes = [...openCafes, ...closedCafes];
+        
+        setCafes(reorderedCafes);
         setLastFetchTime(now);
-        console.log('✅ Homepage: Set cafes (limited to first 6):', limitedCafes.map(c => c.name));
+        console.log('✅ Homepage: Set cafes (top 10 by priority, reordered: open first, closed last):', reorderedCafes.map(c => `${c.name} (${c.accepting_orders ? 'OPEN' : 'CLOSED'})`));
       } else {
         console.warn('⚠️ Homepage: No cafes found');
         setCafes([]);
@@ -154,10 +167,10 @@ const Index = () => {
           <HeroBannerSection />
         </div>
         
-        {/* Cafe Categories */}
-        {!loading && cafes.length > 0 && (
+        {/* Cafe Categories - HIDDEN */}
+        {/* {!loading && cafes.length > 0 && (
           <CafeCategories cafes={cafes} />
-        )}
+        )} */}
         
         <main className="m-0 p-0">
           {/* Unified Cafe Section - Merged Icon Grid + Cafe Cards */}
@@ -170,16 +183,16 @@ const Index = () => {
                 </h2>
               </div>
 
-              {/* Cafe Icon Grid with Slide Buttons */}
-              {!loading && cafes.length > 0 && (
+              {/* Cafe Icon Grid with Slide Buttons - HIDDEN */}
+              {/* {!loading && cafes.length > 0 && (
                 <div className="mb-12">
                   <CafeIconGrid cafes={cafes} />
                 </div>
-              )}
+              )} */}
 
               {/* Limited Cafe Grid - Show 6 cafes */}
               <div className="cafe-grid">
-                <FeaturedCafeGrid showAll={false} maxCafes={6} cafes={cafes} loading={loading} />
+                <FeaturedCafeGrid showAll={false} maxCafes={10} cafes={cafes} loading={loading} />
               </div>
             </div>
           </section>
@@ -187,6 +200,9 @@ const Index = () => {
           {/* Rewards Section removed for simplified version */}
         </main>
       </div>
+      
+      {/* Active Order Status Bar - Only show if user has active orders */}
+      <ActiveOrderStatusBar activeOrders={activeOrders} />
     </MobileLayoutWrapper>
   );
 };

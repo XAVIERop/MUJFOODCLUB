@@ -8,7 +8,7 @@ interface AuthContextType {
   session: Session | null;
   profile: any | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, block: string, phone: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, block: string, phone: string, referralCode?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: any) => Promise<{ error: any }>;
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const createProfile = async (userId: string, email: string, fullName: string, block: string, phone: string) => {
+  const createProfile = async (userId: string, email: string, fullName: string, block: string, phone: string, referralCode?: string) => {
     try {
       // Extract name from email if fullName is not provided
       const displayName = fullName || email.split('@')[0];
@@ -72,6 +72,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         total_spent: 0,
         qr_code: qrCode
       });
+
+      // Process referral code if provided (OPTIONAL)
+      if (referralCode && typeof referralCode === 'string' && referralCode.trim()) {
+        try {
+          // Import referral service
+          const { referralService } = await import('@/services/referralService');
+
+          // Validate referral code
+          const validation = await referralService.validateReferralCode(referralCode);
+
+          if (validation.isValid) {
+            // Update user with referral code
+            await supabase
+              .from('profiles')
+              .update({
+                referral_code_used: referralCode.toUpperCase(),
+                referred_by: referralCode.toUpperCase()
+              })
+              .eq('id', userId);
+
+            // Track referral usage
+            await referralService.trackReferralUsage({
+              user_id: userId,
+              referral_code_used: referralCode.toUpperCase(),
+              usage_type: 'signup',
+              discount_applied: 5, // ₹5 for new signup (updated amount)
+              team_member_credit: 0 // No credit for signup, only for orders
+            });
+
+            console.log('Referral code processed successfully:', referralCode);
+          }
+        } catch (error) {
+          console.error('Error processing referral code:', error);
+          // Don't throw error - referral code is optional
+        }
+      }
     } catch (error) {
       console.error('Error creating profile:', error);
       throw error;
@@ -136,11 +172,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   );
 
-  const signUp = async (email: string, password: string, fullName: string, block: string, phone: string) => {
+  const signUp = async (email: string, password: string, fullName: string, block: string, phone: string, referralCode?: string) => {
     try {
       // Validate email domain
       if (!email.endsWith('@muj.manipal.edu')) {
         return { error: { message: 'Please use a valid MUJ email address (@muj.manipal.edu)' } };
+      }
+
+      // Ensure referralCode is properly handled (optional)
+      const cleanReferralCode = referralCode && referralCode.trim() ? referralCode.trim() : undefined;
+
+      // Check if user already exists in profiles table BEFORE attempting signup
+      const { data: existingProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('email', email)
+        .single();
+      
+      console.log('Checking existing profile:', { existingProfile, profileError });
+      
+      if (existingProfile) {
+        console.log('User already exists in profiles table');
+        return { 
+        error: { 
+          message: 'This email is already registered. Please try signing in instead.',
+          code: 'user_already_exists'
+        } 
+      };
       }
 
       const redirectUrl = `${window.location.origin}/auth`;
@@ -153,14 +211,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
-            block: block
+            block: block,
+            phone: phone
           }
         }
       });
       
+      console.log('Signup result:', { data, error });
+      console.log('Data user:', data?.user);
+      console.log('Data session:', data?.session);
+      
       if (error) {
-        // Handle specific error cases
-        if (error.code === 'user_already_exists') {
+        // Handle specific error cases - check both code and message
+        if (error.code === 'user_already_exists' || 
+            error.message?.includes('already registered') ||
+            error.message?.includes('already exists') ||
+            error.message?.includes('User already registered') ||
+            error.message?.includes('User already signed up') ||
+            error.message?.includes('already signed up')) {
           return { 
             error: { 
               message: 'This email is already registered. Please try signing in instead.',
@@ -168,12 +236,112 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } 
           };
         }
+        
+        // Log the error for debugging
+        console.error('Supabase signup error:', error);
         return { error };
       }
       
+      // Check if user is null (might happen for existing users)
+      if (!data.user && !error) {
+        console.log('No user returned but no error - might be existing user');
+        return { 
+          error: { 
+            message: 'This email is already registered. Please try signing in instead.',
+            code: 'user_already_exists'
+          } 
+        };
+      }
+      
       if (data.user && !error) {
-        // Create profile for student
-        await createProfile(data.user.id, email, fullName, block, phone);
+        // CRITICAL CHECK: If session is null, user already exists
+        if (!data.session) {
+          console.log('User already exists - session is null');
+          return { 
+            error: { 
+              message: 'This email is already registered. Please try signing in instead.',
+              code: 'user_already_exists'
+            } 
+          };
+        }
+        
+        // Double-check: Verify this is actually a new user
+        const { data: checkProfile, error: checkError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', email)
+          .single();
+        
+        console.log('Double-check profile:', { checkProfile, checkError });
+        
+        if (checkProfile) {
+          console.log('User already exists in profiles after signup - this is unexpected');
+          // User already exists in profiles, this shouldn't happen but handle it
+          return { 
+            error: { 
+              message: 'This email is already registered. Please try signing in instead.',
+              code: 'user_already_exists'
+            } 
+          };
+        }
+        
+        // Create profile for student (without referral processing yet)
+        console.log('Creating profile for new user:', data.user.id);
+        await createProfile(data.user.id, email, fullName, block, phone, cleanReferralCode);
+        console.log('Profile created successfully for:', email);
+        
+        // Final check: Make sure we actually created a new user
+        const { data: finalCheck } = await supabase
+          .from('profiles')
+          .select('id, email, created_at')
+          .eq('email', email)
+          .single();
+        
+        if (finalCheck) {
+          const createdAt = new Date(finalCheck.created_at);
+          const now = new Date();
+          const timeDiff = now.getTime() - createdAt.getTime();
+          
+          // If profile was created more than 1 minute ago, it's an existing user
+          if (timeDiff > 60000) {
+            console.log('Profile was created long ago - this is an existing user');
+            return { 
+              error: { 
+                message: 'This email is already registered. Please try signing in instead.',
+                code: 'user_already_exists'
+              } 
+            };
+          }
+        }
+        
+        // Store referral code in user metadata for processing after verification
+        if (cleanReferralCode) {
+          const { error: updateError } = await supabase.auth.updateUser({
+            data: {
+              full_name: fullName,
+              block: block,
+              phone: phone,
+              pending_referral_code: cleanReferralCode // Store for later processing
+            }
+          });
+          
+          if (updateError) {
+            console.error('Error updating user metadata:', updateError);
+          }
+        } else {
+          // Update user metadata without referral code
+          const { error: updateError } = await supabase.auth.updateUser({
+            data: {
+              full_name: fullName,
+              block: block,
+              phone: phone
+            }
+          });
+          
+          if (updateError) {
+            console.error('Error updating user metadata:', updateError);
+          }
+        }
         
         // User will receive confirmation email
         // They must click the link to verify before they can log in
@@ -251,6 +419,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) throw error;
       
+      // Update user metadata if phone number is being updated
+      if (updates.phone !== undefined) {
+        const { error: updateError } = await supabase.auth.updateUser({
+          data: {
+            full_name: updates.full_name || profile?.full_name,
+            block: updates.block || profile?.block,
+            phone: updates.phone
+          }
+        });
+        
+        if (updateError) {
+          console.error('Error updating user metadata:', updateError);
+        }
+      }
+      
       // Refresh profile data
       await fetchProfile(user.id);
       
@@ -294,12 +477,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error;
 
-      // If verification successful, create profile
+      // If verification successful, create profile and process referral code
       if (data.user) {
         const fullName = data.user.user_metadata?.full_name || email.split('@')[0];
         const block = data.user.user_metadata?.block || 'B1';
+        const phone = data.user.user_metadata?.phone || '';
+        const pendingReferralCode = data.user.user_metadata?.pending_referral_code;
         
-        await createProfile(data.user.id, email, fullName, block, '');
+        await createProfile(data.user.id, email, fullName, block, phone);
+        
+        // Process referral code only after email verification
+        if (pendingReferralCode) {
+          try {
+            const { referralService } = await import('@/services/referralService');
+            const validation = await referralService.validateReferralCode(pendingReferralCode);
+            
+            if (validation.isValid) {
+              // Update profile with referral code
+              await supabase
+                .from('profiles')
+                .update({
+                  referral_code_used: pendingReferralCode,
+                  referred_by: pendingReferralCode
+                })
+                .eq('id', data.user.id);
+              
+              // Track referral usage for signup
+              await referralService.trackReferralUsage({
+                user_id: data.user.id,
+                referral_code_used: pendingReferralCode,
+                usage_type: 'signup',
+                discount_applied: 0, // No discount for signup, only for orders
+                team_member_credit: 0.50 // ₹0.50 credit for team member
+              });
+              
+              console.log('Referral code processed after email verification:', pendingReferralCode);
+            }
+          } catch (error) {
+            console.error('Error processing referral code after verification:', error);
+            // Don't throw error - referral processing is optional
+          }
+          
+          // Clear pending referral code from metadata
+          await supabase.auth.updateUser({
+            data: {
+              pending_referral_code: null
+            }
+          });
+        }
       }
 
       return { error: null };

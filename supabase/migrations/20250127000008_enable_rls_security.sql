@@ -224,3 +224,5 @@ COMMENT ON POLICY "Users can view their own loyalty transactions" ON public.loya
 
 
 
+
+

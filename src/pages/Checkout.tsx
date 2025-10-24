@@ -8,17 +8,20 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, MapPin, Clock, Banknote, AlertCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Banknote, AlertCircle, Plus, Minus, Gift } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useCart } from '@/hooks/useCart';
 import { useLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/hooks/use-toast';
 import { ORDER_CONSTANTS } from '@/lib/constants';
-import { isDineInTakeawayAllowed, isDeliveryAllowed, getDineInTakeawayMessage } from '@/utils/timeRestrictions';
+import { isDineInTakeawayAllowed, isDeliveryAllowed, getDineInTakeawayMessage, getDeliveryMessage } from '@/utils/timeRestrictions';
 import { generateDailyOrderNumber } from '@/utils/orderNumberGenerator';
 import { getCafeTableOptions } from '@/utils/tableMapping';
 import { WhatsAppService } from '@/services/whatsappService';
 import Header from '@/components/Header';
+import ReferralCodeInput from '@/components/ReferralCodeInput';
+import { ReferralValidation } from '@/services/referralService';
 
 // Helper function to get dropdown options based on order type and cafe
 const getLocationOptions = (orderType: string, cafeName: string) => {
@@ -93,17 +96,15 @@ const Checkout = () => {
   const navigate = useNavigate();
   const location = useRouterLocation();
   const { user, profile, refreshProfile } = useAuth();
+  const { cart, cafe, getTotalAmount, addToCart, removeFromCart } = useCart();
   const { selectedBlock } = useLocation();
   const { toast } = useToast();
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
-  
-  // Get cart data from navigation state
-  const cart: {[key: string]: CartItem} = location.state?.cart || {};
-  const cafe: Cafe = location.state?.cafe;
-  const totalAmount: number = location.state?.totalAmount || 0;
+  // Calculate total amount from global cart
+  const totalAmount = getTotalAmount();
 
   // Form states
   const [deliveryDetails, setDeliveryDetails] = useState({
@@ -124,7 +125,20 @@ const Checkout = () => {
   
   // MUJ FOOD CLUB discount
   const [discountAmount, setDiscountAmount] = useState(0);
-  const isEligibleForDiscount = cafe?.name === 'CHATKARA' || cafe?.name === 'COOK HOUSE';
+  const isEligibleForDiscount = cafe?.name === 'CHATKARA' || cafe?.name === 'COOK HOUSE' || 
+                                cafe?.name?.toLowerCase().includes('mini meals') || 
+                                cafe?.name === 'MINI MEALS' ||
+                                cafe?.name?.toLowerCase().includes('taste of india') ||
+                                cafe?.name?.toLowerCase().includes('food court') || 
+                                cafe?.name === 'FOOD COURT';
+
+  // Referral system states
+  const [referralCode, setReferralCode] = useState('');
+  const [referralDiscount, setReferralDiscount] = useState(0);
+  const [referralValidation, setReferralValidation] = useState<ReferralValidation | null>(null);
+  
+  // Check if user is verified (email confirmed)
+  const isUserVerified = user?.email_confirmed_at !== null;
 
   // Minimum order amount validation
   const isMinimumOrderMet = totalAmount >= ORDER_CONSTANTS.MINIMUM_ORDER_AMOUNT;
@@ -140,7 +154,7 @@ const Checkout = () => {
       navigate('/cafes');
       return;
     }
-  }, [cart, cafe, navigate]);
+  }, [cart, cafe, navigate, totalAmount]);
 
   // Update phone number when profile changes
   useEffect(() => {
@@ -154,18 +168,68 @@ const Checkout = () => {
     const subtotal = totalAmount;
     const deliveryCharge = deliveryDetails.orderType === 'delivery' ? ORDER_CONSTANTS.DELIVERY_CHARGE : 0;
     
-    // Calculate MUJ FOOD CLUB discount (10% on subtotal)
-    const discount = isEligibleForDiscount ? subtotal * 0.10 : 0;
+    // Calculate MUJ FOOD CLUB discount (different rates for different cafes and order types)
+    let discountRate = 0;
+    if (cafe?.name === 'CHATKARA') {
+      discountRate = 0.10; // 10% for Chatkara (all order types)
+    } else if (cafe?.name === 'COOK HOUSE') {
+      // Cook House: Different rates based on order type
+      if (deliveryDetails.orderType === 'delivery') {
+        discountRate = 0.10; // 10% for delivery
+      } else if (deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') {
+        discountRate = 0.05; // 5% for dine-in and takeaway
+      }
+    } else if (cafe?.name?.toLowerCase().includes('mini meals') || cafe?.name === 'MINI MEALS') {
+      discountRate = 0.10; // 10% for Mini Meals
+    } else if (cafe?.name?.toLowerCase().includes('taste of india')) {
+      discountRate = 0.10; // 10% for Taste of India
+    } else if (cafe?.name?.toLowerCase().includes('food court') || cafe?.name === 'FOOD COURT') {
+      discountRate = 0.05; // 5% for Food Court
+    }
+    const discount = isEligibleForDiscount ? subtotal * discountRate : 0;
     
-    // No CGST/SGST for Chatkara orders
-    const finalAmountWithDelivery = subtotal + deliveryCharge - discount;
+    // Check if this is Food Court, Pizza Bakers, or Taste of India order for GST calculation
+    const isFoodCourt = cafe?.name?.toLowerCase().includes('food court') || 
+                       cafe?.name === 'FOOD COURT' ||
+                       cafe?.name?.toLowerCase() === 'food court';
     
-    setCgst(0);
-    setSgst(0);
+    const isPizzaBakers = cafe?.name?.toLowerCase().includes('pizza bakers') || 
+                         cafe?.name?.toLowerCase().includes('crazy chef');
+    
+    const isTasteOfIndia = cafe?.name?.toLowerCase().includes('taste of india') || 
+                          cafe?.name === 'TASTE OF INDIA';
+    
+    
+    // Calculate GST for Food Court, Pizza Bakers, and Taste of India orders
+    let cgstAmount = 0;
+    let sgstAmount = 0;
+    
+    if (isFoodCourt || isPizzaBakers || isTasteOfIndia) {
+      // GST is calculated on subtotal (before discount and delivery)
+      cgstAmount = subtotal * 0.025; // 2.5% CGST
+      sgstAmount = subtotal * 0.025; // 2.5% SGST
+    }
+    
+    const finalAmountWithDelivery = subtotal + cgstAmount + sgstAmount + deliveryCharge - discount - referralDiscount;
+    
+    setCgst(cgstAmount);
+    setSgst(sgstAmount);
     setDeliveryFee(deliveryCharge);
     setDiscountAmount(discount);
     setFinalAmount(Math.max(0, finalAmountWithDelivery));
-  }, [totalAmount, deliveryDetails.orderType, isEligibleForDiscount]);
+  }, [totalAmount, deliveryDetails.orderType, isEligibleForDiscount, cafe?.name, referralDiscount]);
+
+  // Handle referral code validation
+  const handleReferralValidation = async (validation: ReferralValidation | null) => {
+    setReferralValidation(validation);
+
+    // Only allow referral discount for verified users
+    if (validation?.isValid && isUserVerified) {
+      setReferralDiscount(5); // Apply ₹5 referral discount
+    } else {
+      setReferralDiscount(0);
+    }
+  };
 
   const handlePlaceOrder = async () => {
     if (!user || !profile) {
@@ -176,6 +240,25 @@ const Checkout = () => {
     // Check if cafe is accepting orders from database
     if (!cafe.accepting_orders) {
       setError('This cafe is temporarily not accepting orders. They will resume service in the next 2 days.');
+      return;
+    }
+
+    // Check if the selected order type is currently available
+    if (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) {
+      toast({
+        title: "Delivery Unavailable",
+        description: getDeliveryMessage(cafe?.name),
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed()) {
+      toast({
+        title: "Dine-in/Takeaway Unavailable", 
+        description: getDineInTakeawayMessage(),
+        variant: "destructive"
+      });
       return;
     }
 
@@ -266,7 +349,10 @@ const Checkout = () => {
           customer_name: profile?.full_name || '',
           points_earned: 0, // No points in simplified version
           status: 'received',
-          estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString()
+          estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+          referral_code_used: referralCode || null,
+          discount_amount: referralDiscount,
+          team_member_credit: referralValidation?.isValid ? 0.50 : 0 // ₹0.50 per order for team member
         })
         .select(`
           id,
@@ -305,6 +391,27 @@ const Checkout = () => {
       if (itemsError) {
         console.error('Order items creation error:', itemsError);
         throw itemsError;
+      }
+
+      // Track referral usage if referral code was used
+      if (referralCode && referralValidation?.isValid) {
+        try {
+          const { referralService } = await import('@/services/referralService');
+
+          await referralService.trackReferralUsage({
+            user_id: user.id,
+            referral_code_used: referralCode,
+            usage_type: 'checkout',
+            order_id: order.id,
+            discount_applied: referralDiscount,
+            team_member_credit: 0.50 // ₹0.50 per order for team member
+          });
+
+          console.log('Referral usage tracked successfully:', referralCode);
+        } catch (error) {
+          console.error('Error tracking referral usage:', error);
+          // Don't throw error - referral tracking is optional
+        }
       }
 
       toast({
@@ -403,11 +510,11 @@ const Checkout = () => {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate(`/menu/${cafe?.slug || cafe?.id}`)}
               className="mr-4"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              Back to Menu
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Checkout</h1>
@@ -437,12 +544,12 @@ const Checkout = () => {
                           value="delivery"
                           checked={deliveryDetails.orderType === 'delivery'}
                           onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
-                          disabled={!isDeliveryAllowed()}
+                          disabled={!isDeliveryAllowed(cafe?.name)}
                         />
                         <Label htmlFor="delivery" className="flex items-center">
                           <MapPin className="w-4 h-4 mr-2" />
                           Delivery
-                          {!isDeliveryAllowed() && (
+                          {!isDeliveryAllowed(cafe?.name) && (
                             <Badge variant="secondary" className="ml-2">Not Available</Badge>
                           )}
                         </Label>
@@ -487,7 +594,16 @@ const Checkout = () => {
                       </div>
                         </div>
                     
-                    {!isDeliveryAllowed() && !isDineInTakeawayAllowed() && (
+                    {!isDeliveryAllowed(cafe?.name) && (
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          {getDeliveryMessage(cafe?.name)}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    {!isDineInTakeawayAllowed() && (
                       <Alert>
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
@@ -567,9 +683,46 @@ const Checkout = () => {
                         rows={3}
                       />
                     </div>
+
                   </CardContent>
                 </Card>
                   )}
+
+              {/* Referral Code Input - Always Visible */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Gift className="w-5 h-5 mr-2" />
+                    Referral Code
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="referral-code" className="text-sm font-medium text-gray-700">
+                      Referral Code (Optional)
+                    </Label>
+                    <ReferralCodeInput
+                      value={referralCode}
+                      onChange={setReferralCode}
+                      onValidation={handleReferralValidation}
+                      placeholder="Enter referral code (e.g., TEAM123)"
+                      className="w-full"
+                    />
+                    {referralValidation?.isValid && (
+                      <div className="text-sm text-green-600 flex items-center gap-1">
+                        <span>✅</span>
+                        Valid code! You'll get ₹5 off your order
+                      </div>
+                    )}
+                    {!isUserVerified && referralCode && (
+                      <div className="text-sm text-orange-600 flex items-center gap-1">
+                        <span>⚠️</span>
+                        Please verify your email to use referral codes
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
 
               {/* Payment Method */}
@@ -598,6 +751,7 @@ const Checkout = () => {
               </Card>
             </div>
 
+
             {/* Order Summary */}
             <div className="space-y-6">
               <Card>
@@ -607,18 +761,64 @@ const Checkout = () => {
                 <CardContent className="space-y-4">
                   {/* Order Items */}
                   <div className="space-y-3">
-                    {Object.values(cart).map((cartItem) => (
-                      <div key={cartItem.item.id} className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <p className="font-medium">{cartItem.item.name}</p>
-                          <p className="text-sm text-muted-foreground">Qty: {cartItem.quantity}</p>
-                          {cartItem.notes && (
-                            <p className="text-xs text-muted-foreground">Note: {cartItem.notes}</p>
-                          )}
-                        </div>
-                        <p className="font-medium">₹{cartItem.item.price * cartItem.quantity}</p>
-                      </div>
-                    ))}
+                    {Object.values(cart).map((cartItem) => {
+                      const isFreeBogoItem = cartItem.item.name.startsWith('FREE ') && cartItem.item.price === 0;
+                      
+                      return (
+           <div 
+             key={cartItem.item.id} 
+             className={`flex justify-between items-start p-3 rounded-lg border ${
+               isFreeBogoItem 
+                 ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 shadow-sm' 
+                 : 'bg-gray-50 border-gray-200'
+             }`}
+           >
+             <div className="flex-1">
+               <div className="flex items-center gap-2">
+                 <p className={`font-medium ${isFreeBogoItem ? 'text-green-800' : 'text-gray-900'}`}>
+                   {cartItem.item.name}
+                 </p>
+                 {/* Removed FREE BOGO Badge */}
+               </div>
+               <div className="flex items-center gap-2 mt-1">
+                 <p className="text-sm text-muted-foreground">Qty:</p>
+                 <div className="flex items-center gap-1">
+                   <Button
+                     size="sm"
+                     variant="outline"
+                     className="h-6 w-6 p-0"
+                     onClick={() => removeFromCart(cartItem.item.id)}
+                   >
+                     <Minus className="h-3 w-3" />
+                   </Button>
+                   <span className="text-sm font-medium min-w-[20px] text-center">
+                     {cartItem.quantity}
+                   </span>
+                   <Button
+                     size="sm"
+                     variant="outline"
+                     className="h-6 w-6 p-0"
+                     onClick={() => addToCart(cartItem.item, 1, cartItem.notes)}
+                   >
+                     <Plus className="h-3 w-3" />
+                   </Button>
+                 </div>
+               </div>
+               {cartItem.notes && (
+                 <p className="text-xs text-muted-foreground mt-1">Note: {cartItem.notes}</p>
+               )}
+             </div>
+             <div className="text-right">
+               <p className={`font-medium ${isFreeBogoItem ? 'text-green-600' : 'text-gray-900'}`}>
+                 {isFreeBogoItem ? 'FREE' : `₹${(cartItem.item.price * cartItem.quantity).toFixed(2)}`}
+               </p>
+               {!isFreeBogoItem && (
+                 <p className="text-xs text-muted-foreground">₹{cartItem.item.price} each</p>
+               )}
+             </div>
+           </div>
+                      );
+                    })}
                   </div>
 
                   <div className="border-t pt-4 space-y-2">
@@ -626,6 +826,30 @@ const Checkout = () => {
                       <span>Subtotal</span>
                       <span>₹{totalAmount}</span>
                     </div>
+                    
+                    {/* CGST and SGST for Food Court, Pizza Bakers, and Taste of India orders */}
+                    {((cafe?.name?.toLowerCase().includes('food court') || 
+                      cafe?.name === 'FOOD COURT' ||
+                      cafe?.name?.toLowerCase() === 'food court') ||
+                      cafe?.name?.toLowerCase().includes('pizza bakers') ||
+                      cafe?.name?.toLowerCase().includes('crazy chef') ||
+                      cafe?.name?.toLowerCase().includes('taste of india') ||
+                      cafe?.name === 'TASTE OF INDIA') && (
+                      <>
+                        {cgst > 0 && (
+                          <div className="flex justify-between items-center text-black">
+                            <span>CGST @2.5%</span>
+                            <span>+₹{cgst.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {sgst > 0 && (
+                          <div className="flex justify-between items-center text-black">
+                            <span>SGST @2.5%</span>
+                            <span>+₹{sgst.toFixed(2)}</span>
+                          </div>
+                        )}
+                      </>
+                    )}
                     
                     {deliveryDetails.orderType === 'delivery' && (
                       <div className="flex justify-between items-center text-black">
@@ -637,8 +861,20 @@ const Checkout = () => {
                     {/* MUJ FOOD CLUB Discount */}
                     {isEligibleForDiscount && discountAmount > 0 && (
                       <div className="flex justify-between items-center text-green-600">
-                        <span className="font-bold">MUJ FOOD CLUB DISCOUNT (10%)</span>
+                        <span className="font-bold">
+                          MUJ FOOD CLUB DISCOUNT ({cafe?.name?.toLowerCase().includes('food court') || cafe?.name === 'FOOD COURT' ? '5%' : 
+                            cafe?.name === 'COOK HOUSE' ? (deliveryDetails.orderType === 'delivery' ? '10%' : '5%') : 
+                            cafe?.name?.toLowerCase().includes('taste of india') ? '10%' : '10%'})
+                        </span>
                         <span className="font-bold">-₹{discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Referral Discount Display */}
+                    {referralDiscount > 0 && (
+                      <div className="flex justify-between items-center text-green-600">
+                        <span className="font-bold">Referral Discount</span>
+                        <span className="font-bold">-₹{referralDiscount.toFixed(2)}</span>
                       </div>
                     )}
                     
@@ -684,13 +920,18 @@ const Checkout = () => {
                   {/* Place Order Button */}
               <Button 
                 onClick={handlePlaceOrder}
-                    disabled={isLoading || !isMinimumOrderMet}
+                disabled={isLoading || !isMinimumOrderMet || 
+                  (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) ||
+                  ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed())
+                }
                 className="w-full"
                 size="lg"
                 variant="hero"
               >
                     {isLoading ? 'Placing Order...' :
                      !isMinimumOrderMet ? `Minimum Order ₹${ORDER_CONSTANTS.MINIMUM_ORDER_AMOUNT} Required` :
+                     (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) ? 'Delivery Unavailable' :
+                     ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed()) ? 'Dine-in/Takeaway Unavailable' :
                      `Place Order - ₹${finalAmount.toFixed(2)}`}
               </Button>
 

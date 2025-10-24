@@ -20,7 +20,19 @@ export interface CafeStaff {
 }
 
 export const useCafeStaff = (cafeId?: string) => {
-  const { user, profile } = useAuth();
+  // Safely get user and profile from auth context
+  let user = null;
+  let profile = null;
+  try {
+    const auth = useAuth();
+    user = auth?.user || null;
+    profile = auth?.profile || null;
+  } catch (error) {
+    // AuthProvider not ready yet, user and profile will be null
+    user = null;
+    profile = null;
+  }
+  
   const [staff, setStaff] = useState<CafeStaff[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

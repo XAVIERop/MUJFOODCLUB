@@ -460,3 +460,5 @@ COMMENT ON POLICY "loyalty_transactions_insert_optimized" ON public.loyalty_tran
 
 
 
+
+

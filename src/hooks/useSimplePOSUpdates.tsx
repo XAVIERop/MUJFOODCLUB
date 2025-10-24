@@ -56,13 +56,19 @@ export const useSimplePOSUpdates = ({
           const orderTime = latestOrder.created_at;
           
           if (lastOrderTime && orderTime > lastOrderTime) {
-            setLastOrderTime(orderTime);
-            onNewOrder?.(latestOrder);
-            
-            toast({
-              title: "New Order!",
-              description: `Order #${latestOrder.order_number} received`,
-            });
+            // Additional check: Only trigger for orders in 'received' status
+            if (latestOrder.status === 'received') {
+              setLastOrderTime(orderTime);
+              onNewOrder?.(latestOrder);
+              
+              toast({
+                title: "New Order!",
+                description: `Order #${latestOrder.order_number} received`,
+              });
+            } else {
+              // Still update the time to prevent re-triggering
+              setLastOrderTime(orderTime);
+            }
           } else if (!lastOrderTime) {
             // First time, just set the baseline
             setLastOrderTime(orderTime);

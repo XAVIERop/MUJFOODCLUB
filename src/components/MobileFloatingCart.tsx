@@ -14,23 +14,17 @@ const MobileFloatingCart: React.FC = () => {
   if (itemCount === 0 || (!location.pathname.startsWith('/menu/') && !location.pathname.startsWith('/grocery'))) return null;
 
   const handleViewCart = () => {
-    // Navigate to checkout with cart data, just like desktop
+    // Navigate to checkout - cart data will come from global context
     if (!cafe) {
       console.error('No cafe data available for checkout');
       return;
     }
     
-    navigate('/checkout', {
-      state: {
-        cart,
-        cafe,
-        totalAmount
-      }
-    });
+    navigate('/checkout');
   };
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 bg-green-600 text-white p-3 rounded-lg shadow-lg z-[60]">
+    <div className="fixed bottom-20 left-4 right-4 bg-green-600 text-white p-3 rounded-lg shadow-lg z-[60] block lg:hidden">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <span className="font-medium text-sm">

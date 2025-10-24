@@ -6,6 +6,7 @@ import { useCart } from '@/hooks/useCart';
 import { supabase } from '@/integrations/supabase/client';
 import ModernMenuLayout from '@/components/ModernMenuLayout';
 import Header from '@/components/Header';
+import { CafeSwitchDialog } from '@/components/CafeSwitchDialog';
 
 interface MenuItem {
   id: string;
@@ -73,21 +74,24 @@ const MenuModern = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [groupedMenuItems, setGroupedMenuItems] = useState<GroupedMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cart, setCart] = useState<{[key: string]: CartItem}>({});
-  const { setCart: setGlobalCart, setCafe: setGlobalCafe } = useCart();
+  const { cart, setCart, setCafe: setGlobalCafe, clearCart, setMenuItems: setGlobalMenuItems, addToCart: addToGlobalCart, removeFromCart: removeFromGlobalCart, getTotalAmount: getGlobalTotalAmount, getItemCount: getGlobalItemCount } = useCart();
   
-  // Sync local cart and cafe with global cart context
-  useEffect(() => {
-    setGlobalCart(cart);
-  }, [cart, setGlobalCart]);
+  // Dialog state
+  const [showCafeSwitchDialog, setShowCafeSwitchDialog] = useState(false);
+  const [pendingItem, setPendingItem] = useState<{item: GroupedMenuItem, selectedPortion?: string} | null>(null);
   
   useEffect(() => {
     setGlobalCafe(cafe);
   }, [cafe, setGlobalCafe]);
+
+  useEffect(() => {
+    setGlobalMenuItems(menuItems);
+  }, [menuItems, setGlobalMenuItems]);
   
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedBrand, setSelectedBrand] = useState('all');
 
   // Helper function to determine if identifier is UUID or slug
   const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
@@ -175,6 +179,18 @@ const MenuModern = () => {
         baseName = item.name.replace(' (Fried)', '');
         portionType = 'Fried';
         hasVariant = true;
+      } else if (item.name.includes(' (Regular 7")')) {
+        baseName = item.name.replace(' (Regular 7")', '');
+        portionType = 'Regular';
+        hasVariant = true;
+      } else if (item.name.includes(' (Medium 10")')) {
+        baseName = item.name.replace(' (Medium 10")', '');
+        portionType = 'Medium';
+        hasVariant = true;
+      } else if (item.name.includes(' (Large 12")')) {
+        baseName = item.name.replace(' (Large 12")', '');
+        portionType = 'Large';
+        hasVariant = true;
       }
       
       // Only group items that have variants, otherwise treat as individual items
@@ -201,11 +217,11 @@ const MenuModern = () => {
       return acc;
     }, {} as {[key: string]: GroupedMenuItem});
     
-    // Sort portions by price (Half first, then Full, then Veg, then Non-veg, then Chicken, then Mutton, then Regular, then Medium, then Dry, then Gravy)
+    // Sort portions by price (Half first, then Full, then Veg, then Non-veg, then Chicken, then Mutton, then Regular, then Medium, then Large, then Dry, then Gravy)
     Object.values(grouped).forEach(item => {
       item.portions.sort((a, b) => {
         // First sort by type priority, then by price
-        const typeOrder = { 'Half': 1, 'Full': 2, 'Veg': 3, 'Non-veg': 4, 'Chicken': 5, 'Mutton': 6, 'Regular': 7, 'Medium': 8, 'Dry': 9, 'Gravy': 10, 'Plain': 11, 'Butter': 12, 'Roasted': 13, 'Fried': 14 };
+        const typeOrder = { 'Half': 1, 'Full': 2, 'Veg': 3, 'Non-veg': 4, 'Chicken': 5, 'Mutton': 6, 'Regular': 7, 'Medium': 8, 'Large': 9, 'Dry': 10, 'Gravy': 11, 'Plain': 12, 'Butter': 13, 'Roasted': 14, 'Fried': 15 };
         const aOrder = typeOrder[a.name as keyof typeof typeOrder] || 15;
         const bOrder = typeOrder[b.name as keyof typeof typeOrder] || 15;
         
@@ -250,12 +266,11 @@ const MenuModern = () => {
         
         setCafe(cafeData);
 
-        // Fetch menu items
+        // Fetch menu items (including out-of-stock items)
         const { data: menuData, error: menuError } = await supabase
           .from('menu_items')
           .select('*')
           .eq('cafe_id', cafeId)
-          .eq('is_available', true)
           .order('category', { ascending: true });
 
         if (menuError) {
@@ -264,6 +279,18 @@ const MenuModern = () => {
         }
         
         setMenuItems(menuData || []);
+        
+        // Debug logging for out-of-stock items
+        const outOfStockItems = menuData?.filter(item => item.out_of_stock === true) || [];
+        if (outOfStockItems.length > 0) {
+          console.log('🔍 Found out-of-stock items in database:', outOfStockItems.map(item => ({
+            name: item.name,
+            out_of_stock: item.out_of_stock,
+            is_available: item.is_available
+          })));
+        } else {
+          console.log('✅ No out-of-stock items found in database');
+        }
         
         // Group menu items by name and portion
         const grouped = groupMenuItems(menuData || []);
@@ -286,76 +313,142 @@ const MenuModern = () => {
     }
   }, [cafeIdentifier, navigate, toast]);
 
+  // Helper function to check if cart has items from different cafe
+  const hasItemsFromDifferentCafe = (currentCafeId: string) => {
+    return Object.values(cart).some(cartItem => 
+      cartItem.item.cafe_id && cartItem.item.cafe_id !== currentCafeId
+    );
+  };
+
+  // Helper function to get current cafe name from cart
+  const getCurrentCafeName = () => {
+    const cartItems = Object.values(cart);
+    if (cartItems.length === 0) return '';
+    
+    // Get the first item's cafe name (assuming all items are from same cafe)
+    const firstItem = cartItems[0];
+    return firstItem.item.cafe_name || 'Previous Cafe';
+  };
+
+  // Helper function to get cart's cafe ID
+  const getCartCafeId = () => {
+    const cartItems = Object.values(cart);
+    if (cartItems.length === 0) return null;
+    
+    // Get the first item's cafe ID (assuming all items are from same cafe)
+    const firstItem = cartItems[0];
+    return firstItem.item.cafe_id || null;
+  };
+
+  // Helper function to get cart's cafe name
+  const getCartCafeName = () => {
+    const cartItems = Object.values(cart);
+    if (cartItems.length === 0) return '';
+    
+    // Get the first item's cafe name (assuming all items are from same cafe)
+    const firstItem = cartItems[0];
+    return firstItem.item.cafe_name || '';
+  };
+
   // Cart functions
   const addToCart = (item: GroupedMenuItem, selectedPortion?: string) => {
     const portionId = selectedPortion || item.portions[0]?.id;
-    if (!portionId) return;
+    if (!portionId || !cafe) return;
 
-    const cartKey = portionId;
-    const existingItem = cart[cartKey];
-    
-    if (existingItem) {
-      setCart(prev => ({
-        ...prev,
-        [cartKey]: {
-          ...prev[cartKey],
-          quantity: prev[cartKey].quantity + 1
-        }
-      }));
-    } else {
-      const portion = item.portions.find(p => p.id === portionId);
-      if (!portion) return;
-
-      setCart(prev => ({
-        ...prev,
-        [cartKey]: {
-          item: {
-            id: portion.id,
-            name: item.baseName,
-            description: item.description,
-            price: portion.price,
-            category: item.category,
-            preparation_time: item.preparation_time,
-            is_available: portion.is_available
-          },
-          selectedPortion: portionId,
-          quantity: 1,
-          notes: ''
-        }
-      }));
+    // Check if cart has items from different cafe
+    if (hasItemsFromDifferentCafe(cafe.id)) {
+      console.log('🔄 Cafe mismatch detected, showing dialog');
+      setPendingItem({ item, selectedPortion });
+      setShowCafeSwitchDialog(true);
+      return;
     }
+
+    // Proceed with normal add to cart
+    addItemToCart(item, selectedPortion);
+  };
+
+  // Function to actually add item to cart
+  const addItemToCart = (item: GroupedMenuItem, selectedPortion?: string) => {
+    const portionId = selectedPortion || item.portions[0]?.id;
+    if (!portionId || !cafe) return;
+
+    console.log('🛒 Adding to cart:', {
+      itemName: item.baseName,
+      cafeName: cafe.name,
+      cafeId: cafe.id,
+      portionId
+    });
+
+    const portion = item.portions.find(p => p.id === portionId);
+    if (!portion) return;
+
+    // Create the menu item object for the global cart
+    // Use the portion name to determine the full pizza name with size
+    let fullName = item.baseName;
+    if (portion.name === 'Regular') {
+      fullName = `${item.baseName} (Regular 7")`;
+    } else if (portion.name === 'Medium') {
+      fullName = `${item.baseName} (Medium 10")`;
+    } else if (portion.name === 'Large') {
+      fullName = `${item.baseName} (Large 12")`;
+    }
+
+    const menuItem = {
+      id: portion.id,
+      name: fullName,
+      description: item.description,
+      price: portion.price,
+      category: item.category,
+      preparation_time: item.preparation_time,
+      is_available: portion.is_available,
+      cafe_id: cafe.id,
+      cafe_name: cafe.name
+    };
+
+    // Use the global cart context which includes BOGO logic
+    addToGlobalCart(menuItem, 1, '');
+  };
+
+  // Handle dialog confirmation
+  const handleDialogConfirm = () => {
+    if (pendingItem) {
+      // Clear cart and add new item
+      clearCart();
+      // Add the pending item after clearing
+      setTimeout(() => {
+        addItemToCart(pendingItem.item, pendingItem.selectedPortion);
+      }, 100);
+    }
+    setShowCafeSwitchDialog(false);
+    setPendingItem(null);
+  };
+
+  // Handle dialog cancellation
+  const handleDialogCancel = () => {
+    setShowCafeSwitchDialog(false);
+    setPendingItem(null);
   };
 
   const removeFromCart = (cartItem: CartItem) => {
-    const cartKey = cartItem.selectedPortion;
-    setCart(prev => {
-      const newCart = { ...prev };
-      if (newCart[cartKey]) {
-        if (newCart[cartKey].quantity > 1) {
-          newCart[cartKey].quantity -= 1;
-        } else {
-          delete newCart[cartKey];
-        }
-      }
-      return newCart;
-    });
+    // Extract the item ID from the cart item
+    const itemId = cartItem.item.id;
+    // Use the global cart context which includes BOGO logic
+    removeFromGlobalCart(itemId);
   };
 
   const getTotalAmount = () => {
-    return Object.values(cart).reduce((total, cartItem) => {
-      return total + cartItem.item.price * cartItem.quantity;
-    }, 0);
+    return getGlobalTotalAmount();
   };
 
   const getCartItemCount = () => {
-    return Object.values(cart).reduce((total, cartItem) => total + cartItem.quantity, 0);
+    return getGlobalItemCount();
   };
 
   const getCartQuantity = (itemId: string) => {
     return cart[itemId]?.quantity || 0;
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!user) {
       navigate('/auth');
       return;
@@ -370,18 +463,85 @@ const MenuModern = () => {
       return;
     }
 
-    navigate('/checkout', { 
-      state: { 
-        cart, 
-        cafe, 
-        totalAmount: getTotalAmount() 
-      } 
-    });
+    // Get the cafe that the cart items belong to
+    const cartCafeId = getCartCafeId();
+    const cartCafeName = getCartCafeName();
+    
+    if (!cartCafeId) {
+      toast({
+        title: "Invalid Cart",
+        description: "Cart items don't have valid cafe information",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log('🛒 Checkout - Cart belongs to cafe:', cartCafeName, 'ID:', cartCafeId);
+    console.log('🛒 Checkout - Current page cafe:', cafe?.name, 'ID:', cafe?.id);
+
+    // If cart belongs to different cafe than current page, fetch that cafe's data
+    if (cartCafeId !== cafe?.id) {
+      try {
+        console.log('🔄 Checkout - Fetching cart cafe data...');
+        const { data: cartCafeData, error: cartCafeError } = await supabase
+          .from('cafes')
+          .select('*')
+          .eq('id', cartCafeId)
+          .single();
+
+        if (cartCafeError || !cartCafeData) {
+          toast({
+            title: "Cafe Not Found",
+            description: "The cafe for your cart items could not be found",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Set the cart's cafe as the global cafe context
+        console.log('✅ Checkout - Setting global cafe to cart cafe:', cartCafeData.name);
+        setGlobalCafe(cartCafeData);
+        
+        // Small delay to ensure context is updated
+        setTimeout(() => {
+          navigate('/checkout');
+        }, 100);
+      } catch (error) {
+        console.error('Error fetching cart cafe:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load cafe information",
+          variant: "destructive"
+        });
+        return;
+      }
+    } else {
+      // Cart belongs to current cafe, proceed normally
+      console.log('✅ Checkout - Cart belongs to current cafe, proceeding normally');
+      navigate('/checkout');
+    }
   };
 
-  // Filter menu items based on search and category
+  // Filter menu items based on search, category, and brand
   const getFilteredMenuItems = () => {
     let filtered = groupedMenuItems;
+    
+    // Apply brand filter (only for Food Court)
+    if (selectedBrand !== 'all' && cafe?.name === 'FOOD COURT') {
+      filtered = filtered.filter(item => {
+        const category = item.category;
+        if (selectedBrand === 'gobblers') {
+          return category.startsWith('GOBBLERS');
+        } else if (selectedBrand === 'krispp') {
+          return category.startsWith('KRISPP');
+        } else if (selectedBrand === 'momo-street') {
+          return category.startsWith('MOMO STREET');
+        } else if (selectedBrand === 'waffles-more') {
+          return category.startsWith('WAFFLES');
+        }
+        return true;
+      });
+    }
     
     // Apply veg/non-veg filter
     if (selectedCategory === 'veg') {
@@ -390,10 +550,8 @@ const MenuModern = () => {
       filtered = filtered.filter(item => item.is_vegetarian === false);
     }
     
-    // Apply menu category filter (use selectedCategory for menu categories too)
-    if (selectedCategory !== 'all' && selectedCategory !== 'veg' && selectedCategory !== 'non-veg') {
-      filtered = filtered.filter(item => item.category === selectedCategory);
-    }
+    // REMOVED: Menu category filtering - now we show all categories and scroll to selected one
+    // The scroll behavior is handled in MenuCategorySections component
     
     // Apply search filter
     if (searchQuery.trim()) {
@@ -408,8 +566,8 @@ const MenuModern = () => {
     return filtered;
   };
 
-  // Get categories for filter
-  const categories = ['all', 'veg', 'non-veg', ...Array.from(new Set(groupedMenuItems.map(item => item.category)))];
+  // Get categories for filter (use original menuItems, not filtered groupedMenuItems)
+  const categories = ['all', 'veg', 'non-veg', ...Array.from(new Set(menuItems.map(item => item.category)))];
 
   // Loading state
   if (loading) {
@@ -463,6 +621,8 @@ const MenuModern = () => {
         categories={categories}
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
+        selectedBrand={selectedBrand}
+        onBrandChange={setSelectedBrand}
         menuItems={getFilteredMenuItems()}
         onAddToCart={addToCart}
         onRemoveFromCart={removeFromCart}
@@ -473,8 +633,19 @@ const MenuModern = () => {
         onCheckout={handleCheckout}
         cafe={cafe}
       />
+      
+      {/* Cafe Switch Dialog */}
+      <CafeSwitchDialog
+        isOpen={showCafeSwitchDialog}
+        onClose={handleDialogCancel}
+        onConfirm={handleDialogConfirm}
+        currentCafeName={getCurrentCafeName()}
+        newCafeName={cafe?.name || ''}
+        currentCartItems={Object.keys(cart).length}
+      />
     </div>
   );
 };
 
 export default MenuModern;
+

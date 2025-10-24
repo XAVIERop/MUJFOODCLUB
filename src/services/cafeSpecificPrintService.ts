@@ -148,6 +148,12 @@ export class CafeSpecificPrintService {
     } else if (cafeName.toLowerCase().includes('punjabi') && cafeName.toLowerCase().includes('tadka')) {
       console.log('✅ Using Punjabi Tadka API key');
       return import.meta.env.VITE_PUNJABI_TADKA_PRINTNODE_API_KEY || '';
+    } else if (cafeName.toLowerCase().includes('munch') && cafeName.toLowerCase().includes('box')) {
+      console.log('✅ Using Munch Box API key');
+      return import.meta.env.VITE_MUNCHBOX_PRINTNODE_API_KEY || '';
+    } else if (cafeName.toLowerCase().includes('pizza') && cafeName.toLowerCase().includes('bakers')) {
+      console.log('✅ Using Pizza Bakers API key');
+      return import.meta.env.VITE_PIZZA_BAKERS_PRINTNODE_API_KEY || '';
     }
     
     // Fallback to general API key
@@ -224,7 +230,7 @@ export class CafeSpecificPrintService {
       } else if (cafe.name.toLowerCase().includes('food court')) {
         printerId = 74692682; // Food Court EPSON TM-T82 Receipt
       } else if (cafe.name.toLowerCase().includes('punjabi') && cafe.name.toLowerCase().includes('tadka')) {
-        printerId = 74760016; // Punjabi Tadka Printer
+        printerId = 74782622; // Punjabi Tadka Printer (POS-60C)
       } else {
         return { success: false, error: 'No printer ID configured for this cafe' };
       }
@@ -642,3 +648,6 @@ Thanks`;
 export const createCafePrintService = (cafeId: string): CafeSpecificPrintService => {
   return new CafeSpecificPrintService(cafeId);
 };
+  return new CafeSpecificPrintService(cafeId);
+};
+

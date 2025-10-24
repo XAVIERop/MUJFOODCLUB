@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,17 +36,42 @@ const CafeManagement = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   
   // WhatsApp settings state
   const [whatsappPhone, setWhatsappPhone] = useState<string>('');
   const [whatsappEnabled, setWhatsappEnabled] = useState<boolean>(false);
   const [whatsappNotifications, setWhatsappNotifications] = useState<boolean>(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { user, profile } = useAuth();
 
-  // Filter menu items based on search query
+  // Get the source dashboard from URL parameters
+  const getSourceDashboard = () => {
+    const urlParams = new URLSearchParams(location.search);
+    return urlParams.get('from') || 'cafe-dashboard'; // Default to cafe-dashboard
+  };
+
+  // Navigate back to the correct dashboard
+  const handleBackNavigation = () => {
+    const source = getSourceDashboard();
+    if (source === 'pos-dashboard') {
+      navigate('/pos-dashboard');
+    } else {
+      navigate('/cafe-dashboard');
+    }
+  };
+
+  // Filter menu items based on search query and selected category
   const filteredMenuItems = menuItems.filter(item => {
+    // First filter by category if one is selected
+    if (selectedCategory && item.category !== selectedCategory) {
+      return false;
+    }
+    
+    // Then filter by search query if provided
     if (!searchQuery.trim()) return true;
     
     const query = searchQuery.toLowerCase().trim();
@@ -136,6 +161,15 @@ const CafeManagement = () => {
 
       if (menuError) throw menuError;
       setMenuItems(menuData || []);
+      
+      // Extract unique categories
+      const uniqueCategories = [...new Set(menuData?.map(item => item.category) || [])];
+      setCategories(uniqueCategories);
+      
+      // Set first category as selected
+      if (uniqueCategories.length > 0) {
+        setSelectedCategory(uniqueCategories[0]);
+      }
     } catch (error) {
       console.error('Error fetching cafe data:', error);
       toast({
@@ -309,7 +343,7 @@ const CafeManagement = () => {
             <div>
               <Button 
                 variant="ghost" 
-                onClick={() => navigate('/cafe-dashboard')}
+                onClick={handleBackNavigation}
                 className="mb-4"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -497,65 +531,102 @@ const CafeManagement = () => {
             </p>
           </CardHeader>
           <CardContent>
-            {/* Search Bar */}
-            <div className="mb-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Search menu items by name, category, or price..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2"
-                />
-              </div>
-              {searchQuery && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  Showing {filteredMenuItems.length} of {menuItems.length} items
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              {filteredMenuItems.length === 0 ? (
-                <div className="text-center py-8">
-                  <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    {searchQuery ? 'No menu items match your search' : 'No menu items found'}
-                  </p>
-                  {searchQuery && (
-                    <Button
-                      variant="outline"
-                      onClick={() => setSearchQuery('')}
-                      className="mt-2"
-                    >
-                      Clear Search
-                    </Button>
-                  )}
+            {/* Two-Panel Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Left Panel - Categories */}
+              <div className="lg:col-span-1">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-900 mb-3">Categories</h3>
+                  <div className="space-y-2">
+                    {categories.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => setSelectedCategory(category)}
+                        className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                          selectedCategory === category
+                            ? 'bg-orange-100 text-orange-700 border border-orange-200'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                              ) : (
-                filteredMenuItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3">
-                        <h3 className="font-medium">{item.name}</h3>
-                        <Badge variant="secondary">{item.category}</Badge>
-                        <span className="text-sm text-muted-foreground">₹{item.price}</span>
-                      </div>
-                      {item.out_of_stock && (
-                        <div className="flex items-center space-x-2 mt-1">
-                          <AlertTriangle className="w-4 h-4 text-red-500" />
-                          <span className="text-sm text-red-600">Out of Stock</span>
-                        </div>
-                      )}
-                    </div>
-                    <Switch
-                      checked={!item.out_of_stock}
-                      onCheckedChange={() => toggleItemStock(item.id, item.out_of_stock)}
-                      disabled={updating}
+              </div>
+
+              {/* Right Panel - Menu Items */}
+              <div className="lg:col-span-3">
+                {/* Search Bar */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Input
+                      placeholder="Search menu items by name, category, or price..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 pr-4 py-2"
                     />
                   </div>
-                ))
-              )}
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-sm text-muted-foreground">
+                      {selectedCategory ? `${selectedCategory} (${filteredMenuItems.length} items)` : `All Items (${filteredMenuItems.length} items)`}
+                    </p>
+                    {searchQuery && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSearchQuery('')}
+                      >
+                        Clear Search
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Menu Items Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredMenuItems.length === 0 ? (
+                    <div className="col-span-full text-center py-8">
+                      <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">
+                        {searchQuery ? 'No menu items match your search' : 'No menu items found'}
+                      </p>
+                    </div>
+                  ) : (
+                    filteredMenuItems.map((item) => (
+                      <div key={item.id} className="border rounded-lg p-4 bg-white">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900 mb-1">{item.name}</h3>
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Badge variant="secondary" className="text-xs">{item.category}</Badge>
+                              <span className="text-sm font-medium text-gray-900">₹{item.price}</span>
+                            </div>
+                            {item.out_of_stock && (
+                              <div className="flex items-center space-x-1">
+                                <AlertTriangle className="w-3 h-3 text-red-500" />
+                                <span className="text-xs text-red-600">Out of Stock</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">
+                            {item.out_of_stock ? 'Out of Stock' : 'Available'}
+                          </span>
+                          <Switch
+                            checked={!item.out_of_stock}
+                            onCheckedChange={() => toggleItemStock(item.id, item.out_of_stock)}
+                            disabled={updating}
+                            size="sm"
+                          />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

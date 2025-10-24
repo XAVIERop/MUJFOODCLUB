@@ -197,7 +197,7 @@ const CafeDashboard = () => {
         .from('orders')
         .select(`
           *,
-          user:profiles(full_name, phone, block, email),
+          user:profiles!user_id(full_name, phone, block, email),
           order_items(
             id,
             menu_item_id,
@@ -239,8 +239,8 @@ const CafeDashboard = () => {
         setOrders(data || []);
         setFilteredOrders(data || []);
         
-        // If we need delivered_by_staff data, we can fetch it separately
-        // This avoids the complex join that was causing the 400 error
+        // Fetch staff data separately for delivery assignments
+        await fetchStaffData();
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -426,6 +426,46 @@ const CafeDashboard = () => {
     }
   };
 
+  const fetchStaffData = async () => {
+    if (!cafeId) return;
+    
+    try {
+      const { data: staffData, error: staffError } = await supabase
+        .from('cafe_staff')
+        .select(`
+          user_id,
+          role,
+          is_active,
+          profiles!user_id(full_name, email)
+        `)
+        .eq('cafe_id', cafeId)
+        .eq('is_active', true);
+
+      if (staffError) {
+        console.error('Error fetching staff data:', staffError);
+        return;
+      }
+
+      // Update orders with staff names
+      setOrders(prevOrders => 
+        prevOrders.map(order => {
+          if (order.delivered_by_staff_id) {
+            const staffMember = staffData?.find(s => s.user_id === order.delivered_by_staff_id);
+            if (staffMember) {
+              return {
+                ...order,
+                delivered_by_staff_name: staffMember.profiles?.full_name || 'Unknown Staff'
+              };
+            }
+          }
+          return order;
+        })
+      );
+    } catch (error) {
+      console.error('Error fetching staff data:', error);
+    }
+  };
+
   const updateOrderStatus = async (orderId: string, newStatus: Order['status']) => {
     try {
       const updateData: any = {
@@ -506,7 +546,7 @@ const CafeDashboard = () => {
 
   const exportOrders = async () => {
     try {
-      const csvData = filteredOrders.map(order => ({
+      const csvData = orders.map(order => ({
         'Order Number': order.order_number,
         'Customer': order.user?.full_name || 'Unknown User',
         'Email': order.user?.email || 'N/A',
@@ -520,7 +560,7 @@ const CafeDashboard = () => {
         ).join(', '),
         'Order Date': new Date(order.created_at).toLocaleString(),
         'Delivery Notes': order.delivery_notes || 'N/A',
-        'Delivered By': getStaffNameForOrder(order)
+        'Delivered By': order.delivered_by_staff_name || getStaffNameForOrder(order)
       }));
 
       const csvContent = [
@@ -914,7 +954,7 @@ const CafeDashboard = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/cafe-management')}
+              onClick={() => navigate('/cafe-management?from=cafe-dashboard')}
             >
               <Settings className="w-4 h-4 mr-2" />
               Management
@@ -1419,3 +1459,4 @@ const CafeDashboard = () => {
 };
 
 export default CafeDashboard;
+

@@ -1,28 +1,49 @@
--- Update Cafe Priorities and Make Cook House Exclusive
--- Run this in Supabase SQL Editor
+-- Query to update Dialog cafe priority to 8 and Pizza Bakers priority to 7
+-- This will change the priority values for these specific cafes
 
--- Update Cook House priority to 6 and make it exclusive
-UPDATE public.cafes 
+UPDATE cafes 
 SET 
-    priority = 6,
-    is_exclusive = true,
+    priority = 8,
     updated_at = NOW()
-WHERE name ILIKE '%cook house%';
+WHERE name ILIKE '%dialog%';
 
--- Update China Town priority to 7
-UPDATE public.cafes 
+UPDATE cafes 
 SET 
     priority = 7,
     updated_at = NOW()
-WHERE name ILIKE '%china town%';
+WHERE name ILIKE '%pizza bakers%' 
+   OR name ILIKE '%crazy chef%';
 
--- Show current priority order
+-- Verification query to check the updated priorities
+-- Uncomment the section below to verify the priority changes
+
+/*
 SELECT 
+    id,
     name,
     priority,
-    is_exclusive,
-    average_rating,
-    total_ratings
-FROM public.cafes 
-WHERE is_active = true
-ORDER BY priority ASC, average_rating DESC NULLS LAST;
+    is_active,
+    accepting_orders,
+    updated_at
+FROM cafes 
+WHERE name ILIKE '%dialog%' 
+   OR name ILIKE '%pizza bakers%' 
+   OR name ILIKE '%crazy chef%'
+ORDER BY priority ASC;
+*/
+
+-- Query to show all cafes with their current priorities
+-- Uncomment the section below to see all cafe priorities
+
+/*
+SELECT 
+    id,
+    name,
+    priority,
+    is_active,
+    accepting_orders,
+    created_at,
+    updated_at
+FROM cafes 
+ORDER BY priority ASC, name;
+*/

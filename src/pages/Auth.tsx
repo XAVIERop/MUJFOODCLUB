@@ -27,6 +27,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
+import ReferralCodeInput from '@/components/ReferralCodeInput';
+import { ReferralValidation } from '@/services/referralService';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -68,13 +70,17 @@ const Auth = () => {
     confirmPassword: '',
     fullName: '', 
     block: 'B1',
-    phone: ''
+    phone: '',
+    referralCode: ''
   });
 
   // OTP form
   const [otpForm, setOtpForm] = useState({
     email: ''
   });
+
+  // Referral validation
+  const [referralValidation, setReferralValidation] = useState<ReferralValidation | null>(null);
 
 
   // Scroll to top hook
@@ -210,12 +216,16 @@ const Auth = () => {
         signupForm.password,
         signupForm.fullName,
         signupForm.block,
-        signupForm.phone
+        signupForm.phone,
+        signupForm.referralCode || undefined // Ensure it's undefined if empty
       );
       
       if (error) {
-        // Handle specific error cases
-        if (error.code === 'user_already_exists') {
+        // Handle specific error cases - check both code and message
+        if (error.code === 'user_already_exists' || 
+            error.message?.includes('already registered') ||
+            error.message?.includes('already exists') ||
+            error.message?.includes('User already registered')) {
           toast({
             title: "Email Already Registered",
             description: "This email is already registered. Please try signing in instead.",
@@ -235,6 +245,9 @@ const Auth = () => {
             });
           }, 2000);
         } else {
+          // Log the error for debugging
+          console.error('Signup error:', error);
+          
           toast({
             title: "Sign Up Failed",
             description: error.message || "Please try again with different credentials.",
@@ -649,7 +662,7 @@ const Auth = () => {
                         disabled={!signinForm.email || isLoading}
                         className="text-sm h-10 rounded-lg border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors"
                       >
-                        Reset Password
+                        Send Login Link
                       </Button>
                     </div>
                   </div>
@@ -850,6 +863,26 @@ const Auth = () => {
                       </div>
                       {signupForm.confirmPassword && signupForm.password !== signupForm.confirmPassword && (
                         <p className="text-sm text-red-500">Passwords do not match</p>
+                      )}
+                    </div>
+
+                    {/* Referral Code Input */}
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-referral" className="text-sm font-medium text-gray-700">
+                        Referral Code (Optional)
+                      </Label>
+                      <ReferralCodeInput
+                        value={signupForm.referralCode}
+                        onChange={(code) => setSignupForm({ ...signupForm, referralCode: code })}
+                        onValidation={setReferralValidation}
+                        placeholder="Enter referral code (e.g., TEAM123)"
+                        className="w-full"
+                      />
+                      {referralValidation?.isValid && (
+                        <div className="text-sm text-green-600 flex items-center gap-1">
+                          <CheckCircle className="h-4 w-4" />
+                          Valid code! You'll get ₹10 off your first order
+                        </div>
                       )}
                     </div>
 

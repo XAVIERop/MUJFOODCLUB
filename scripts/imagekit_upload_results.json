@@ -1,0 +1,62 @@
+[
+  {
+    "success": true,
+    "fileId": "68f4d9b05c7cd75eb86a0498",
+    "url": "https://ik.imagekit.io/foodclub/chatkara_logo.jpg",
+    "fileName": "chatkara_logo.jpg"
+  },
+  {
+    "success": true,
+    "fileId": "68f4df195c7cd75eb8926a43",
+    "url": "https://ik.imagekit.io/foodclub/cookhouse_logo.jpg",
+    "fileName": "cookhouse_logo.jpg"
+  },
+  {
+    "success": true,
+    "fileId": "68f4df1b5c7cd75eb8927423",
+    "url": "https://ik.imagekit.io/foodclub/foodcourt.png",
+    "fileName": "foodcourt.png"
+  },
+  {
+    "success": true,
+    "fileId": "68f4df1c5c7cd75eb89289f2",
+    "url": "https://ik.imagekit.io/foodclub/favicon.svg",
+    "fileName": "favicon.svg"
+  },
+  {
+    "success": true,
+    "fileId": "68f4df1e5c7cd75eb8929eff",
+    "url": "https://ik.imagekit.io/foodclub/fav.png",
+    "fileName": "fav.png"
+  },
+  {
+    "success": true,
+    "fileId": "68f4df1f5c7cd75eb892b461",
+    "url": "https://ik.imagekit.io/foodclub/chinese.svg",
+    "fileName": "chinese.svg"
+  },
+  {
+    "success": true,
+    "fileId": "68f4df215c7cd75eb892c33e",
+    "url": "https://ik.imagekit.io/foodclub/chatkaramenu.pdf",
+    "fileName": "chatkaramenu.pdf"
+  },
+  {
+    "success": true,
+    "fileId": "68f4df225c7cd75eb892cfe5",
+    "url": "https://ik.imagekit.io/foodclub/cookhousemenu.pdf",
+    "fileName": "cookhousemenu.pdf"
+  },
+  {
+    "success": true,
+    "fileId": "68f4df245c7cd75eb892dd65",
+    "url": "https://ik.imagekit.io/foodclub/foodcourtmenu.pdf",
+    "fileName": "foodcourtmenu.pdf"
+  },
+  {
+    "success": true,
+    "fileId": "68f4df255c7cd75eb892e503",
+    "url": "https://ik.imagekit.io/foodclub/havmormenu.pdf",
+    "fileName": "havmormenu.pdf"
+  }
+]

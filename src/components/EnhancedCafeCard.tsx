@@ -37,9 +37,12 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
   // Check if this cafe is exclusive (Top 6 cafes by priority)
   const isExclusive = cafe.name.toLowerCase().includes('chatkara') || 
                      cafe.name.toLowerCase().includes('food court') ||
+                     cafe.name.toLowerCase().includes('mini meals') ||
                      cafe.name.toLowerCase().includes('punjabi tadka') ||
                      cafe.name.toLowerCase().includes('munch box') ||
                      cafe.name.toLowerCase().includes('cook house') ||
+                     cafe.name.toLowerCase().includes('pizza bakers') ||
+                     cafe.name.toLowerCase().includes('taste of india') ||
                      cafe.name.toLowerCase().includes('havmor') ||
                      cafe.name.toLowerCase().includes('china town');
 
@@ -59,6 +62,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
       'Taste of India': '/tasteofindia_card.jpg',
       'Food Court': '/foodcourt_card.jpg',
       'The Kitchen Curry': '/thekitchencurry_logo.png',
+      'Pizza Bakers': '/pizz.png',
       'The Kitchen & Curry': '/thekitchencurry_logo.png',
       'Havmor': '/havmor_card.jpg',
       'Stardom': '/stardom_card.webp',
@@ -131,8 +135,17 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
   };
 
   const handleWhatsApp = (phone: string, cafeName: string) => {
+    // Normalize phone for wa.me: must be international format without '+' or symbols
+    let normalized = (phone || '').replace(/\D/g, '');
+    // If 10-digit Indian mobile, prefix country code
+    if (normalized.length === 10) {
+      normalized = `91${normalized}`;
+    }
+    // Fallback: if still empty, do nothing
+    if (!normalized) return;
+
     const message = `Hi! I'd like to place an order from ${cafeName}. Can you help me?`;
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 
@@ -213,33 +226,22 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
             {cafe.name}
           </h3>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1">
-              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-              <span className="text-xs font-semibold text-gray-800">
-                {cafe.average_rating ? cafe.average_rating.toFixed(1) : '0.0'}
-              </span>
-              {cafe.total_ratings && cafe.total_ratings > 0 && (
-                <span className="text-xs text-gray-500 ml-1">
-                  ({cafe.total_ratings})
-                </span>
-              )}
-            </div>
             
-            {/* Cuisine Categories */}
-            {cafe.cuisine_categories && cafe.cuisine_categories.length > 0 && (
-              <div className="flex gap-1">
-                {cafe.cuisine_categories.slice(0, 2).map((category, index) => (
-                  <Badge key={index} variant="secondary" className="text-xs px-2 py-1 bg-white/90 text-gray-700">
-                    {category}
-                  </Badge>
-                ))}
-              </div>
+            {/* Discount Badge for Chatkara, Cook House, Mini Meals, Taste of India, and Food Court */}
+            {(cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('taste of india')) && (
+              <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-xs px-2 py-1 shadow-lg border border-green-400 hover:shadow-green-400/60 hover:scale-110 transition-all duration-200 hover:bg-gradient-to-r hover:from-green-600 hover:to-green-700">
+                Flat 10% Off
+              </Badge>
             )}
-            
-            {/* Discount Badge for Chatkara and Cook House */}
-            {(cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house')) && (
+            {(cafe.name.toLowerCase().includes('food court') || cafe.name === 'FOOD COURT') && (
               <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-xs px-2 py-1 shadow-lg border border-green-400 hover:shadow-green-400/60 hover:scale-110 transition-all duration-200 hover:bg-gradient-to-r hover:from-green-600 hover:to-green-700">
                 Flat 5% Off
+              </Badge>
+            )}
+            {/* BOGO Offers Badge for Pizza Bakers */}
+            {(cafe.name.toLowerCase().includes('pizza bakers') || cafe.name === 'Pizza Bakers') && (
+              <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-xs px-2 py-1 shadow-lg border border-orange-400 hover:shadow-orange-400/60 hover:scale-110 transition-all duration-200 hover:bg-gradient-to-r hover:from-orange-600 hover:to-red-600">
+                🍕 BOGO Offers
               </Badge>
             )}
           </div>
@@ -309,14 +311,18 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               onClick={() => handleOrderNow(cafe.id)}
               disabled={!cafe.accepting_orders}
               className={`text-xs font-medium ${
-                cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house')
-                  ? "bg-orange-600 hover:bg-orange-700"
-                  : "bg-gray-500 hover:bg-gray-600"
-              } disabled:bg-gray-300 disabled:cursor-not-allowed`}
+                !cafe.accepting_orders
+                  ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed text-gray-600"
+                  : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india')
+                    ? "bg-orange-600 hover:bg-orange-700 text-white"
+                    : "bg-gray-500 hover:bg-gray-600 text-white"
+              } disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-600`}
             >
-              {cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house')
-                ? "Order Now"
-                : "Coming Soon"
+              {!cafe.accepting_orders
+                ? "Closed"
+                : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india')
+                  ? "Order Now"
+                  : "Coming Soon"
               }
             </Button>
           </div>
@@ -326,7 +332,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleCall(cafe.phone)}
+              onClick={(e) => { e.stopPropagation(); handleCall(cafe.phone); }}
               className="text-xs text-gray-600 hover:text-orange-600 hover:bg-orange-50"
             >
               <Phone className="w-3 h-3 mr-1" />
@@ -350,7 +356,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleWhatsApp(cafe.phone, cafe.name)}
+                onClick={(e) => { e.stopPropagation(); handleWhatsApp(cafe.phone, cafe.name); }}
                 className="text-xs text-gray-600 hover:text-green-600 hover:bg-green-50"
               >
                 <MessageCircle className="w-3 h-3 mr-1" />
@@ -372,3 +378,4 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
     prevProps.cafe.accepting_orders === nextProps.cafe.accepting_orders
   );
 });
+
