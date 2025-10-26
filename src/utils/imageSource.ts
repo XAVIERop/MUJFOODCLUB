@@ -34,7 +34,9 @@ export function getImageUrl(
   }
   
   // Build ImageKit URL with transformations
-  const url = new URL(`${imageKitEndpoint}${normalizedPath}`);
+  // Properly encode the path to handle spaces and special characters
+  const encodedPath = normalizedPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
+  const url = new URL(`${imageKitEndpoint}${encodedPath}`);
   
   // Add transformations as query parameters
   const transformations: string[] = [];

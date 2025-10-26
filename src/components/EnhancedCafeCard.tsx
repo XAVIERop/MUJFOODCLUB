@@ -22,6 +22,7 @@ interface Cafe {
   cuisine_categories: string[] | null;
   priority: number | null;
   menu_pdf_url?: string | null;
+  image_url?: string | null;
 }
 
 interface EnhancedCafeCardProps {
@@ -47,8 +48,12 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
                      cafe.name.toLowerCase().includes('china town');
 
   const getCafeImage = () => {
+    // First, try to use the database image_url if available
+    if (cafe.image_url) {
+      return cafe.image_url;
+    }
     
-    // Map cafe names to their respective card images (preferred) or logo images
+    // Fallback to hardcoded mapping for cafes without database image_url
     const cafeImages: { [key: string]: string } = {
       'Dialog': '/dialog_card.jpg',
       'Chatkara': '/chatkara_card.png',

@@ -15,6 +15,7 @@ interface Cafe {
   average_rating: number | null;
   total_ratings: number | null;
   priority: number | null;
+  image_url?: string | null;
 }
 
 interface MobileCafeSlideListProps {
@@ -37,7 +38,13 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
   }
 
   // Use same cafe images as desktop EnhancedCafeCard
-  const getCafeImage = (cafeName: string): string => {
+  const getCafeImage = (cafe: Cafe): string => {
+    // First, try to use the database image_url if available
+    if (cafe.image_url) {
+      return cafe.image_url;
+    }
+    
+    // Fallback to hardcoded mapping for cafes without database image_url
     const cafeImages: { [key: string]: string } = {
       'Dialog': '/dialog_card.jpg',
       'Chatkara': '/chatkara_card.png',
@@ -75,12 +82,12 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
     };
 
     // Try to find exact match first
-    if (cafeImages[cafeName]) {
-      return cafeImages[cafeName];
+    if (cafeImages[cafe.name]) {
+      return cafeImages[cafe.name];
     }
 
     // Try partial matches for variations in naming
-    const cafeNameLower = cafeName.toLowerCase();
+    const cafeNameLower = cafe.name.toLowerCase();
     for (const [cafeKey, imagePath] of Object.entries(cafeImages)) {
       if (cafeNameLower.includes(cafeKey.toLowerCase()) || cafeKey.toLowerCase().includes(cafeNameLower)) {
         return imagePath;
@@ -115,11 +122,25 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
             {/* Real Cafe Image */}
             <div className="h-32 relative overflow-hidden">
               <img
-                src={getCafeImage(cafe.name)}
+                src={getCafeImage(cafe)}
                 alt={`${cafe.name} Food`}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/20" />
+              
+              {/* Open/Closed Status Badge */}
+              <div className="absolute top-2 right-2">
+                <Badge
+                  variant={cafe.accepting_orders ? "default" : "destructive"}
+                  className={`text-xs px-2 py-1 font-semibold ${
+                    cafe.accepting_orders 
+                      ? "bg-green-500 hover:bg-green-600 text-white shadow-lg" 
+                      : "bg-red-500 hover:bg-red-600 text-white shadow-lg"
+                  }`}
+                >
+                  {cafe.accepting_orders ? "Open" : "Closed"}
+                </Badge>
+              </div>
             </div>
 
             {/* Cafe Info */}
@@ -168,19 +189,13 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
               <Button
                 size="sm"
                 className={`w-full text-white text-xs font-medium ${
-                  cafe.name.toLowerCase().includes('chatkara')
-                    ? "bg-gray-500 hover:bg-gray-600"
-                    : cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india')
-                    ? "bg-orange-600 hover:bg-orange-700"
-                    : "bg-gray-500 hover:bg-gray-600"
+                  !cafe.accepting_orders
+                    ? "bg-gray-500 hover:bg-gray-600 cursor-not-allowed"
+                    : "bg-orange-600 hover:bg-orange-700"
                 }`}
+                disabled={!cafe.accepting_orders}
               >
-                {cafe.name.toLowerCase().includes('chatkara')
-                  ? "Closed"
-                  : cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india')
-                  ? "Order Now"
-                  : "Coming Soon"
-                }
+                {!cafe.accepting_orders ? "Closed" : "Order Now"}
               </Button>
             </div>
           </Link>

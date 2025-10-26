@@ -15,6 +15,7 @@ interface Cafe {
   accepting_orders: boolean;
   average_rating: number | null;
   total_ratings: number | null;
+  image_url?: string | null;
 }
 
 interface SwiggyStyleHeroProps {
@@ -30,6 +31,12 @@ const SwiggyStyleHero: React.FC<SwiggyStyleHeroProps> = ({
 }) => {
   // Get cafe background image
   const getCafeImage = () => {
+    // First, try to use the database image_url if available
+    if (cafe.image_url) {
+      return cafe.image_url;
+    }
+    
+    // Fallback to hardcoded mapping for cafes without database image_url
     const cafeImages: { [key: string]: string } = {
       'COOK HOUSE': '/cookhouse_card.png',
       'CHATKARA': '/chatkara_card.png',
