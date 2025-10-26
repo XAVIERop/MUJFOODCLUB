@@ -409,14 +409,8 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
       return;
     }
 
-    if (!customerInfo.name.trim()) {
-      toast({
-        title: "Customer Info Required",
-        description: "Please enter customer name",
-        variant: "destructive"
-      });
-      return;
-    }
+    // Customer info is optional for manual orders
+    // No validation required - staff can enter orders without customer details
 
     setIsLoading(true);
 
@@ -442,9 +436,9 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
           payment_method: 'cod',
           points_earned: Math.floor(total / 10),
           estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-          customer_name: customerInfo.name,
-          phone_number: customerInfo.phone,
-          delivery_notes: customerInfo.specialInstructions
+          customer_name: customerInfo.name || 'Manual Order',
+          phone_number: customerInfo.phone || null,
+          delivery_notes: customerInfo.specialInstructions || null
         })
         .select()
         .single();
@@ -740,165 +734,122 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
           </div>
         </div>
 
-        {/* Right Panel - Order Cart */}
-        <div className="w-96 bg-white border-l overflow-y-auto">
-          <div className="p-4 space-y-4">
-            {/* Order Type Selection */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Order Type
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="delivery"
-                        name="orderType"
-                        value="delivery"
-                        checked={customerInfo.orderType === 'delivery'}
-                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
-                        disabled={!isDeliveryAllowed()}
-                      />
-                      <Label htmlFor="delivery" className="flex items-center">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        Delivery
-                        {!isDeliveryAllowed() && (
-                          <Badge variant="secondary" className="ml-2">Not Available</Badge>
-                        )}
-                      </Label>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="takeaway"
-                        name="orderType"
-                        value="takeaway"
-                        checked={customerInfo.orderType === 'takeaway'}
-                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
-                        disabled={!isDineInTakeawayAllowed()}
-                      />
-                      <Label htmlFor="takeaway" className="flex items-center">
-                        <Clock className="w-4 h-4 mr-2" />
-                        Takeaway
-                        {!isDineInTakeawayAllowed() && (
-                          <Badge variant="secondary" className="ml-2">Not Available</Badge>
-                        )}
-                      </Label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="dine_in"
-                        name="orderType"
-                        value="dine_in"
-                        checked={customerInfo.orderType === 'dine_in'}
-                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
-                        disabled={!isDineInTakeawayAllowed()}
-                      />
-                      <Label htmlFor="dine_in" className="flex items-center">
-                        <Clock className="w-4 h-4 mr-2" />
-                        Dine In
-                        {!isDineInTakeawayAllowed() && (
-                          <Badge variant="secondary" className="ml-2">Not Available</Badge>
-                        )}
-                      </Label>
-                    </div>
-                  </div>
-                
-                  {!isDeliveryAllowed() && (
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        {getDeliveryMessage()}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  {!isDineInTakeawayAllowed() && (
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        {getDineInTakeawayMessage()}
-                      </AlertDescription>
-                    </Alert>
-                  )}
+        {/* Right Panel - Compact Order Form */}
+        <div className="w-80 bg-white border-l overflow-y-auto">
+          <div className="p-4">
+            {/* Compact Order Form */}
+            <div className="space-y-4">
+              {/* Order Type - Compact */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Clock className="h-4 w-4 text-gray-600" />
+                  <span className="font-medium text-sm">Order Type</span>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Delivery Details */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  {customerInfo.orderType === 'delivery' ? 'Delivery Details' : 
-                   customerInfo.orderType === 'dine_in' ? 'Dine In Details' : 
-                   'Takeaway Details'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="location">
-                    {customerInfo.orderType === 'delivery' ? 'Block' : 
-                     customerInfo.orderType === 'dine_in' ? 'Table Number *' : 
-                     'Location'}
-                  </Label>
-                  <Select 
-                    value={customerInfo.block} 
-                    onValueChange={(value) => setCustomerInfo(prev => ({ ...prev, block: value }))}
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => setCustomerInfo(prev => ({ ...prev, orderType: 'delivery', block: '' }))}
+                    disabled={!isDeliveryAllowed()}
+                    className={`p-2 text-xs rounded border ${
+                      customerInfo.orderType === 'delivery' 
+                        ? 'bg-blue-500 text-white border-blue-500' 
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    } ${!isDeliveryAllowed() ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder={
-                        customerInfo.orderType === 'delivery' ? 'Select your block' :
-                        customerInfo.orderType === 'dine_in' ? 'Select table number' :
-                        'Select location'
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getLocationOptions(customerInfo.orderType, cafeName).map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <MapPin className="w-3 h-3 mx-auto mb-1" />
+                    Delivery
+                  </button>
+                  <button
+                    onClick={() => setCustomerInfo(prev => ({ ...prev, orderType: 'takeaway', block: '' }))}
+                    disabled={!isDineInTakeawayAllowed()}
+                    className={`p-2 text-xs rounded border ${
+                      customerInfo.orderType === 'takeaway' 
+                        ? 'bg-blue-500 text-white border-blue-500' 
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    } ${!isDineInTakeawayAllowed() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <QrCode className="w-3 h-3 mx-auto mb-1" />
+                    Takeaway
+                  </button>
+                  <button
+                    onClick={() => setCustomerInfo(prev => ({ ...prev, orderType: 'dine_in', block: '' }))}
+                    disabled={!isDineInTakeawayAllowed()}
+                    className={`p-2 text-xs rounded border ${
+                      customerInfo.orderType === 'dine_in' 
+                        ? 'bg-blue-500 text-white border-blue-500' 
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    } ${!isDineInTakeawayAllowed() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <CreditCard className="w-3 h-3 mx-auto mb-1" />
+                    Dine In
+                  </button>
                 </div>
-              </CardContent>
-            </Card>
+                {(!isDineInTakeawayAllowed() || !isDeliveryAllowed()) && (
+                  <div className="mt-2 text-xs text-orange-600">
+                    {!isDineInTakeawayAllowed() && getDineInTakeawayMessage()}
+                    {!isDeliveryAllowed() && getDeliveryMessage()}
+                  </div>
+                )}
+              </div>
 
-            {/* Customer Info */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Customer Info
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Input
-                  placeholder="Customer Name *"
-                  value={customerInfo.name}
-                  onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
-                />
-                <Input
-                  placeholder="Phone Number"
-                  value={customerInfo.phone}
-                  onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
-                />
-                <Input
-                  placeholder="Special Instructions"
-                  value={customerInfo.specialInstructions}
-                  onChange={(e) => setCustomerInfo({...customerInfo, specialInstructions: e.target.value})}
-                />
-              </CardContent>
-            </Card>
+              {/* Location/Table - Compact */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="h-4 w-4 text-gray-600" />
+                  <span className="font-medium text-sm">
+                    {customerInfo.orderType === 'delivery' ? 'Block' : 
+                     customerInfo.orderType === 'dine_in' ? 'Table' : 
+                     'Location'}
+                  </span>
+                </div>
+                <Select 
+                  value={customerInfo.block} 
+                  onValueChange={(value) => setCustomerInfo(prev => ({ ...prev, block: value }))}
+                >
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue placeholder={
+                      customerInfo.orderType === 'delivery' ? 'Select block (Optional)' :
+                      customerInfo.orderType === 'dine_in' ? 'Select table (Optional)' :
+                      'Select location (Optional)'
+                    } />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getLocationOptions(customerInfo.orderType, cafeName).map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Customer Info - Compact */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <User className="h-4 w-4 text-gray-600" />
+                  <span className="font-medium text-sm">Customer Info</span>
+                </div>
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Customer Name (Optional)"
+                    value={customerInfo.name}
+                    onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
+                    className="h-8 text-sm"
+                  />
+                  <Input
+                    placeholder="Phone Number (Optional)"
+                    value={customerInfo.phone}
+                    onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
+                    className="h-8 text-sm"
+                  />
+                  <Input
+                    placeholder="Special Instructions (Optional)"
+                    value={customerInfo.specialInstructions}
+                    onChange={(e) => setCustomerInfo({...customerInfo, specialInstructions: e.target.value})}
+                    className="h-8 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
 
             {/* Coupon Section */}
             <Card>

@@ -67,21 +67,12 @@ class UnifiedPrintService {
 
   /**
    * Initialize PrintNode service with cafe-specific API key
+   * NO FALLBACKS - Each cafe must have its own configuration
    */
   private async initializePrintNode(cafeId?: string) {
     if (!cafeId) {
-      // Use the main PrintNode API key as fallback
-      const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY;
-      
-      if (apiKey) {
-        this.printNodeService = new PrintNodeService({
-          apiKey: apiKey,
-          baseUrl: 'https://api.printnode.com'
-        });
-        console.log('✅ Unified Print Service: PrintNode initialized with main API key');
-      } else {
-        console.error('❌ Unified Print Service: VITE_PRINTNODE_API_KEY environment variable is not set');
-      }
+      console.error('❌ Unified Print Service: No cafeId provided - cannot initialize PrintNode');
+      this.printNodeService = null;
       return;
     }
 
@@ -94,8 +85,8 @@ class UnifiedPrintService {
         .single();
 
       if (!cafe) {
-        console.warn('Cafe not found, using fallback API key');
-        this.initializePrintNode(); // Use fallback
+        console.error('❌ Unified Print Service: Cafe not found in database');
+        this.printNodeService = null;
         return;
       }
 
@@ -104,48 +95,54 @@ class UnifiedPrintService {
       if (cafe.name.toLowerCase().includes('chatkara')) {
         apiKey = import.meta.env.VITE_CHATKARA_PRINTNODE_API_KEY || '';
         if (!apiKey || apiKey === 'your-chatkara-printnode-api-key') {
-          console.warn('⚠️ Unified Print Service: VITE_CHATKARA_PRINTNODE_API_KEY not set, using main API key');
-          apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+          console.error('❌ Unified Print Service: VITE_CHATKARA_PRINTNODE_API_KEY not configured');
+          this.printNodeService = null;
+          return;
         } else {
           console.log('✅ Unified Print Service: Using Chatkara API key');
         }
       } else if (cafe.name.toLowerCase().includes('cook house')) {
         apiKey = import.meta.env.VITE_COOKHOUSE_PRINTNODE_API_KEY || '';
         if (!apiKey || apiKey === 'your-cookhouse-printnode-api-key') {
-          console.warn('⚠️ Unified Print Service: VITE_COOKHOUSE_PRINTNODE_API_KEY not set, using main API key');
-          apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+          console.error('❌ Unified Print Service: VITE_COOKHOUSE_PRINTNODE_API_KEY not configured');
+          this.printNodeService = null;
+          return;
         } else {
           console.log('✅ Unified Print Service: Using Cook House API key');
         }
       } else if (cafe.name.toLowerCase().includes('food court')) {
         apiKey = import.meta.env.VITE_FOODCOURT_PRINTNODE_API_KEY || '';
         if (!apiKey || apiKey === 'your-foodcourt-printnode-api-key') {
-          console.warn('⚠️ Unified Print Service: VITE_FOODCOURT_PRINTNODE_API_KEY not set, using main API key');
-          apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+          console.error('❌ Unified Print Service: VITE_FOODCOURT_PRINTNODE_API_KEY not configured');
+          this.printNodeService = null;
+          return;
         } else {
           console.log('✅ Unified Print Service: Using Food Court API key');
         }
       } else if (cafe.name.toLowerCase().includes('punjabi') && cafe.name.toLowerCase().includes('tadka')) {
         apiKey = import.meta.env.VITE_PUNJABI_TADKA_PRINTNODE_API_KEY || '';
         if (!apiKey || apiKey === 'your-punjabi-tadka-printnode-api-key') {
-          console.warn('⚠️ Unified Print Service: VITE_PUNJABI_TADKA_PRINTNODE_API_KEY not set, using main API key');
-          apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+          console.error('❌ Unified Print Service: VITE_PUNJABI_TADKA_PRINTNODE_API_KEY not configured');
+          this.printNodeService = null;
+          return;
         } else {
           console.log('✅ Unified Print Service: Using Punjabi Tadka API key');
         }
       } else if (cafe.name.toLowerCase().includes('pizza') && cafe.name.toLowerCase().includes('bakers')) {
         apiKey = import.meta.env.VITE_PIZZA_BAKERS_PRINTNODE_API_KEY || '';
         if (!apiKey || apiKey === 'your-pizza-bakers-printnode-api-key') {
-          console.warn('⚠️ Unified Print Service: VITE_PIZZA_BAKERS_PRINTNODE_API_KEY not set, using main API key');
-          apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+          console.error('❌ Unified Print Service: VITE_PIZZA_BAKERS_PRINTNODE_API_KEY not configured');
+          this.printNodeService = null;
+          return;
         } else {
           console.log('✅ Unified Print Service: Using Pizza Bakers API key');
         }
       } else if (cafe.name.toLowerCase().includes('munch') && cafe.name.toLowerCase().includes('box')) {
         apiKey = import.meta.env.VITE_MUNCHBOX_PRINTNODE_API_KEY || '';
         if (!apiKey || apiKey === 'your-munchbox-printnode-api-key') {
-          console.warn('⚠️ Unified Print Service: VITE_MUNCHBOX_PRINTNODE_API_KEY not set, using main API key');
-          apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
+          console.error('❌ Unified Print Service: VITE_MUNCHBOX_PRINTNODE_API_KEY not configured');
+          this.printNodeService = null;
+          return;
         } else {
           console.log('✅ Unified Print Service: Using Munch Box API key');
         }
@@ -158,12 +155,9 @@ class UnifiedPrintService {
           method: 'disabled'
         };
       } else {
-        apiKey = import.meta.env.VITE_PRINTNODE_API_KEY || '';
-        if (!apiKey) {
-          console.error('❌ Unified Print Service: VITE_PRINTNODE_API_KEY environment variable is not set');
-          return;
-        }
-        console.log('✅ Unified Print Service: Using main API key');
+        console.error(`❌ Unified Print Service: No API key configured for cafe: ${cafe.name}`);
+        this.printNodeService = null;
+        return;
       }
 
       if (apiKey) {
@@ -173,12 +167,12 @@ class UnifiedPrintService {
         });
         console.log(`✅ Unified Print Service: PrintNode initialized for ${cafe.name}`);
       } else {
-        console.warn('No API key found for cafe, using fallback');
-        this.initializePrintNode(); // Use fallback
+        console.error('❌ Unified Print Service: No valid API key found for cafe');
+        this.printNodeService = null;
       }
     } catch (error) {
-      console.error('Error fetching cafe info:', error);
-      this.initializePrintNode(); // Use fallback
+      console.error('❌ Unified Print Service: Error fetching cafe info:', error);
+      this.printNodeService = null;
     }
   }
 
@@ -280,29 +274,7 @@ class UnifiedPrintService {
       // Get cafe printer configuration
       const config = await this.getCafePrinterConfig(cafeId);
       if (!config) {
-        console.log('⚠️ No printer configuration found, trying direct PrintNode printing...');
-        // Try direct PrintNode printing without database configuration
-        if (this.printNodeService) {
-          // Get cafe-specific printer ID
-          let targetPrinterId: number | undefined;
-          if (cafeName.toLowerCase().includes('chatkara')) {
-            targetPrinterId = 74698272; // Chatkara POS-80-Series
-          } else if (cafeName.toLowerCase().includes('food court')) {
-            targetPrinterId = 74692682; // Food Court EPSON TM-T82 Receipt
-          } else if (cafeName.toLowerCase().includes('mini meals')) {
-            targetPrinterId = 74756354; // Mini Meals Printer
-          } else if (cafeName.toLowerCase().includes('cook house')) {
-            targetPrinterId = 74781013; // Cook House POS 80 C
-          } else if (cafeName.toLowerCase().includes('punjabi') && cafeName.toLowerCase().includes('tadka')) {
-            targetPrinterId = 74782622; // Punjabi Tadka Printer (POS-60C)
-          }
-          
-          console.log(`🖨️ Using direct PrintNode for KOT (Printer ID: ${targetPrinterId || 'default'})`);
-          const result = await this.printNodeService.printKOT(formattedReceiptData, targetPrinterId);
-          if (result.success) {
-            return { ...result, method: 'printnode-direct', jobId: result.jobId?.toString() };
-          }
-        }
+        console.error('❌ Unified Print Service: No printer configuration found for this cafe');
         return { 
           success: false, 
           error: 'No printer configuration found for this cafe',
@@ -343,12 +315,21 @@ class UnifiedPrintService {
         if (result.success) {
           return { ...result, method: 'printnode', jobId: result.jobId?.toString() };
         }
-        console.log('⚠️ PrintNode KOT failed, falling back to browser printing');
+        console.error('❌ PrintNode KOT failed - no fallback available');
+        return { 
+          success: false, 
+          error: 'PrintNode printing failed for this cafe',
+          method: 'printnode-failed'
+        };
       }
 
-      // Use enhanced browser printing
-      console.log('🌐 Using enhanced browser printing for KOT');
-      return await enhancedBrowserPrintService.printKOT(formattedReceiptData);
+      // NO FALLBACK - PrintNode is the only method
+      console.error('❌ Unified Print Service: No valid printing method available for this cafe');
+      return { 
+        success: false, 
+        error: 'No valid printing method configured for this cafe',
+        method: 'none'
+      };
 
     } catch (error) {
       console.error(`Error printing KOT for cafe ${cafeId}:`, error);
@@ -388,29 +369,7 @@ class UnifiedPrintService {
       // Get cafe printer configuration
       const config = await this.getCafePrinterConfig(cafeId);
       if (!config) {
-        console.log('⚠️ No printer configuration found, trying direct PrintNode printing...');
-        // Try direct PrintNode printing without database configuration
-        if (this.printNodeService) {
-          // Get cafe-specific printer ID
-          let targetPrinterId: number | undefined;
-          if (cafeName.toLowerCase().includes('chatkara')) {
-            targetPrinterId = 74698272; // Chatkara POS-80-Series
-          } else if (cafeName.toLowerCase().includes('food court')) {
-            targetPrinterId = 74692682; // Food Court EPSON TM-T82 Receipt
-          } else if (cafeName.toLowerCase().includes('mini meals')) {
-            targetPrinterId = 74756354; // Mini Meals Printer
-          } else if (cafeName.toLowerCase().includes('cook house')) {
-            targetPrinterId = 74781013; // Cook House POS 80 C
-          } else if (cafeName.toLowerCase().includes('punjabi') && cafeName.toLowerCase().includes('tadka')) {
-            targetPrinterId = 74782622; // Punjabi Tadka Printer (POS-60C)
-          }
-          
-          console.log(`🖨️ Using direct PrintNode for Receipt (Printer ID: ${targetPrinterId || 'default'})`);
-          const result = await this.printNodeService.printOrderReceipt(formattedReceiptData, targetPrinterId);
-          if (result.success) {
-            return { ...result, method: 'printnode-direct', jobId: result.jobId?.toString() };
-          }
-        }
+        console.error('❌ Unified Print Service: No printer configuration found for this cafe');
         return { 
           success: false, 
           error: 'No printer configuration found for this cafe',
@@ -451,12 +410,21 @@ class UnifiedPrintService {
         if (result.success) {
           return { ...result, method: 'printnode', jobId: result.jobId?.toString() };
         }
-        console.log('⚠️ PrintNode Receipt failed, falling back to browser printing');
+        console.error('❌ PrintNode Receipt failed - no fallback available');
+        return { 
+          success: false, 
+          error: 'PrintNode printing failed for this cafe',
+          method: 'printnode-failed'
+        };
       }
 
-      // Use enhanced browser printing
-      console.log('🌐 Using enhanced browser printing for Receipt');
-      return await enhancedBrowserPrintService.printReceipt(formattedReceiptData);
+      // NO FALLBACK - PrintNode is the only method
+      console.error('❌ Unified Print Service: No valid printing method available for this cafe');
+      return { 
+        success: false, 
+        error: 'No valid printing method configured for this cafe',
+        method: 'none'
+      };
 
     } catch (error) {
       console.error(`Error printing receipt for cafe ${cafeId}:`, error);

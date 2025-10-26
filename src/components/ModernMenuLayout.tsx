@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Filter, Heart, ShoppingCart, MapPin, Clock, Star, Plus, Minus, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, Filter, Heart, ShoppingCart, MapPin, Clock, Star, Plus, Minus, ChevronDown, ChevronUp, ArrowLeft, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import PromotionalBanner from '@/components/PromotionalBanner';
 import { promotionalBannerService, PromotionalBannerData } from '@/services/promotionalBannerService';
 import FloatingMenuButton from '@/components/FloatingMenuButton';
+import { useFavorites } from '@/hooks/useFavorites';
 
 interface ModernMenuLayoutProps {
   // Search and filters
@@ -59,6 +60,81 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
   onToggleFavorite,
   isFavorite
 }) => {
+  // Add favorites functionality
+  const { toggleFavorite, isFavorite: isCafeFavorite } = useFavorites();
+  
+  // Add call and favorite handlers
+  const handleCall = (phone: string) => {
+    if (window.confirm(`Do you want to call ${cafe?.name} at ${phone}?`)) {
+      window.open(`tel:${phone}`, '_blank');
+    }
+  };
+
+  const handleFavoriteToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (cafe?.id) {
+      toggleFavorite(cafe.id);
+    }
+  };
+
+  // Swipe to call functionality
+  const [swipeStart, setSwipeStart] = useState<{ x: number; y: number } | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwipeActive, setIsSwipeActive] = useState(false);
+  const [touchStarted, setTouchStarted] = useState(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setSwipeStart({ x: touch.clientX, y: touch.clientY });
+    setIsSwipeActive(true);
+    setTouchStarted(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!swipeStart || !isSwipeActive) return;
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - swipeStart.x;
+    const deltaY = touch.clientY - swipeStart.y;
+    
+    // Only allow horizontal swipes (more horizontal than vertical)
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      e.preventDefault(); // Prevent scrolling
+      setSwipeOffset(Math.max(0, deltaX)); // Only allow rightward swipes
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!swipeStart || !isSwipeActive) return;
+    
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - swipeStart.x;
+    
+    // If swiped more than 160px to the right (arrow reaches end), trigger call
+    if (deltaX > 160) {
+      if (cafe?.phone) {
+        handleCall(cafe.phone);
+      }
+    }
+    
+    // Reset swipe state
+    setSwipeStart(null);
+    setSwipeOffset(0);
+    setIsSwipeActive(false);
+    setTouchStarted(false);
+  };
+
+  // Simple click handler for desktop (only if no touch/swipe occurred)
+  const handleDesktopClick = (e: React.MouseEvent) => {
+    // Only trigger if no touch or swipe was performed
+    if (!touchStarted && !isSwipeActive && swipeOffset === 0) {
+      e.preventDefault();
+      if (cafe?.phone) {
+        handleCall(cafe.phone);
+      }
+    }
+  };
+  
   // showCart state removed - using floating cart on mobile instead
   const [promotionalBanners, setPromotionalBanners] = useState<PromotionalBannerData[]>([]);
 
@@ -176,7 +252,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
         
         {/* Content Overlay */}
         <div className="relative z-10 h-full flex flex-col justify-between p-6">
-          {/* Top Row - Back Button and Bookmark */}
+          {/* Top Row - Back Button, Call Button, and Favorite Button */}
           <div className="flex items-center justify-between">
             <button 
               onClick={() => window.history.back()}
@@ -184,8 +260,17 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
             >
               <ArrowLeft className="w-5 h-5 text-white" />
             </button>
-            <button className="bg-white/20 backdrop-blur-sm rounded-full p-2 hover:bg-white/30 transition-colors">
-              <Heart className="w-5 h-5 text-white" />
+            
+            {/* Favorite Button */}
+            <button 
+              onClick={handleFavoriteToggle}
+              className={`backdrop-blur-sm rounded-full p-2 transition-colors ${
+                isCafeFavorite(cafe?.id)
+                  ? 'bg-red-500/80 hover:bg-red-500 text-white'
+                  : 'bg-white/20 hover:bg-white/30 text-white'
+              }`}
+            >
+              <Heart className={`w-5 h-5 ${isCafeFavorite(cafe?.id) ? 'fill-current' : ''}`} />
             </button>
           </div>
           
@@ -205,6 +290,52 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
                   {cafe?.average_rating ? cafe.average_rating.toFixed(1) : '4.5'} ({cafe?.total_ratings || 1256} Reviews)
                 </span>
               </div>
+              
+              {/* Call Button - Different for Mobile vs Desktop */}
+              {cafe?.phone && (
+                <>
+                  {/* Mobile: Swipe to Call Button */}
+                  <div className="relative md:hidden">
+                    <div 
+                      onTouchStart={handleTouchStart}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
+                      className="bg-white/20 backdrop-blur-sm text-white rounded-full px-6 py-3 flex items-center justify-center relative overflow-hidden shadow-lg hover:shadow-xl transition-all duration-200 min-w-[200px] cursor-pointer select-none"
+                    >
+                      {/* Sliding Arrow Circle */}
+                      <div 
+                        className="absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center shadow-md transition-all duration-150"
+                        style={{
+                          transform: `translateX(${Math.min(swipeOffset, 160)}px) translateY(-50%)`,
+                          transition: isSwipeActive ? 'none' : 'transform 0.3s ease-out'
+                        }}
+                      >
+                        <svg 
+                          className="w-4 h-4 text-white" 
+                          fill="currentColor" 
+                          viewBox="0 0 20 20"
+                        >
+                          <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      
+                      {/* Button Text */}
+                      <span className="text-sm font-medium ml-4">
+                        Swipe to call
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Desktop: Simple Call Button */}
+                  <button 
+                    onClick={() => handleCall(cafe.phone)}
+                    className="hidden md:flex bg-white/20 backdrop-blur-sm hover:bg-orange-50 text-white rounded-full px-6 py-3 items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200"
+                  >
+                    <Phone className="w-4 h-4" />
+                    <span className="text-sm font-medium">Call</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -489,17 +620,41 @@ const ModernFoodCard: React.FC<{
   isFavorite?: (itemId: string) => boolean;
 }> = ({ item, onAddToCart, onRemoveFromCart, getCartQuantity, onToggleFavorite, isFavorite }) => {
   const [selectedSize, setSelectedSize] = useState<string>('');
+
+  // Dedupe portions by size name (e.g., multiple "Half" variants) keeping the cheapest
+  const uniquePortions = useMemo(() => {
+    if (!item.portions || item.portions.length === 0) return [] as any[];
+    const map = new Map<string, any>();
+    for (const p of item.portions) {
+      const key = (p.name || '').toLowerCase().trim();
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, p);
+      } else {
+        // Keep the cheaper available option for the same size name
+        const pick = (() => {
+          if (existing.out_of_stock && !p.out_of_stock) return p;
+          if (!existing.out_of_stock && p.out_of_stock) return existing;
+          return (p.price ?? Number.MAX_SAFE_INTEGER) < (existing.price ?? Number.MAX_SAFE_INTEGER)
+            ? p
+            : existing;
+        })();
+        map.set(key, pick);
+      }
+    }
+    return Array.from(map.values());
+  }, [item.portions]);
   
   // Initialize selected size to the first available portion
   useEffect(() => {
-    if (item.portions && item.portions.length > 0 && !selectedSize) {
-      setSelectedSize(item.portions[0].id);
+    if (uniquePortions.length > 0 && !selectedSize) {
+      setSelectedSize(uniquePortions[0].id);
     }
-  }, [item.portions, selectedSize]);
+  }, [uniquePortions, selectedSize]);
 
-  const selectedPortion = item.portions?.find((p: any) => p.id === selectedSize) || item.portions?.[0];
+  const selectedPortion = (item.portions || []).find((p: any) => p.id === selectedSize) || uniquePortions[0];
   const cartQuantity = getCartQuantity(selectedPortion?.id || item.id);
-  const hasMultipleSizes = item.portions && item.portions.length > 1;
+  const hasMultipleSizes = uniquePortions && uniquePortions.length > 1;
 
   const isOutOfStock = item.out_of_stock || (selectedPortion && selectedPortion.out_of_stock);
   
@@ -559,7 +714,7 @@ const ModernFoodCard: React.FC<{
         {hasMultipleSizes && (
           <div className="mb-3">
             <div className="flex flex-wrap gap-2">
-              {item.portions.map((portion: any) => {
+              {uniquePortions.map((portion: any) => {
                 const isPortionOutOfStock = portion.out_of_stock;
                 return (
                   <Button
@@ -573,7 +728,7 @@ const ModernFoodCard: React.FC<{
                       isPortionOutOfStock
                         ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                         : selectedSize === portion.id
-                        ? "bg-orange-500 text-white shadow-sm"
+                        ? "bg-orange-100 text-orange-700 border border-orange-300 shadow-sm"
                         : "bg-white text-gray-600 border-orange-200 hover:bg-orange-50"
                     )}
                   >
@@ -591,12 +746,6 @@ const ModernFoodCard: React.FC<{
             <span className="text-xl font-bold text-gray-900">
               ₹{selectedPortion?.price || item.price}
             </span>
-            {item.preparation_time && (
-              <span className="text-xs text-gray-500 flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {item.preparation_time} mins
-              </span>
-            )}
           </div>
           
           {/* Quantity Controls */}
@@ -650,7 +799,7 @@ const ModernFoodCard: React.FC<{
             ) : (
               <Button
                 onClick={() => onAddToCart(item, selectedSize)}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full text-sm font-medium shadow-sm"
+                className="bg-white hover:bg-orange-50 text-orange-600 border-2 border-orange-500 px-6 py-2 rounded-full text-sm font-medium shadow-sm"
               >
                 Add
               </Button>
