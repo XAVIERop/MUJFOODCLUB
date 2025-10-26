@@ -4,6 +4,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom Font for Grocery Page */
+@font-face {
+  font-family: 'Acumin Variable Concept';
+  src: url('/fonts/Acumin-Variable-Concept.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Grocery Page Font Class */
+.grocery-font {
+  font-family: 'Acumin Variable Concept', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 /* Hide scrollbar for horizontal scroll */
 .scrollbar-hide {
   -ms-overflow-style: none;  /* Internet Explorer 10+ */

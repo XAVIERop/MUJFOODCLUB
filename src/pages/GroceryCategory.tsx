@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Search, Filter, ShoppingCart, Plus, Minus, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/hooks/useCart';
+import { getImageUrl } from '@/utils/imageSource';
+import { getGroceryProductImage } from '@/utils/groceryImageMatcher';
 
 interface GroceryItem {
   id: string;
@@ -320,6 +322,20 @@ const GroceryCategory: React.FC = () => {
                       }`}
                     >
                       <div className="p-4">
+                    {/* Product Image */}
+                        <div className="mb-3">
+                          <div className="w-full h-32 bg-gray-100 rounded-lg overflow-hidden">
+                            <img
+                              src={getGroceryProductImage(item.name)}
+                              alt={item.name}
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                e.currentTarget.src = '/menu_hero.png';
+                              }}
+                            />
+                          </div>
+                        </div>
+                        
                         {/* Product Name */}
                         <div className="mb-2">
                           <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight">
