@@ -197,6 +197,10 @@ const MenuModern = () => {
         baseName = item.name.replace(' (Large 12")', '');
         portionType = 'Large';
         hasVariant = true;
+      } else if (item.name.includes(' (Large)')) {
+        baseName = item.name.replace(' (Large)', '');
+        portionType = 'Large';
+        hasVariant = true;
       } else if (isLetsGoLive && /pasta/i.test(item.category)) {
         // Let's Go Live uses dash variants for Veg/Chicken
         if (item.name.endsWith(' - Veg')) {
