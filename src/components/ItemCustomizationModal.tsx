@@ -135,14 +135,6 @@ const ItemCustomizationModal = ({
             <DialogTitle className="text-xl font-bold">
               {item.baseName}
             </DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-8 w-8 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
             {item.description}
