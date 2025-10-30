@@ -191,6 +191,18 @@ const MenuModern = () => {
         baseName = item.name.replace(' (Large 12")', '');
         portionType = 'Large';
         hasVariant = true;
+      } else if (item.name.endsWith(' - Veg')) {
+        baseName = item.name.replace(' - Veg', '');
+        portionType = 'Veg';
+        hasVariant = true;
+      } else if (item.name.endsWith(' - Chicken')) {
+        baseName = item.name.replace(' - Chicken', '');
+        portionType = 'Chicken';
+        hasVariant = true;
+      } else if (item.name.endsWith(' - Non-veg')) {
+        baseName = item.name.replace(' - Non-veg', '');
+        portionType = 'Non-veg';
+        hasVariant = true;
       }
       
       // Only group items that have variants, otherwise treat as individual items
