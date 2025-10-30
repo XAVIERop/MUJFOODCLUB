@@ -269,7 +269,39 @@ const MenuModern = () => {
         }
         expanded.push(gi);
       }
-      return expanded;
+      // For beverages in Let's Go Live, restrict to the official list
+      const allowedBeveragePatterns = [
+        /^Lemonade(?!\s*\()/i,
+        /^Iced Tea(?!\s*\()/i,
+        /^Fresh Lime Soda/i,
+        /^Masala Nimbu Soda/i,
+        /^Mojito/i,
+        /^Cold Coffee/i,
+        /^Hazelnut Cold Coffee/i,
+        /^Mango(?!.*Pasta)/i,
+        /^Strawberry(?!.*Pasta)/i,
+        /^Blueberry/i,
+        /^Verr?y Berry/i,
+        /^Black Currant/i,
+        /^Oreo/i,
+        /^Chocolate Hazelnut/i,
+        /^Fruit Punch/i,
+        /^Brownie Shake/i,
+        /^Frappe - Coffee/i,
+        /^Frappe - Chocolate/i
+      ];
+      const isAllowedBeverage = (name: string) => allowedBeveragePatterns.some(p => p.test(name));
+
+      const beveragesFiltered = expanded.map(it => ({ ...it })) as GroupedMenuItem[];
+      for (let i = beveragesFiltered.length - 1; i >= 0; i--) {
+        const gi = beveragesFiltered[i];
+        if (/beverage/i.test(gi.category)) {
+          if (!isAllowedBeverage(gi.baseName)) {
+            beveragesFiltered.splice(i, 1);
+          }
+        }
+      }
+      return beveragesFiltered;
     }
     return groupedArray;
   };
