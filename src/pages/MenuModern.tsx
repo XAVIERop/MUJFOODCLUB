@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/hooks/useCart';
 import { supabase } from '@/integrations/supabase/client';
 import ModernMenuLayout from '@/components/ModernMenuLayout';
+import ItemCustomizationModal from '@/components/ItemCustomizationModal';
 import Header from '@/components/Header';
 import { CafeSwitchDialog } from '@/components/CafeSwitchDialog';
 
@@ -75,6 +76,11 @@ const MenuModern = () => {
   const [groupedMenuItems, setGroupedMenuItems] = useState<GroupedMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { cart, setCart, setCafe: setGlobalCafe, clearCart, setMenuItems: setGlobalMenuItems, addToCart: addToGlobalCart, removeFromCart: removeFromGlobalCart, getTotalAmount: getGlobalTotalAmount, getItemCount: getGlobalItemCount } = useCart();
+  
+  // Popup state (feature branch)
+  const [isCustomizationModalOpen, setIsCustomizationModalOpen] = useState(false);
+  const [selectedItemForCustomization, setSelectedItemForCustomization] = useState<GroupedMenuItem | null>(null);
+  const [pendingPortionId, setPendingPortionId] = useState<string | undefined>(undefined);
   
   // Dialog state
   const [showCafeSwitchDialog, setShowCafeSwitchDialog] = useState(false);
@@ -350,8 +356,18 @@ const MenuModern = () => {
     return firstItem.item.cafe_name || '';
   };
 
-  // Cart functions
+  // Helpers
+  const isLetsGoLive = cafe?.name === "Let's Go Live";
+  const isPastaItem = (item: GroupedMenuItem) => (item.category || '').toLowerCase().includes('pasta');
+
+  // Cart functions (wrapped to open popup for Let's Go Live pastas)
   const addToCart = (item: GroupedMenuItem, selectedPortion?: string) => {
+    if (isLetsGoLive && isPastaItem(item)) {
+      setSelectedItemForCustomization(item);
+      setPendingPortionId(selectedPortion);
+      setIsCustomizationModalOpen(true);
+      return;
+    }
     const portionId = selectedPortion || item.portions[0]?.id;
     if (!portionId || !cafe) return;
 
@@ -365,6 +381,44 @@ const MenuModern = () => {
 
     // Proceed with normal add to cart
     addItemToCart(item, selectedPortion);
+  };
+
+  // Handle customized pasta add-to-cart (modal confirm)
+  const handlePastaAddToCart = (item: GroupedMenuItem, selectedPortion: string, selectedAddOns: string[], quantity: number, notes: string) => {
+    const portionId = selectedPortion || item.portions[0]?.id;
+    if (!portionId || !cafe) return;
+
+    const portion = item.portions.find(p => p.id === portionId);
+    if (!portion) return;
+
+    let fullName = item.baseName;
+    if (portion.name === 'Regular') {
+      fullName = `${item.baseName} (Regular 7")`;
+    } else if (portion.name === 'Medium') {
+      fullName = `${item.baseName} (Medium 10")`;
+    } else if (portion.name === 'Large') {
+      fullName = `${item.baseName} (Large 12")`;
+    }
+
+    const addOnNote = selectedAddOns.length > 0 ? `Add-ons: ${selectedAddOns.join(', ')}` : '';
+    const combinedNotes = [addOnNote, notes].filter(Boolean).join(' | ');
+
+    const menuItem = {
+      id: portion.id,
+      name: fullName,
+      description: item.description,
+      price: portion.price,
+      category: item.category,
+      preparation_time: item.preparation_time,
+      is_available: portion.is_available,
+      cafe_id: cafe.id,
+      cafe_name: cafe.name
+    };
+
+    addToGlobalCart(menuItem, quantity, combinedNotes);
+    setIsCustomizationModalOpen(false);
+    setSelectedItemForCustomization(null);
+    setPendingPortionId(undefined);
   };
 
   // Function to actually add item to cart
@@ -642,6 +696,15 @@ const MenuModern = () => {
         currentCafeName={getCurrentCafeName()}
         newCafeName={cafe?.name || ''}
         currentCartItems={Object.keys(cart).length}
+      />
+
+      {/* Pasta Customization Modal - feature branch only */}
+      <ItemCustomizationModal
+        isOpen={isCustomizationModalOpen}
+        onClose={() => { setIsCustomizationModalOpen(false); setSelectedItemForCustomization(null); setPendingPortionId(undefined); }}
+        item={selectedItemForCustomization}
+        addOns={[]}
+        onAddToCart={handlePastaAddToCart}
       />
     </div>
   );
