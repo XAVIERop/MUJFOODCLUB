@@ -301,6 +301,23 @@ const MenuModern = () => {
           }
         }
       }
+      // Collapse sizes for beverages that shouldn't have size options (keep Regular/cheapest only)
+      const allowedSizedNames = [
+        'Cold Coffee',
+        'Hazelnut Cold Coffee',
+        'Lemonade',
+        'Iced Tea'
+      ];
+      beveragesFiltered.forEach(gi => {
+        if (/beverage/i.test(gi.category)) {
+          const name = gi.baseName;
+          const shouldKeepSizes = allowedSizedNames.some(n => name.toLowerCase().startsWith(n.toLowerCase()));
+          if (!shouldKeepSizes && gi.portions && gi.portions.length > 0) {
+            const cheapest = [...gi.portions].sort((a, b) => a.price - b.price)[0];
+            gi.portions = [cheapest];
+          }
+        }
+      });
       return beveragesFiltered;
     }
     return groupedArray;
