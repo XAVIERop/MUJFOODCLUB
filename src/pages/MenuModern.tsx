@@ -282,11 +282,14 @@ const MenuModern = () => {
         /^Mojito/i,
         /^Cold Coffee/i,
         /^Hazelnut Cold Coffee/i,
+        /^Coffee Frappe/i,
+        /^Chocolate Frappe/i,
         /^Mango(?!.*Pasta)/i,
         /^Strawberry(?!.*Pasta)/i,
         /^Blueberry/i,
         /^Verr?y Berry/i,
         /^Black Currant/i,
+        /^Chocolate Shake/i,
         /^Oreo/i,
         /^Chocolate Hazelnut/i,
         /^Fruit Punch/i,
@@ -305,21 +308,11 @@ const MenuModern = () => {
           }
         }
       }
-      // Collapse sizes for beverages that shouldn't have size options (keep Regular/cheapest only)
-      const allowedSizedNames = [
-        'Cold Coffee',
-        'Hazelnut Cold Coffee',
-        'Lemonade',
-        'Iced Tea'
-      ];
+      // Collapse sizes for ALL beverages (keep only the cheapest e.g., Regular)
       beveragesFiltered.forEach(gi => {
-        if (/beverage/i.test(gi.category)) {
-          const name = gi.baseName;
-          const shouldKeepSizes = allowedSizedNames.some(n => name.toLowerCase().startsWith(n.toLowerCase()));
-          if (!shouldKeepSizes && gi.portions && gi.portions.length > 0) {
-            const cheapest = [...gi.portions].sort((a, b) => a.price - b.price)[0];
-            gi.portions = [cheapest];
-          }
+        if (/beverage/i.test(gi.category) && gi.portions && gi.portions.length > 0) {
+          const cheapest = [...gi.portions].sort((a, b) => a.price - b.price)[0];
+          gi.portions = [cheapest];
         }
       });
       return beveragesFiltered;
