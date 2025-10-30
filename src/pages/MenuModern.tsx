@@ -197,6 +197,21 @@ const MenuModern = () => {
         baseName = item.name.replace(' (Large 12")', '');
         portionType = 'Large';
         hasVariant = true;
+      } else if (isLetsGoLive && /pasta/i.test(item.category)) {
+        // Let's Go Live uses dash variants for Veg/Chicken
+        if (item.name.endsWith(' - Veg')) {
+          baseName = item.name.replace(' - Veg', '');
+          portionType = 'Veg';
+          hasVariant = true;
+        } else if (item.name.endsWith(' - Chicken')) {
+          baseName = item.name.replace(' - Chicken', '');
+          portionType = 'Chicken';
+          hasVariant = true;
+        } else if (item.name.endsWith(' - Non-veg')) {
+          baseName = item.name.replace(' - Non-veg', '');
+          portionType = 'Non-veg';
+          hasVariant = true;
+        }
       }
       
       // Only group items that have variants, otherwise treat as individual items
@@ -238,7 +253,25 @@ const MenuModern = () => {
       });
     });
     
-    return Object.values(grouped);
+    const groupedArray = Object.values(grouped);
+    // Special-case split for combined names like "Cheesy Corn / Baked Pasta"
+    // Only for Let's Go Live pasta items
+    if (isLetsGoLive) {
+      const expanded: GroupedMenuItem[] = [] as any;
+      for (const gi of groupedArray) {
+        if (/pasta/i.test(gi.category) && gi.baseName.includes(' / ')) {
+          const parts = gi.baseName.split(' / ').map(p => p.trim()).filter(Boolean);
+          if (parts.length === 2) {
+            expanded.push({ ...gi, baseName: parts[0] });
+            expanded.push({ ...gi, baseName: parts[1] });
+            continue;
+          }
+        }
+        expanded.push(gi);
+      }
+      return expanded;
+    }
+    return groupedArray;
   };
 
   // Fetch cafe data and menu items
