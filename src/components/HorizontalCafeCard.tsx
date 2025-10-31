@@ -35,6 +35,11 @@ export const HorizontalCafeCard: React.FC<HorizontalCafeCardProps> = memo(({ caf
   const { toast } = useToast();
 
   const getCafeImage = () => {
+    // First, try to use the database image_url if available
+    if (cafe.image_url) {
+      return cafe.image_url;
+    }
+    
     // Map cafe names to their respective card images (preferred) or logo images
     const cafeImages: { [key: string]: string } = {
       'Dialog': '/dialog_card.jpg',

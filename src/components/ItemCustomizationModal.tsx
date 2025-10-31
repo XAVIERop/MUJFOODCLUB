@@ -49,6 +49,27 @@ const ItemCustomizationModal = ({
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
 
+  // Structured selections for Let's Go Live pasta builder
+  const pastaTypes = [
+    'Macaroni', 'Penne', 'Fusilli', 'Spaghetti'
+  ];
+  const sauces = [
+    'White Sauce', 'Red Sauce', 'Pink Sauce', 'Makhani Sauce', 'Kadhai Sauce', 'Bhuna Masala'
+  ];
+  const veggies = [
+    'Broccoli', 'Green Pepper', 'Red Pepper', 'Yellow Pepper', 'Tomato',
+    'Mushroom', 'Jalapeno', 'Corn', 'Zucchini', 'Baby Corn',
+    'Black Olives', 'Red Paprika', 'Onion'
+  ];
+  const proteins = [
+    'Spicy Chicken', 'Salami', 'Sausages', 'Herby Chicken'
+  ];
+
+  const [selectedPastaType, setSelectedPastaType] = useState<string>('');
+  const [selectedSauce, setSelectedSauce] = useState<string>('');
+  const [selectedVeggies, setSelectedVeggies] = useState<string[]>([]);
+  const [selectedProtein, setSelectedProtein] = useState<string>('');
+
   if (!item) return null;
 
   const handleAddOnToggle = (addOnId: string, maxSelection?: number) => {
@@ -68,8 +89,17 @@ const ItemCustomizationModal = ({
 
   const handleAddToCart = () => {
     if (!selectedPortion) return;
-    
-    onAddToCart(item, selectedPortion, selectedAddOns, quantity, notes);
+
+    // Build a structured summary as add-ons text for downstream notes
+    const parts: string[] = [];
+    if (selectedPastaType) parts.push(`Pasta: ${selectedPastaType}`);
+    if (selectedSauce) parts.push(`Sauce: ${selectedSauce}`);
+    if (selectedVeggies.length > 0) parts.push(`Veggies: ${selectedVeggies.join(', ')}`);
+    if (!item.is_vegetarian && selectedProtein) parts.push(`Protein: ${selectedProtein}`);
+
+    const consolidated = parts.length ? parts : [];
+
+    onAddToCart(item, selectedPortion, consolidated, quantity, notes);
     onClose();
     
     // Reset form
@@ -77,6 +107,10 @@ const ItemCustomizationModal = ({
     setSelectedAddOns([]);
     setQuantity(1);
     setNotes('');
+    setSelectedPastaType('');
+    setSelectedSauce('');
+    setSelectedVeggies([]);
+    setSelectedProtein('');
   };
 
   const getTotalPrice = () => {
@@ -101,14 +135,6 @@ const ItemCustomizationModal = ({
             <DialogTitle className="text-xl font-bold">
               {item.baseName}
             </DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-8 w-8 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
             {item.description}
@@ -116,6 +142,93 @@ const ItemCustomizationModal = ({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Pasta Builder Sections */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Pasta Type */}
+            <div>
+              <h3 className="font-semibold mb-3 text-orange-600">Pasta Type (Choose 1)</h3>
+              <div className="flex flex-wrap gap-2">
+                {pastaTypes.map(name => (
+                  <Button
+                    key={name}
+                    variant={selectedPastaType === name ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedPastaType(name)}
+                    className="rounded-full text-xs"
+                  >
+                    {name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sauce */}
+            <div>
+              <h3 className="font-semibold mb-3 text-orange-600">Sauce (Choose 1)</h3>
+              <div className="flex flex-wrap gap-2">
+                {sauces.map(name => (
+                  <Button
+                    key={name}
+                    variant={selectedSauce === name ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedSauce(name)}
+                    className="rounded-full text-xs"
+                  >
+                    {name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Veggies */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-orange-600">Vegetables (Choose up to 3)</h3>
+              <Badge className="bg-orange-100 text-orange-700">{selectedVeggies.length}/3</Badge>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {veggies.map(name => {
+                const selected = selectedVeggies.includes(name);
+                const limitReached = !selected && selectedVeggies.length >= 3;
+                return (
+                  <Button
+                    key={name}
+                    variant={selected ? 'default' : 'outline'}
+                    size="sm"
+                    disabled={limitReached}
+                    onClick={() => {
+                      setSelectedVeggies(prev => selected ? prev.filter(v => v !== name) : [...prev, name]);
+                    }}
+                    className="rounded-full text-xs"
+                  >
+                    {name}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Protein */}
+          {!item.is_vegetarian && (
+            <div>
+              <h3 className="font-semibold mb-3 text-orange-600">Non‑veg Protein (Choose 1, optional)</h3>
+              <div className="flex flex-wrap gap-2">
+                {proteins.map(name => (
+                  <Button
+                    key={name}
+                    variant={selectedProtein === name ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedProtein(prev => prev === name ? '' : name)}
+                    className="rounded-full text-xs"
+                  >
+                    {name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Portion Selection */}
           <div>
             <h3 className="font-semibold mb-3 text-orange-600">
@@ -137,34 +250,7 @@ const ItemCustomizationModal = ({
             </div>
           </div>
 
-          {/* Add-ons Selection */}
-          {addOns.length > 0 && (
-            <div>
-              <h3 className="font-semibold mb-3 text-orange-600">
-                Choose Your Add-ons (Optional)
-              </h3>
-              <div className="space-y-2">
-                {addOns.map((addOn) => (
-                  <div key={addOn.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        id={addOn.id}
-                        checked={selectedAddOns.includes(addOn.id)}
-                        onChange={() => handleAddOnToggle(addOn.id, addOn.max_selection)}
-                        disabled={!addOn.is_available}
-                        className="w-4 h-4 text-orange-600"
-                      />
-                      <label htmlFor={addOn.id} className="font-medium cursor-pointer">
-                        {addOn.name}
-                      </label>
-                    </div>
-                    <span className="font-bold text-orange-600">+₹{addOn.price}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Legacy add-ons hidden for pasta builder (not used) */}
 
           {/* Quantity Selection */}
           <div>
@@ -211,7 +297,7 @@ const ItemCustomizationModal = ({
             </div>
             <Button
               onClick={handleAddToCart}
-              disabled={!selectedPortion}
+              disabled={!selectedPortion || !selectedPastaType || !selectedSauce}
               className="w-full h-12 text-lg font-semibold bg-orange-600 hover:bg-orange-700"
             >
               Add Item - ₹{getTotalPrice()}

@@ -45,7 +45,8 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
                      cafe.name.toLowerCase().includes('pizza bakers') ||
                      cafe.name.toLowerCase().includes('taste of india') ||
                      cafe.name.toLowerCase().includes('havmor') ||
-                     cafe.name.toLowerCase().includes('china town');
+                     cafe.name.toLowerCase().includes('china town') ||
+                     (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry'));
 
   const getCafeImage = () => {
     // First, try to use the database image_url if available
@@ -318,14 +319,14 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               className={`text-xs font-medium ${
                 !cafe.accepting_orders
                   ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed text-gray-600"
-                  : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india')
+                  : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry'))
                     ? "bg-orange-600 hover:bg-orange-700 text-white"
                     : "bg-gray-500 hover:bg-gray-600 text-white"
               } disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-600`}
             >
               {!cafe.accepting_orders
                 ? "Closed"
-                : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india')
+                : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry'))
                   ? "Order Now"
                   : "Coming Soon"
               }

@@ -51,8 +51,32 @@ const PROMOTIONAL_BANNERS: PromotionalBanner[] = [
     textColor: 'text-white',
     badge: '',
     badgeIcon: '',
-    cafeId: 'Cook House',
+    cafeId: 'COOK HOUSE',
     backgroundImage: '/cookhouse_offer.jpeg',
+  },
+  {
+    id: 'pizza-bakers',
+    title: '',
+    subtitle: '',
+    buttonText: '',
+    backgroundColor: 'bg-red-600',
+    textColor: 'text-white',
+    badge: '',
+    badgeIcon: '',
+    cafeId: 'Pizza Bakers',
+    backgroundImage: 'https://ik.imagekit.io/foodclub/Banners/Mobile/Pizza%20Bakers.png?updatedAt=1761896484845',
+  },
+  {
+    id: 'punjabi-tadka',
+    title: '',
+    subtitle: '',
+    buttonText: '',
+    backgroundColor: 'bg-orange-600',
+    textColor: 'text-white',
+    badge: '',
+    badgeIcon: '',
+    cafeId: 'Punjabi Tadka',
+    backgroundImage: 'https://ik.imagekit.io/foodclub/Banners/Mobile/Punjabi%20Tadka.png?updatedAt=1761896484185',
   },
 ];
 
@@ -125,7 +149,7 @@ const MobilePromotionalBanners: React.FC = () => {
             onClick={() => handleBannerClick(banner.cafeId)}
           >
             {/* Dark overlay for background images - Removed for offer banners */}
-            {banner.backgroundImage && banner.id !== 'chatkara' && banner.id !== 'cook-house' && banner.id !== 'food-court' && (
+            {banner.backgroundImage && banner.id !== 'chatkara' && banner.id !== 'cook-house' && banner.id !== 'food-court' && banner.id !== 'pizza-bakers' && banner.id !== 'punjabi-tadka' && (
               <div className="absolute inset-0 bg-black/40" />
             )}
             

@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/hooks/useCart';
 import { supabase } from '@/integrations/supabase/client';
 import ModernMenuLayout from '@/components/ModernMenuLayout';
+import ItemCustomizationModal from '@/components/ItemCustomizationModal';
 import Header from '@/components/Header';
 import { CafeSwitchDialog } from '@/components/CafeSwitchDialog';
 
@@ -62,6 +63,7 @@ interface Cafe {
   accepting_orders: boolean;
   average_rating: number | null;
   total_ratings: number | null;
+  image_url?: string | null;
 }
 
 const MenuModern = () => {
@@ -75,6 +77,11 @@ const MenuModern = () => {
   const [groupedMenuItems, setGroupedMenuItems] = useState<GroupedMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { cart, setCart, setCafe: setGlobalCafe, clearCart, setMenuItems: setGlobalMenuItems, addToCart: addToGlobalCart, removeFromCart: removeFromGlobalCart, getTotalAmount: getGlobalTotalAmount, getItemCount: getGlobalItemCount } = useCart();
+  
+  // Popup state (feature branch)
+  const [isCustomizationModalOpen, setIsCustomizationModalOpen] = useState(false);
+  const [selectedItemForCustomization, setSelectedItemForCustomization] = useState<GroupedMenuItem | null>(null);
+  const [pendingPortionId, setPendingPortionId] = useState<string | undefined>(undefined);
   
   // Dialog state
   const [showCafeSwitchDialog, setShowCafeSwitchDialog] = useState(false);
@@ -122,6 +129,53 @@ const MenuModern = () => {
       let baseName = item.name;
       let portionType = 'Full'; // default
       let hasVariant = false;
+
+      // Special handling for Mexican: combined Paneer/Chicken variants in various positions
+      // Case A: suffix form "- Paneer / Chicken"
+      const paneerChickenSuffix = /(\s*-\s*)?Paneer\s*\/\s*Chicken\s*$/i;
+      // Case B: infix form like "Chili Garlic Paneer / Chicken Taco" or "Paneer Tikka / Chicken Tikka Taco"
+      const paneerChickenInfix = /(.*?)(?:\bPaneer\b)\s*\/\s*(?:\bChicken\b)(.*)/i;
+      if (/mexican/i.test(item.category) && (paneerChickenSuffix.test(item.name) || paneerChickenInfix.test(item.name))) {
+        if (paneerChickenSuffix.test(item.name)) {
+          baseName = item.name.replace(paneerChickenSuffix, '').trim();
+        } else {
+          // Remove the specific protein tokens around the slash, keep prefix and suffix words
+          const m = item.name.match(paneerChickenInfix);
+          if (m) {
+            const pre = (m[1] || '').trim();
+            const post = (m[2] || '').trim();
+            baseName = `${pre} ${post}`.replace(/\s+/g, ' ').trim();
+          }
+        }
+        hasVariant = true;
+        const key = baseName;
+        if (!acc[key]) {
+          acc[key] = {
+            baseName,
+            category: item.category,
+            description: item.description,
+            preparation_time: item.preparation_time,
+            is_vegetarian: item.is_vegetarian,
+            portions: []
+          };
+        }
+        // Push two synthetic portions for Paneer and Chicken using the same price
+        acc[key].portions.push({
+          id: `${item.id}-paneer`,
+          name: 'Paneer',
+          price: item.price,
+          is_available: item.is_available,
+          out_of_stock: item.out_of_stock
+        });
+        acc[key].portions.push({
+          id: `${item.id}-chicken`,
+          name: 'Chicken',
+          price: item.price,
+          is_available: item.is_available,
+          out_of_stock: item.out_of_stock
+        });
+        return acc;
+      }
       
       if (item.name.includes(' (Half)')) {
         baseName = item.name.replace(' (Half)', '');
@@ -191,6 +245,10 @@ const MenuModern = () => {
         baseName = item.name.replace(' (Large 12")', '');
         portionType = 'Large';
         hasVariant = true;
+      } else if (item.name.includes(' (Large)')) {
+        baseName = item.name.replace(' (Large)', '');
+        portionType = 'Large';
+        hasVariant = true;
       } else if (item.name.endsWith(' - Veg')) {
         baseName = item.name.replace(' - Veg', '');
         portionType = 'Veg';
@@ -244,7 +302,81 @@ const MenuModern = () => {
       });
     });
     
-    return Object.values(grouped);
+    const groupedArray = Object.values(grouped);
+    // Special-case split for combined names like "Cheesy Corn / Baked Pasta"
+    // Only for Let's Go Live pasta items
+    if (isLetsGoLive) {
+      const expanded: GroupedMenuItem[] = [] as any;
+      for (const gi of groupedArray) {
+        if (/pasta/i.test(gi.category) && gi.baseName.includes(' / ')) {
+          const parts = gi.baseName.split(' / ').map(p => p.trim()).filter(Boolean);
+          if (parts.length === 2) {
+            expanded.push({ ...gi, baseName: parts[0] });
+            expanded.push({ ...gi, baseName: parts[1] });
+            continue;
+          }
+        }
+        expanded.push(gi);
+      }
+      // Also split Mexican combined names like "Italian / Mexican Taco" into two items
+      const expandedMex: GroupedMenuItem[] = [] as any;
+      for (const gi of expanded) {
+        if (/mexican/i.test(gi.category) && gi.baseName.includes(' / ')) {
+          const parts = gi.baseName.split(' / ').map(p => p.replace(/\s*Taco$/i, '').trim()).filter(Boolean);
+          if (parts.length === 2) {
+            expandedMex.push({ ...gi, baseName: `${parts[0]} Taco` });
+            expandedMex.push({ ...gi, baseName: `${parts[1]} Taco` });
+            continue;
+          }
+        }
+        expandedMex.push(gi);
+      }
+
+      // For beverages in Let's Go Live, restrict to the official list
+      const allowedBeveragePatterns = [
+        /^Lemonade(?!\s*\()/i,
+        /^Iced Tea(?!\s*\()/i,
+        /^Fresh Lime Soda/i,
+        /^Masala Nimbu Soda/i,
+        /^Mojito/i,
+        /^Cold Coffee/i,
+        /^Hazelnut Cold Coffee/i,
+        /^Coffee Frappe/i,
+        /^Chocolate Frappe/i,
+        /^Mango(?!.*Pasta)/i,
+        /^Strawberry(?!.*Pasta)/i,
+        /^Blueberry/i,
+        /^Verr?y Berry/i,
+        /^Black Currant/i,
+        /^Chocolate Shake/i,
+        /^Oreo/i,
+        /^Chocolate Hazelnut/i,
+        /^Fruit Punch/i,
+        /^Brownie Shake/i,
+        /^Frappe - Coffee/i,
+        /^Frappe - Chocolate/i
+      ];
+      const isAllowedBeverage = (name: string) => allowedBeveragePatterns.some(p => p.test(name));
+
+      const beveragesFiltered = expandedMex.map(it => ({ ...it })) as GroupedMenuItem[];
+      for (let i = beveragesFiltered.length - 1; i >= 0; i--) {
+        const gi = beveragesFiltered[i];
+        if (/beverage/i.test(gi.category)) {
+          if (!isAllowedBeverage(gi.baseName)) {
+            beveragesFiltered.splice(i, 1);
+          }
+        }
+      }
+      // Collapse sizes for ALL beverages (keep only the cheapest e.g., Regular)
+      beveragesFiltered.forEach(gi => {
+        if (/beverage/i.test(gi.category) && gi.portions && gi.portions.length > 0) {
+          const cheapest = [...gi.portions].sort((a, b) => a.price - b.price)[0];
+          gi.portions = [cheapest];
+        }
+      });
+      return beveragesFiltered;
+    }
+    return groupedArray;
   };
 
   // Fetch cafe data and menu items
@@ -362,8 +494,18 @@ const MenuModern = () => {
     return firstItem.item.cafe_name || '';
   };
 
-  // Cart functions
+  // Helpers
+  const isLetsGoLive = cafe?.name === "Let's Go Live";
+  const isPastaItem = (item: GroupedMenuItem) => (item.category || '').toLowerCase().includes('pasta');
+
+  // Cart functions (wrapped to open popup for Let's Go Live pastas)
   const addToCart = (item: GroupedMenuItem, selectedPortion?: string) => {
+    if (isLetsGoLive && isPastaItem(item)) {
+      setSelectedItemForCustomization(item);
+      setPendingPortionId(selectedPortion);
+      setIsCustomizationModalOpen(true);
+      return;
+    }
     const portionId = selectedPortion || item.portions[0]?.id;
     if (!portionId || !cafe) return;
 
@@ -377,6 +519,44 @@ const MenuModern = () => {
 
     // Proceed with normal add to cart
     addItemToCart(item, selectedPortion);
+  };
+
+  // Handle customized pasta add-to-cart (modal confirm)
+  const handlePastaAddToCart = (item: GroupedMenuItem, selectedPortion: string, selectedAddOns: string[], quantity: number, notes: string) => {
+    const portionId = selectedPortion || item.portions[0]?.id;
+    if (!portionId || !cafe) return;
+
+    const portion = item.portions.find(p => p.id === portionId);
+    if (!portion) return;
+
+    let fullName = item.baseName;
+    if (portion.name === 'Regular') {
+      fullName = `${item.baseName} (Regular 7")`;
+    } else if (portion.name === 'Medium') {
+      fullName = `${item.baseName} (Medium 10")`;
+    } else if (portion.name === 'Large') {
+      fullName = `${item.baseName} (Large 12")`;
+    }
+
+    const addOnNote = selectedAddOns.length > 0 ? `Add-ons: ${selectedAddOns.join(', ')}` : '';
+    const combinedNotes = [addOnNote, notes].filter(Boolean).join(' | ');
+
+    const menuItem = {
+      id: portion.id,
+      name: fullName,
+      description: item.description,
+      price: portion.price,
+      category: item.category,
+      preparation_time: item.preparation_time,
+      is_available: portion.is_available,
+      cafe_id: cafe.id,
+      cafe_name: cafe.name
+    };
+
+    addToGlobalCart(menuItem, quantity, combinedNotes);
+    setIsCustomizationModalOpen(false);
+    setSelectedItemForCustomization(null);
+    setPendingPortionId(undefined);
   };
 
   // Function to actually add item to cart
@@ -654,6 +834,15 @@ const MenuModern = () => {
         currentCafeName={getCurrentCafeName()}
         newCafeName={cafe?.name || ''}
         currentCartItems={Object.keys(cart).length}
+      />
+
+      {/* Pasta Customization Modal - feature branch only */}
+      <ItemCustomizationModal
+        isOpen={isCustomizationModalOpen}
+        onClose={() => { setIsCustomizationModalOpen(false); setSelectedItemForCustomization(null); setPendingPortionId(undefined); }}
+        item={selectedItemForCustomization}
+        addOns={[]}
+        onAddToCart={handlePastaAddToCart}
       />
     </div>
   );

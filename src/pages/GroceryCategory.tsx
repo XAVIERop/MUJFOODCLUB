@@ -83,12 +83,12 @@ const GroceryCategory: React.FC = () => {
         
         // Extract brand from item name
         if (name.includes('LAYS')) brand = 'Lays';
-        else if (name.includes('BINGO')) brand = 'Bingo';
+        else if (name.includes('Bingo')) brand = 'Bingo';
         else if (name.includes('CORNITOS')) brand = 'Cornitos';
         else if (name.includes('CRAX')) brand = 'Crax';
         else if (name.includes('BALAJI')) brand = 'Balaji';
-        else if (name.includes('ACT2')) brand = 'Act2';
-        else if (name.includes('POPZ')) brand = 'Popz';
+        else if (name.includes('ACT II')) brand = 'ACT II';
+        else if (name.includes('POPZ')) brand = 'POPZ';
         else if (name.includes('PEPSI')) brand = 'Pepsi';
         else if (name.includes('COKE')) brand = 'Coca Cola';
         else if (name.includes('THUMS UP')) brand = 'Thums Up';
@@ -175,8 +175,8 @@ const GroceryCategory: React.FC = () => {
       'Cornitos': '🌽',
       'Crax': '🍿',
       'Balaji': '🥔',
-      'Act2': '🍿',
-      'Popz': '🍫',
+      'ACT II': '🍿',
+      'POPZ': '🍫',
       'Pepsi': '🥤',
       'Coca Cola': '🥤',
       'Thums Up': '🥤',
