@@ -72,7 +72,7 @@ export function isDeliveryAllowed(cafeName?: string): boolean {
   // Check if this cafe has extended delivery hours (11 AM to 2 AM)
   const extendedDeliveryCafes = [
     'cook house', 'taste of india', 'pizza bakers', 'food court', 
-    'punjabi tadka', 'munch box', 'mini meals'
+    'punjabi tadka', 'munch box', 'mini meals', 'kitchen', 'curry'
   ];
   
   const isExtendedDeliveryCafe = cafeName && extendedDeliveryCafes.some(cafe => 
@@ -114,18 +114,41 @@ export function isDeliveryAllowed(cafeName?: string): boolean {
 
 /**
  * Get the next available delivery time
- * @returns {string} Next available delivery time (e.g., "11:00 PM")
+ * @param cafeName - Name of the cafe to check restrictions for
+ * @returns {string} Next available delivery time (e.g., "11:00 AM" or "11:00 PM")
  */
-export function getNextDeliveryTime(): string {
+export function getNextDeliveryTime(cafeName?: string): string {
   const now = new Date();
   const currentHour = now.getHours();
   
-  if (currentHour < 23) {
-    // Before 11 PM, next delivery is 11 PM today
-    return "11:00 PM";
+  // Check if this cafe has extended delivery hours (11 AM to 2 AM)
+  const extendedDeliveryCafes = [
+    'cook house', 'taste of india', 'pizza bakers', 'food court', 
+    'punjabi tadka', 'munch box', 'mini meals', 'kitchen', 'curry'
+  ];
+  
+  const isExtendedDeliveryCafe = cafeName && extendedDeliveryCafes.some(cafe => 
+    cafeName.toLowerCase().includes(cafe)
+  );
+  
+  if (isExtendedDeliveryCafe) {
+    // Extended cafes: Available from 11 AM to 2 AM
+    if (currentHour >= 2 && currentHour < 11) {
+      // Between 2 AM and 11 AM, next delivery is 11 AM today
+      return "11:00 AM today";
+    } else {
+      // After 2 AM next day or already within delivery hours
+      return "11:00 AM";
+    }
   } else {
-    // After 2:30 AM, next delivery is 11 PM today
-    return "11:00 PM today";
+    // Standard cafes: Available from 11 PM to 2:30 AM
+    if (currentHour < 23) {
+      // Before 11 PM, next delivery is 11 PM today
+      return "11:00 PM";
+    } else {
+      // After 2:30 AM, next delivery is 11 PM today
+      return "11:00 PM today";
+    }
   }
 }
 
@@ -138,7 +161,7 @@ export function getDeliveryMessage(cafeName?: string): string {
   if (isDeliveryAllowed(cafeName)) {
     return "Delivery orders are currently available";
   } else {
-    return `Delivery orders are currently unavailable. Available from ${getNextDeliveryTime()}`;
+    return `Delivery orders are currently unavailable. Available from ${getNextDeliveryTime(cafeName)}`;
   }
 }
 
