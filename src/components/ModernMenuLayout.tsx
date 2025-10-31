@@ -22,7 +22,7 @@ interface ModernMenuLayoutProps {
   
   // Menu items
   menuItems: any[];
-  onAddToCart: (item: any) => void;
+  onAddToCart: (item: any, selectedPortion?: string) => void;
   onRemoveFromCart: (item: any) => void;
   getCartQuantity: (itemId: string) => number;
   
@@ -77,62 +77,10 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
     }
   };
 
-  // Swipe to call functionality
-  const [swipeStart, setSwipeStart] = useState<{ x: number; y: number } | null>(null);
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isSwipeActive, setIsSwipeActive] = useState(false);
-  const [touchStarted, setTouchStarted] = useState(false);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    setSwipeStart({ x: touch.clientX, y: touch.clientY });
-    setIsSwipeActive(true);
-    setTouchStarted(true);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!swipeStart || !isSwipeActive) return;
-    
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - swipeStart.x;
-    const deltaY = touch.clientY - swipeStart.y;
-    
-    // Only allow horizontal swipes (more horizontal than vertical)
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      e.preventDefault(); // Prevent scrolling
-      setSwipeOffset(Math.max(0, deltaX)); // Only allow rightward swipes
-    }
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!swipeStart || !isSwipeActive) return;
-    
-    const touch = e.changedTouches[0];
-    const deltaX = touch.clientX - swipeStart.x;
-    
-    // If swiped more than 160px to the right (arrow reaches end), trigger call
-    if (deltaX > 160) {
-      if (cafe?.phone) {
-        handleCall(cafe.phone);
-      }
-    }
-    
-    // Reset swipe state
-    setSwipeStart(null);
-    setSwipeOffset(0);
-    setIsSwipeActive(false);
-    setTouchStarted(false);
-  };
-
-  // Simple click handler for desktop (only if no touch/swipe occurred)
-  const handleDesktopClick = (e: React.MouseEvent) => {
-    // Only trigger if no touch or swipe was performed
-    if (!touchStarted && !isSwipeActive && swipeOffset === 0) {
-      e.preventDefault();
-      if (cafe?.phone) {
-        handleCall(cafe.phone);
-      }
-    }
+  // Temporary compatibility shim: if any legacy JSX still references
+  // handleAddPastaClick, route it to the standard onAddToCart handler.
+  const handleAddPastaClick = (item: any, selectedPortion?: string) => {
+    onAddToCart(item, selectedPortion);
   };
   
   // showCart state removed - using floating cart on mobile instead
@@ -201,6 +149,11 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
 
   // Get cafe image for header background
   const getCafeHeaderImage = () => {
+    // First, try to use the database image_url if available
+    if (cafe?.image_url) {
+      return cafe.image_url;
+    }
+    
     const cafeImages: { [key: string]: string } = {
       'CHATKARA': '/chatkara_card.png',
       'COOK HOUSE': '/cookhouse_card.png',
@@ -291,50 +244,15 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
                 </span>
               </div>
               
-              {/* Call Button - Different for Mobile vs Desktop */}
+              {/* Call Button - Same for Mobile and Desktop */}
               {cafe?.phone && (
-                <>
-                  {/* Mobile: Swipe to Call Button */}
-                  <div className="relative md:hidden">
-                    <div 
-                      onTouchStart={handleTouchStart}
-                      onTouchMove={handleTouchMove}
-                      onTouchEnd={handleTouchEnd}
-                      className="bg-white/20 backdrop-blur-sm text-white rounded-full px-6 py-3 flex items-center justify-center relative overflow-hidden shadow-lg hover:shadow-xl transition-all duration-200 min-w-[200px] cursor-pointer select-none"
-                    >
-                      {/* Sliding Arrow Circle */}
-                      <div 
-                        className="absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center shadow-md transition-all duration-150"
-                        style={{
-                          transform: `translateX(${Math.min(swipeOffset, 160)}px) translateY(-50%)`,
-                          transition: isSwipeActive ? 'none' : 'transform 0.3s ease-out'
-                        }}
-                      >
-                        <svg 
-                          className="w-4 h-4 text-white" 
-                          fill="currentColor" 
-                          viewBox="0 0 20 20"
-                        >
-                          <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      
-                      {/* Button Text */}
-                      <span className="text-sm font-medium ml-4">
-                        Swipe to call
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Desktop: Simple Call Button */}
-                  <button 
-                    onClick={() => handleCall(cafe.phone)}
-                    className="hidden md:flex bg-white/20 backdrop-blur-sm hover:bg-orange-50 text-white rounded-full px-6 py-3 items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200"
-                  >
-                    <Phone className="w-4 h-4" />
-                    <span className="text-sm font-medium">Call</span>
-                  </button>
-                </>
+                <button 
+                  onClick={() => handleCall(cafe.phone)}
+                  className="bg-white/20 backdrop-blur-sm hover:bg-orange-50 text-white rounded-full px-6 py-3 flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  <Phone className="w-4 h-4" />
+                  <span className="text-sm font-medium">Call</span>
+                </button>
               )}
             </div>
           </div>
@@ -486,7 +404,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
 // Menu Category Sections Component (Swiggy-style)
 const MenuCategorySections: React.FC<{
   menuItems: any[];
-  onAddToCart: (item: any) => void;
+  onAddToCart: (item: any, selectedPortion?: string) => void;
   onRemoveFromCart: (item: any) => void;
   getCartQuantity: (itemId: string) => number;
   onToggleFavorite?: (itemId: string) => void;
@@ -504,6 +422,15 @@ const MenuCategorySections: React.FC<{
     acc[category].push(item);
     return acc;
   }, {} as Record<string, any[]>);
+
+  // Sort items within each category alphabetically by baseName
+  Object.keys(groupedItems).forEach(category => {
+    groupedItems[category].sort((a, b) => {
+      const nameA = (a.baseName || a.name || '').toLowerCase();
+      const nameB = (b.baseName || b.name || '').toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+  });
 
   // Convert to array and sort by category name
   const sortedCategories = Object.entries(groupedItems).sort(([a], [b]) => a.localeCompare(b));
@@ -791,14 +718,14 @@ const ModernFoodCard: React.FC<{
                   variant="outline"
                   size="sm"
                   className="w-8 h-8 p-0 rounded-full border-orange-200 hover:bg-orange-50"
-                  onClick={() => onAddToCart(item, selectedSize)}
+                  onClick={() => onAddToCart(item, selectedSize || uniquePortions[0]?.id)}
                 >
                   <Plus className="w-3 h-3" />
                 </Button>
               </div>
             ) : (
               <Button
-                onClick={() => onAddToCart(item, selectedSize)}
+                onClick={() => onAddToCart(item, selectedSize || uniquePortions[0]?.id)}
                 className="bg-white hover:bg-orange-50 text-orange-600 border-2 border-orange-500 px-6 py-2 rounded-full text-sm font-medium shadow-sm"
               >
                 Add
