@@ -124,6 +124,7 @@ const MenuModern = () => {
 
   // Group menu items by base name and portion
   const groupMenuItems = (items: MenuItem[]): GroupedMenuItem[] => {
+    const isMiniMeals = cafe?.name?.toLowerCase().includes('mini meals');
     const grouped = items.reduce((acc, item) => {
       // Extract base name by removing (Half), (Full), (Veg), (Non-veg), (Chicken), (Mutton), (Regular), (Medium), (Dry), and (Gravy) suffixes
       let baseName = item.name;
@@ -261,6 +262,62 @@ const MenuModern = () => {
         baseName = item.name.replace(' - Non-veg', '');
         portionType = 'Non-veg';
         hasVariant = true;
+      } else if (item.name.includes(' (Single Stuffing)')) {
+        baseName = item.name.replace(' (Single Stuffing)', '');
+        portionType = 'Single Stuffing';
+        hasVariant = true;
+      } else if (item.name.includes(' (Double Stuffing)')) {
+        baseName = item.name.replace(' (Double Stuffing)', '');
+        portionType = 'Double Stuffing';
+        hasVariant = true;
+      }
+      
+      // Special handling for Mini Meals rolls: if no stuffing variant detected and it's a roll/chaap,
+      // create synthetic Single and Double stuffing portions
+      if (isMiniMeals && !hasVariant && (
+        item.category?.toLowerCase().includes('roll') || 
+        item.category?.toLowerCase().includes('chaap') ||
+        item.name.toLowerCase().includes('roll') ||
+        item.name.toLowerCase().includes('chaap')
+      )) {
+        baseName = item.name;
+        hasVariant = true;
+        const key = baseName;
+        if (!acc[key]) {
+          acc[key] = {
+            baseName,
+            category: item.category,
+            description: item.description,
+            preparation_time: item.preparation_time,
+            is_vegetarian: item.is_vegetarian,
+            portions: []
+          };
+        }
+        // Add Single Stuffing (current price) and Double Stuffing (price difference based on item price)
+        // Pattern: <100: +30, 100-130: +40, >130: +40-50
+        let priceDiff = 30;
+        if (item.price >= 100 && item.price <= 130) {
+          priceDiff = 40;
+        } else if (item.price > 130) {
+          priceDiff = 40; // Most items use +40, adjust to +50 only for very high prices if needed
+          if (item.price > 150) priceDiff = 50;
+        }
+        const doublePrice = Math.round(item.price + priceDiff);
+        acc[key].portions.push({
+          id: item.id,
+          name: 'Single Stuffing',
+          price: item.price,
+          is_available: item.is_available,
+          out_of_stock: item.out_of_stock
+        });
+        acc[key].portions.push({
+          id: `${item.id}-double`,
+          name: 'Double Stuffing',
+          price: doublePrice,
+          is_available: item.is_available,
+          out_of_stock: item.out_of_stock
+        });
+        return acc;
       }
       
       // Only group items that have variants, otherwise treat as individual items
@@ -287,11 +344,11 @@ const MenuModern = () => {
       return acc;
     }, {} as {[key: string]: GroupedMenuItem});
     
-    // Sort portions by price (Half first, then Full, then Veg, then Non-veg, then Chicken, then Mutton, then Regular, then Medium, then Large, then Dry, then Gravy)
+    // Sort portions by price (Single Stuffing first, then Double Stuffing, then Half, Full, Veg, Non-veg, Chicken, Mutton, Regular, Medium, Large, Dry, Gravy)
     Object.values(grouped).forEach(item => {
       item.portions.sort((a, b) => {
         // First sort by type priority, then by price
-        const typeOrder = { 'Half': 1, 'Full': 2, 'Veg': 3, 'Non-veg': 4, 'Chicken': 5, 'Mutton': 6, 'Regular': 7, 'Medium': 8, 'Large': 9, 'Dry': 10, 'Gravy': 11, 'Plain': 12, 'Butter': 13, 'Roasted': 14, 'Fried': 15 };
+        const typeOrder = { 'Single Stuffing': 1, 'Double Stuffing': 2, 'Half': 3, 'Full': 4, 'Veg': 5, 'Non-veg': 6, 'Chicken': 7, 'Mutton': 8, 'Regular': 9, 'Medium': 10, 'Large': 11, 'Dry': 12, 'Gravy': 13, 'Plain': 14, 'Butter': 15, 'Roasted': 16, 'Fried': 17 };
         const aOrder = typeOrder[a.name as keyof typeof typeOrder] || 15;
         const bOrder = typeOrder[b.name as keyof typeof typeOrder] || 15;
         
@@ -575,9 +632,13 @@ const MenuModern = () => {
     if (!portion) return;
 
     // Create the menu item object for the global cart
-    // Use the portion name to determine the full pizza name with size
+    // Use the portion name to determine the full item name with size/stuffing
     let fullName = item.baseName;
-    if (portion.name === 'Regular') {
+    if (portion.name === 'Single Stuffing') {
+      fullName = `${item.baseName} (Single Stuffing)`;
+    } else if (portion.name === 'Double Stuffing') {
+      fullName = `${item.baseName} (Double Stuffing)`;
+    } else if (portion.name === 'Regular') {
       fullName = `${item.baseName} (Regular 7")`;
     } else if (portion.name === 'Medium') {
       fullName = `${item.baseName} (Medium 10")`;
