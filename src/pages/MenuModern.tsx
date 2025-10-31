@@ -63,6 +63,7 @@ interface Cafe {
   accepting_orders: boolean;
   average_rating: number | null;
   total_ratings: number | null;
+  image_url?: string | null;
 }
 
 const MenuModern = () => {
@@ -128,6 +129,53 @@ const MenuModern = () => {
       let baseName = item.name;
       let portionType = 'Full'; // default
       let hasVariant = false;
+
+      // Special handling for Mexican: combined Paneer/Chicken variants in various positions
+      // Case A: suffix form "- Paneer / Chicken"
+      const paneerChickenSuffix = /(\s*-\s*)?Paneer\s*\/\s*Chicken\s*$/i;
+      // Case B: infix form like "Chili Garlic Paneer / Chicken Taco" or "Paneer Tikka / Chicken Tikka Taco"
+      const paneerChickenInfix = /(.*?)(?:\bPaneer\b)\s*\/\s*(?:\bChicken\b)(.*)/i;
+      if (/mexican/i.test(item.category) && (paneerChickenSuffix.test(item.name) || paneerChickenInfix.test(item.name))) {
+        if (paneerChickenSuffix.test(item.name)) {
+          baseName = item.name.replace(paneerChickenSuffix, '').trim();
+        } else {
+          // Remove the specific protein tokens around the slash, keep prefix and suffix words
+          const m = item.name.match(paneerChickenInfix);
+          if (m) {
+            const pre = (m[1] || '').trim();
+            const post = (m[2] || '').trim();
+            baseName = `${pre} ${post}`.replace(/\s+/g, ' ').trim();
+          }
+        }
+        hasVariant = true;
+        const key = baseName;
+        if (!acc[key]) {
+          acc[key] = {
+            baseName,
+            category: item.category,
+            description: item.description,
+            preparation_time: item.preparation_time,
+            is_vegetarian: item.is_vegetarian,
+            portions: []
+          };
+        }
+        // Push two synthetic portions for Paneer and Chicken using the same price
+        acc[key].portions.push({
+          id: `${item.id}-paneer`,
+          name: 'Paneer',
+          price: item.price,
+          is_available: item.is_available,
+          out_of_stock: item.out_of_stock
+        });
+        acc[key].portions.push({
+          id: `${item.id}-chicken`,
+          name: 'Chicken',
+          price: item.price,
+          is_available: item.is_available,
+          out_of_stock: item.out_of_stock
+        });
+        return acc;
+      }
       
       if (item.name.includes(' (Half)')) {
         baseName = item.name.replace(' (Half)', '');
@@ -273,6 +321,20 @@ const MenuModern = () => {
         }
         expanded.push(gi);
       }
+      // Also split Mexican combined names like "Italian / Mexican Taco" into two items
+      const expandedMex: GroupedMenuItem[] = [] as any;
+      for (const gi of expanded) {
+        if (/mexican/i.test(gi.category) && gi.baseName.includes(' / ')) {
+          const parts = gi.baseName.split(' / ').map(p => p.replace(/\s*Taco$/i, '').trim()).filter(Boolean);
+          if (parts.length === 2) {
+            expandedMex.push({ ...gi, baseName: `${parts[0]} Taco` });
+            expandedMex.push({ ...gi, baseName: `${parts[1]} Taco` });
+            continue;
+          }
+        }
+        expandedMex.push(gi);
+      }
+
       // For beverages in Let's Go Live, restrict to the official list
       const allowedBeveragePatterns = [
         /^Lemonade(?!\s*\()/i,
@@ -299,7 +361,7 @@ const MenuModern = () => {
       ];
       const isAllowedBeverage = (name: string) => allowedBeveragePatterns.some(p => p.test(name));
 
-      const beveragesFiltered = expanded.map(it => ({ ...it })) as GroupedMenuItem[];
+      const beveragesFiltered = expandedMex.map(it => ({ ...it })) as GroupedMenuItem[];
       for (let i = beveragesFiltered.length - 1; i >= 0; i--) {
         const gi = beveragesFiltered[i];
         if (/beverage/i.test(gi.category)) {
