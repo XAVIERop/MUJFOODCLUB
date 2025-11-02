@@ -76,8 +76,8 @@ const App = () => {
                       <Route path="/orders" element={<MyOrders />} />
                       <Route path="/order-analytics" element={<OrderAnalyticsPage />} />
                       <Route path="/cafes" element={<Cafes />} />
-                      <Route path="/grocery" element={<Grocery />} />
-                      <Route path="/grocery/category/:categoryId" element={<GroceryCategory />} />
+                      <Route path="/grabit" element={<Grocery />} />
+                      <Route path="/grabit/category/:categoryId" element={<GroceryCategory />} />
                       {/* <Route path="/rewards" element={<CafeRewards />} /> */} {/* Disabled for simplified version */}
                       <Route path="/qr-code" element={<QRCodePage />} />
                       <Route path="/profile" element={<Profile />} />

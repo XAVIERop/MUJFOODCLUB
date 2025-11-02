@@ -48,14 +48,14 @@ const BottomNavigation = () => {
         {/* Grocery Tab - HIDDEN until feature is ready for production */}
         {/* 
         <button
-          onClick={() => navigate('/grocery')}
+          onClick={() => navigate('/grabit')}
           className={`flex flex-col items-center py-1.5 px-2 rounded-lg transition-all duration-200 ${
-            isActive('/grocery') 
+            isActive('/grabit') 
               ? 'text-primary bg-primary/10' 
               : 'text-gray-600 hover:text-primary hover:bg-gray-50'
           }`}
         >
-          <ShoppingCart className={`w-5 h-5 mb-0.5 ${isActive('/grocery') ? 'text-primary' : ''}`} />
+          <ShoppingCart className={`w-5 h-5 mb-0.5 ${isActive('/grabit') ? 'text-primary' : ''}`} />
           <span className="text-[11px] font-medium">Grocery</span>
         </button>
         */}

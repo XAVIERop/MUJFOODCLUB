@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Search, Filter, ShoppingCart, Plus, Minus, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/hooks/useCart';
+import { useAuth } from '@/hooks/useAuth';
 import { getImageUrl } from '@/utils/imageSource';
 import { getGroceryProductImage } from '@/utils/groceryImageMatcher';
 
@@ -25,7 +26,8 @@ interface GroceryItem {
 const GroceryCategory: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
-  const { addToCart, removeFromCart, getItemCount, cart } = useCart();
+  const { user } = useAuth();
+  const { addToCart, removeFromCart, getItemCount, getTotalAmount, cart, cafe } = useCart();
   
   const [items, setItems] = useState<GroceryItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<GroceryItem[]>([]);
@@ -75,31 +77,38 @@ const GroceryCategory: React.FC = () => {
         return;
       }
       
-      // Extract brands from item names
+      // Extract brands from item names (case-insensitive)
       const extractedBrands = new Set<string>();
       const processedItems = itemsData.map((item: any) => {
-        const name = item.name;
+        const name = item.name.toUpperCase();
         let brand = 'Other';
         
-        // Extract brand from item name
-        if (name.includes('LAYS')) brand = 'Lays';
+        // Extract brand from item name (case-insensitive matching)
+        if (name.includes('LAYS') || name.includes('LAY\'S')) brand = 'Lays';
         else if (name.includes('BINGO')) brand = 'Bingo';
         else if (name.includes('CORNITOS')) brand = 'Cornitos';
         else if (name.includes('CRAX')) brand = 'Crax';
         else if (name.includes('BALAJI')) brand = 'Balaji';
-        else if (name.includes('ACT2')) brand = 'Act2';
+        else if (name.includes('ACT2') || name.includes('ACT II') || name.includes('ACT 2')) brand = 'Act II';
         else if (name.includes('POPZ')) brand = 'Popz';
         else if (name.includes('PEPSI')) brand = 'Pepsi';
-        else if (name.includes('COKE')) brand = 'Coca Cola';
-        else if (name.includes('THUMS UP')) brand = 'Thums Up';
+        else if (name.includes('COKE') || name.includes('COCA-COLA') || name.includes('COCA COLA')) brand = 'Coca Cola';
+        else if (name.includes('THUMS UP') || name.includes('THUMSUP')) brand = 'Thums Up';
         else if (name.includes('SPRITE')) brand = 'Sprite';
         else if (name.includes('FANTA')) brand = 'Fanta';
         else if (name.includes('MIRINDA')) brand = 'Mirinda';
-        else if (name.includes('DEW')) brand = 'Mountain Dew';
+        else if (name.includes('DEW') || name.includes('MOUNTAIN DEW')) brand = 'Mountain Dew';
         else if (name.includes('PAPERBOAT')) brand = 'Paperboat';
         else if (name.includes('WINKIES')) brand = 'Winkies';
         else if (name.includes('MONSTER')) brand = 'Monster';
         else if (name.includes('PREDATOR')) brand = 'Predator';
+        else if (name.includes('CREAM BELL')) brand = 'Cream Bell';
+        else if (name.includes('BRITANNIA')) brand = 'Britannia';
+        else if (name.includes('CADBURY')) brand = 'Cadbury';
+        else if (name.includes('AMUL')) brand = 'Amul';
+        else if (name.includes('BISLERI')) brand = 'Bisleri';
+        else if (name.includes('TROPICANA')) brand = 'Tropicana';
+        else if (name.includes('RED BULL') || name.includes('REDBULL')) brand = 'Red Bull';
         
         extractedBrands.add(brand);
         
@@ -110,7 +119,16 @@ const GroceryCategory: React.FC = () => {
       });
 
       setItems(processedItems);
-      setBrands(Array.from(extractedBrands).sort());
+      // Always include "Other" brand if any items have "Other" brand
+      // Sort brands: "All Brands" equivalent is handled separately, then alphabetically
+      const sortedBrands = Array.from(extractedBrands).sort();
+      // Ensure "Other" is at the end if it exists
+      const otherIndex = sortedBrands.indexOf('Other');
+      if (otherIndex > -1) {
+        sortedBrands.splice(otherIndex, 1);
+        sortedBrands.push('Other');
+      }
+      setBrands(sortedBrands);
     } catch (error) {
       console.error('Error fetching items:', error);
     } finally {
@@ -150,6 +168,19 @@ const GroceryCategory: React.FC = () => {
     removeFromCart(itemId);
   };
 
+  const handleCheckout = () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    
+    if (Object.keys(cart).length === 0) {
+      return;
+    }
+    
+    navigate('/checkout');
+  };
+
   const getCategoryTitle = () => {
     const titles: { [key: string]: string } = {
       'CHIPS': 'Chips & Snacks',
@@ -169,27 +200,42 @@ const GroceryCategory: React.FC = () => {
   };
 
   const getBrandIcon = (brand: string) => {
-    const icons: { [key: string]: string } = {
-      'Lays': '🍟',
-      'Bingo': '🥨',
-      'Cornitos': '🌽',
-      'Crax': '🍿',
-      'Balaji': '🥔',
-      'Act2': '🍿',
-      'Popz': '🍫',
-      'Pepsi': '🥤',
-      'Coca Cola': '🥤',
-      'Thums Up': '🥤',
-      'Sprite': '🥤',
+    // Brand logo images from ImageKit
+    const brandLogos: { [key: string]: string } = {
+      'Lays': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Lay\'s.png?updatedAt=1762075613699',
+      'Bingo': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Bingo.png?updatedAt=1762075613442',
+      'Cornitos': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Cornitos.jpg?updatedAt=1762075614417',
+      'Crax': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Crax.png?updatedAt=1762075613637',
+      'Balaji': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Balaji%20Wafers.png?updatedAt=1762075613753',
+      'Act II': 'https://ik.imagekit.io/foodclub/Grocery/Brands/ACT%20II.webp?updatedAt=1762075613316',
+      'Act2': 'https://ik.imagekit.io/foodclub/Grocery/Brands/ACT%20II.webp?updatedAt=1762075613316',
+      'Popz': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Popz.png?updatedAt=1762075613664',
+      'Pepsi': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Pepsi.svg?updatedAt=1762076366842',
+      'Coca Cola': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Coca%20Cola.png?updatedAt=1762076367063',
+      'Thums Up': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Thums%20Up.svg?updatedAt=1762076366815',
+      'Sprite': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Sprite.svg?updatedAt=1762076366727',
       'Fanta': '🥤',
-      'Mirinda': '🥤',
-      'Mountain Dew': '🥤',
-      'Paperboat': '🧃',
-      'Winkies': '🍰',
-      'Monster': '⚡',
-      'Predator': '⚡'
+      'Mirinda': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Miranda.png?updatedAt=1762076367088',
+      'Mountain Dew': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Mountain%20Dew.svg?updatedAt=1762076366845',
+      'Paperboat': '🚢',
+      'Winkies': '🎂',
+      'Monster': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Monster.png?updatedAt=1762076367061',
+      'Predator': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Predator.png?updatedAt=1762076366695',
+      'Cream Bell': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Cream%20Bell.png?updatedAt=1762076367262',
+      'Britannia': '🍪',
+      'Cadbury': '🍫',
+      'Amul': '🥛',
+      'Bisleri': '💧',
+      'Tropicana': 'https://ik.imagekit.io/foodclub/Grocery/Brands/Tropicana.png?updatedAt=1762076366684',
+      'Red Bull': '⚡',
+      'Other': '🛒'
     };
-    return icons[brand] || '🛒';
+    return brandLogos[brand] || '🛒';
+  };
+  
+  const isBrandLogo = (brand: string) => {
+    const icon = getBrandIcon(brand);
+    return icon.startsWith('https://');
   };
 
   if (loading) {
@@ -213,23 +259,18 @@ const GroceryCategory: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/grocery')}
+                onClick={() => navigate('/grabit')}
                 className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </Button>
                 <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                  <span className="text-2xl">{getCategoryIcon()}</span>
+                <h1 className="text-2xl font-bold text-gray-900">
                   {getCategoryTitle()}
                   </h1>
                 <p className="text-sm text-gray-600">{filteredItems.length} items available</p>
               </div>
-            </div>
-            <div className="flex items-center gap-2 text-gray-600">
-              <ShoppingCart className="h-5 w-5" />
-              <span className="text-sm">Cart</span>
             </div>
           </div>
         </div>
@@ -250,66 +291,83 @@ const GroceryCategory: React.FC = () => {
         </div>
       </div>
 
-      {/* Two Column Layout */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left Sidebar - Brands */}
-          <div className="w-full lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Brands</h3>
-              <div className="space-y-2">
-                <button
-                  onClick={() => handleBrandSelect('all', 'All Brands')}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    selectedBrand === 'all'
-                      ? 'bg-orange-100 text-orange-700 border-l-4 border-orange-500'
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg">🛒</span>
-                    <span>All Brands</span>
-                  </div>
-                </button>
-                {brands.map((brand) => {
-                  const brandIcon = getBrandIcon(brand);
-                  return (
+      {/* Two Column Layout - Blinkit Style with Brands Sidebar */}
+      <div className="max-w-7xl mx-auto px-0 sm:px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex flex-row gap-0">
+          {/* Left Sidebar - Brands (Vertical List - Blinkit Style) */}
+          <div className="w-20 sm:w-24 md:w-32 lg:w-64 flex-shrink-0 bg-white border-r border-gray-200">
+            <div className="sticky top-20 h-[calc(100vh-5rem)] overflow-y-auto">
+              <div className="p-2 sm:p-3 lg:p-4">
+                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 lg:mb-4 px-1 sm:px-2 hidden sm:block">Brands</h3>
+                <div className="space-y-1 sm:space-y-2">
                   <button
-                      key={brand}
-                      onClick={() => handleBrandSelect(brand, brand)}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                        selectedBrand === brand
-                          ? 'bg-orange-100 text-orange-700 border-l-4 border-orange-500'
+                    onClick={() => handleBrandSelect('all', 'All Brands')}
+                    className={`w-full text-left px-1 sm:px-2 lg:px-3 py-1.5 sm:py-2 lg:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+                      selectedBrand === 'all'
+                        ? 'bg-orange-100 text-orange-700 border-l-2 sm:border-l-4 border-orange-500'
                         : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg">{brandIcon}</span>
-                        <span>{brand}</span>
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-1 sm:gap-2 lg:gap-3">
+                      <span className="text-base sm:text-lg text-center sm:text-left">🛒</span>
+                      <span className="text-center sm:text-left text-[10px] sm:text-xs lg:text-sm leading-tight line-clamp-2">All Brands</span>
                     </div>
                   </button>
-                  );
-                })}
+                  {brands.map((brand) => {
+                    const brandIcon = getBrandIcon(brand);
+                    const isLogo = isBrandLogo(brand);
+                    return (
+                    <button
+                        key={brand}
+                        onClick={() => handleBrandSelect(brand, brand)}
+                        className={`w-full text-left px-1 sm:px-2 lg:px-3 py-1.5 sm:py-2 lg:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+                          selectedBrand === brand
+                            ? 'bg-orange-100 text-orange-700 border-l-2 sm:border-l-4 border-orange-500'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-1 sm:gap-2 lg:gap-3">
+                          {isLogo ? (
+                            <img 
+                              src={brandIcon} 
+                              alt={brand} 
+                              className="w-5 h-5 sm:w-6 sm:h-6 object-contain flex-shrink-0"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const fallback = e.currentTarget.parentElement?.querySelector('.emoji-fallback');
+                                if (fallback) {
+                                  (fallback as HTMLElement).style.display = 'block';
+                                }
+                              }}
+                            />
+                          ) : null}
+                          <span className={`emoji-fallback ${isLogo ? 'hidden' : 'block'} text-base sm:text-lg text-center sm:text-left`}>{brandIcon}</span>
+                          <span className="text-center sm:text-left text-[10px] sm:text-xs lg:text-sm leading-tight line-clamp-2">{brand}</span>
+                      </div>
+                    </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Right Content - Products */}
-          <div className="flex-1">
+          <div className="flex-1 px-2 sm:px-4 lg:px-6">
             <div className="mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {filteredItems.length} items in {selectedBrandName}
+              <h2 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">
+                {filteredItems.length} items {selectedBrand !== 'all' ? `in ${selectedBrandName}` : ''}
                 </h2>
-              </div>
+            </div>
 
-            {filteredItems.length === 0 ? (
+              {filteredItems.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">🔍</div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No items found</h3>
                 <p className="text-gray-600">Try adjusting your search or filter criteria</p>
-              </div>
+                        </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {filteredItems.map((item) => {
                   const cartCount = cart[item.id]?.quantity || 0;
                   const isOutOfStock = item.out_of_stock || !item.is_available;
@@ -317,44 +375,36 @@ const GroceryCategory: React.FC = () => {
                   return (
                     <div 
                       key={item.id}
-                      className={`bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 ${
+                      className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col ${
                         isOutOfStock ? 'opacity-60' : ''
                       }`}
                     >
-                      <div className="p-4">
-                    {/* Product Image */}
-                        <div className="mb-3">
-                          <div className="w-full h-32 bg-gray-100 rounded-lg overflow-hidden">
-                            <img
-                              src={getGroceryProductImage(item.name)}
-                              alt={item.name}
-                              className="w-full h-full object-contain"
-                              onError={(e) => {
-                                e.currentTarget.src = '/menu_hero.png';
-                              }}
-                            />
-                          </div>
-                        </div>
-                        
+                      {/* Product Image - Blinkit Style */}
+                      <div className="w-full aspect-square flex items-center justify-center bg-white p-4 mb-2">
+                        <img
+                          src={getGroceryProductImage(item.name, item.image_url)}
+                          alt={item.name}
+                          className="w-full h-full object-contain max-w-full max-h-full"
+                          onError={(e) => {
+                            e.currentTarget.src = '/menu_hero.png';
+                          }}
+                        />
+                      </div>
+                      
+                      {/* Product Info */}
+                      <div className="px-3 pb-3 flex flex-col flex-grow">
                         {/* Product Name */}
-                        <div className="mb-2">
-                          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight">
-                            {item.name}
-                          </h3>
-                        </div>
-                        
-                        {/* Description */}
-                        <p className="text-xs text-gray-500 mb-3 line-clamp-2">
-                          {item.description}
-                        </p>
+                        <h3 className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight mb-1 min-h-[2.5rem]">
+                          {item.name}
+                        </h3>
                         
                         {/* Price and Add Button */}
-                        <div className="flex items-center justify-between">
-                          <div className="text-lg font-bold text-gray-900">
+                        <div className="flex items-center justify-between mt-auto pt-2">
+                          <div className="text-base font-bold text-gray-900">
                             ₹{item.price.toFixed(2)}
-                      </div>
+                        </div>
                           {isOutOfStock ? (
-                            <span className="text-xs text-red-600 font-medium">
+                            <span className="text-xs text-red-600 font-medium px-2 py-1">
                               Out of Stock
                             </span>
                           ) : cartCount > 0 ? (
@@ -363,16 +413,16 @@ const GroceryCategory: React.FC = () => {
                                 variant="outline"
                           size="sm"
                                 onClick={() => handleRemoveFromCart(item.id)}
-                                className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400"
+                                className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400 rounded-full"
                         >
                                 <Minus className="h-4 w-4" />
                         </Button>
-                              <span className="text-sm font-medium text-gray-900">{cartCount}</span>
+                              <span className="text-sm font-medium text-gray-900 min-w-[20px] text-center">{cartCount}</span>
                           <Button
                                 variant="outline"
                             size="sm"
                                 onClick={() => handleAddToCart(item)}
-                                className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400"
+                                className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400 rounded-full"
                           >
                                 <Plus className="h-4 w-4" />
                           </Button>
@@ -381,10 +431,10 @@ const GroceryCategory: React.FC = () => {
                           <Button
                               variant="default" 
                             size="sm"
-                              className="bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-full h-8 w-8 p-0"
+                              className="bg-green-500 hover:bg-green-600 text-white font-medium rounded-md px-4 py-1.5 h-8 text-xs"
                               onClick={() => handleAddToCart(item)}
                           >
-                              <Plus className="h-4 w-4" />
+                              ADD
                           </Button>
                           )}
                         </div>
@@ -397,6 +447,34 @@ const GroceryCategory: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Floating Cart Bar - Desktop Only (Green Bar like Mobile) */}
+      {Object.keys(cart).length > 0 && (
+        <div className="hidden lg:block fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-md w-full mx-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/20 rounded-lg px-3 py-1.5">
+                <span className="font-medium text-sm">
+                  {getItemCount()} {getItemCount() === 1 ? 'Item' : 'Items'} • ₹{getTotalAmount().toFixed(2)}
+                </span>
+              </div>
+              <div className="text-sm">
+                {getTotalAmount() >= 89 ? (
+                  <span className="text-green-100">Free Delivery</span>
+                ) : (
+                  <span className="text-yellow-200">₹{(89 - getTotalAmount()).toFixed(2)} more for free delivery</span>
+                )}
+              </div>
+            </div>
+            <Button
+              onClick={handleCheckout}
+              className="bg-white text-green-600 px-6 py-2 rounded-md font-medium text-sm hover:bg-gray-100 transition-colors"
+            >
+              View Cart &gt;
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
