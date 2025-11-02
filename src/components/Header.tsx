@@ -203,7 +203,7 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
             </a> */}
             {/* Grocery Link - HIDDEN */}
             {/* <a
-              href="/grocery"
+              href="/grabit"
               className="flex items-center space-x-2 transition-smooth story-link text-muted-foreground hover:text-primary"
             >
               <ShoppingCart className="w-4 h-4" />

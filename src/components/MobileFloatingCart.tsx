@@ -10,8 +10,8 @@ const MobileFloatingCart: React.FC = () => {
   const itemCount = getItemCount();
   const totalAmount = getTotalAmount();
 
-  // Don't render if no items or not on a menu/grocery page
-  if (itemCount === 0 || (!location.pathname.startsWith('/menu/') && !location.pathname.startsWith('/grocery'))) return null;
+  // Don't render if no items or not on a menu/grabit page
+  if (itemCount === 0 || (!location.pathname.startsWith('/menu/') && !location.pathname.startsWith('/grabit'))) return null;
 
   const handleViewCart = () => {
     // Navigate to checkout - cart data will come from global context

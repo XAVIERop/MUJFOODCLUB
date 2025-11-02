@@ -4,9 +4,10 @@ import Header from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Star, Plus, Minus } from 'lucide-react';
+import { Star, Plus, Minus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/hooks/useCart';
+import { useAuth } from '@/hooks/useAuth';
 import { getImageUrl } from '@/utils/imageSource';
 import { getGroceryProductImage } from '@/utils/groceryImageMatcher';
 
@@ -36,70 +37,37 @@ const Grocery: React.FC = () => {
   const [allProducts, setAllProducts] = useState<GroceryItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  // Removed banner carousel state - using static banner
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { addToCart, removeFromCart, cart, setCafe } = useCart();
+  const { user } = useAuth();
+  const { addToCart, removeFromCart, cart, setCafe, getItemCount, getTotalAmount, cafe } = useCart();
 
-  // Banner data
-  const banners = [
-    {
-      id: 1,
-      title: "Fresh Grocery Delivery",
-      subtitle: "Get fresh groceries delivered to your doorstep",
-      image: getImageUrl('/grocery/banners/fresh-delivery.jpg') || '/menu_hero.png',
-      ctaText: "Shop Now",
-      ctaAction: () => document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' })
-    },
-    {
-      id: 2,
-      title: "Chips & Snacks Sale",
-      subtitle: "Up to 30% off on all chips and snacks",
-      image: getImageUrl('/grocery/banners/chips-sale.jpg') || '/menu_hero.png',
-      ctaText: "Shop Chips",
-      ctaAction: () => navigate('/grocery/category/CHIPS')
-    },
-    {
-      id: 3,
-      title: "Refreshing Drinks",
-      subtitle: "Cool down with our wide range of beverages",
-      image: getImageUrl('/grocery/banners/drinks-promo.jpg') || '/menu_hero.png',
-      ctaText: "Shop Drinks",
-      ctaAction: () => navigate('/grocery/category/DRINKS')
-    }
-  ];
+  // Static banner image - ImageKit URL
+  const bannerImage = 'https://ik.imagekit.io/foodclub/Grocery/Banners/Fc%20grocery%20web%20banneers-04.jpg?updatedAt=1761650212610';
 
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  // Auto-slide functionality
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentBannerIndex((prevIndex) => 
-        prevIndex === banners.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 5000); // Change banner every 5 seconds
-
-    return () => clearInterval(interval);
-  }, []);
+  // Removed auto-slide functionality - using static banner
 
   const fetchCategories = async () => {
     try {
       setLoading(true);
       
-          // Get 24 Seven Mart cafe ID
-          const { data: cafeData, error: cafeError } = await supabase
-            .from('cafes')
+      // Get 24 Seven Mart cafe ID
+      const { data: cafeData, error: cafeError } = await supabase
+        .from('cafes')
             .select('*')
             .ilike('name', '%24 seven mart%')
-            .single();
-          
-          if (cafeError || !cafeData) {
+        .single();
+      
+      if (cafeError || !cafeData) {
             console.error('Cafe not found:', cafeError);
-            return;
-          }
-
+        return;
+      }
+      
           // Set the cafe context for cart operations
           setCafe(cafeData);
           console.log('✅ Grocery: Set cafe context to:', cafeData.name);
@@ -122,13 +90,13 @@ const Grocery: React.FC = () => {
         return acc;
       }, {});
 
-      // Define category details
+      // Define category details with ImageKit banner images
       const categoryDetails: GroceryCategory[] = [
         {
           id: 'CHIPS',
           name: 'Chips & Snacks',
           description: 'Crispy chips, wafers, and crunchy snacks',
-          image: getImageUrl('/grocery/categories/chips-snacks.jpg') || '/menu_hero.png',
+          image: 'https://ik.imagekit.io/foodclub/Grocery/Banners/Fc%20grocery%20web%20banneers-01.jpg?updatedAt=1761650212314',
           item_count: (categoryCounts.CHIPS || 0) + (categoryCounts.SNACKS || 0),
           icon: '🍟'
         },
@@ -136,7 +104,7 @@ const Grocery: React.FC = () => {
           id: 'DRINKS',
           name: 'Drinks',
           description: 'All beverages - soft drinks, juices, energy drinks',
-          image: getImageUrl('/grocery/categories/drinks.jpg') || '/menu_hero.png',
+          image: 'https://ik.imagekit.io/foodclub/Grocery/Banners/Fc%20grocery%20web%20banneers-02.jpg?updatedAt=1761650212313',
           item_count: (categoryCounts.DRINKS || 0) + (categoryCounts.COLDDRINK || 0) + (categoryCounts.BEVERAGES || 0) + (categoryCounts.JUICES || 0) + (categoryCounts.ENERGYDRINK || 0) + (categoryCounts.MILKDRINK || 0) + (categoryCounts.SPARKLINGWATER || 0),
           icon: '🥤'
         },
@@ -144,7 +112,7 @@ const Grocery: React.FC = () => {
           id: 'CAKES',
           name: 'Cakes & Desserts',
           description: 'Sweet treats and baked goods',
-          image: getImageUrl('/grocery/categories/cakes-desserts.jpg') || '/menu_hero.png',
+          image: 'https://ik.imagekit.io/foodclub/Grocery/Banners/Fc%20grocery%20web%20banneers-03.jpg?updatedAt=1761650212166',
           item_count: categoryCounts.CAKES || 0,
           icon: '🍰'
         }
@@ -167,8 +135,8 @@ const Grocery: React.FC = () => {
           
           setAllProducts(allProductsData || []);
           
-          // Set featured products (first 20 items)
-          setFeaturedProducts((allProductsData || []).slice(0, 20));
+          // Set featured products (first 50 items to ensure we have enough chips and drinks)
+          setFeaturedProducts((allProductsData || []).slice(0, 50));
     } catch (error) {
       console.error('Error fetching categories:', error);
     } finally {
@@ -182,6 +150,19 @@ const Grocery: React.FC = () => {
 
   const handleRemoveFromCart = (itemId: string) => {
     removeFromCart(itemId);
+  };
+
+  const handleCheckout = () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    
+    if (Object.keys(cart).length === 0) {
+      return;
+    }
+    
+    navigate('/checkout');
   };
 
   // Filter products based on search query
@@ -234,98 +215,9 @@ const Grocery: React.FC = () => {
     <div className="min-h-screen bg-white grocery-font">
       <Header />
 
-      {/* Sliding Banner Carousel - Hidden on Mobile */}
-      <div className="hidden md:block relative overflow-hidden">
-        <div className="relative h-96">
-          {/* Banner Images */}
-          {banners.map((banner, index) => (
-            <div
-              key={banner.id}
-              className={`absolute inset-0 transition-opacity duration-1000 ${
-                index === currentBannerIndex ? 'opacity-100' : 'opacity-0'
-              }`}
-            >
-              <div className="relative w-full h-full">
-                <img
-                  src={banner.image}
-                  alt={banner.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = '/menu_hero.png';
-                  }}
-                />
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-                
-                {/* Content */}
-                <div className="absolute inset-0 flex items-center">
-                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-                    <div className="max-w-2xl text-white">
-                      <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight">
-                        {banner.title}
-                      </h1>
-                      <p className="text-xl md:text-2xl mb-8 text-gray-100">
-                        {banner.subtitle}
-                      </p>
-                      <Button 
-                        size="lg" 
-                        className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-                        onClick={banner.ctaAction}
-                      >
-                        <ShoppingCart className="mr-2 h-5 w-5" />
-                        {banner.ctaText}
-                        <span className="ml-2">→</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-          
-          {/* Navigation Dots */}
-          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
-            {banners.map((_, index) => (
-              <button
-                key={index}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  index === currentBannerIndex 
-                    ? 'bg-orange-500 scale-125' 
-                    : 'bg-white bg-opacity-50 hover:bg-opacity-75'
-                }`}
-                onClick={() => setCurrentBannerIndex(index)}
-              />
-            ))}
-          </div>
-          
-          {/* Navigation Arrows */}
-          <button
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all duration-300"
-            onClick={() => setCurrentBannerIndex(
-              currentBannerIndex === 0 ? banners.length - 1 : currentBannerIndex - 1
-            )}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          
-          <button
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all duration-300"
-            onClick={() => setCurrentBannerIndex(
-              currentBannerIndex === banners.length - 1 ? 0 : currentBannerIndex + 1
-            )}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-        {/* Search Bar */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="max-w-2xl mx-auto">
+      {/* Search Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-5xl mx-auto">
             <form onSubmit={handleSearchSubmit} className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -333,10 +225,10 @@ const Grocery: React.FC = () => {
                 </svg>
               </div>
               <input
-                type="text"
+              type="text"
                 placeholder="Search all grocery items..."
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
-                value={searchQuery}
+                className="block w-full pl-10 pr-3 py-3 border-2 border-gray-400 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm shadow-sm"
+              value={searchQuery}
                 onChange={handleSearchChange}
                 onFocus={() => setShowDropdown(searchQuery.trim().length >= 2)}
                 onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
@@ -354,14 +246,14 @@ const Grocery: React.FC = () => {
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
                           <img
-                            src={getGroceryProductImage(item.name)}
+                            src={getGroceryProductImage(item.name, item.image_url)}
                             alt={item.name}
                             className="w-6 h-6 object-contain"
                             onError={(e) => {
                               e.currentTarget.src = '/menu_hero.png';
                             }}
-                          />
-                        </div>
+            />
+          </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">
                             {item.name}
@@ -372,144 +264,151 @@ const Grocery: React.FC = () => {
                         </div>
                         <div className="text-sm font-semibold text-orange-600">
                           ₹{item.price.toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
+        </div>
+      </div>
+                  </div>
                   ))}
-                </div>
+                  </div>
               )}
             </form>
           </div>
         </div>
 
-        {/* Categories Grid */}
-        <div id="categories" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Desktop Title - Hidden on Mobile */}
-          <div className="hidden md:block text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Shop by Category</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">Browse our wide selection of grocery items</p>
-          </div>
+      {/* Static Hero Banner - Blinkit Style, Image size matches actual image */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
+        <div className="relative rounded-xl overflow-hidden shadow-lg">
+          <img
+            src={bannerImage}
+            alt="Grocery Banner"
+            className="w-full h-auto object-contain"
+            onError={(e) => {
+              e.currentTarget.src = bannerImage;
+            }}
+          />
+        </div>
+      </div>
 
+        {/* Categories Grid */}
+        <div id="categories" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12">
           {/* Mobile: 3 categories in one row, Desktop: responsive grid */}
           <div className="grid grid-cols-3 md:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
           {categories.map((category) => (
             <div 
                 key={category.id} 
-              className="group cursor-pointer hover:shadow-xl transition-all duration-300 bg-white rounded-2xl shadow-lg border border-gray-100 hover:scale-105 hover:border-orange-200"
-              onClick={() => navigate(`/grocery/category/${category.id}`)}
+              className="group cursor-pointer hover:shadow-xl transition-all duration-300 bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 hover:scale-105 hover:border-orange-200"
+              onClick={() => navigate(`/grabit/category/${category.id}`)}
             >
-              {/* Category Card */}
-              <div className="p-4 md:p-8">
-                {/* Category Icon */}
-                <div className="flex items-center justify-center mb-3 md:mb-6">
-                  <div className="w-12 h-12 md:w-20 md:h-20 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl md:rounded-2xl flex items-center justify-center group-hover:from-orange-200 group-hover:to-orange-300 transition-all duration-300">
-                    <span className="text-2xl md:text-4xl group-hover:scale-110 transition-transform duration-300">
-                    {category.icon}
-                    </span>
+              {/* Category Card with Banner Image Background */}
+              <div className="relative w-full aspect-[4/3]">
+                <img
+                  src={category.image}
+                  alt={category.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = category.image;
+                  }}
+                />
                   </div>
-                </div>
-
-                {/* Category Info */}
-                <div className="text-center">
-                  <h3 className="text-sm md:text-xl font-bold text-gray-900 mb-1 md:mb-2 group-hover:text-orange-600 transition-colors">
-                    {category.name}
-                  </h3>
-                  <p className="text-gray-600 mb-2 md:mb-4 text-xs md:text-sm leading-relaxed hidden md:block">
-                    {category.description}
-                  </p>
-                  <div className="flex items-center justify-center gap-1 md:gap-2 text-orange-600 font-semibold text-xs md:text-base">
-                    <span>{category.item_count}</span>
-                    <span className="text-orange-400 hidden md:inline">→</span>
                   </div>
-                </div>
-              </div>
-            </div>
             ))}
         </div>
 
         {/* Featured Products / Search Results Section */}
-        <div className="mt-20">
-          <div className="text-center mb-12">
-            {searchQuery.trim() ? (
-              <>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Search Results</h2>
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                  Found {filteredProducts.length} items for "{searchQuery}"
-                </p>
-              </>
-            ) : (
-              <>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Featured Products</h2>
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto">Discover our most popular items</p>
-              </>
-            )}
-          </div>
+        <div className="mt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {searchQuery.trim() ? (
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Search Results</h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Found {filteredProducts.length} items for "{searchQuery}"
+              </p>
+            </div>
+          ) : (
+            <div className="text-center mb-12">
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">Discover our most popular items</p>
+            </div>
+          )}
           
-          {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.slice(0, 8).map((item) => {
-              const cartCount = cart[item.id]?.quantity || 0;
-              const isOutOfStock = item.out_of_stock || !item.is_available;
+          {/* Featured Products - Show chips/snacks above banner, or all if searching */}
+          {(() => {
+            // Determine which items to show
+            let itemsToShow: GroceryItem[] = [];
+            
+            if (searchQuery.trim()) {
+              // When searching, show all filtered results
+              itemsToShow = filteredProducts.slice(0, 10);
+            } else {
+              // When not searching, filter for chips/snacks items only (for display above banner)
+              // Search through all products to get chips items, not just first 50
+              const chipsItems = allProducts.filter(item => {
+                const cat = (item.category || '').toUpperCase();
+                return cat === 'CHIPS' || cat === 'SNACKS' || cat.includes('CHIP') || cat.includes('SNACK');
+              });
               
-              return (
+              // If chips found, use them (up to 10), otherwise fallback to first 10 featured products
+              itemsToShow = chipsItems.length > 0 ? chipsItems.slice(0, 10) : featuredProducts.slice(0, 10);
+            }
+            
+            if (itemsToShow.length === 0) {
+              return null;
+            }
+            
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {itemsToShow.map((item) => {
+                  const cartCount = cart[item.id]?.quantity || 0;
+                  const isOutOfStock = item.out_of_stock || !item.is_available;
+                  
+                  return (
                 <div 
                   key={item.id}
-                  className={`bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-105 ${
+                  className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col ${
                     isOutOfStock ? 'opacity-60' : ''
                   }`}
                 >
-                  <div className="p-6">
-                  {/* Product Image */}
-                    <div className="mb-4">
-                      <div className="w-full h-32 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
-                        <img
-                          src={getGroceryProductImage(item.name)}
-                          alt={item.name}
-                          className="w-full h-full object-contain p-2"
-                          onError={(e) => {
-                            e.currentTarget.src = '/menu_hero.png';
-                          }}
-                        />
-                      </div>
-                    </div>
-                    
+                  {/* Product Image - Blinkit Style */}
+                  <div className="w-full aspect-square flex items-center justify-center bg-white p-4 mb-2">
+                    <img
+                      src={getGroceryProductImage(item.name, item.image_url)}
+                      alt={item.name}
+                      className="w-full h-full object-contain max-w-full max-h-full"
+                      onError={(e) => {
+                        e.currentTarget.src = '/menu_hero.png';
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Product Info */}
+                  <div className="px-3 pb-3 flex flex-col flex-grow">
                     {/* Product Name */}
-                    <div className="mb-3">
-                      <h3 className="text-base font-bold text-gray-900 line-clamp-2 leading-tight">
-                        {item.name}
-                      </h3>
-                    </div>
-                    
-                    {/* Description */}
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
-                      {item.description}
-                    </p>
+                    <h3 className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight mb-1 min-h-[2.5rem]">
+                      {item.name}
+                    </h3>
                     
                     {/* Price and Add Button */}
-                    <div className="flex items-center justify-between">
-                      <div className="text-xl font-bold text-gray-900">
+                    <div className="flex items-center justify-between mt-auto pt-2">
+                      <div className="text-base font-bold text-gray-900">
                         ₹{item.price.toFixed(2)}
                       </div>
                       {isOutOfStock ? (
-                        <span className="text-sm text-red-600 font-semibold bg-red-50 px-3 py-1 rounded-full">
+                        <span className="text-xs text-red-600 font-medium px-2 py-1">
                           Out of Stock
                         </span>
                       ) : cartCount > 0 ? (
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleRemoveFromCart(item.id)}
-                            className="h-9 w-9 p-0 border-orange-300 hover:border-orange-400 hover:bg-orange-50 rounded-full"
+                            className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400 rounded-full"
                           >
                             <Minus className="h-4 w-4" />
                           </Button>
-                          <span className="text-lg font-bold text-gray-900 min-w-[24px] text-center">{cartCount}</span>
+                          <span className="text-sm font-medium text-gray-900 min-w-[20px] text-center">{cartCount}</span>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleAddToCart(item)}
-                            className="h-9 w-9 p-0 border-orange-300 hover:border-orange-400 hover:bg-orange-50 rounded-full"
+                            className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400 rounded-full"
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
@@ -518,19 +417,23 @@ const Grocery: React.FC = () => {
                         <Button
                           variant="default" 
                           size="sm"
-                          className="bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-full h-9 w-9 p-0 shadow-lg hover:shadow-xl transition-all duration-300"
+                          className="bg-green-500 hover:bg-green-600 text-white font-medium rounded-md px-4 py-1.5 h-8 text-xs"
                           onClick={() => handleAddToCart(item)}
                         >
-                          <Plus className="h-4 w-4" />
+                          ADD
                         </Button>
                       )}
                     </div>
                   </div>
                 </div>
-              );
-            })}
-            </div>
-          ) : searchQuery.trim() ? (
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {/* Show "No items found" message only when searching and no results */}
+          {searchQuery.trim() && filteredProducts.length === 0 && (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">🔍</div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No items found</h3>
@@ -542,7 +445,7 @@ const Grocery: React.FC = () => {
                 Clear Search
               </Button>
             </div>
-          ) : null}
+          )}
 
           {/* Promotional Banners - Only show when not searching */}
           {!searchQuery.trim() && (
@@ -551,10 +454,10 @@ const Grocery: React.FC = () => {
             <div className="relative bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
               <div className="p-8 relative z-10">
                 <h3 className="text-3xl font-bold text-gray-900 mb-2">Drinks & Beverages</h3>
-                <p className="text-xl text-blue-600 font-semibold mb-6">Get Upto 30% Off</p>
+                <p className="text-xl text-blue-600 font-semibold mb-6">Fresh & Refreshing Drinks</p>
                 <Button 
                   className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                  onClick={() => navigate('/grocery/category/DRINKS')}
+                  onClick={() => navigate('/grabit/category/DRINKS')}
                 >
                   Shop Now
                 </Button>
@@ -567,10 +470,10 @@ const Grocery: React.FC = () => {
             <div className="relative bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
               <div className="p-8 relative z-10">
                 <h3 className="text-3xl font-bold text-gray-900 mb-2">Chips & Snacks</h3>
-                <p className="text-xl text-orange-600 font-semibold mb-6">Get Upto 25% Off</p>
+                <p className="text-xl text-orange-600 font-semibold mb-6">Crispy & Delicious Snacks</p>
                 <Button 
                   className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                  onClick={() => navigate('/grocery/category/CHIPS')}
+                  onClick={() => navigate('/grabit/category/CHIPS')}
                 >
                   Shop Now
                 </Button>
@@ -578,75 +481,85 @@ const Grocery: React.FC = () => {
               <div className="absolute top-4 right-4 w-32 h-32 bg-orange-200 rounded-full opacity-20"></div>
               <div className="absolute bottom-4 right-4 text-6xl opacity-20">🍟</div>
             </div>
-          </div>
-          )}
+                      </div>
+                    )}
 
           {/* More Featured Products - Only show when not searching */}
           {!searchQuery.trim() && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {featuredProducts.slice(8).map((item) => {
-              const cartCount = cart[item.id]?.quantity || 0;
-              const isOutOfStock = item.out_of_stock || !item.is_available;
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {(() => {
+              // Filter for drinks items only (for display below banner)
+              // Search through all products to get drinks items, not just first 50
+              // Limit to 10 items (2 rows with 5 columns on xl screens)
+              const drinksItems = allProducts.filter(item => {
+                const cat = (item.category || '').toUpperCase();
+                return cat === 'DRINKS' || 
+                       cat === 'COLDDRINK' || 
+                       cat === 'BEVERAGES' || 
+                       cat === 'JUICES' || 
+                       cat === 'ENERGYDRINK' || 
+                       cat === 'MILKDRINK' || 
+                       cat === 'SPARKLINGWATER' ||
+                       cat.includes('DRINK') ||
+                       cat.includes('BEVERAGE') ||
+                       cat.includes('JUICE');
+              }).slice(0, 10); // Limit to 2 rows (10 items)
               
-              return (
+              return drinksItems.map((item) => {
+                const cartCount = cart[item.id]?.quantity || 0;
+                const isOutOfStock = item.out_of_stock || !item.is_available;
+                
+                return (
                 <div 
                   key={item.id}
-                  className={`bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-105 ${
+                  className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex flex-col ${
                     isOutOfStock ? 'opacity-60' : ''
                   }`}
                 >
-                  <div className="p-6">
-                    {/* Product Image */}
-                    <div className="mb-4">
-                      <div className="w-full h-32 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
-                        <img
-                          src={getGroceryProductImage(item.name)}
-                          alt={item.name}
-                          className="w-full h-full object-contain p-2"
-                          onError={(e) => {
-                            e.currentTarget.src = '/menu_hero.png';
-                          }}
-                        />
-                    </div>
+                  {/* Product Image - Blinkit Style */}
+                  <div className="w-full aspect-square flex items-center justify-center bg-white p-4 mb-2">
+                    <img
+                      src={getGroceryProductImage(item.name, item.image_url)}
+                      alt={item.name}
+                      className="w-full h-full object-contain max-w-full max-h-full"
+                      onError={(e) => {
+                        e.currentTarget.src = '/menu_hero.png';
+                      }}
+                    />
                   </div>
 
+                  {/* Product Info */}
+                  <div className="px-3 pb-3 flex flex-col flex-grow">
                     {/* Product Name */}
-                    <div className="mb-3">
-                      <h3 className="text-base font-bold text-gray-900 line-clamp-2 leading-tight">
-                        {item.name}
-                      </h3>
-                    </div>
-                    
-                    {/* Description */}
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
-                      {item.description}
-                    </p>
+                    <h3 className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight mb-1 min-h-[2.5rem]">
+                      {item.name}
+                    </h3>
                     
                     {/* Price and Add Button */}
-                    <div className="flex items-center justify-between">
-                      <div className="text-xl font-bold text-gray-900">
+                    <div className="flex items-center justify-between mt-auto pt-2">
+                      <div className="text-base font-bold text-gray-900">
                         ₹{item.price.toFixed(2)}
                       </div>
                       {isOutOfStock ? (
-                        <span className="text-sm text-red-600 font-semibold bg-red-50 px-3 py-1 rounded-full">
+                        <span className="text-xs text-red-600 font-medium px-2 py-1">
                           Out of Stock
                         </span>
                       ) : cartCount > 0 ? (
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleRemoveFromCart(item.id)}
-                            className="h-9 w-9 p-0 border-orange-300 hover:border-orange-400 hover:bg-orange-50 rounded-full"
+                            className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400 rounded-full"
                           >
                             <Minus className="h-4 w-4" />
                           </Button>
-                          <span className="text-lg font-bold text-gray-900 min-w-[24px] text-center">{cartCount}</span>
+                          <span className="text-sm font-medium text-gray-900 min-w-[20px] text-center">{cartCount}</span>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleAddToCart(item)}
-                            className="h-9 w-9 p-0 border-orange-300 hover:border-orange-400 hover:bg-orange-50 rounded-full"
+                            className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400 rounded-full"
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
@@ -655,21 +568,50 @@ const Grocery: React.FC = () => {
                         <Button
                           variant="default" 
                           size="sm"
-                          className="bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-full h-9 w-9 p-0 shadow-lg hover:shadow-xl transition-all duration-300"
+                          className="bg-green-500 hover:bg-green-600 text-white font-medium rounded-md px-4 py-1.5 h-8 text-xs"
                           onClick={() => handleAddToCart(item)}
                         >
-                          <Plus className="h-4 w-4" />
+                          ADD
                         </Button>
                       )}
                     </div>
                   </div>
                 </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
           )}
         </div>
       </div>
+
+      {/* Floating Cart Bar - Desktop Only (Green Bar like Mobile) */}
+      {Object.keys(cart).length > 0 && (
+        <div className="hidden lg:block fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-md w-full mx-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/20 rounded-lg px-3 py-1.5">
+                <span className="font-medium text-sm">
+                  {getItemCount()} {getItemCount() === 1 ? 'Item' : 'Items'} • ₹{getTotalAmount().toFixed(2)}
+                </span>
+              </div>
+              <div className="text-sm">
+                {getTotalAmount() >= 89 ? (
+                  <span className="text-green-100">Free Delivery</span>
+                ) : (
+                  <span className="text-yellow-200">₹{(89 - getTotalAmount()).toFixed(2)} more for free delivery</span>
+                )}
+              </div>
+            </div>
+            <Button
+              onClick={handleCheckout}
+              className="bg-white text-green-600 px-6 py-2 rounded-md font-medium text-sm hover:bg-gray-100 transition-colors"
+            >
+              View Cart &gt;
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Footer Section */}
       <div className="bg-gray-50 mt-20">
@@ -683,7 +625,7 @@ const Grocery: React.FC = () => {
               <Button 
                 size="lg" 
                 className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-                onClick={() => navigate('/grocery/category/CHIPS')}
+                onClick={() => navigate('/grabit/category/CHIPS')}
               >
                 <span className="mr-2">🍟</span>
                 Shop Chips & Snacks
@@ -692,7 +634,7 @@ const Grocery: React.FC = () => {
                 size="lg" 
                 variant="outline"
                 className="border-orange-500 text-orange-600 hover:bg-orange-50 font-semibold px-8 py-3 rounded-full"
-                onClick={() => navigate('/grocery/category/DRINKS')}
+                onClick={() => navigate('/grabit/category/DRINKS')}
               >
                 <span className="mr-2">🥤</span>
                 Shop Drinks

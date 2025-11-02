@@ -10,8 +10,17 @@ import { getImageUrl } from './imageSource';
  * Only shows images for products with EXACT matching names in ImageKit
  * Everything else falls back to default image
  */
-export function getGroceryProductImage(productName: string): string {
-  // Try exact product name match with common extensions
+export function getGroceryProductImage(productName: string, imageUrl?: string | null): string {
+  // First priority: use image_url from database (SQL) if it's a valid URL
+  // Check if imageUrl is a non-empty string that's not a default/placeholder path
+  if (imageUrl && 
+      imageUrl.trim() !== '' && 
+      !imageUrl.includes('/menu_hero.png') &&
+      (imageUrl.startsWith('http') || imageUrl.startsWith('https'))) {
+    return imageUrl;
+  }
+  
+  // Fallback: Try exact product name match with common extensions
   const extensions = ['webp', 'jpg', 'jpeg', 'png', 'avif'];
   
   for (const ext of extensions) {

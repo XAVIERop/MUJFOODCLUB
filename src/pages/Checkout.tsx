@@ -106,6 +106,16 @@ const Checkout = () => {
   // Calculate total amount from global cart
   const totalAmount = getTotalAmount();
 
+  // Helper function to get cart's cafe name
+  const getCartCafeName = () => {
+    const cartItems = Object.values(cart);
+    if (cartItems.length === 0) return '';
+    
+    // Get the first item's cafe name (assuming all items are from same cafe)
+    const firstItem = cartItems[0] as any;
+    return firstItem.item.cafe_name || '';
+  };
+
   // Form states
   const [deliveryDetails, setDeliveryDetails] = useState({
     orderType: 'delivery', // 'delivery', 'takeaway', or 'dine_in'
@@ -510,7 +520,23 @@ const Checkout = () => {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate(`/menu/${cafe?.slug || cafe?.id}`)}
+              onClick={() => {
+                // Go back to previous page in browser history
+                // This will take user back to where they came from (grocery, cafe menu, home, etc.)
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  // Fallback: if no history, go to appropriate page based on cart context
+                  const cartCafeName = getCartCafeName();
+                  if (cartCafeName?.toLowerCase().includes('24 seven') || cartCafeName?.toLowerCase().includes('grocery')) {
+                    navigate('/grabit');
+                  } else if (cafe?.slug || cafe?.id) {
+                    navigate(`/menu/${cafe.slug || cafe.id}`);
+                  } else {
+                    navigate('/');
+                  }
+                }
+              }}
               className="mr-4"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
