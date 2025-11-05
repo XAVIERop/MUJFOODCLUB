@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Store } from 'lucide-react';
+import { Home, Store, ShoppingBag, Package } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const BottomNavigation = () => {
@@ -18,7 +18,7 @@ const BottomNavigation = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 lg:hidden shadow-lg">
-      <div className="flex items-center justify-center gap-8 py-2 px-3">
+      <div className="flex items-center justify-center gap-4 sm:gap-6 py-2 px-2">
         {/* Home Tab */}
         <button
           onClick={() => navigate('/')}
@@ -45,8 +45,7 @@ const BottomNavigation = () => {
           <span className="text-[11px] font-medium">Food</span>
         </button>
 
-        {/* Grocery Tab - HIDDEN until feature is ready for production */}
-        {/* 
+        {/* Grabit Tab */}
         <button
           onClick={() => navigate('/grabit')}
           className={`flex flex-col items-center py-1.5 px-2 rounded-lg transition-all duration-200 ${
@@ -55,10 +54,33 @@ const BottomNavigation = () => {
               : 'text-gray-600 hover:text-primary hover:bg-gray-50'
           }`}
         >
-          <ShoppingCart className={`w-5 h-5 mb-0.5 ${isActive('/grabit') ? 'text-primary' : ''}`} />
-          <span className="text-[11px] font-medium">Grocery</span>
+          <ShoppingBag className={`w-5 h-5 mb-0.5 ${isActive('/grabit') ? 'text-primary' : ''}`} />
+          <span className="text-[11px] font-medium">Grabit</span>
         </button>
-        */}
+
+        {/* Track Order Tab */}
+        <button
+          onClick={() => navigate('/orders')}
+          className={`flex flex-col items-center py-1.5 px-2 rounded-lg transition-all duration-200 ${
+            isActive('/orders') 
+              ? 'text-primary bg-primary/10' 
+              : 'text-gray-600 hover:text-primary hover:bg-gray-50'
+          }`}
+        >
+          <Package className={`w-5 h-5 mb-0.5 ${isActive('/orders') ? 'text-primary' : ''}`} />
+          <span className="text-[11px] font-medium">Orders</span>
+        </button>
+
+      </div>
+      
+      {/* Home Indicator for iOS - More compact */}
+      <div className="w-20 h-0.5 bg-gray-300 rounded-full mx-auto mb-1"></div>
+    </div>
+  );
+};
+
+export default BottomNavigation;
+
 
       </div>
       

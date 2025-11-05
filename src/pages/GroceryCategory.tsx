@@ -480,3 +480,81 @@ const GroceryCategory: React.FC = () => {
 };
 
 export default GroceryCategory;
+
+                          {isOutOfStock ? (
+                            <span className="text-xs text-red-600 font-medium px-2 py-1">
+                              Out of Stock
+                            </span>
+                          ) : cartCount > 0 ? (
+                            <div className="flex items-center gap-2">
+                        <Button
+                                variant="outline"
+                          size="sm"
+                                onClick={() => handleRemoveFromCart(item.id)}
+                                className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400 rounded-full"
+                        >
+                                <Minus className="h-4 w-4" />
+                        </Button>
+                              <span className="text-sm font-medium text-gray-900 min-w-[20px] text-center">{cartCount}</span>
+                          <Button
+                                variant="outline"
+                            size="sm"
+                                onClick={() => handleAddToCart(item)}
+                                className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400 rounded-full"
+                          >
+                                <Plus className="h-4 w-4" />
+                          </Button>
+                            </div>
+                          ) : (
+                          <Button
+                              variant="default" 
+                            size="sm"
+                              className="bg-green-500 hover:bg-green-600 text-white font-medium rounded-md px-4 py-1.5 h-8 text-xs"
+                              onClick={() => handleAddToCart(item)}
+                          >
+                              ADD
+                          </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* Floating Cart Bar - Desktop Only (Green Bar like Mobile) */}
+      {Object.keys(cart).length > 0 && (
+        <div className="hidden lg:block fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-md w-full mx-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/20 rounded-lg px-3 py-1.5">
+                <span className="font-medium text-sm">
+                  {getItemCount()} {getItemCount() === 1 ? 'Item' : 'Items'} • ₹{getTotalAmount().toFixed(2)}
+                </span>
+              </div>
+              <div className="text-sm">
+                {getTotalAmount() >= 89 ? (
+                  <span className="text-green-100">Free Delivery</span>
+                ) : (
+                  <span className="text-yellow-200">₹{(89 - getTotalAmount()).toFixed(2)} more for free delivery</span>
+                )}
+              </div>
+            </div>
+            <Button
+              onClick={handleCheckout}
+              className="bg-white text-green-600 px-6 py-2 rounded-md font-medium text-sm hover:bg-gray-100 transition-colors"
+            >
+              View Cart &gt;
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default GroceryCategory;

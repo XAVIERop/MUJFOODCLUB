@@ -280,7 +280,8 @@ const Grocery: React.FC = () => {
           <img
             src={bannerImage}
             alt="Grocery Banner"
-            className="w-full h-auto object-contain"
+            className="w-full h-auto object-contain md:object-contain"
+            style={{ maxHeight: '180px', objectFit: 'contain' }}
             onError={(e) => {
               e.currentTarget.src = bannerImage;
             }}
@@ -290,16 +291,16 @@ const Grocery: React.FC = () => {
 
         {/* Categories Grid */}
         <div id="categories" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12">
-          {/* Mobile: 3 categories in one row, Desktop: responsive grid */}
-          <div className="grid grid-cols-3 md:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
+          {/* Mobile: Horizontal scroll, Desktop: responsive grid */}
+          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 overflow-x-auto md:overflow-visible scrollbar-hide pb-2 md:pb-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {categories.map((category) => (
             <div 
                 key={category.id} 
-              className="group cursor-pointer hover:shadow-xl transition-all duration-300 bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 hover:scale-105 hover:border-orange-200"
+              className="group cursor-pointer hover:shadow-xl transition-all duration-300 bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 hover:scale-105 hover:border-orange-200 flex-shrink-0 w-[280px] md:w-auto"
               onClick={() => navigate(`/grabit/category/${category.id}`)}
             >
               {/* Category Card with Banner Image Background */}
-              <div className="relative w-full aspect-[4/3]">
+              <div className="relative w-full aspect-[4/3] md:aspect-[4/3]">
                 <img
                   src={category.image}
                   alt={category.name}
@@ -325,7 +326,7 @@ const Grocery: React.FC = () => {
           ) : (
             <div className="text-center mb-12">
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">Discover our most popular items</p>
-            </div>
+          </div>
           )}
           
           {/* Featured Products - Show chips/snacks above banner, or all if searching */}

@@ -34,6 +34,7 @@ const OrderTracking = lazy(() => import("./pages/OrderTracking"));
 const MyOrders = lazy(() => import("./pages/MyOrders"));
 const OrderAnalyticsPage = lazy(() => import("./pages/OrderAnalyticsPage"));
 const Cafes = lazy(() => import("./pages/Cafes"));
+const ExternalCafes = lazy(() => import("./pages/ExternalCafes"));
 const Grocery = lazy(() => import("./pages/Grocery"));
 const GroceryCategory = lazy(() => import("./pages/GroceryCategory"));
 const QRCodePage = lazy(() => import("./pages/QRCodePage"));
@@ -76,6 +77,7 @@ const App = () => {
                       <Route path="/orders" element={<MyOrders />} />
                       <Route path="/order-analytics" element={<OrderAnalyticsPage />} />
                       <Route path="/cafes" element={<Cafes />} />
+                      <Route path="/external-cafes" element={<ExternalCafes />} />
                       <Route path="/grabit" element={<Grocery />} />
                       <Route path="/grabit/category/:categoryId" element={<GroceryCategory />} />
                       {/* <Route path="/rewards" element={<CafeRewards />} /> */} {/* Disabled for simplified version */}
@@ -123,5 +125,7 @@ const App = () => {
     </ErrorBoundary>
   );
 };
+
+export default App;
 
 export default App;
