@@ -514,11 +514,40 @@ const MenuModern = () => {
     }
   }, [cafeIdentifier, navigate, toast]);
 
-  // Helper function to check if cart has items from different cafe
-  const hasItemsFromDifferentCafe = (currentCafeId: string) => {
-    return Object.values(cart).some(cartItem => 
-      cartItem.item.cafe_id && cartItem.item.cafe_id !== currentCafeId
-    );
+  // Helper function to check if a cafe is Grabit
+  const isGrabitCafe = (cafeId: string | null, cafeName: string | null, cafeSlug?: string | null) => {
+    if (!cafeId && !cafeName && !cafeSlug) return false;
+    const name = cafeName?.toLowerCase() || '';
+    const slug = cafeSlug?.toLowerCase() || '';
+    return name.includes('grabit') || slug === 'grabit';
+  };
+
+  // Helper function to check if cart has items from different cafe (including Grabit detection)
+  const hasItemsFromDifferentCafe = (currentCafeId: string, currentCafeName?: string | null, currentCafeSlug?: string | null) => {
+    const cartItems = Object.values(cart);
+    if (cartItems.length === 0) return false;
+    
+    // Get the first cart item's cafe info
+    const firstCartItem = cartItems[0];
+    const cartCafeId = firstCartItem.item.cafe_id;
+    const cartCafeName = firstCartItem.item.cafe_name;
+    const cartCafeSlug = firstCartItem.item.cafe_slug;
+    
+    // Check if cart is from Grabit
+    const cartIsGrabit = isGrabitCafe(cartCafeId, cartCafeName, cartCafeSlug);
+    const currentIsGrabit = isGrabitCafe(currentCafeId, currentCafeName, currentCafeSlug);
+    
+    // If both are Grabit or both are not Grabit, check by cafe_id
+    if (cartIsGrabit && currentIsGrabit) {
+      return false; // Both are Grabit, same cafe
+    }
+    if (!cartIsGrabit && !currentIsGrabit) {
+      // Both are regular cafes, check by cafe_id
+      return cartCafeId && cartCafeId !== currentCafeId;
+    }
+    
+    // One is Grabit and one is not - different cafes
+    return true;
   };
 
   // Helper function to get current cafe name from cart
@@ -566,8 +595,8 @@ const MenuModern = () => {
     const portionId = selectedPortion || item.portions[0]?.id;
     if (!portionId || !cafe) return;
 
-    // Check if cart has items from different cafe
-    if (hasItemsFromDifferentCafe(cafe.id)) {
+    // Check if cart has items from different cafe (including Grabit detection)
+    if (hasItemsFromDifferentCafe(cafe.id, cafe.name, cafe.slug)) {
       console.log('🔄 Cafe mismatch detected, showing dialog');
       setPendingItem({ item, selectedPortion });
       setShowCafeSwitchDialog(true);
@@ -825,7 +854,7 @@ const MenuModern = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 pt-16 pb-20 lg:pb-0">
         <Header />
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
@@ -840,7 +869,7 @@ const MenuModern = () => {
   // Error states
   if (!cafeIdentifier) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 pt-16 pb-20 lg:pb-0">
         <Header />
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
@@ -853,7 +882,7 @@ const MenuModern = () => {
 
   if (!cafe) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 pt-16 pb-20 lg:pb-0">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <p className="text-center text-gray-600">Cafe not found</p>
@@ -863,7 +892,7 @@ const MenuModern = () => {
   }
 
   return (
-    <div className="min-h-screen pb-24 lg:pb-8">
+    <div className="min-h-screen pt-16 pb-24 lg:pb-8">
       {/* Header hidden on mobile, shown on desktop */}
       <div className="hidden lg:block">
         <Header />

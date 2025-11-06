@@ -172,17 +172,21 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     const isChatkara = orderData.cafe_name?.toLowerCase().includes('chatkara') || 
                        orderData.cafe_name === 'CHATKARA' ||
                        orderData.cafe_name?.toLowerCase() === 'chatkara';
+    const isGrabit = orderData.cafe_name?.toLowerCase().includes('grabit') || 
+                     orderData.cafe_name === 'GRABIT' ||
+                     orderData.cafe_name?.toLowerCase() === 'grabit';
     const isFoodCourt = orderData.cafe_name?.toLowerCase().includes('food court') || 
                        orderData.cafe_name === 'FOOD COURT' ||
                        orderData.cafe_name?.toLowerCase() === 'food court';
     
     console.log('  - Is Chatkara:', isChatkara);
+    console.log('  - Is Grabit:', isGrabit);
     console.log('  - Is Food Court:', isFoodCourt);
     
     let receiptFormat = 'mujfoodclub'; // default
-    if (isChatkara) {
+    if (isChatkara || isGrabit) {
       receiptFormat = 'chatkara';
-      console.log('✅ Using Chatkara format');
+      console.log('✅ Using Chatkara format (for Chatkara or Grabit)');
     } else if (isFoodCourt) {
       receiptFormat = 'foodcourt';
       console.log('✅ Using Food Court format');
@@ -357,8 +361,8 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
               <div style="font-weight: bold;">Total Qty: ${orderData.items.reduce((sum, item) => sum + item.quantity, 0)}</div>
               <div style="font-weight: bold;">Sub Total: ${orderData.subtotal.toFixed(0)}</div>
               <div style="font-weight: bold;">Delivery Charge: +10</div>
-              <div style="font-weight: bold;">MUJ Food Club Discount: -${(orderData.subtotal * 0.10).toFixed(0)}</div>
-              <div style="font-weight: bold; font-size: 16px; margin-top: 8px;">Grand Total: ${(orderData.subtotal + 10 - orderData.subtotal * 0.10).toFixed(0)}rs</div>
+              ${orderData.cafe_name?.toLowerCase().includes('grabit') ? '' : `<div style="font-weight: bold;">MUJ Food Club Discount: -${(orderData.subtotal * 0.10).toFixed(0)}</div>`}
+              <div style="font-weight: bold; font-size: 16px; margin-top: 8px;">Grand Total: ${orderData.cafe_name?.toLowerCase().includes('grabit') ? (orderData.subtotal + 10).toFixed(0) : (orderData.subtotal + 10 - orderData.subtotal * 0.10).toFixed(0)}rs</div>
             </div>
             
             <div class="footer">

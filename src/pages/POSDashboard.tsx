@@ -658,38 +658,69 @@ const POSDashboard = () => {
   const autoPrintReceiptWithCafeService = async (order: Order) => {
     console.log('🚀 UNIFIED PRINT: Using Unified Print Service!');
     
-    // Check if this is Pizza Bakers - skip automatic printing
+    // Fetch cafe data to check if it's Grabit or Pizza Bakers
+    let isGrabit = false;
+    let isPizzaBakers = false;
+    
     if (order.cafe_id && cafeId) {
       const { data: cafeData } = await supabase
         .from('cafes')
-        .select('name')
+        .select('name, slug')
         .eq('id', order.cafe_id)
         .single();
       
-      if (cafeData && cafeData.name.toLowerCase().includes('pizza bakers')) {
-        console.log('🚫 AUTO-PRINT: Pizza Bakers - skipping automatic printing:', order.order_number);
-        return;
+      if (cafeData) {
+        const cafeName = cafeData.name?.toLowerCase() || '';
+        const cafeSlug = cafeData.slug?.toLowerCase() || '';
+        isGrabit = cafeName.includes('grabit') || cafeSlug === 'grabit';
+        isPizzaBakers = cafeName.includes('pizza bakers');
+        
+        console.log('🔍 AUTO-PRINT: Cafe check:', {
+          cafeName: cafeData.name,
+          cafeSlug: cafeData.slug,
+          isGrabit,
+          isPizzaBakers
+        });
       }
     }
     
-    // Check if this order has already been auto-printed to prevent duplicates
-    if (printedOrders.has(order.id)) {
-      console.log('🚫 AUTO-PRINT: Order already printed, skipping duplicate:', order.order_number);
+    // Check if this is Pizza Bakers - skip automatic printing
+    if (isPizzaBakers) {
+      console.log('🚫 AUTO-PRINT: Pizza Bakers - skipping automatic printing:', order.order_number);
       return;
     }
     
-    // Check if order is too old (older than 5 minutes) to prevent printing stale orders
-    const orderAge = Date.now() - new Date(order.created_at).getTime();
-    const maxAge = 5 * 60 * 1000; // 5 minutes (reduced from 10)
-    if (orderAge > maxAge) {
-      console.log('🚫 AUTO-PRINT: Order too old, skipping auto-print:', order.order_number, 'Age:', Math.round(orderAge / 1000), 'seconds');
-      return;
-    }
-    
-    // Additional check: Only print orders that are in 'received' status
-    if (order.status !== 'received') {
-      console.log('🚫 AUTO-PRINT: Order not in received status, skipping:', order.order_number, 'Status:', order.status);
-      return;
+    // For Grabit orders, always print automatically (skip duplicate and age checks)
+    if (isGrabit) {
+      console.log('✅ AUTO-PRINT: Grabit order detected - will print automatically:', order.order_number);
+      // Skip duplicate check for Grabit - always print
+      // Skip age check for Grabit - always print
+      // Only check status
+      if (order.status !== 'received') {
+        console.log('🚫 AUTO-PRINT: Grabit order not in received status, skipping:', order.order_number, 'Status:', order.status);
+        return;
+      }
+    } else {
+      // For other cafes, apply normal checks
+      // Check if this order has already been auto-printed to prevent duplicates
+      if (printedOrders.has(order.id)) {
+        console.log('🚫 AUTO-PRINT: Order already printed, skipping duplicate:', order.order_number);
+        return;
+      }
+      
+      // Check if order is too old (older than 5 minutes) to prevent printing stale orders
+      const orderAge = Date.now() - new Date(order.created_at).getTime();
+      const maxAge = 5 * 60 * 1000; // 5 minutes (reduced from 10)
+      if (orderAge > maxAge) {
+        console.log('🚫 AUTO-PRINT: Order too old, skipping auto-print:', order.order_number, 'Age:', Math.round(orderAge / 1000), 'seconds');
+        return;
+      }
+      
+      // Additional check: Only print orders that are in 'received' status
+      if (order.status !== 'received') {
+        console.log('🚫 AUTO-PRINT: Order not in received status, skipping:', order.order_number, 'Status:', order.status);
+        return;
+      }
     }
     
     try {
@@ -771,18 +802,24 @@ const POSDashboard = () => {
       
       if (result.success) {
         console.log('✅ UNIFIED PRINT: Success!', result);
+        if (isGrabit) {
+          console.log('✅ AUTO-PRINT: Grabit receipt printed successfully:', order.order_number);
+        }
         
-        // Mark this order as printed to prevent duplicates
-        setPrintedOrders(prev => new Set(prev).add(order.id));
-        
-        // Also store in localStorage for persistence across page refreshes
-        const printedOrdersArray = Array.from(printedOrders);
-        printedOrdersArray.push(order.id);
-        localStorage.setItem('printedOrders', JSON.stringify(printedOrdersArray));
+        // Mark this order as printed to prevent duplicates (only for non-Grabit orders)
+        // For Grabit, we don't mark as printed so it can be reprinted if needed
+        if (!isGrabit) {
+          setPrintedOrders(prev => new Set(prev).add(order.id));
+          
+          // Also store in localStorage for persistence across page refreshes
+          const printedOrdersArray = Array.from(printedOrders);
+          printedOrdersArray.push(order.id);
+          localStorage.setItem('printedOrders', JSON.stringify(printedOrdersArray));
+        }
         
         toast({
           title: "Receipt Printed",
-          description: `KOT and Receipt for order #${order.order_number} printed using ${result.method}`,
+          description: `KOT and Receipt for order #${order.order_number} printed using ${result.method}${isGrabit ? ' (Auto-printed for Grabit)' : ''}`,
         });
       } else {
         console.error('❌ UNIFIED PRINT: Failed:', result);
@@ -877,19 +914,24 @@ const POSDashboard = () => {
         const isChatkara = orderData.cafe?.name?.toLowerCase().includes('chatkara') || 
                            orderData.cafe?.name === 'CHATKARA' ||
                            orderData.cafe?.name?.toLowerCase() === 'chatkara';
+        const isGrabit = orderData.cafe?.name?.toLowerCase().includes('grabit') || 
+                         orderData.cafe?.name === 'GRABIT' ||
+                         orderData.cafe?.name?.toLowerCase() === 'grabit' ||
+                         orderData.cafe?.slug === 'grabit';
         const isFoodCourt = orderData.cafe?.name?.toLowerCase().includes('food court') || 
                            orderData.cafe?.name === 'FOOD COURT' ||
                            orderData.cafe?.name?.toLowerCase() === 'food court';
         
         console.log('  - Is Chatkara:', isChatkara);
+        console.log('  - Is Grabit:', isGrabit);
         console.log('  - Is Food Court:', isFoodCourt);
         console.log('  - Chatkara check details:');
         console.log('    - includes("chatkara"):', orderData.cafe?.name?.toLowerCase().includes('chatkara'));
         console.log('    - equals "CHATKARA":', orderData.cafe?.name === 'CHATKARA');
         console.log('    - equals "chatkara":', orderData.cafe?.name?.toLowerCase() === 'chatkara');
         
-        if (isChatkara) {
-          console.log('✅ POSDashboard - Using Chatkara receipt format');
+        if (isChatkara || isGrabit) {
+          console.log('✅ POSDashboard - Using Chatkara receipt format (for Chatkara or Grabit)');
           return generateChatkaraReceipt(orderData, orderItems);
         } else if (isFoodCourt) {
           console.log('✅ POSDashboard - Using Food Court receipt format');
@@ -1222,8 +1264,8 @@ const POSDashboard = () => {
                   <div style="font-weight: bold;">Total Qty: ${orderItems.reduce((sum, item) => sum + item.quantity, 0)}</div>
                   <div style="font-weight: bold;">Sub Total: ${orderData.total_amount.toFixed(0)}</div>
                   <div style="font-weight: bold;">Delivery Charge: +10</div>
-                  <div style="font-weight: bold;">MUJ Food Club Discount: -${(orderData.total_amount * 0.10).toFixed(0)}</div>
-                  <div style="font-weight: bold; font-size: 16px; margin-top: 8px;">Grand Total: ${(orderData.total_amount + 10 - orderData.total_amount * 0.10).toFixed(0)}rs</div>
+                  ${orderData.cafe?.name?.toLowerCase().includes('grabit') || orderData.cafe?.slug === 'grabit' ? '' : `<div style="font-weight: bold;">MUJ Food Club Discount: -${(orderData.total_amount * 0.10).toFixed(0)}</div>`}
+                  <div style="font-weight: bold; font-size: 16px; margin-top: 8px;">Grand Total: ${(orderData.cafe?.name?.toLowerCase().includes('grabit') || orderData.cafe?.slug === 'grabit') ? (orderData.total_amount + 10).toFixed(0) : (orderData.total_amount + 10 - orderData.total_amount * 0.10).toFixed(0)}rs</div>
                 </div>
                 
                 <div class="footer">

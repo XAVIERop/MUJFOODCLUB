@@ -295,8 +295,8 @@ const Cafes = () => {
         selectedBlock={selectedBlock}
         onBlockChange={setSelectedBlock}
         mobileChildren={
-        <div className="min-h-screen bg-white pb-32">
-          <div className="container mx-auto px-4 pt-4">
+        <div className="min-h-screen bg-white pt-16 pb-20">
+          <div className="container mx-auto px-4">
         {/* Search Bar with Favorites Button */}
         <div className="mb-6">
           <div className="flex gap-3">
@@ -402,7 +402,7 @@ const Cafes = () => {
         </div>
       }
     >
-      <div className="min-h-screen bg-white pt-4">
+      <div className="min-h-screen bg-white pt-16">
         <Header />
         <div className="container mx-auto px-4">
           {/* Search Bar */}

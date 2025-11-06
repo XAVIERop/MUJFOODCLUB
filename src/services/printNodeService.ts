@@ -402,6 +402,9 @@ MUJFOODCLUB!`;
     const isChatkara = cafe_name?.toLowerCase().includes('chatkara') || 
                        cafe_name === 'CHATKARA' ||
                        cafe_name?.toLowerCase() === 'chatkara';
+    const isGrabit = cafe_name?.toLowerCase().includes('grabit') || 
+                     cafe_name === 'GRABIT' ||
+                     cafe_name?.toLowerCase() === 'grabit';
     const isCookHouse = cafe_name?.toLowerCase().includes('cook house') || 
                         cafe_name === 'COOK HOUSE' ||
                         cafe_name?.toLowerCase() === 'cook house';
@@ -423,10 +426,11 @@ MUJFOODCLUB!`;
                        cafe_name?.toLowerCase().includes('box');
     
     // Calculate MUJ FOOD CLUB discount (different rates for different cafes and order types)
+    // Note: Grabit does NOT get discount
     const isEligibleForDiscount = isChatkara || isCookHouse || isMiniMeals || isFoodCourt || isPunjabiTadka || isMunchBox;
     let discountRate = 0;
     if (isChatkara || isMiniMeals || isPunjabiTadka || isMunchBox) {
-      discountRate = 0.10; // 10% for Chatkara, Mini Meals, Punjabi Tadka, and Munch Box
+      discountRate = 0.10; // 10% for Chatkara, Mini Meals, Punjabi Tadka, and Munch Box (NOT Grabit)
     } else if (isCookHouse) {
       // Cook House: Different rates based on order type
       const orderType = data.delivery_block === 'DINE_IN' ? 'dine_in' : 
@@ -443,19 +447,20 @@ MUJFOODCLUB!`;
     
     console.log('🔍 PrintNode Service - Cafe name:', cafe_name);
     console.log('🔍 PrintNode Service - Is Chatkara:', isChatkara);
+    console.log('🔍 PrintNode Service - Is Grabit:', isGrabit);
     console.log('🔍 PrintNode Service - Is Cook House:', isCookHouse);
     console.log('🔍 PrintNode Service - Is Mini Meals:', isMiniMeals);
     console.log('🔍 PrintNode Service - Is Food Court:', isFoodCourt);
     console.log('🔍 PrintNode Service - Is Punjabi Tadka:', isPunjabiTadka);
     console.log('🔍 PrintNode Service - Cafe name exact:', `"${cafe_name}"`);
     console.log('🔍 PrintNode Service - Cafe name length:', cafe_name?.length);
-    console.log('🔍 PrintNode Service - Using format:', isChatkara ? 'CHATKARA' : isCookHouse ? 'COOK HOUSE' : isMiniMeals ? 'MINI MEALS' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : 'MUJ FOOD CLUB');
+    console.log('🔍 PrintNode Service - Using format:', isChatkara || isGrabit ? 'CHATKARA' : isCookHouse ? 'COOK HOUSE' : isMiniMeals ? 'MINI MEALS' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : 'MUJ FOOD CLUB');
     
     let receipt;
     
-    if (isChatkara) {
-      // Chatkara format (compact, thermal printer optimized with bold text)
-      receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'CHATKARA'}\x1B\x21\x00
+    if (isChatkara || isGrabit) {
+      // Chatkara/Grabit format (compact, thermal printer optimized with bold text)
+      receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || (isGrabit ? 'GRABIT' : 'CHATKARA')}\x1B\x21\x00
     ---------------------------------------
     \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
     \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
@@ -548,8 +553,8 @@ MUJFOODCLUB!`;
         itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
         qty = item.quantity.toString().padStart(2);
         
-        // Use different format for Chatkara, Mini Meals, Cook House vs others
-        if (isChatkara || isMiniMeals || isCookHouse) {
+        // Use different format for Chatkara, Grabit, Mini Meals, Cook House vs others
+        if (isChatkara || isGrabit || isMiniMeals || isCookHouse) {
           price = item.unit_price.toFixed(0).padStart(4);
           amount = item.total_price.toFixed(0).padStart(5);
         } else {
@@ -557,7 +562,7 @@ MUJFOODCLUB!`;
           amount = item.total_price.toFixed(0).padStart(5);
         }
         
-        if (isChatkara || isMiniMeals || isCookHouse) {
+        if (isChatkara || isGrabit || isMiniMeals || isCookHouse) {
           // Keep normal size for item names in receipt
           receipt += `\n    \x1B\x21\x08${itemName}\x1B\x21\x00 ${qty}    ${price}    ${amount}`;
         } else {
@@ -567,7 +572,7 @@ MUJFOODCLUB!`;
     });
 
     // Add cafe-specific footer
-    if (isChatkara) {
+    if (isChatkara || isGrabit) {
       // Determine if it's a delivery order based on delivery_block
       const isDelivery = data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block);
       const deliveryCharge = isDelivery ? 10 : 0;
@@ -582,8 +587,8 @@ MUJFOODCLUB!`;
         receipt += `\n    \x1B\x21\x08Delivery Charge: +${deliveryCharge}\x1B\x21\x00`;
       }
       
-      // Show MUJ FOOD CLUB discount if applicable
-      if (mujFoodClubDiscount > 0) {
+      // Show MUJ FOOD CLUB discount if applicable (but NOT for Grabit)
+      if (mujFoodClubDiscount > 0 && !isGrabit) {
         receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (${(discountRate * 100).toFixed(0)}%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
       }
       

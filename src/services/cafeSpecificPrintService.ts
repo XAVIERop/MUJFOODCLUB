@@ -498,10 +498,11 @@ MUJFOODCLUB
   private formatReceiptForBrowser(data: ReceiptData): string {
     const { order_number, cafe_name, customer_name, customer_phone, items, final_amount, payment_method, delivery_block } = data;
     
-    // Check if this is Chatkara cafe
+    // Check if this is Chatkara or Grabit cafe (both use Chatkara format)
     const isChatkara = cafe_name.toLowerCase().includes('chatkara');
+    const isGrabit = cafe_name.toLowerCase().includes('grabit') || cafe_name.toLowerCase() === 'grabit';
     
-    if (isChatkara) {
+    if (isChatkara || isGrabit) {
       return this.formatChatkaraReceipt(data);
     } else {
       return this.formatGenericReceipt(data);

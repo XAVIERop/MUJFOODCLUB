@@ -10,6 +10,7 @@ import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/hooks/useAuth';
 import { getImageUrl } from '@/utils/imageSource';
 import { getGroceryProductImage } from '@/utils/groceryImageMatcher';
+import { CafeSwitchDialog } from '@/components/CafeSwitchDialog';
 
 interface GroceryItem {
   id: string;
@@ -27,7 +28,7 @@ const GroceryCategory: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { addToCart, removeFromCart, getItemCount, getTotalAmount, cart, cafe } = useCart();
+  const { addToCart, removeFromCart, getItemCount, getTotalAmount, cart, cafe, clearCart, setCafe } = useCart();
   
   const [items, setItems] = useState<GroceryItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<GroceryItem[]>([]);
@@ -36,6 +37,11 @@ const GroceryCategory: React.FC = () => {
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [brands, setBrands] = useState<string[]>([]);
   const [selectedBrandName, setSelectedBrandName] = useState<string>('All Brands');
+  const [grabitCafe, setGrabitCafe] = useState<any | null>(null);
+  
+  // Dialog state
+  const [showCafeSwitchDialog, setShowCafeSwitchDialog] = useState(false);
+  const [pendingItem, setPendingItem] = useState<GroceryItem | null>(null);
 
   useEffect(() => {
     if (categoryId) {
@@ -54,7 +60,7 @@ const GroceryCategory: React.FC = () => {
       // Get Grabit cafe ID
       const { data: cafeData, error: cafeError } = await supabase
         .from('cafes')
-        .select('id, name')
+        .select('id, name, slug')
         .eq('slug', 'grabit')
         .single();
       
@@ -160,8 +166,136 @@ const GroceryCategory: React.FC = () => {
     setSelectedBrandName(brandName);
   };
 
+  // Helper function to check if a cafe is Grabit
+  const isGrabitCafe = (cafeId: string | null, cafeName: string | null, cafeSlug?: string | null) => {
+    if (!cafeId && !cafeName && !cafeSlug) return false;
+    const name = cafeName?.toLowerCase() || '';
+    const slug = cafeSlug?.toLowerCase() || '';
+    return name.includes('grabit') || slug === 'grabit';
+  };
+
+  // Helper function to check if cart has items from different cafe (including Grabit detection)
+  const hasItemsFromDifferentCafe = () => {
+    const cartItems = Object.values(cart);
+    if (cartItems.length === 0) return false;
+    if (!grabitCafe) return false; // Can't check if we don't have Grabit cafe data
+    
+    // Check the global cafe state from cart context (this is set when items are added from a cafe)
+    const cartCafeFromContext = cafe;
+    
+    // If cart context has a cafe, use that for comparison
+    if (cartCafeFromContext && cartCafeFromContext.id) {
+      const cartCafeId = cartCafeFromContext.id;
+      const cartCafeName = cartCafeFromContext.name;
+      const cartCafeSlug = cartCafeFromContext.slug;
+      
+      // Check if cart is from Grabit
+      const cartIsGrabit = isGrabitCafe(cartCafeId, cartCafeName, cartCafeSlug);
+      const currentIsGrabit = isGrabitCafe(grabitCafe.id, grabitCafe.name, grabitCafe.slug);
+      
+      // If both are Grabit, same cafe
+      if (cartIsGrabit && currentIsGrabit) {
+        return false;
+      }
+      
+      // One is Grabit and one is not - different cafes
+      if (cartIsGrabit !== currentIsGrabit) {
+        return true;
+      }
+      
+      // Both are regular cafes, check by cafe_id
+      if (!cartIsGrabit && !currentIsGrabit) {
+        return cartCafeId !== grabitCafe.id;
+      }
+    }
+    
+    // Fallback: Check first cart item's cafe info
+    const firstCartItem = cartItems[0];
+    if (firstCartItem && firstCartItem.item) {
+      const cartCafeId = firstCartItem.item.cafe_id;
+      const cartCafeName = firstCartItem.item.cafe_name;
+      const cartCafeSlug = firstCartItem.item.cafe_slug;
+      
+      // If we have cafe_id, check if it's different from Grabit
+      if (cartCafeId) {
+        const cartIsGrabit = isGrabitCafe(cartCafeId, cartCafeName, cartCafeSlug);
+        const currentIsGrabit = isGrabitCafe(grabitCafe.id, grabitCafe.name, grabitCafe.slug);
+        
+        // If one is Grabit and one is not, they're different
+        if (cartIsGrabit !== currentIsGrabit) {
+          return true;
+        }
+        
+        // Both are regular cafes with different IDs
+        if (!cartIsGrabit && !currentIsGrabit && cartCafeId !== grabitCafe.id) {
+          return true;
+        }
+      }
+    }
+    
+    // If we can't determine, assume same cafe (don't block)
+    return false;
+  };
+
+  // Helper function to get current cafe name from cart
+  const getCurrentCafeName = () => {
+    // First check the global cafe state from cart context
+    if (cafe && cafe.name) {
+      return cafe.name;
+    }
+    
+    // Fallback: Check first cart item
+    const cartItems = Object.values(cart);
+    if (cartItems.length === 0) return '';
+    
+    const firstItem = cartItems[0];
+    return firstItem.item.cafe_name || 'Previous Cafe';
+  };
+
   const handleAddToCart = (item: GroceryItem) => {
+    // Check if cart has items from different cafe (including Grabit detection)
+    console.log('🔍 Checking cafe mismatch:', {
+      cartCafe: cafe,
+      grabitCafe: grabitCafe,
+      cartItems: Object.keys(cart).length,
+      hasDifferentCafe: hasItemsFromDifferentCafe()
+    });
+    
+    if (hasItemsFromDifferentCafe()) {
+      console.log('🔄 Cafe mismatch detected, showing dialog');
+      setPendingItem(item);
+      setShowCafeSwitchDialog(true);
+      return;
+    }
+    
+    // If cart is empty or cafe context is not set to Grabit, set it now
+    if (grabitCafe && (!cafe || cafe.id !== grabitCafe.id)) {
+      setCafe(grabitCafe);
+      console.log('✅ GroceryCategory: Set cafe context to Grabit before adding item');
+    }
+    
     addToCart(item, 1);
+  };
+
+  // Handle dialog confirmation
+  const handleDialogConfirm = () => {
+    if (pendingItem && grabitCafe) {
+      clearCart();
+      // Set cafe context to Grabit after clearing cart
+      setCafe(grabitCafe);
+      // Add the pending item after clearing
+      setTimeout(() => {
+        addToCart(pendingItem, 1);
+      }, 100);
+    }
+    setShowCafeSwitchDialog(false);
+    setPendingItem(null);
+  };
+
+  // Handle dialog cancellation
+  const handleDialogCancel = () => {
+    setShowCafeSwitchDialog(false);
+    setPendingItem(null);
   };
 
   const handleRemoveFromCart = (itemId: string) => {
@@ -252,9 +386,9 @@ const GroceryCategory: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 pt-16 pb-20 lg:pb-0">
+      {/* Header - Normal scroll, not fixed */}
+      <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -278,7 +412,7 @@ const GroceryCategory: React.FC = () => {
         </div>
       </div>
 
-      {/* Search Bar */}
+      {/* Search Bar - Normal scroll, not fixed */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="relative max-w-md">
@@ -468,15 +602,40 @@ const GroceryCategory: React.FC = () => {
                 )}
               </div>
             </div>
-            <Button
-              onClick={handleCheckout}
-              className="bg-white text-green-600 px-6 py-2 rounded-md font-medium text-sm hover:bg-gray-100 transition-colors"
-            >
-              View Cart &gt;
-            </Button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to remove all items from your cart?')) {
+                    clearCart();
+                  }
+                }}
+                className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
+                aria-label="Clear cart"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <Button
+                onClick={handleCheckout}
+                className="bg-white text-green-600 px-6 py-2 rounded-md font-medium text-sm hover:bg-gray-100 transition-colors"
+              >
+                View Cart &gt;
+              </Button>
+            </div>
           </div>
         </div>
       )}
+      
+      {/* Cafe Switch Dialog */}
+      <CafeSwitchDialog
+        isOpen={showCafeSwitchDialog}
+        onClose={handleDialogCancel}
+        onConfirm={handleDialogConfirm}
+        currentCafeName={getCurrentCafeName()}
+        newCafeName={grabitCafe?.name || 'Grabit'}
+        currentCartItems={Object.keys(cart).length}
+      />
     </div>
   );
 };
