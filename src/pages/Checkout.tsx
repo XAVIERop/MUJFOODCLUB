@@ -96,7 +96,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const location = useRouterLocation();
   const { user, profile, refreshProfile } = useAuth();
-  const { cart, cafe, getTotalAmount, addToCart, removeFromCart } = useCart();
+  const { cart, cafe, getTotalAmount, addToCart, removeFromCart, clearCart } = useCart();
   const { selectedBlock } = useLocation();
   const { toast } = useToast();
   
@@ -116,6 +116,24 @@ const Checkout = () => {
     return firstItem.item.cafe_name || '';
   };
 
+  // Check if this is a grocery order (24 Seven Mart only - Grabit is now a regular cafe)
+  const isGroceryOrder = () => {
+    const cartCafeName = getCartCafeName();
+    return cartCafeName?.toLowerCase().includes('24 seven') || 
+           cartCafeName?.toLowerCase().includes('grocery') ||
+           cafe?.name?.toLowerCase().includes('24 seven') ||
+           cafe?.name?.toLowerCase().includes('grocery') ||
+           cafe?.type === 'grocery';
+  };
+
+  // Check if this is a Grabit order (to hide takeaway/dine-in options)
+  const isGrabitOrder = () => {
+    const cartCafeName = getCartCafeName();
+    return cartCafeName?.toLowerCase().includes('grabit') ||
+           cafe?.name?.toLowerCase().includes('grabit') ||
+           cafe?.slug === 'grabit';
+  };
+
   // Form states
   const [deliveryDetails, setDeliveryDetails] = useState({
     orderType: 'delivery', // 'delivery', 'takeaway', or 'dine_in'
@@ -124,6 +142,16 @@ const Checkout = () => {
     paymentMethod: 'cod',
     phoneNumber: profile?.phone || ''
   });
+
+  // Force delivery for grocery orders and Grabit
+  useEffect(() => {
+    if (isGroceryOrder() || isGrabitOrder()) {
+      // Force delivery order type
+      if (deliveryDetails.orderType !== 'delivery') {
+        setDeliveryDetails(prev => ({ ...prev, orderType: 'delivery' }));
+      }
+    }
+  }, [isGroceryOrder(), isGrabitOrder(), deliveryDetails.orderType]);
 
   // Calculate final amount
   const [finalAmount, setFinalAmount] = useState(totalAmount);
@@ -248,28 +276,32 @@ const Checkout = () => {
     }
 
     // Check if cafe is accepting orders from database
-    if (!cafe.accepting_orders) {
+    // This check applies to ALL cafes including Grabit
+    if (cafe && !cafe.accepting_orders) {
       setError('This cafe is temporarily not accepting orders. They will resume service in the next 2 days.');
       return;
     }
 
     // Check if the selected order type is currently available
-    if (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) {
-      toast({
-        title: "Delivery Unavailable",
-        description: getDeliveryMessage(cafe?.name),
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed()) {
-      toast({
-        title: "Dine-in/Takeaway Unavailable", 
-        description: getDineInTakeawayMessage(),
-        variant: "destructive"
-      });
-      return;
+    // Skip time restrictions for grocery orders and Grabit
+    if (!isGroceryOrder() && !isGrabitOrder()) {
+      if (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) {
+        toast({
+          title: "Delivery Unavailable",
+          description: getDeliveryMessage(cafe?.name),
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      if ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed()) {
+        toast({
+          title: "Dine-in/Takeaway Unavailable", 
+          description: getDineInTakeawayMessage(),
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     // Validate phone number
@@ -301,11 +333,22 @@ const Checkout = () => {
     setIsLoading(true);
     setError('');
 
+    // Validate cafe exists
+    if (!cafe || !cafe.id) {
+      setError('Cafe information is missing. Please try again.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       console.log('🛒 Starting order creation...');
       console.log('🛒 Order data:', {
         user_id: user.id,
         cafe_id: cafe.id,
+        cafe_name: cafe.name,
+        cafe_type: cafe.type,
+        cafe_slug: cafe.slug,
+        is_grocery_order: isGroceryOrder(),
         total_amount: finalAmount,
         order_type: deliveryDetails.orderType,
         delivery_block: deliveryDetails.block,
@@ -343,6 +386,7 @@ const Checkout = () => {
         deliveryBlock = deliveryDetails.block;
       }
 
+      console.log('🛒 Inserting order into database...');
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -374,34 +418,58 @@ const Checkout = () => {
         .single();
 
       if (orderError) {
-        console.error('Order creation error:', orderError);
-        console.error('Order error details:', {
+        console.error('❌ Order creation error:', orderError);
+        console.error('❌ Order error details:', {
           message: orderError.message,
           details: orderError.details,
           hint: orderError.hint,
           code: orderError.code
         });
-        throw orderError;
+        throw new Error(`Failed to create order: ${orderError.message || 'Unknown database error'}`);
       }
 
+      if (!order || !order.id) {
+        console.error('❌ Order was not created - no order data returned');
+        throw new Error('Order creation failed - no order data returned from database');
+      }
+
+      console.log('✅ Order created successfully:', order.order_number, 'ID:', order.id);
+
       // Create order items (using the exact same pattern as the working CafeScanner)
-      const orderItems = Object.values(cart).map((cartItem) => ({
-        order_id: order.id,
-        menu_item_id: cartItem.item.id,
-        quantity: cartItem.quantity,
-        unit_price: cartItem.item.price,
-        total_price: cartItem.item.price * cartItem.quantity,
-        special_instructions: cartItem.notes
-      }));
+      const orderItems = Object.values(cart).map((cartItem) => {
+        if (!cartItem.item.id) {
+          console.error('❌ Missing menu_item_id for item:', cartItem.item);
+          throw new Error(`Missing menu item ID for "${cartItem.item.name}". Please remove this item and try again.`);
+        }
+        return {
+          order_id: order.id,
+          menu_item_id: cartItem.item.id,
+          quantity: cartItem.quantity,
+          unit_price: cartItem.item.price,
+          total_price: cartItem.item.price * cartItem.quantity,
+          special_instructions: cartItem.notes
+        };
+      });
+
+      console.log('🛒 Creating order items:', orderItems.length, 'items');
+      console.log('🛒 Order items data:', orderItems);
 
       const { error: itemsError } = await supabase
         .from('order_items')
         .insert(orderItems);
 
       if (itemsError) {
-        console.error('Order items creation error:', itemsError);
-        throw itemsError;
+        console.error('❌ Order items creation error:', itemsError);
+        console.error('❌ Order items error details:', {
+          message: itemsError.message,
+          details: itemsError.details,
+          hint: itemsError.hint,
+          code: itemsError.code
+        });
+        throw new Error(`Failed to create order items: ${itemsError.message || 'Unknown error'}`);
       }
+      
+      console.log('✅ Order items created successfully');
 
       // Track referral usage if referral code was used
       if (referralCode && referralValidation?.isValid) {
@@ -480,12 +548,38 @@ const Checkout = () => {
         // Don't fail the order if WhatsApp fails
       }
 
+      // Clear the cart after successful order placement
+      clearCart();
+      console.log('🛒 Cart cleared after successful order placement');
+
       // Navigate to order confirmation
       navigate(`/order-confirmation/${order.id}`);
           
       } catch (error) {
-      console.error('Order placement error:', error);
-      setError(error instanceof Error ? error.message : 'Failed to place order');
+      console.error('❌ Order placement error:', error);
+      console.error('❌ Error details:', {
+        error,
+        errorType: typeof error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined
+      });
+      
+      // Extract more detailed error message
+      let errorMessage = 'Failed to place order';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        // Handle Supabase errors
+        if ('message' in error) {
+          errorMessage = String(error.message);
+        } else if ('details' in error) {
+          errorMessage = String(error.details) || errorMessage;
+        } else if ('hint' in error) {
+          errorMessage = String(error.hint) || errorMessage;
+        }
+      }
+      
+      setError(errorMessage || 'Failed to place order. Please check the console for details.');
     } finally {
       setIsLoading(false);
     }
@@ -570,17 +664,20 @@ const Checkout = () => {
                           value="delivery"
                           checked={deliveryDetails.orderType === 'delivery'}
                           onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
-                          disabled={!isDeliveryAllowed(cafe?.name)}
+                          disabled={!isGroceryOrder() && !isGrabitOrder() && !isDeliveryAllowed(cafe?.name)}
                         />
                         <Label htmlFor="delivery" className="flex items-center">
                           <MapPin className="w-4 h-4 mr-2" />
                           Delivery
-                          {!isDeliveryAllowed(cafe?.name) && (
+                          {!isGroceryOrder() && !isGrabitOrder() && !isDeliveryAllowed(cafe?.name) && (
                             <Badge variant="secondary" className="ml-2">Not Available</Badge>
                           )}
                         </Label>
                   </div>
 
+                      {/* Hide takeaway and dine-in for grocery orders and Grabit */}
+                      {!isGroceryOrder() && !isGrabitOrder() && (
+                        <>
                       <div className="flex items-center space-x-2">
                         <input
                           type="radio"
@@ -618,9 +715,12 @@ const Checkout = () => {
                           )}
                         </Label>
                       </div>
+                        </>
+                      )}
                         </div>
                     
-                    {!isDeliveryAllowed(cafe?.name) && (
+                    {/* Hide time restriction alerts for grocery orders and Grabit */}
+                    {!isGroceryOrder() && !isGrabitOrder() && !isDeliveryAllowed(cafe?.name) && (
                       <Alert>
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
@@ -629,7 +729,7 @@ const Checkout = () => {
                       </Alert>
                     )}
                     
-                    {!isDineInTakeawayAllowed() && (
+                    {!isGroceryOrder() && !isGrabitOrder() && !isDineInTakeawayAllowed() && (
                       <Alert>
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
@@ -945,22 +1045,28 @@ const Checkout = () => {
 
                   {/* Place Order Button */}
               <Button 
-                onClick={handlePlaceOrder}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handlePlaceOrder();
+                }}
                 disabled={isLoading || !isMinimumOrderMet || 
-                  (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) ||
-                  ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed())
+                  (!isGroceryOrder() && !isGrabitOrder() && deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) ||
+                  (!isGroceryOrder() && !isGrabitOrder() && (deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed())
                 }
                 className="w-full"
                 size="lg"
                 variant="hero"
+                type="button"
               >
                     {isLoading ? 'Placing Order...' :
                      !isMinimumOrderMet ? `Minimum Order ₹${ORDER_CONSTANTS.MINIMUM_ORDER_AMOUNT} Required` :
-                     (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) ? 'Delivery Unavailable' :
-                     ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed()) ? 'Dine-in/Takeaway Unavailable' :
+                     (!isGroceryOrder() && !isGrabitOrder() && deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) ? 'Delivery Unavailable' :
+                     (!isGroceryOrder() && !isGrabitOrder() && (deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed()) ? 'Dine-in/Takeaway Unavailable' :
                      `Place Order - ₹${finalAmount.toFixed(2)}`}
               </Button>
 
+                  {/* Show all errors including accepting_orders errors */}
                   {error && (
                     <Alert variant="destructive">
                       <AlertCircle className="h-4 w-4" />

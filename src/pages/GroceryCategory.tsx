@@ -51,11 +51,11 @@ const GroceryCategory: React.FC = () => {
     try {
       setLoading(true);
       
-      // Get 24 Seven Mart cafe ID
+      // Get Grabit cafe ID
       const { data: cafeData, error: cafeError } = await supabase
         .from('cafes')
         .select('id, name')
-        .ilike('name', '%24 seven mart%')
+        .eq('slug', 'grabit')
         .single();
       
       if (cafeError || !cafeData) {
@@ -185,7 +185,8 @@ const GroceryCategory: React.FC = () => {
     const titles: { [key: string]: string } = {
       'CHIPS': 'Chips & Snacks',
       'DRINKS': 'Drinks',
-      'CAKES': 'Cakes & Desserts'
+      'CAKES': 'Cakes & Desserts',
+      'INSTANTFOOD': 'Instant Food'
     };
     return titles[categoryId || ''] || categoryId || 'Category';
   };
@@ -194,7 +195,8 @@ const GroceryCategory: React.FC = () => {
     const icons: { [key: string]: string } = {
       'CHIPS': '🍟',
       'DRINKS': '🥤',
-      'CAKES': '🍰'
+      'CAKES': '🍰',
+      'INSTANTFOOD': '🍜'
     };
     return icons[categoryId || ''] || '🛒';
   };

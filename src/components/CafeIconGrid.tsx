@@ -217,6 +217,14 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
       };
     }
     
+    if (cafeName.includes('pizza') && cafeName.includes('baker')) {
+      return {
+        type: 'image',
+        src: 'https://ik.imagekit.io/foodclub/Cafe/Pizza%20Bakers/pb%20logo.png?updatedAt=1762264154273',
+        alt: `${cafe.name} Logo`
+      };
+    }
+    
     // Fallback to emojis for other cafes
     let emoji = '🍽️'; // default
     

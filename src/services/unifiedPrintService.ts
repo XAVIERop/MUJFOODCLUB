@@ -146,6 +146,15 @@ class UnifiedPrintService {
         } else {
           console.log('✅ Unified Print Service: Using Munch Box API key');
         }
+      } else if (cafe.name.toLowerCase().includes('grabit')) {
+        apiKey = import.meta.env.VITE_GRABIT_PRINTNODE_API_KEY || import.meta.env.VITE_24_SEVEN_MART_PRINTNODE_API_KEY || '';
+        if (!apiKey || apiKey === 'your-grabit-printnode-api-key') {
+          console.error('❌ Unified Print Service: VITE_GRABIT_PRINTNODE_API_KEY not configured');
+          this.printNodeService = null;
+          return;
+        } else {
+          console.log('✅ Unified Print Service: Using Grabit API key');
+        }
       } else if (cafe.name.toLowerCase().includes('taste') && cafe.name.toLowerCase().includes('india')) {
         // Taste of India: PrintNode service disabled
         console.log('🚫 Unified Print Service: PrintNode service disabled for Taste of India');

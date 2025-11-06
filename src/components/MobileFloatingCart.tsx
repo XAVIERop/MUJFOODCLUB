@@ -12,6 +12,10 @@ const MobileFloatingCart: React.FC = () => {
 
   // Don't render if no items or not on a menu/grabit page
   if (itemCount === 0 || (!location.pathname.startsWith('/menu/') && !location.pathname.startsWith('/grabit'))) return null;
+  
+  // Don't render for Dev Sweets (no online ordering)
+  const isDevSweets = cafe?.name && (cafe.name.toLowerCase().includes('dev') && cafe.name.toLowerCase().includes('sweet'));
+  if (isDevSweets) return null;
 
   const handleViewCart = () => {
     // Navigate to checkout - cart data will come from global context

@@ -250,6 +250,12 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
                 🍕 BOGO Offers
               </Badge>
             )}
+            {/* Call Only Badge for Dev Sweets */}
+            {(cafe.name.toLowerCase().includes('dev') && cafe.name.toLowerCase().includes('sweet')) && (
+              <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold text-xs px-2 py-1 shadow-lg border border-blue-400 hover:shadow-blue-400/60 hover:scale-110 transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-600 hover:to-blue-700">
+                📞 Call Only
+              </Badge>
+            )}
           </div>
         </div>
       </div>
@@ -319,14 +325,14 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               className={`text-xs font-medium ${
                 !cafe.accepting_orders
                   ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed text-gray-600"
-                  : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry'))
-                    ? "bg-orange-600 hover:bg-orange-700 text-white"
+                  : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || cafe.name.toLowerCase().includes('grabit') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry'))
+                    ? "bg-orange-100 hover:bg-orange-200 text-orange-600 hover:text-orange-700"
                     : "bg-gray-500 hover:bg-gray-600 text-white"
               } disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-600`}
             >
               {!cafe.accepting_orders
                 ? "Closed"
-                : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry'))
+                : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || cafe.name.toLowerCase().includes('grabit') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry'))
                   ? "Order Now"
                   : "Coming Soon"
               }
@@ -339,7 +345,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               variant="ghost"
               size="sm"
               onClick={(e) => { e.stopPropagation(); handleCall(cafe.phone); }}
-              className="text-xs text-gray-600 hover:text-orange-600 hover:bg-orange-50"
+              className="text-xs text-gray-600 hover:text-blue-600 hover:bg-blue-50"
             >
               <Phone className="w-3 h-3 mr-1" />
               Call
@@ -363,7 +369,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
                 variant="ghost"
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); handleWhatsApp(cafe.phone, cafe.name); }}
-                className="text-xs text-gray-600 hover:text-green-600 hover:bg-green-50"
+                className="text-xs text-gray-600 hover:text-green-500 hover:bg-green-100"
               >
                 <MessageCircle className="w-3 h-3 mr-1" />
                 WhatsApp

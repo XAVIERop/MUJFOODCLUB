@@ -56,11 +56,11 @@ const Grocery: React.FC = () => {
     try {
       setLoading(true);
       
-      // Get 24 Seven Mart cafe ID
+      // Get Grabit cafe ID
       const { data: cafeData, error: cafeError } = await supabase
         .from('cafes')
             .select('*')
-            .ilike('name', '%24 seven mart%')
+            .eq('slug', 'grabit')
         .single();
       
       if (cafeError || !cafeData) {
@@ -115,6 +115,14 @@ const Grocery: React.FC = () => {
           image: 'https://ik.imagekit.io/foodclub/Grocery/Banners/Fc%20grocery%20web%20banneers-03.jpg?updatedAt=1761650212166',
           item_count: categoryCounts.CAKES || 0,
           icon: '🍰'
+        },
+        {
+          id: 'INSTANTFOOD',
+          name: 'Instant Food',
+          description: 'Quick and delicious instant noodles',
+          image: 'https://ik.imagekit.io/foodclub/Grocery/Banners/Fc%20grocery%20web%20banneers-04.jpg?updatedAt=1761650212610',
+          item_count: categoryCounts.INSTANTFOOD || 0,
+          icon: '🍜'
         }
       ];
 
@@ -280,7 +288,7 @@ const Grocery: React.FC = () => {
           <img
             src={bannerImage}
             alt="Grocery Banner"
-            className="w-full h-auto object-contain"
+            className="w-full h-auto"
             onError={(e) => {
               e.currentTarget.src = bannerImage;
             }}
@@ -288,29 +296,58 @@ const Grocery: React.FC = () => {
         </div>
       </div>
 
-        {/* Categories Grid */}
+        {/* Categories Grid - Simple Buttons */}
         <div id="categories" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12">
-          {/* Mobile: 3 categories in one row, Desktop: responsive grid */}
-          <div className="grid grid-cols-3 md:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-          {categories.map((category) => (
-            <div 
-                key={category.id} 
-              className="group cursor-pointer hover:shadow-xl transition-all duration-300 bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 hover:scale-105 hover:border-orange-200"
-              onClick={() => navigate(`/grabit/category/${category.id}`)}
-            >
-              {/* Category Card with Banner Image Background */}
-              <div className="relative w-full aspect-[4/3]">
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = category.image;
-                  }}
-                />
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:gap-4 lg:max-w-3xl lg:mx-auto">
+          {categories.map((category) => {
+            const isInstantFood = category.id === 'INSTANTFOOD';
+            
+            return (
+              <button
+                key={category.id}
+                onClick={() => navigate(`/grabit/category/${category.id}`)}
+                className="group cursor-pointer hover:shadow-lg transition-all duration-300 bg-white rounded-xl overflow-hidden shadow-md border border-gray-200 hover:scale-105 active:scale-95 w-full"
+              >
+                {isInstantFood ? (
+                  // Custom Instant Food Visual Placeholder
+                  <div className="w-full h-auto min-h-[160px] bg-gradient-to-br from-orange-50 via-orange-100 to-red-50 flex flex-col items-center justify-center relative overflow-hidden py-8">
+                    {/* Decorative Noodles Pattern */}
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="absolute top-4 left-4 w-16 h-16 border-4 border-orange-300 rounded-full"></div>
+                      <div className="absolute top-8 right-8 w-12 h-12 border-4 border-red-300 rounded-full"></div>
+                      <div className="absolute bottom-6 left-8 w-14 h-14 border-4 border-orange-400 rounded-full"></div>
+                      <div className="absolute bottom-4 right-4 w-10 h-10 border-4 border-red-400 rounded-full"></div>
+                    </div>
+                    
+                    {/* Instant Food Icons */}
+                    <div className="relative z-10 flex flex-col items-center gap-3">
+                      <div className="text-5xl">🍜</div>
+                      <div className="text-center">
+                        <h3 className="text-lg font-bold text-orange-800 mb-1">Instant Food</h3>
+                        <p className="text-xs text-orange-600">Quick & Delicious</p>
+                      </div>
+                      
+                      {/* Noodle Cup Icons */}
+                      <div className="flex gap-2 mt-2">
+                        <div className="w-8 h-8 bg-orange-200 rounded-lg flex items-center justify-center text-lg">🍜</div>
+                        <div className="w-8 h-8 bg-red-200 rounded-lg flex items-center justify-center text-lg">🍜</div>
+                        <div className="w-8 h-8 bg-orange-200 rounded-lg flex items-center justify-center text-lg">🍜</div>
+                      </div>
+                    </div>
                   </div>
-                  </div>
-            ))}
+                ) : (
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="w-full h-auto object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = category.image;
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Featured Products / Search Results Section */}

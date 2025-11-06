@@ -29,6 +29,7 @@ interface Order {
     id: string;
     name: string;
     location: string;
+    slug?: string;
   };
 }
 
@@ -81,7 +82,7 @@ const OrderConfirmationNew = () => {
           has_rating,
           rating_submitted_at,
           cafe_id,
-          cafe:cafes(name, location, id)
+          cafe:cafes(name, location, id, slug)
         `)
         .eq('order_number', orderNumber)
         .eq('user_id', user?.id)
@@ -366,7 +367,22 @@ const OrderConfirmationNew = () => {
               <Home className="w-4 h-4 mr-2" />
               Back to Home
             </Button>
-            <Button onClick={() => navigate('/cafes')}>
+            <Button onClick={() => {
+              const cafe = order?.cafe;
+              if (cafe) {
+                // Check if it's Grabit - navigate to /grabit (keep special UI)
+                if (cafe.slug === 'grabit' || cafe.name?.toLowerCase().includes('grabit')) {
+                  navigate('/grabit');
+                } else {
+                  // Navigate to cafe menu using slug or id
+                  const identifier = cafe.slug || cafe.id;
+                  navigate(`/menu/${identifier}`);
+                }
+              } else {
+                // Fallback to cafes page if cafe data not available
+                navigate('/cafes');
+              }
+            }}>
               <ShoppingCart className="w-4 h-4 mr-2" />
               Order Again
             </Button>

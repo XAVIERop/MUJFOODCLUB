@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import SearchBar from './SearchBar';
 import MobilePromotionalBanners from './MobilePromotionalBanners';
 import MobileCafeSlideList from './MobileCafeSlideList';
+import MobileFeaturedCafeCarousel from './MobileFeaturedCafeCarousel';
 import { FeaturedCafeGrid } from './FeaturedCafeGrid';
 import CafeIconGrid from './CafeIconGrid';
 import CafeCategories from './CafeCategories';
@@ -31,7 +32,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   selectedBlock 
 }) => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 pt-16">
 
       {/* Search Bar - Same functionality as desktop */}
       <SearchBar />
@@ -58,6 +59,11 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       {/* Featured Cafe Grid - Top 6 cafes with Show All button */}
       <div className="px-4 py-4">
         <FeaturedCafeGrid cafes={cafes} />
+      </div>
+
+      {/* Featured Cafe Carousel - Below Show All Cafes button */}
+      <div className="py-4">
+        <MobileFeaturedCafeCarousel cafes={cafes} title="Featured this week" />
       </div>
 
       {/* Bottom Spacing - Increased for proper mobile scrolling and navigation */}

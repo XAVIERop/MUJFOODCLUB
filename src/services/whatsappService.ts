@@ -298,6 +298,8 @@ ${itemsText}${notesText}
 
   /**
    * Send via WhatsApp Web (opens in new tab with pre-filled message)
+   * NOTE: This should not be used in production - it opens dialogs for customers
+   * This is disabled to prevent customer-facing dialogs
    */
   private async sendViaWhatsAppWeb(phoneNumber: string, message: string): Promise<boolean> {
     try {
@@ -305,23 +307,18 @@ ${itemsText}${notesText}
       const encodedMessage = encodeURIComponent(message);
       const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodedMessage}`;
       
-      console.log('📱 Opening WhatsApp Web:', whatsappUrl);
+      console.log('📱 WhatsApp Web fallback (disabled for customer experience):', whatsappUrl);
       console.log('📱 Phone Number:', cleanNumber);
       console.log('📱 Message Preview:', message.substring(0, 100) + '...');
+      console.warn('⚠️ WhatsApp API credentials not configured. Notification not sent. Please configure Twilio or Meta WhatsApp API.');
       
-      // Open WhatsApp Web in new tab
-      window.open(whatsappUrl, '_blank');
+      // DO NOT open WhatsApp Web for customers - this creates a poor UX
+      // Instead, just log that the notification would have been sent
+      // The cafe will receive the order in their POS dashboard
       
-      // Show a notification to the user
-      if (typeof window !== 'undefined' && window.alert) {
-        setTimeout(() => {
-          alert(`📱 WhatsApp notification ready!\n\nPhone: ${phoneNumber}\n\nWhatsApp Web has opened with the order details pre-filled. Just click send!`);
-        }, 1000);
-      }
-      
-      return true;
+      return false; // Return false to indicate notification was not sent
     } catch (error) {
-      console.error('Error opening WhatsApp Web:', error);
+      console.error('Error in WhatsApp Web fallback:', error);
       return false;
     }
   }

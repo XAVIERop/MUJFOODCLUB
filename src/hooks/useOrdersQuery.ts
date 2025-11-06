@@ -155,7 +155,7 @@ export const useOrderByNumberQuery = (orderNumber: string) => {
           status,
           created_at,
           updated_at,
-          cafe:cafes(name, location, id),
+          cafe:cafes(name, location, id, slug),
           order_items(
             id,
             quantity,
@@ -187,7 +187,7 @@ export const useOrderByNumberQuery = (orderNumber: string) => {
             status,
             created_at,
             updated_at,
-            cafe:cafes(name, location, id),
+            cafe:cafes(name, location, id, slug),
             order_items(
               id,
               quantity,

@@ -154,6 +154,14 @@ export class CafeSpecificPrintService {
     } else if (cafeName.toLowerCase().includes('pizza') && cafeName.toLowerCase().includes('bakers')) {
       console.log('✅ Using Pizza Bakers API key');
       return import.meta.env.VITE_PIZZA_BAKERS_PRINTNODE_API_KEY || '';
+    } else if (cafeName.toLowerCase().includes('grabit')) {
+      console.log('✅ Using Grabit API key');
+      const apiKey = import.meta.env.VITE_GRABIT_PRINTNODE_API_KEY || import.meta.env.VITE_24_SEVEN_MART_PRINTNODE_API_KEY || '';
+      if (!apiKey) {
+        console.warn('⚠️ VITE_GRABIT_PRINTNODE_API_KEY not set, using fallback');
+        return import.meta.env.VITE_PRINTNODE_API_KEY || '';
+      }
+      return apiKey;
     }
     
     // Fallback to general API key
@@ -231,6 +239,8 @@ export class CafeSpecificPrintService {
         printerId = 74692682; // Food Court EPSON TM-T82 Receipt
       } else if (cafe.name.toLowerCase().includes('punjabi') && cafe.name.toLowerCase().includes('tadka')) {
         printerId = 74782622; // Punjabi Tadka Printer (POS-60C)
+      } else if (cafe.name.toLowerCase().includes('grabit')) {
+        printerId = 74883417; // Grabit POS80 Printer
       } else {
         return { success: false, error: 'No printer ID configured for this cafe' };
       }

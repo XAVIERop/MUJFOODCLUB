@@ -262,6 +262,18 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent" />
       </div>
 
+      {/* Dev Sweets Ordering Notice Banner */}
+      {cafe?.name && (cafe.name.toLowerCase().includes('dev') && cafe.name.toLowerCase().includes('sweet')) && (
+        <div className="bg-blue-50 border-b-2 border-blue-200 px-4 py-3 -mt-2 relative z-20">
+          <div className="flex items-center gap-3 text-center justify-center">
+            <Phone className="w-5 h-5 text-blue-600 flex-shrink-0" />
+            <p className="text-sm font-semibold text-blue-800">
+              Cafe accepting orders on call only. Please call to place your order.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Search and Filter Section */}
       <div className="bg-white px-4 py-4 -mt-2 relative z-20">
 
@@ -368,32 +380,37 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
               onToggleFavorite={onToggleFavorite}
               isFavorite={isFavorite}
               selectedCategory={selectedCategory}
-            />
-          </div>
-
-          {/* Floating Cart Panel - Hidden on mobile, shown on desktop */}
-          <div className="hidden lg:block w-80">
-            <ModernCartPanel
-              cart={cart}
-              getTotalAmount={getTotalAmount}
-              getCartItemCount={getCartItemCount}
-              onCheckout={onCheckout}
-              onRemoveFromCart={onRemoveFromCart}
               cafe={cafe}
             />
           </div>
+
+          {/* Floating Cart Panel - Hidden on mobile, shown on desktop, hidden for Dev Sweets */}
+          {cafe?.name && !(cafe.name.toLowerCase().includes('dev') && cafe.name.toLowerCase().includes('sweet')) && (
+            <div className="hidden lg:block w-80">
+              <ModernCartPanel
+                cart={cart}
+                getTotalAmount={getTotalAmount}
+                getCartItemCount={getCartItemCount}
+                onCheckout={onCheckout}
+                onRemoveFromCart={onRemoveFromCart}
+                cafe={cafe}
+              />
+            </div>
+          )}
         </div>
       </div>
 
       {/* Mobile Cart Button - Removed, replaced with floating cart in App.tsx */}
 
-      {/* Floating Menu Button */}
-      <FloatingMenuButton
-        categories={getCategoryCounts()}
-        selectedCategory={selectedCategory}
-        onCategorySelect={onCategoryChange}
-        totalItems={menuItems.length}
-      />
+      {/* Floating Menu Button - Hidden for Dev Sweets */}
+      {cafe?.name && !(cafe.name.toLowerCase().includes('dev') && cafe.name.toLowerCase().includes('sweet')) && (
+        <FloatingMenuButton
+          categories={getCategoryCounts()}
+          selectedCategory={selectedCategory}
+          onCategorySelect={onCategoryChange}
+          totalItems={menuItems.length}
+        />
+      )}
 
       {/* Bottom Spacing for Mobile Navigation */}
       <div className="h-32 pb-safe lg:hidden"></div>
@@ -410,7 +427,8 @@ const MenuCategorySections: React.FC<{
   onToggleFavorite?: (itemId: string) => void;
   isFavorite?: (itemId: string) => boolean;
   selectedCategory: string;
-}> = ({ menuItems, onAddToCart, onRemoveFromCart, getCartQuantity, onToggleFavorite, isFavorite, selectedCategory }) => {
+  cafe?: any;
+}> = ({ menuItems, onAddToCart, onRemoveFromCart, getCartQuantity, onToggleFavorite, isFavorite, selectedCategory, cafe }) => {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   // Group menu items by category
@@ -525,6 +543,7 @@ const MenuCategorySections: React.FC<{
                       getCartQuantity={getCartQuantity}
                       onToggleFavorite={onToggleFavorite}
                       isFavorite={isFavorite}
+                      cafe={cafe}
                     />
                   ))}
                 </div>
@@ -545,7 +564,8 @@ const ModernFoodCard: React.FC<{
   getCartQuantity: (itemId: string) => number;
   onToggleFavorite?: (itemId: string) => void;
   isFavorite?: (itemId: string) => boolean;
-}> = ({ item, onAddToCart, onRemoveFromCart, getCartQuantity, onToggleFavorite, isFavorite }) => {
+  cafe?: any;
+}> = ({ item, onAddToCart, onRemoveFromCart, getCartQuantity, onToggleFavorite, isFavorite, cafe }) => {
   const [selectedSize, setSelectedSize] = useState<string>('');
 
   // Dedupe portions by size name (e.g., multiple "Half" variants) keeping the cheapest
@@ -584,6 +604,9 @@ const ModernFoodCard: React.FC<{
   const hasMultipleSizes = uniquePortions && uniquePortions.length > 1;
 
   const isOutOfStock = item.out_of_stock || (selectedPortion && selectedPortion.out_of_stock);
+  
+  // Check if this is Dev Sweets cafe (no online ordering)
+  const isDevSweets = cafe?.name && (cafe.name.toLowerCase().includes('dev') && cafe.name.toLowerCase().includes('sweet'));
   
   // Debug logging for out-of-stock items
   if (item.out_of_stock || (selectedPortion && selectedPortion.out_of_stock)) {
@@ -723,6 +746,10 @@ const ModernFoodCard: React.FC<{
                   <Plus className="w-3 h-3" />
                 </Button>
               </div>
+            ) : isDevSweets ? (
+              <Badge className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium">
+                📞 Call to Order
+              </Badge>
             ) : (
               <Button
                 onClick={() => onAddToCart(item, selectedSize || uniquePortions[0]?.id)}

@@ -159,8 +159,10 @@ const Index = () => {
         {/* Header with Location and Profile */}
         <Header selectedBlock={selectedBlock} onBlockChange={setSelectedBlock} />
         
-        {/* Search Bar */}
-        <SearchBar />
+        {/* Search Bar - Add top padding for fixed header */}
+        <div className="pt-16">
+          <SearchBar />
+        </div>
         
         {/* Hero Banner Section */}
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

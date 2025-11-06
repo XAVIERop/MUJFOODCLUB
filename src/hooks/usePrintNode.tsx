@@ -166,6 +166,20 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
         }
         console.log('✅ usePrintNode - Munch Box API key is valid, using it');
         return apiKey;
+      } else if (cafe.name.toLowerCase().includes('grabit')) {
+        console.log('✅ usePrintNode - Using Grabit API key');
+        const apiKey = import.meta.env.VITE_GRABIT_PRINTNODE_API_KEY || import.meta.env.VITE_24_SEVEN_MART_PRINTNODE_API_KEY;
+        if (!apiKey || apiKey === 'your-grabit-printnode-api-key') {
+          console.warn('VITE_GRABIT_PRINTNODE_API_KEY not set, trying fallback');
+          const fallbackKey = import.meta.env.VITE_24_SEVEN_MART_PRINTNODE_API_KEY || import.meta.env.VITE_PRINTNODE_API_KEY;
+          if (!fallbackKey) {
+            console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+            return '';
+          }
+          return fallbackKey;
+        }
+        console.log('✅ usePrintNode - Grabit API key is valid, using it');
+        return apiKey;
       }
 
       // Fallback to general API key

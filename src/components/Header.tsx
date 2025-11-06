@@ -27,6 +27,7 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [isCafeOwner, setIsCafeOwner] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const { user, profile, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,6 +40,27 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
 
   // Check if we're on the home page (hero section)
   const isHomePage = location.pathname === '/';
+
+  // Prevent body scroll when dropdown is open
+  useEffect(() => {
+    if (isProfileDropdownOpen) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        // Restore scroll position
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [isProfileDropdownOpen]);
 
   // Check if user is a cafe owner
   useEffect(() => {
@@ -68,7 +90,7 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
           .eq('user_id', user.id)
           .in('role', ['owner', 'manager'])
           .eq('is_active', true)
-          .single();
+          .maybeSingle();
 
         if (!staffError && staffData) {
           setIsCafeOwner(true);
@@ -144,8 +166,8 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
   return (
     <header className={`w-full transition-all duration-300 ${
       isMobile 
-        ? 'bg-white text-gray-900 shadow-xl shadow-gray-300/60' // White background for mobile navbar - not sticky, no border
-        : 'sticky top-0 z-50 border-b border-gray-200 bg-white text-foreground shadow-xl shadow-gray-300/60' // Keep sticky for desktop navbar
+        ? 'fixed top-0 left-0 right-0 z-[100] bg-white text-gray-900 shadow-xl shadow-gray-300/60' // Fixed on mobile with high z-index
+        : 'fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white text-foreground shadow-xl shadow-gray-300/60' // Fixed for desktop navbar
     } m-0`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
@@ -193,6 +215,18 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
 
           {/* Center Section - Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
+            {/* Home Link */}
+            <Link
+              to="/"
+              className={`flex items-center space-x-2 transition-smooth story-link ${
+                location.pathname === '/'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-primary'
+              }`}
+            >
+              <Home className="w-4 h-4" />
+              <span>Home</span>
+            </Link>
             {/* Food Link - HIDDEN */}
             {/* <a
               href="/cafes"
@@ -201,14 +235,18 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
               <Store className="w-4 h-4" />
               <span>Food</span>
             </a> */}
-            {/* Grocery Link - HIDDEN */}
-            {/* <a
-              href="/grabit"
-              className="flex items-center space-x-2 transition-smooth story-link text-muted-foreground hover:text-primary"
+            {/* Grabit Link */}
+            <Link
+              to="/grabit"
+              className={`flex items-center space-x-2 transition-smooth story-link ${
+                location.pathname.startsWith('/grabit')
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-primary'
+              }`}
             >
               <ShoppingCart className="w-4 h-4" />
-              <span>Grocery</span>
-            </a> */}
+              <span>Grabit</span>
+            </Link>
           </nav>
 
           {/* Right Section - User Actions */}
@@ -238,7 +276,7 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
                 </Button>
 
                 {/* Profile Dropdown */}
-                <DropdownMenu>
+                <DropdownMenu open={isProfileDropdownOpen} onOpenChange={setIsProfileDropdownOpen}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full text-foreground hover:text-foreground hover:bg-muted">
                       <Avatar className="h-8 w-8">
@@ -247,7 +285,7 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuContent className="w-56 z-[200]" align="end" onEscapeKeyDown={() => setIsProfileDropdownOpen(false)}>
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
@@ -257,42 +295,66 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    <DropdownMenuItem onClick={() => {
+                      setIsProfileDropdownOpen(false);
+                      navigate('/profile');
+                    }}>
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/qr-code')}>
+                    <DropdownMenuItem onClick={() => {
+                      setIsProfileDropdownOpen(false);
+                      navigate('/qr-code');
+                    }}>
                       <QrCode className="mr-2 h-4 w-4" />
                       <span>My QR Code</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/orders')}>
+                    <DropdownMenuItem onClick={() => {
+                      setIsProfileDropdownOpen(false);
+                      navigate('/orders');
+                    }}>
                       <Package className="mr-2 h-4 w-4" />
                       <span>My Orders</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/cafes?favorites=true')}>
+                    <DropdownMenuItem onClick={() => {
+                      setIsProfileDropdownOpen(false);
+                      navigate('/cafes?favorites=true');
+                    }}>
                       <Heart className="mr-2 h-4 w-4" />
                       <span>My Favorites</span>
                     </DropdownMenuItem>
                     {user?.email === 'pulkit.229302047@muj.manipal.edu' && (
-                      <DropdownMenuItem onClick={() => navigate('/admin/referrals')}>
+                      <DropdownMenuItem onClick={() => {
+                        setIsProfileDropdownOpen(false);
+                        navigate('/admin/referrals');
+                      }}>
                         <BarChart3 className="mr-2 h-4 w-4" />
                         <span>Referral Dashboard</span>
                       </DropdownMenuItem>
                     )}
                     {isCafeOwner && (
                       <>
-                        <DropdownMenuItem onClick={() => navigate('/cafe-dashboard')}>
+                        <DropdownMenuItem onClick={() => {
+                          setIsProfileDropdownOpen(false);
+                          navigate('/cafe-dashboard');
+                        }}>
                           <Store className="mr-2 h-4 w-4" />
                           <span>Cafe Dashboard</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate('/pos-dashboard')}>
+                        <DropdownMenuItem onClick={() => {
+                          setIsProfileDropdownOpen(false);
+                          navigate('/pos-dashboard');
+                        }}>
                           <Receipt className="mr-2 h-4 w-4" />
                           <span>POS Dashboard</span>
                         </DropdownMenuItem>
                       </>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={signOut}>
+                    <DropdownMenuItem onClick={() => {
+                      setIsProfileDropdownOpen(false);
+                      signOut();
+                    }}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
                     </DropdownMenuItem>

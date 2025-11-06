@@ -172,6 +172,13 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
                       🍕 BOGO Offers
                     </span>
                   )}
+                  
+                  {/* Call Only Badge for Dev Sweets */}
+                  {(cafe.name.toLowerCase().includes('dev') && cafe.name.toLowerCase().includes('sweet')) && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm">
+                      📞 Call Only
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -188,10 +195,10 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
 
               <Button
                 size="sm"
-                className={`w-full text-white text-xs font-medium ${
+                className={`w-full text-xs font-medium ${
                   !cafe.accepting_orders
-                    ? "bg-gray-500 hover:bg-gray-600 cursor-not-allowed"
-                    : "bg-orange-600 hover:bg-orange-700"
+                    ? "bg-gray-500 hover:bg-gray-600 cursor-not-allowed text-white"
+                    : "bg-orange-100 hover:bg-orange-200 text-orange-600 hover:text-orange-700"
                 }`}
                 disabled={!cafe.accepting_orders}
               >

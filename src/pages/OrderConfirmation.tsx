@@ -561,7 +561,22 @@ const OrderConfirmation = () => {
               Back to Home
             </div>
             <div 
-              onClick={() => navigate('/cafes')}
+              onClick={() => {
+                const cafe = (order as any)?.cafe;
+                if (cafe) {
+                  // Check if it's Grabit - navigate to /grabit (keep special UI)
+                  if (cafe.slug === 'grabit' || cafe.name?.toLowerCase().includes('grabit')) {
+                    navigate('/grabit');
+                  } else {
+                    // Navigate to cafe menu using slug or id
+                    const identifier = cafe.slug || cafe.id;
+                    navigate(`/menu/${identifier}`);
+                  }
+                } else {
+                  // Fallback to cafes page if cafe data not available
+                  navigate('/cafes');
+                }
+              }}
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 cursor-pointer"
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
