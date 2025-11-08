@@ -10,7 +10,7 @@ import { getImageUrl } from './imageSource';
  * Only shows images for products with EXACT matching names in ImageKit
  * Everything else falls back to default image
  */
-export function getGroceryProductImage(productName: string, imageUrl?: string | null): string {
+export function getGroceryProductImage(productName: string, imageUrl?: string | null): string | null {
   // First priority: use image_url from database (SQL) if it's a valid URL
   // Check if imageUrl is a non-empty string that's not a default/placeholder path
   if (imageUrl && 
@@ -33,7 +33,7 @@ export function getGroceryProductImage(productName: string, imageUrl?: string | 
     }
   }
   
-  // No exact match found - use default fallback
-  console.log(`❌ No exact match found for: ${productName} - using default fallback`);
-  return '/menu_hero.png';
+  // No exact match found - return null so UI can hide image entirely
+  console.log(`❌ No exact match found for: ${productName} - no image will be shown`);
+  return null;
 }

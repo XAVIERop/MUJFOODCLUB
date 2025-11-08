@@ -174,8 +174,8 @@ const Grocery: React.FC = () => {
           
           setAllProducts(allProductsData || []);
           
-          // Set featured products (first 50 items to ensure we have enough chips and drinks)
-          setFeaturedProducts((allProductsData || []).slice(0, 50));
+          // Use full product list for featured sections so homepage can display every item
+          setFeaturedProducts(allProductsData || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
     } finally {
@@ -404,38 +404,60 @@ const Grocery: React.FC = () => {
               {/* Dropdown Suggestions */}
               {showDropdown && dropdownSuggestions.length > 0 && (
                 <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-                  {dropdownSuggestions.map((item) => (
-                    <div
-                      key={item.id}
-                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                      onClick={() => handleSuggestionClick(item)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <img
-                            src={getGroceryProductImage(item.name, item.image_url)}
-                            alt={item.name}
-                            className="w-6 h-6 object-contain"
-                            onError={(e) => {
-                              e.currentTarget.src = '/menu_hero.png';
+                  {dropdownSuggestions.map((item) => {
+                    const productImage = getGroceryProductImage(item.name, item.image_url);
+                    return (
+                      <div
+                        key={item.id}
+                        className="px-4 py-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
+                      >
+                        <div
+                          className="flex items-center gap-3 cursor-pointer"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleSuggestionClick(item);
+                          }}
+                        >
+                          {productImage && (
+                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <img
+                                src={productImage}
+                                alt={item.name}
+                                className="w-6 h-6 object-contain"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  e.currentTarget.parentElement?.classList.add('hidden');
+                                }}
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {item.name}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {item.description}
+                            </p>
+                          </div>
+                          <div className="text-sm font-semibold text-orange-600">
+                            ₹{item.price.toFixed(2)}
+                          </div>
+                          <Button
+                            size="sm"
+                            className="ml-3"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleAddToCart(item);
                             }}
-            />
-          </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {item.name}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {item.description}
-                          </p>
+                          >
+                            Add
+                          </Button>
                         </div>
-                        <div className="text-sm font-semibold text-orange-600">
-                          ₹{item.price.toFixed(2)}
-        </div>
-      </div>
-                  </div>
-                  ))}
-                  </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </form>
           </div>
@@ -467,43 +489,14 @@ const Grocery: React.FC = () => {
                 onClick={() => navigate(`/grabit/category/${category.id}`)}
                 className="group cursor-pointer hover:shadow-lg transition-all duration-300 bg-white rounded-xl overflow-hidden shadow-md border border-gray-200 hover:scale-105 active:scale-95 w-full"
               >
-                {isInstantFood ? (
-                  // Custom Instant Food Visual Placeholder
-                  <div className="w-full h-auto min-h-[160px] bg-gradient-to-br from-orange-50 via-orange-100 to-red-50 flex flex-col items-center justify-center relative overflow-hidden py-8">
-                    {/* Decorative Noodles Pattern */}
-                    <div className="absolute inset-0 opacity-10">
-                      <div className="absolute top-4 left-4 w-16 h-16 border-4 border-orange-300 rounded-full"></div>
-                      <div className="absolute top-8 right-8 w-12 h-12 border-4 border-red-300 rounded-full"></div>
-                      <div className="absolute bottom-6 left-8 w-14 h-14 border-4 border-orange-400 rounded-full"></div>
-                      <div className="absolute bottom-4 right-4 w-10 h-10 border-4 border-red-400 rounded-full"></div>
-                    </div>
-                    
-                    {/* Instant Food Icons */}
-                    <div className="relative z-10 flex flex-col items-center gap-3">
-                      <div className="text-5xl">🍜</div>
-                      <div className="text-center">
-                        <h3 className="text-lg font-bold text-orange-800 mb-1">Instant Food</h3>
-                        <p className="text-xs text-orange-600">Quick & Delicious</p>
-                      </div>
-                      
-                      {/* Noodle Cup Icons */}
-                      <div className="flex gap-2 mt-2">
-                        <div className="w-8 h-8 bg-orange-200 rounded-lg flex items-center justify-center text-lg">🍜</div>
-                        <div className="w-8 h-8 bg-red-200 rounded-lg flex items-center justify-center text-lg">🍜</div>
-                        <div className="w-8 h-8 bg-orange-200 rounded-lg flex items-center justify-center text-lg">🍜</div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <img
-                    src={category.image}
-                    alt={category.name}
-                    className="w-full h-auto object-contain"
-                    onError={(e) => {
-                      e.currentTarget.src = category.image;
-                    }}
-                  />
-                )}
+                <img
+                  src={isInstantFood ? 'https://ik.imagekit.io/foodclub/Grocery/Banners/WhatsApp%20Image%202025-11-07%20at%209.37.13%20PM.jpeg?updatedAt=1762598359844' : category.image}
+                  alt={category.name}
+                  className="w-full h-auto object-cover min-h-[160px]"
+                  onError={(e) => {
+                    e.currentTarget.src = category.image;
+                  }}
+                />
               </button>
             );
           })}
@@ -531,7 +524,7 @@ const Grocery: React.FC = () => {
             
             if (searchQuery.trim()) {
               // When searching, show all filtered results
-              itemsToShow = filteredProducts.slice(0, 10);
+              itemsToShow = filteredProducts;
             } else {
               // When not searching, filter for chips/snacks items only (for display above banner)
               // Search through all products to get chips items, not just first 50
@@ -540,8 +533,8 @@ const Grocery: React.FC = () => {
                 return cat === 'CHIPS' || cat === 'SNACKS' || cat.includes('CHIP') || cat.includes('SNACK');
               });
               
-              // If chips found, use them (up to 10), otherwise fallback to first 10 featured products
-              itemsToShow = chipsItems.length > 0 ? chipsItems.slice(0, 10) : featuredProducts.slice(0, 10);
+              // If chips found, use them all, otherwise fallback to full featured products
+              itemsToShow = chipsItems.length > 0 ? chipsItems : featuredProducts;
             }
             
             if (itemsToShow.length === 0) {
@@ -553,6 +546,7 @@ const Grocery: React.FC = () => {
                 {itemsToShow.map((item) => {
                   const cartCount = cart[item.id]?.quantity || 0;
                   const isOutOfStock = item.out_of_stock || !item.is_available;
+                  const productImage = getGroceryProductImage(item.name, item.image_url);
                   
                   return (
                 <div 
@@ -562,19 +556,22 @@ const Grocery: React.FC = () => {
                   }`}
                 >
                   {/* Product Image - Blinkit Style */}
-                  <div className="w-full aspect-square flex items-center justify-center bg-white p-4 mb-2">
-                    <img
-                      src={getGroceryProductImage(item.name, item.image_url)}
-                      alt={item.name}
-                      className="w-full h-full object-contain max-w-full max-h-full"
-                      onError={(e) => {
-                        e.currentTarget.src = '/menu_hero.png';
-                      }}
-                    />
-                  </div>
+                  {productImage && (
+                    <div className="w-full aspect-square flex items-center justify-center bg-white p-4 mb-2">
+                      <img
+                        src={productImage}
+                        alt={item.name}
+                        className="w-full h-full object-contain max-w-full max-h-full"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.parentElement?.classList.add('hidden');
+                        }}
+                      />
+                    </div>
+                  )}
                   
                   {/* Product Info */}
-                  <div className="px-3 pb-3 flex flex-col flex-grow">
+                  <div className={`px-3 pb-3 flex flex-col flex-grow ${productImage ? '' : 'pt-4'}`}>
                     {/* Product Name */}
                     <h3 className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight mb-1 min-h-[2.5rem]">
                       {item.name}
@@ -699,11 +696,12 @@ const Grocery: React.FC = () => {
                        cat.includes('DRINK') ||
                        cat.includes('BEVERAGE') ||
                        cat.includes('JUICE');
-              }).slice(0, 10); // Limit to 2 rows (10 items)
+              });
               
               return drinksItems.map((item) => {
                 const cartCount = cart[item.id]?.quantity || 0;
                 const isOutOfStock = item.out_of_stock || !item.is_available;
+                const productImage = getGroceryProductImage(item.name, item.image_url);
                 
                 return (
                 <div 
@@ -713,19 +711,22 @@ const Grocery: React.FC = () => {
                   }`}
                 >
                   {/* Product Image - Blinkit Style */}
-                  <div className="w-full aspect-square flex items-center justify-center bg-white p-4 mb-2">
-                    <img
-                      src={getGroceryProductImage(item.name, item.image_url)}
-                      alt={item.name}
-                      className="w-full h-full object-contain max-w-full max-h-full"
-                      onError={(e) => {
-                        e.currentTarget.src = '/menu_hero.png';
-                      }}
-                    />
-                  </div>
+                  {productImage && (
+                    <div className="w-full aspect-square flex items-center justify-center bg-white p-4 mb-2">
+                      <img
+                        src={productImage}
+                        alt={item.name}
+                        className="w-full h-full object-contain max-w-full max-h-full"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.parentElement?.classList.add('hidden');
+                        }}
+                      />
+                    </div>
+                  )}
 
                   {/* Product Info */}
-                  <div className="px-3 pb-3 flex flex-col flex-grow">
+                  <div className={`px-3 pb-3 flex flex-col flex-grow ${productImage ? '' : 'pt-4'}`}>
                     {/* Product Name */}
                     <h3 className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight mb-1 min-h-[2.5rem]">
                       {item.name}

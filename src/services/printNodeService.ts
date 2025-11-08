@@ -220,11 +220,35 @@ export class PrintNodeService {
 
       // Print Order Receipt only with paper cut commands
       const receiptContent = this.formatReceiptForThermal(receiptData) + '\n\n\x1D\x56\x00';
+      
+      // Debug: Log receipt content length and preview for Grabit
+      const isGrabit = receiptData.cafe_name?.toLowerCase().includes('grabit');
+      if (isGrabit) {
+        console.log('🔍 Grabit Receipt Debug:');
+        console.log('  - Receipt content length:', receiptContent.length);
+        console.log('  - Receipt content preview (first 200 chars):', receiptContent.substring(0, 200));
+        console.log('  - Receipt content preview (last 200 chars):', receiptContent.substring(Math.max(0, receiptContent.length - 200)));
+      }
+      
+      if (!receiptContent || receiptContent.trim().length === 0) {
+        console.error('❌ Receipt content is empty!');
+        return {
+          success: false,
+          error: 'Receipt content is empty'
+        };
+      }
+      
+      const base64Content = this.unicodeToBase64(receiptContent);
+      if (isGrabit) {
+        console.log('  - Base64 content length:', base64Content.length);
+        console.log('  - Base64 content preview (first 100 chars):', base64Content.substring(0, 100));
+      }
+      
       const receiptJob = {
         printer: {
           id: targetPrinterId
         },
-        content: this.unicodeToBase64(receiptContent),
+        content: base64Content,
         contentType: 'raw_base64',
         source: 'MUJFOODCLUB',
       };
@@ -275,11 +299,35 @@ export class PrintNodeService {
 
       // Print Order Receipt only with paper cut commands
       const receiptContent = this.formatReceiptForThermal(receiptData) + '\n\n\x1D\x56\x00';
+      
+      // Debug: Log receipt content length and preview for Grabit
+      const isGrabit = receiptData.cafe_name?.toLowerCase().includes('grabit');
+      if (isGrabit) {
+        console.log('🔍 Grabit Receipt Debug (printReceipt):');
+        console.log('  - Receipt content length:', receiptContent.length);
+        console.log('  - Receipt content preview (first 200 chars):', receiptContent.substring(0, 200));
+        console.log('  - Receipt content preview (last 200 chars):', receiptContent.substring(Math.max(0, receiptContent.length - 200)));
+      }
+      
+      if (!receiptContent || receiptContent.trim().length === 0) {
+        console.error('❌ Receipt content is empty!');
+        return {
+          success: false,
+          error: 'Receipt content is empty'
+        };
+      }
+      
+      const base64Content = this.unicodeToBase64(receiptContent);
+      if (isGrabit) {
+        console.log('  - Base64 content length:', base64Content.length);
+        console.log('  - Base64 content preview (first 100 chars):', base64Content.substring(0, 100));
+      }
+      
       const receiptJob = {
         printer: {
           id: targetPrinterId
         },
-        content: this.unicodeToBase64(receiptContent),
+        content: base64Content,
         contentType: 'raw_base64',
         source: 'MUJFOODCLUB',
       };
@@ -917,18 +965,38 @@ MUJFOODCLUB!`;
   }
 
   /**
-   * Unicode-safe base64 encoding
+   * Unicode-safe base64 encoding for ESC/POS commands
+   * Converts string to bytes first, then base64 encodes
+   * This ensures ESC/POS control characters are properly encoded
    */
   private unicodeToBase64(str: string): string {
     try {
-      // Use the standard btoa for simple ASCII content
-      // This is more reliable for thermal printer content
-      return btoa(str);
+      // Convert string to Uint8Array (byte array) using Latin-1 encoding
+      // This preserves ESC/POS control characters (0x00-0xFF) correctly
+      const bytes = new Uint8Array(str.length);
+      for (let i = 0; i < str.length; i++) {
+        const charCode = str.charCodeAt(i);
+        // For characters > 255, use '?' as fallback, otherwise use the byte value
+        bytes[i] = charCode > 255 ? 63 : charCode;
+      }
+      
+      // Convert byte array to base64
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
     } catch (error) {
       console.error('Base64 encoding error:', error);
-      // Fallback: remove non-ASCII characters and encode
-      const asciiStr = str.replace(/[^\x00-\x7F]/g, '?');
-      return btoa(asciiStr);
+      // Fallback: try standard btoa
+      try {
+        return btoa(str);
+      } catch (fallbackError) {
+        console.error('Fallback base64 encoding also failed:', fallbackError);
+        // Last resort: remove non-ASCII characters and encode
+        const asciiStr = str.replace(/[^\x00-\x7F]/g, '?');
+        return btoa(asciiStr);
+      }
     }
   }
 

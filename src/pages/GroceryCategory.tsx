@@ -507,6 +507,7 @@ const GroceryCategory: React.FC = () => {
                 {filteredItems.map((item) => {
                   const cartCount = cart[item.id]?.quantity || 0;
                   const isOutOfStock = item.out_of_stock || !item.is_available;
+                  const productImage = getGroceryProductImage(item.name, item.image_url);
                   
                   return (
                     <div 
@@ -516,19 +517,22 @@ const GroceryCategory: React.FC = () => {
                       }`}
                     >
                       {/* Product Image - Blinkit Style */}
-                      <div className="w-full aspect-square flex items-center justify-center bg-white p-4 mb-2">
-                        <img
-                          src={getGroceryProductImage(item.name, item.image_url)}
-                          alt={item.name}
-                          className="w-full h-full object-contain max-w-full max-h-full"
-                          onError={(e) => {
-                            e.currentTarget.src = '/menu_hero.png';
-                          }}
-                        />
-                      </div>
+                      {productImage && (
+                        <div className="w-full aspect-square flex items-center justify-center bg-white p-4 mb-2">
+                          <img
+                            src={productImage}
+                            alt={item.name}
+                            className="w-full h-full object-contain max-w-full max-h-full"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.parentElement?.classList.add('hidden');
+                            }}
+                          />
+                        </div>
+                      )}
                       
                       {/* Product Info */}
-                      <div className="px-3 pb-3 flex flex-col flex-grow">
+                      <div className={`px-3 pb-3 flex flex-col flex-grow ${productImage ? '' : 'pt-4'}`}>
                         {/* Product Name */}
                         <h3 className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight mb-1 min-h-[2.5rem]">
                           {item.name}

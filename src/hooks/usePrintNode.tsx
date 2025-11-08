@@ -32,9 +32,11 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
   const getCafeApiKey = useCallback(async (cafeId?: string): Promise<string> => {
     if (!cafeId) {
       // Fallback to general API key
-      const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY;
-      if (!apiKey) {
-        console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+      const apiKey =
+        import.meta.env.VITE_PRINTNODE_API_KEY ||
+        import.meta.env.VITE_SHARED_PRINTNODE_API_KEY;
+      if (!apiKey || apiKey === 'your-shared-printnode-api-key') {
+        console.error('PrintNode fallback API key not configured');
         return '';
       }
       return apiKey;
@@ -168,14 +170,22 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
         return apiKey;
       } else if (cafe.name.toLowerCase().includes('grabit')) {
         console.log('✅ usePrintNode - Using Grabit API key');
-        const apiKey = import.meta.env.VITE_GRABIT_PRINTNODE_API_KEY || import.meta.env.VITE_24_SEVEN_MART_PRINTNODE_API_KEY;
-        if (!apiKey || apiKey === 'your-grabit-printnode-api-key') {
+        const apiKey =
+          import.meta.env.VITE_GRABIT_PRINTNODE_API_KEY ||
+          import.meta.env.VITE_24_SEVEN_MART_PRINTNODE_API_KEY ||
+          import.meta.env.VITE_SHARED_PRINTNODE_API_KEY;
+
+        if (!apiKey || apiKey === 'your-grabit-printnode-api-key' || apiKey === 'your-shared-printnode-api-key') {
           console.warn('VITE_GRABIT_PRINTNODE_API_KEY not set, trying fallback');
-          const fallbackKey = import.meta.env.VITE_24_SEVEN_MART_PRINTNODE_API_KEY || import.meta.env.VITE_PRINTNODE_API_KEY;
-          if (!fallbackKey) {
+          const fallbackKey =
+            import.meta.env.VITE_24_SEVEN_MART_PRINTNODE_API_KEY ||
+            import.meta.env.VITE_SHARED_PRINTNODE_API_KEY ||
+            import.meta.env.VITE_PRINTNODE_API_KEY;
+          if (!fallbackKey || fallbackKey === 'your-shared-printnode-api-key') {
             console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
             return '';
           }
+          console.log('✅ usePrintNode - Using fallback PrintNode API key for Grabit');
           return fallbackKey;
         }
         console.log('✅ usePrintNode - Grabit API key is valid, using it');
@@ -183,9 +193,11 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
       }
 
       // Fallback to general API key
-      const apiKey = import.meta.env.VITE_PRINTNODE_API_KEY;
-      if (!apiKey) {
-        console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+      const apiKey =
+        import.meta.env.VITE_PRINTNODE_API_KEY ||
+        import.meta.env.VITE_SHARED_PRINTNODE_API_KEY;
+      if (!apiKey || apiKey === 'your-shared-printnode-api-key') {
+        console.error('PrintNode fallback API key not configured');
         return '';
       }
       return apiKey;
