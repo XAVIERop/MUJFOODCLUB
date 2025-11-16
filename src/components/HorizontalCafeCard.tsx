@@ -6,6 +6,7 @@ import { Badge } from './ui/badge';
 import { useFavorites } from '../hooks/useFavorites';
 import { useToast } from '../hooks/use-toast';
 import DirectPdfViewer from './DirectPdfViewer';
+import { getCafeScope } from '@/utils/residencyUtils';
 
 interface Cafe {
   id: string;
@@ -22,6 +23,8 @@ interface Cafe {
   cuisine_categories: string[] | null;
   priority: number | null;
   menu_pdf_url?: string | null;
+  image_url?: string | null;
+  location_scope?: 'ghs' | 'off_campus';
 }
 
 interface HorizontalCafeCardProps {
@@ -33,6 +36,12 @@ export const HorizontalCafeCard: React.FC<HorizontalCafeCardProps> = memo(({ caf
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { toast } = useToast();
+
+  const cafeScope = getCafeScope(cafe);
+  const scopeLabel = cafeScope === 'off_campus' ? 'Outside Delivery' : 'GHS Only';
+  const scopeBadgeClasses = cafeScope === 'off_campus'
+    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+    : 'bg-purple-100 text-purple-700 border border-purple-200';
 
   const getCafeImage = () => {
     // First, try to use the database image_url if available
@@ -74,7 +83,10 @@ export const HorizontalCafeCard: React.FC<HorizontalCafeCardProps> = memo(({ caf
       'Tea Tradition': '/teatradition_card.jpeg',
       'China Town': '/china_card.png',
       'Let\'s Go Live': '/letsgolive_card.jpg',
-      'LETS GO LIVE': '/letsgolive_card.jpg'
+      'LETS GO LIVE': '/letsgolive_card.jpg',
+      'BG The Food Cart': 'https://ik.imagekit.io/foodclub/Cafe/Food%20Cart/Food%20Cart.jpg?updatedAt=1763167203799',
+      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/Banna.jpg?updatedAt=1763167090456',
+      'Koko\'ro': 'https://ik.imagekit.io/foodclub/Cafe/Koko\'ro/Koko\'ro.jpeg?updatedAt=1763167147690'
     };
 
     // Try to find exact match first
@@ -95,6 +107,11 @@ export const HorizontalCafeCard: React.FC<HorizontalCafeCardProps> = memo(({ caf
   };
 
   const handleViewMenu = (cafeId: string) => {
+    // Special route for Banna's Chowki
+    if (cafe.name.toLowerCase().includes('banna') && cafe.name.toLowerCase().includes('chowki')) {
+      navigate('/bannaschowki');
+      return;
+    }
     const identifier = cafe.slug || cafeId;
     navigate(`/menu/${identifier}`);
   };
@@ -102,6 +119,11 @@ export const HorizontalCafeCard: React.FC<HorizontalCafeCardProps> = memo(({ caf
   const handleOrderNow = (cafeId: string) => {
     // Allow orders for cafes that are accepting orders
     if (cafe.accepting_orders) {
+      // Special route for Banna's Chowki
+      if (cafe.name.toLowerCase().includes('banna') && cafe.name.toLowerCase().includes('chowki')) {
+        navigate('/bannaschowki');
+        return;
+      }
       const identifier = cafe.slug || cafeId;
       navigate(`/menu/${identifier}`);
     } else {
@@ -126,6 +148,12 @@ export const HorizontalCafeCard: React.FC<HorizontalCafeCardProps> = memo(({ caf
       }`}
       onClick={() => handleViewMenu(cafe.id)}
     >
+      <div className="absolute top-2 right-2 z-10">
+        <Badge className={`${scopeBadgeClasses} text-[10px] font-semibold px-2.5 py-0.5`}>
+          {scopeLabel}
+        </Badge>
+      </div>
+
       {/* Horizontal Card Layout */}
       <div className="flex">
         {/* Image Section - Left Side */}
@@ -171,8 +199,8 @@ export const HorizontalCafeCard: React.FC<HorizontalCafeCardProps> = memo(({ caf
             <span className="text-sm text-gray-600 truncate">{cafe.location}</span>
           </div>
 
-          {/* Bottom Row - Rating */}
-          <div className="flex items-center gap-1">
+          {/* Bottom Row - Rating - Temporarily Hidden */}
+          {/* <div className="flex items-center gap-1">
             <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
             <span className="text-sm font-medium text-gray-800">
               {cafe.average_rating ? cafe.average_rating.toFixed(1) : '0.0'}
@@ -182,7 +210,7 @@ export const HorizontalCafeCard: React.FC<HorizontalCafeCardProps> = memo(({ caf
                 ({cafe.total_ratings})
               </span>
             )}
-          </div>
+          </div> */}
         </div>
       </div>
 

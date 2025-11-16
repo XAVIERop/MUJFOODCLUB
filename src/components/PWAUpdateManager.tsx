@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,9 +22,46 @@ const PWAUpdateManager: React.FC<PWAUpdateManagerProps> = ({ className }) => {
   const [newVersion, setNewVersion] = useState<string>('');
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
 
+  const handleUpdate = useCallback(async () => {
+    setIsUpdating(true);
+    
+    try {
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        
+        if (registration && registration.waiting) {
+          // Tell the waiting service worker to skip waiting and become active
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          
+          // Reload the page to use the new service worker
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        } else {
+          // Force reload to get the latest version
+          window.location.reload();
+        }
+      }
+    } catch (error) {
+      console.error('Update failed:', error);
+      toast.error('Update failed. Please refresh the page manually.');
+      setIsUpdating(false);
+    }
+  }, []);
+
   useEffect(() => {
-    // Register service worker and listen for updates
-    if ('serviceWorker' in navigator) {
+    const isProduction = import.meta.env.PROD;
+
+    if (!isProduction && 'serviceWorker' in navigator) {
+      // ensure local development doesn't get stuck with a cached SW
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => registration.unregister());
+      });
+      return;
+    }
+
+    // Register service worker and listen for updates (production only)
+    if (isProduction && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
         .then((registration) => {
           console.log('Service Worker registered successfully');
@@ -95,9 +132,9 @@ const PWAUpdateManager: React.FC<PWAUpdateManagerProps> = ({ className }) => {
         });
     }
 
-    // Check for updates every 5 minutes
+    // Check for updates every 5 minutes (production only)
     const updateInterval = setInterval(() => {
-      if ('serviceWorker' in navigator) {
+      if (isProduction && 'serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration().then((registration) => {
           if (registration) {
             registration.update();
@@ -107,34 +144,7 @@ const PWAUpdateManager: React.FC<PWAUpdateManagerProps> = ({ className }) => {
     }, 5 * 60 * 1000); // 5 minutes
 
     return () => clearInterval(updateInterval);
-  }, []);
-
-  const handleUpdate = async () => {
-    setIsUpdating(true);
-    
-    try {
-      if ('serviceWorker' in navigator) {
-        const registration = await navigator.serviceWorker.getRegistration();
-        
-        if (registration && registration.waiting) {
-          // Tell the waiting service worker to skip waiting and become active
-          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-          
-          // Reload the page to use the new service worker
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-        } else {
-          // Force reload to get the latest version
-          window.location.reload();
-        }
-      }
-    } catch (error) {
-      console.error('Update failed:', error);
-      toast.error('Update failed. Please refresh the page manually.');
-      setIsUpdating(false);
-    }
-  };
+  }, [handleUpdate]);
 
   const dismissUpdate = () => {
     setShowUpdateBanner(false);
@@ -211,3 +221,4 @@ const PWAUpdateManager: React.FC<PWAUpdateManagerProps> = ({ className }) => {
 };
 
 export default PWAUpdateManager;
+

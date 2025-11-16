@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, MapPin, Clock, Banknote, AlertCircle, Plus, Minus, Gift } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Banknote, AlertCircle, Plus, Minus, Gift, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
@@ -19,12 +19,14 @@ import { isDineInTakeawayAllowed, isDeliveryAllowed, getDineInTakeawayMessage, g
 import { generateDailyOrderNumber } from '@/utils/orderNumberGenerator';
 import { getCafeTableOptions } from '@/utils/tableMapping';
 import { WhatsAppService } from '@/services/whatsappService';
+import { orderPushNotificationService } from '@/services/orderPushNotificationService';
 import Header from '@/components/Header';
 import ReferralCodeInput from '@/components/ReferralCodeInput';
 import { ReferralValidation } from '@/services/referralService';
+import { getUserResidency, shouldUserOrderFromCafe, isOffCampusUser } from '@/utils/residencyUtils';
 
 // Helper function to get dropdown options based on order type and cafe
-const getLocationOptions = (orderType: string, cafeName: string) => {
+const getLocationOptions = (orderType: string, cafeName: string, residencyScope: 'ghs' | 'off_campus') => {
   if (orderType === 'dine_in') {
     // For dine-in, show table numbers
     const tableOptions = getCafeTableOptions(cafeName);
@@ -34,27 +36,35 @@ const getLocationOptions = (orderType: string, cafeName: string) => {
     }));
   } else if (orderType === 'delivery') {
     // For delivery, show blocks
+    if (residencyScope === 'ghs') {
+      return [
+        { value: 'B1', label: 'B1' },
+        { value: 'B2', label: 'B2' },
+        { value: 'B3', label: 'B3' },
+        { value: 'B4', label: 'B4' },
+        { value: 'B5', label: 'B5' },
+        { value: 'B6', label: 'B6' },
+        { value: 'B7', label: 'B7' },
+        { value: 'B8', label: 'B8' },
+        { value: 'B9', label: 'B9' },
+        { value: 'B10', label: 'B10' },
+        { value: 'B11', label: 'B11' },
+        { value: 'B12', label: 'B12' },
+        { value: 'G1', label: 'G1' },
+        { value: 'G2', label: 'G2' },
+        { value: 'G3', label: 'G3' },
+        { value: 'G4', label: 'G4' },
+        { value: 'G5', label: 'G5' },
+        { value: 'G6', label: 'G6' },
+        { value: 'G7', label: 'G7' },
+        { value: 'G8', label: 'G8' }
+      ];
+    }
+
     return [
-      { value: 'B1', label: 'B1' },
-      { value: 'B2', label: 'B2' },
-      { value: 'B3', label: 'B3' },
-      { value: 'B4', label: 'B4' },
-      { value: 'B5', label: 'B5' },
-      { value: 'B6', label: 'B6' },
-      { value: 'B7', label: 'B7' },
-      { value: 'B8', label: 'B8' },
-      { value: 'B9', label: 'B9' },
-      { value: 'B10', label: 'B10' },
-      { value: 'B11', label: 'B11' },
-      { value: 'B12', label: 'B12' },
-      { value: 'G1', label: 'G1' },
-      { value: 'G2', label: 'G2' },
-      { value: 'G3', label: 'G3' },
-      { value: 'G4', label: 'G4' },
-      { value: 'G5', label: 'G5' },
-      { value: 'G6', label: 'G6' },
-      { value: 'G7', label: 'G7' },
-      { value: 'G8', label: 'G8' }
+      { value: 'OFF_CAMPUS', label: 'Off Campus / PG' },
+      { value: 'GHS_GATE', label: 'Deliver to GHS Gate' },
+      { value: 'PG', label: 'PG / Hostel Outside' }
     ];
   } else if (orderType === 'takeaway') {
     // For takeaway, show takeaway option
@@ -76,6 +86,7 @@ interface MenuItem {
 interface Cafe {
   id: string;
   name: string;
+  slug?: string | null;
   type: string;
   description: string;
   location: string;
@@ -84,6 +95,7 @@ interface Cafe {
   rating: number;
   total_reviews: number;
   accepting_orders: boolean;
+  location_scope?: string | null;
 }
 
 interface CartItem {
@@ -97,8 +109,10 @@ const Checkout = () => {
   const location = useRouterLocation();
   const { user, profile, refreshProfile } = useAuth();
   const { cart, cafe, getTotalAmount, addToCart, removeFromCart, clearCart } = useCart();
-  const { selectedBlock } = useLocation();
+  const { selectedBlock, setSelectedBlock } = useLocation();
   const { toast } = useToast();
+  const userResidency = getUserResidency(profile);
+  const isOffCampusResident = userResidency === 'off_campus';
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -114,6 +128,16 @@ const Checkout = () => {
     // Get the first item's cafe name (assuming all items are from same cafe)
     const firstItem = cartItems[0] as any;
     return firstItem.item.cafe_name || '';
+  };
+
+  // Helper function to get cart's cafe ID (CRITICAL: Use this instead of cart context cafe.id)
+  const getCartCafeId = () => {
+    const cartItems = Object.values(cart);
+    if (cartItems.length === 0) return null;
+    
+    // Get the first item's cafe_id (assuming all items are from same cafe)
+    const firstItem = cartItems[0] as any;
+    return firstItem.item.cafe_id || null;
   };
 
   // Check if this is a grocery order (24 Seven Mart only - Grabit is now a regular cafe)
@@ -134,10 +158,23 @@ const Checkout = () => {
            cafe?.slug === 'grabit';
   };
 
+  // Check if this is Banna's Chowki cafe
+  const isBannasChowki = () => {
+    const cartCafeName = getCartCafeName();
+    return cartCafeName?.toLowerCase().includes('banna') ||
+           cafe?.name?.toLowerCase().includes('banna') ||
+           cafe?.slug === 'bannaschowki';
+  };
+
+  // Check if guest ordering is allowed (Banna's Chowki dine-in only)
+  const isGuestOrderingAllowed = () => {
+    return isBannasChowki() && deliveryDetails.orderType === 'dine_in';
+  };
+
   // Form states
   const [deliveryDetails, setDeliveryDetails] = useState({
     orderType: 'delivery', // 'delivery', 'takeaway', or 'dine_in'
-    block: selectedBlock,
+    block: isOffCampusResident ? 'OFF_CAMPUS' : selectedBlock,
     deliveryNotes: '',
     paymentMethod: 'cod',
     phoneNumber: profile?.phone || ''
@@ -175,6 +212,10 @@ const Checkout = () => {
   const [referralDiscount, setReferralDiscount] = useState(0);
   const [referralValidation, setReferralValidation] = useState<ReferralValidation | null>(null);
   
+  // Guest ordering states (for Banna's Chowki dine-in)
+  const [guestName, setGuestName] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
+  
   // Check if user is verified (email confirmed)
   const isUserVerified = user?.email_confirmed_at !== null;
 
@@ -192,7 +233,21 @@ const Checkout = () => {
       navigate('/cafes');
       return;
     }
-  }, [cart, cafe, navigate, totalAmount]);
+
+    // Skip residency check for guest orders (Banna's Chowki dine-in when not logged in)
+    const isGuestOrder = isBannasChowki() && (!user || !profile);
+    
+    // Only check residency for logged-in users (skip for guest orders)
+    if (!isGuestOrder && !shouldUserOrderFromCafe(profile, cafe)) {
+      toast({
+        title: 'Unavailable Cafe',
+        description: 'This cafe is available only for GHS residents.',
+        variant: 'destructive'
+      });
+      navigate('/cafes');
+      return;
+    }
+  }, [cart, cafe, navigate, totalAmount, profile, toast, user]);
 
   // Update phone number when profile changes
   useEffect(() => {
@@ -200,6 +255,21 @@ const Checkout = () => {
       setDeliveryDetails(prev => ({ ...prev, phoneNumber: profile.phone }));
     }
   }, [profile?.phone]);
+
+  useEffect(() => {
+    if (isOffCampusResident) {
+      setDeliveryDetails(prev => {
+        const current = prev.block;
+        if (current === 'OFF_CAMPUS' || current === 'GHS_GATE' || current === 'PG') {
+          return prev;
+        }
+        return { ...prev, block: 'OFF_CAMPUS' };
+      });
+      if (selectedBlock !== 'OFF_CAMPUS') {
+        setSelectedBlock('OFF_CAMPUS');
+      }
+    }
+  }, [isOffCampusResident, selectedBlock, setSelectedBlock]);
 
   // Calculate delivery charges and discount
   useEffect(() => {
@@ -270,9 +340,24 @@ const Checkout = () => {
   };
 
   const handlePlaceOrder = async () => {
-    if (!user || !profile) {
+    // Allow guest ordering for Banna's Chowki dine-in orders
+    const isGuestOrder = isGuestOrderingAllowed() && (!user || !profile);
+    
+    if (!isGuestOrder && (!user || !profile)) {
       setError('Please sign in to place an order');
       return;
+    }
+
+    // Validate guest information if it's a guest order
+    if (isGuestOrder) {
+      if (!guestName || guestName.trim().length === 0) {
+        setError('Please enter your name');
+        return;
+      }
+      if (!guestPhone || guestPhone.length !== 10) {
+        setError('Please enter a valid 10-digit phone number');
+        return;
+      }
     }
 
     // Check if cafe is accepting orders from database
@@ -284,28 +369,20 @@ const Checkout = () => {
 
     // Check if the selected order type is currently available
     // Skip time restrictions for grocery orders and Grabit
+    // Note: Time restriction messages removed - orders will be blocked silently if not available
     if (!isGroceryOrder() && !isGrabitOrder()) {
       if (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) {
-        toast({
-          title: "Delivery Unavailable",
-          description: getDeliveryMessage(cafe?.name),
-          variant: "destructive"
-        });
         return;
       }
       
       if ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed()) {
-        toast({
-          title: "Dine-in/Takeaway Unavailable", 
-          description: getDineInTakeawayMessage(),
-          variant: "destructive"
-        });
         return;
       }
     }
 
-    // Validate phone number
-    if (!deliveryDetails.phoneNumber || deliveryDetails.phoneNumber.length !== 10) {
+    // Validate phone number (use guest phone for guest orders, otherwise use delivery details)
+    const phoneNumberToUse = isGuestOrder ? guestPhone : deliveryDetails.phoneNumber;
+    if (!phoneNumberToUse || phoneNumberToUse.length !== 10) {
       setError('Please enter a valid 10-digit phone number');
       return;
     }
@@ -333,19 +410,41 @@ const Checkout = () => {
     setIsLoading(true);
     setError('');
 
-    // Validate cafe exists
+    // CRITICAL FIX: Get cafe_id from cart items, not from cart context
+    // This ensures orders go to the correct cafe even if cart context is stale
+    const cartCafeId = getCartCafeId();
+    if (!cartCafeId) {
+      setError('Cafe information is missing from cart items. Please try again.');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate cafe exists (still check cart context for other info, but use cart item's cafe_id)
     if (!cafe || !cafe.id) {
       setError('Cafe information is missing. Please try again.');
       setIsLoading(false);
       return;
     }
 
+    // Verify that cart context cafe matches cart items cafe (safety check)
+    if (cafe.id !== cartCafeId) {
+      console.warn('⚠️ WARNING: Cart context cafe.id does not match cart items cafe_id!', {
+        contextCafeId: cafe.id,
+        contextCafeName: cafe.name,
+        cartItemsCafeId: cartCafeId,
+        cartItemsCafeName: getCartCafeName()
+      });
+      // Use the cart items cafe_id (more reliable)
+    }
+
     try {
       console.log('🛒 Starting order creation...');
       console.log('🛒 Order data:', {
-        user_id: user.id,
-        cafe_id: cafe.id,
-        cafe_name: cafe.name,
+        user_id: isGuestOrder ? null : user?.id,
+        is_guest_order: isGuestOrder,
+        cafe_id: cartCafeId, // Use cart items cafe_id, not context cafe.id
+        cafe_id_from_context: cafe.id,
+        cafe_name: getCartCafeName() || cafe.name,
         cafe_type: cafe.type,
         cafe_slug: cafe.slug,
         is_grocery_order: isGroceryOrder(),
@@ -356,18 +455,18 @@ const Checkout = () => {
       });
 
       // Generate order number using new daily reset system
-      console.log('🔄 Generating order number for cafe:', cafe.id);
+      console.log('🔄 Generating order number for cafe:', cartCafeId);
       let orderNumber: string;
       
       try {
-        orderNumber = await generateDailyOrderNumber(cafe.id);
+        orderNumber = await generateDailyOrderNumber(cartCafeId); // Use cart items cafe_id
         console.log('✅ Generated daily order number:', orderNumber);
       } catch (error) {
         console.error('❌ Failed to generate daily order number, using fallback:', error);
         // Fallback to old system
         const timestamp = Date.now();
         const random = Math.random().toString(36).substr(2, 8).toUpperCase();
-        const userSuffix = user.id.substr(-4).toUpperCase();
+        const userSuffix = isGuestOrder ? 'GUEST' : (user?.id?.substr(-4).toUpperCase() || 'USER');
         orderNumber = `ONLINE-${timestamp}-${random}-${userSuffix}`;
       }
 
@@ -390,8 +489,8 @@ const Checkout = () => {
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
-          user_id: user.id,
-          cafe_id: cafe.id,
+          user_id: isGuestOrder ? null : user.id, // NULL for guest orders
+          cafe_id: cartCafeId, // CRITICAL FIX: Use cafe_id from cart items, not context
           order_number: orderNumber,
           total_amount: finalAmount,
           order_type: deliveryDetails.orderType,
@@ -399,14 +498,14 @@ const Checkout = () => {
           table_number: tableNumber,
           delivery_notes: deliveryDetails.deliveryNotes || '',
           payment_method: deliveryDetails.paymentMethod,
-          phone_number: deliveryDetails.phoneNumber || '',
-          customer_name: profile?.full_name || '',
+          phone_number: phoneNumberToUse, // Use guest phone or delivery details phone
+          customer_name: isGuestOrder ? guestName.trim() : (profile?.full_name || ''),
           points_earned: 0, // No points in simplified version
           status: 'received',
           estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-          referral_code_used: referralCode || null,
-          discount_amount: referralDiscount,
-          team_member_credit: referralValidation?.isValid ? 0.50 : 0 // ₹0.50 per order for team member
+          referral_code_used: isGuestOrder ? null : (referralCode || null), // No referral codes for guest orders
+          discount_amount: isGuestOrder ? 0 : referralDiscount, // No referral discount for guest orders
+          team_member_credit: 0 // No team member credit for guest orders
         })
         .select(`
           id,
@@ -471,8 +570,8 @@ const Checkout = () => {
       
       console.log('✅ Order items created successfully');
 
-      // Track referral usage if referral code was used
-      if (referralCode && referralValidation?.isValid) {
+      // Track referral usage if referral code was used (skip for guest orders)
+      if (!isGuestOrder && user?.id && referralCode && referralValidation?.isValid) {
         try {
           const { referralService } = await import('@/services/referralService');
 
@@ -511,8 +610,8 @@ const Checkout = () => {
         const orderData = {
           id: order.id,
           order_number: order.order_number,
-          customer_name: profile?.full_name || 'Customer',
-          phone_number: deliveryDetails.phoneNumber || '+91 0000000000',
+          customer_name: isGuestOrder ? guestName.trim() : (profile?.full_name || 'Customer'),
+          phone_number: phoneNumberToUse || '+91 0000000000',
           delivery_block: deliveryDetails.block || 'N/A',
           total_amount: order.total_amount.toString(),
           created_at: order.created_at,
@@ -546,6 +645,44 @@ const Checkout = () => {
       } catch (whatsappError) {
         console.error('❌ [CHECKOUT] WhatsApp notification error:', whatsappError);
         // Don't fail the order if WhatsApp fails
+      }
+
+      // Send push notification to cafe staff (new order) - skip for guest orders
+      if (!isGuestOrder && user?.id) {
+        try {
+          if (import.meta.env.VITE_ENABLE_PUSH_NOTIFICATIONS === 'true') {
+            await orderPushNotificationService.sendNewOrderNotificationToCafe({
+              orderId: order.id,
+              orderNumber: order.order_number,
+              userId: user.id,
+              cafeId: cartCafeId,
+              status: 'received',
+              totalAmount: order.total_amount,
+              customerName: profile?.full_name || 'Customer',
+            });
+            console.log('✅ Push notification sent to cafe staff');
+          }
+        } catch (pushError) {
+          console.error('❌ Push notification error:', pushError);
+          // Don't fail the order if push notification fails
+        }
+
+        // Send push notification to customer (order received) - skip for guest orders
+        try {
+          if (import.meta.env.VITE_ENABLE_PUSH_NOTIFICATIONS === 'true') {
+            await orderPushNotificationService.sendOrderStatusNotification({
+              orderId: order.id,
+              orderNumber: order.order_number,
+              userId: user.id,
+              cafeId: cartCafeId,
+              status: 'received',
+            });
+            console.log('✅ Push notification sent to customer');
+          }
+        } catch (pushError) {
+          console.error('❌ Push notification error:', pushError);
+          // Don't fail the order if push notification fails
+        }
       }
 
       // Clear the cart after successful order placement
@@ -588,7 +725,7 @@ const Checkout = () => {
 
   if (!cart || Object.keys(cart).length === 0 || !cafe) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-16">
       <Header />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
@@ -605,7 +742,7 @@ const Checkout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+    <div className="min-h-screen bg-background pt-16 pb-24 lg:pb-8">
       <Header />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-4xl mx-auto">
@@ -719,27 +856,60 @@ const Checkout = () => {
                       )}
                         </div>
                     
-                    {/* Hide time restriction alerts for grocery orders and Grabit */}
-                    {!isGroceryOrder() && !isGrabitOrder() && !isDeliveryAllowed(cafe?.name) && (
-                      <Alert>
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>
-                          {getDeliveryMessage(cafe?.name)}
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                    
-                    {!isGroceryOrder() && !isGrabitOrder() && !isDineInTakeawayAllowed() && (
-                      <Alert>
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>
-                          {getDineInTakeawayMessage()}
-                        </AlertDescription>
-                      </Alert>
-                    )}
+                    {/* Time restriction alerts removed - no longer showing delivery/takeaway unavailable messages */}
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Guest Order Form - Only for Banna's Chowki dine-in when not logged in */}
+              {isGuestOrderingAllowed() && (!user || !profile) && (
+                <Card className="border-2 border-orange-200 bg-orange-50/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-orange-800">
+                      <User className="w-5 h-5 mr-2" />
+                      Guest Order Information
+                    </CardTitle>
+                    <p className="text-sm text-orange-700 mt-1">
+                      Enter your details to place a dine-in order
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="guestName">Your Name *</Label>
+                      <Input
+                        id="guestName"
+                        type="text"
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        placeholder="Enter your full name"
+                        required
+                        className="bg-white"
+                      />
+                      {guestName && guestName.trim().length === 0 && (
+                        <p className="text-red-500 text-sm mt-1">Name is required</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="guestPhone">Phone Number *</Label>
+                      <Input
+                        id="guestPhone"
+                        type="tel"
+                        value={guestPhone}
+                        onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        placeholder="Enter your 10-digit phone number"
+                        required
+                        minLength={10}
+                        maxLength={10}
+                        className="bg-white"
+                      />
+                      {guestPhone && guestPhone.length !== 10 && (
+                        <p className="text-red-500 text-sm mt-1">Phone number must be 10 digits</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Location Details - Dynamic based on order type */}
                   {(deliveryDetails.orderType === 'delivery' || deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && (
@@ -771,7 +941,11 @@ const Checkout = () => {
                             } />
                           </SelectTrigger>
                           <SelectContent>
-                          {getLocationOptions(deliveryDetails.orderType, cafe.name).map((option) => (
+                          {getLocationOptions(
+                            deliveryDetails.orderType,
+                            cafe.name,
+                            userResidency
+                          ).map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>
@@ -780,24 +954,27 @@ const Checkout = () => {
                         </Select>
                       </div>
 
-                    <div>
-                      <Label htmlFor="phoneNumber">Phone Number *</Label>
-                      <div className="relative">
-                        <Input
-                          id="phoneNumber"
-                          type="tel"
-                          value={deliveryDetails.phoneNumber}
-                          onChange={(e) => setDeliveryDetails(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                          placeholder="Enter your phone number"
-                          required
-                          minLength={10}
-                          maxLength={10}
-                        />
+                    {/* Phone Number - Only show if not a guest order */}
+                    {!(isGuestOrderingAllowed() && (!user || !profile)) && (
+                      <div>
+                        <Label htmlFor="phoneNumber">Phone Number *</Label>
+                        <div className="relative">
+                          <Input
+                            id="phoneNumber"
+                            type="tel"
+                            value={deliveryDetails.phoneNumber}
+                            onChange={(e) => setDeliveryDetails(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                            placeholder="Enter your phone number"
+                            required
+                            minLength={10}
+                            maxLength={10}
+                          />
+                        </div>
+                        {deliveryDetails.phoneNumber && deliveryDetails.phoneNumber.length !== 10 && (
+                          <p className="text-red-500 text-sm mt-1">Phone number must be 10 digits</p>
+                        )}
                       </div>
-                      {deliveryDetails.phoneNumber && deliveryDetails.phoneNumber.length !== 10 && (
-                        <p className="text-red-500 text-sm mt-1">Phone number must be 10 digits</p>
-                  )}
-                      </div>
+                    )}
 
                     <div>
                       <Label htmlFor="deliveryNotes">Delivery Notes (Optional)</Label>
@@ -814,41 +991,43 @@ const Checkout = () => {
                 </Card>
                   )}
 
-              {/* Referral Code Input - Always Visible */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Gift className="w-5 h-5 mr-2" />
-                    Referral Code
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Label htmlFor="referral-code" className="text-sm font-medium text-gray-700">
-                      Referral Code (Optional)
-                    </Label>
-                    <ReferralCodeInput
-                      value={referralCode}
-                      onChange={setReferralCode}
-                      onValidation={handleReferralValidation}
-                      placeholder="Enter referral code (e.g., TEAM123)"
-                      className="w-full"
-                    />
-                    {referralValidation?.isValid && (
-                      <div className="text-sm text-green-600 flex items-center gap-1">
-                        <span>✅</span>
-                        Valid code! You'll get ₹5 off your order
-                      </div>
-                    )}
-                    {!isUserVerified && referralCode && (
-                      <div className="text-sm text-orange-600 flex items-center gap-1">
-                        <span>⚠️</span>
-                        Please verify your email to use referral codes
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Referral Code Input - Hidden for guest orders */}
+              {!(isGuestOrderingAllowed() && (!user || !profile)) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Gift className="w-5 h-5 mr-2" />
+                      Referral Code
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <Label htmlFor="referral-code" className="text-sm font-medium text-gray-700">
+                        Referral Code (Optional)
+                      </Label>
+                      <ReferralCodeInput
+                        value={referralCode}
+                        onChange={setReferralCode}
+                        onValidation={handleReferralValidation}
+                        placeholder="Enter referral code (e.g., TEAM123)"
+                        className="w-full"
+                      />
+                      {referralValidation?.isValid && (
+                        <div className="text-sm text-green-600 flex items-center gap-1">
+                          <span>✅</span>
+                          Valid code! You'll get ₹5 off your order
+                        </div>
+                      )}
+                      {!isUserVerified && referralCode && (
+                        <div className="text-sm text-orange-600 flex items-center gap-1">
+                          <span>⚠️</span>
+                          Please verify your email to use referral codes
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
 
               {/* Payment Method */}
@@ -909,27 +1088,42 @@ const Checkout = () => {
                <div className="flex items-center gap-2 mt-1">
                  <p className="text-sm text-muted-foreground">Qty:</p>
                  <div className="flex items-center gap-1">
-                   <Button
-                     size="sm"
-                     variant="outline"
-                     className="h-6 w-6 p-0"
-                     onClick={() => removeFromCart(cartItem.item.id)}
-                   >
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className={`h-6 w-6 p-0 ${isFreeBogoItem ? 'opacity-40 cursor-not-allowed' : ''}`}
+                    onClick={
+                      isFreeBogoItem
+                        ? undefined
+                        : () => removeFromCart(cartItem.item.id)
+                    }
+                    disabled={isFreeBogoItem}
+                  >
                      <Minus className="h-3 w-3" />
                    </Button>
                    <span className="text-sm font-medium min-w-[20px] text-center">
                      {cartItem.quantity}
                    </span>
-                   <Button
-                     size="sm"
-                     variant="outline"
-                     className="h-6 w-6 p-0"
-                     onClick={() => addToCart(cartItem.item, 1, cartItem.notes)}
-                   >
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className={`h-6 w-6 p-0 ${isFreeBogoItem ? 'opacity-40 cursor-not-allowed' : ''}`}
+                    onClick={
+                      isFreeBogoItem
+                        ? undefined
+                        : () => addToCart(cartItem.item, 1, cartItem.notes)
+                    }
+                    disabled={isFreeBogoItem}
+                  >
                      <Plus className="h-3 w-3" />
                    </Button>
                  </div>
                </div>
+              {isFreeBogoItem && (
+                <p className="text-xs text-green-700 mt-1">
+                  Quantity is linked to your paid pizza (BOGO offer).
+                </p>
+              )}
                {cartItem.notes && (
                  <p className="text-xs text-muted-foreground mt-1">Note: {cartItem.notes}</p>
                )}
@@ -1061,8 +1255,6 @@ const Checkout = () => {
               >
                     {isLoading ? 'Placing Order...' :
                      !isMinimumOrderMet ? `Minimum Order ₹${ORDER_CONSTANTS.MINIMUM_ORDER_AMOUNT} Required` :
-                     (!isGroceryOrder() && !isGrabitOrder() && deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) ? 'Delivery Unavailable' :
-                     (!isGroceryOrder() && !isGrabitOrder() && (deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed()) ? 'Dine-in/Takeaway Unavailable' :
                      `Place Order - ₹${finalAmount.toFixed(2)}`}
               </Button>
 

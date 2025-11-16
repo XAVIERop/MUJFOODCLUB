@@ -17,6 +17,7 @@ interface ReceiptData {
     unit_price: number;
     total_price: number;
     special_instructions?: string;
+    is_vegetarian?: boolean; // Added for Banna's Chowki split printing
   }>;
   subtotal: number;
   tax_amount: number;
@@ -155,6 +156,33 @@ class UnifiedPrintService {
         } else {
           console.log('✅ Unified Print Service: Using Grabit API key');
         }
+      } else if (cafe.name.toLowerCase().includes('banna')) {
+        apiKey = import.meta.env.VITE_BANNAS_CHOWKI_PRINTNODE_API_KEY || '';
+        if (!apiKey || apiKey === 'your-bannas-chowki-printnode-api-key') {
+          console.error('❌ Unified Print Service: VITE_BANNAS_CHOWKI_PRINTNODE_API_KEY not configured');
+          this.printNodeService = null;
+          return;
+        } else {
+          console.log('✅ Unified Print Service: Using Banna\'s Chowki API key');
+        }
+      } else if (cafe.name.toLowerCase().includes('amor')) {
+        apiKey = import.meta.env.VITE_AMOR_PRINTNODE_API_KEY || '';
+        if (!apiKey || apiKey === 'your-amor-printnode-api-key') {
+          console.error('❌ Unified Print Service: VITE_AMOR_PRINTNODE_API_KEY not configured');
+          this.printNodeService = null;
+          return;
+        } else {
+          console.log('✅ Unified Print Service: Using Amor API key');
+        }
+      } else if (cafe.name.toLowerCase().includes('stardom')) {
+        apiKey = import.meta.env.VITE_STARDOM_PRINTNODE_API_KEY || '';
+        if (!apiKey || apiKey === 'your-stardom-printnode-api-key') {
+          console.error('❌ Unified Print Service: VITE_STARDOM_PRINTNODE_API_KEY not configured');
+          this.printNodeService = null;
+          return;
+        } else {
+          console.log('✅ Unified Print Service: Using Stardom API key');
+        }
       } else if (cafe.name.toLowerCase().includes('taste') && cafe.name.toLowerCase().includes('india')) {
         // Taste of India: PrintNode service disabled
         console.log('🚫 Unified Print Service: PrintNode service disabled for Taste of India');
@@ -257,6 +285,7 @@ class UnifiedPrintService {
 
   /**
    * Print KOT for a specific cafe
+   * For Banna's Chowki: Splits items by vegetarian status and prints to separate printers
    */
   async printKOT(receiptData: ReceiptData, cafeId: string): Promise<PrintResult> {
     console.log(`🔄 Unified Print Service: Printing KOT for cafe ${cafeId}`);
@@ -264,9 +293,11 @@ class UnifiedPrintService {
     try {
       // Get proper cafe name for formatting
       const cafeName = await this.getCafeName(cafeId);
+      const normalizedCafeName = cafeName.toLowerCase();
+      const isBannasChowki = normalizedCafeName.includes('banna');
       
       // Taste of India: PrintNode service disabled
-      if (cafeName.toLowerCase().includes('taste') && cafeName.toLowerCase().includes('india')) {
+      if (normalizedCafeName.includes('taste') && normalizedCafeName.includes('india')) {
         console.log('🚫 Unified Print Service: PrintNode service disabled for Taste of India');
         return {
           success: false,
@@ -278,6 +309,85 @@ class UnifiedPrintService {
       // Reinitialize PrintNode service with cafe-specific API key
       await this.initializePrintNode(cafeId);
       
+      // Banna's Chowki: Split KOT printing by vegetarian status
+      if (isBannasChowki && this.printNodeService) {
+        console.log('🥬 Banna\'s Chowki detected - splitting KOT by vegetarian status');
+        
+        // Split items into veg and non-veg
+        const vegItems = receiptData.items.filter(item => item.is_vegetarian !== false);
+        const nonVegItems = receiptData.items.filter(item => item.is_vegetarian === false);
+        
+        console.log(`🥬 Veg items: ${vegItems.length}, Non-Veg items: ${nonVegItems.length}`);
+        
+        const results: PrintResult[] = [];
+        let allSuccess = true;
+        const errors: string[] = [];
+        
+        // Print Veg KOT to VEG PRINTER (74916694)
+        if (vegItems.length > 0) {
+          const vegReceiptData: ReceiptData = {
+            ...receiptData,
+            items: vegItems,
+            // Recalculate totals for veg items only
+            subtotal: vegItems.reduce((sum, item) => sum + item.total_price, 0),
+            final_amount: vegItems.reduce((sum, item) => sum + item.total_price, 0)
+          };
+          
+          console.log('🥬 Printing Veg KOT to printer 74916694 (VEG PRINTER)');
+          const vegResult = await this.printNodeService.printKOT(vegReceiptData, 74916694);
+          results.push(vegResult);
+          
+          if (!vegResult.success) {
+            allSuccess = false;
+            errors.push(`Veg KOT: ${vegResult.error || 'Failed'}`);
+          } else {
+            console.log('✅ Veg KOT printed successfully');
+          }
+        } else {
+          console.log('⚠️ No veg items to print');
+        }
+        
+        // Print Non-Veg KOT to CASH NONVEGE (74916599)
+        if (nonVegItems.length > 0) {
+          const nonVegReceiptData: ReceiptData = {
+            ...receiptData,
+            items: nonVegItems,
+            // Recalculate totals for non-veg items only
+            subtotal: nonVegItems.reduce((sum, item) => sum + item.total_price, 0),
+            final_amount: nonVegItems.reduce((sum, item) => sum + item.total_price, 0)
+          };
+          
+          console.log('🍗 Printing Non-Veg KOT to printer 74916599 (CASH NONVEGE)');
+          const nonVegResult = await this.printNodeService.printKOT(nonVegReceiptData, 74916599);
+          results.push(nonVegResult);
+          
+          if (!nonVegResult.success) {
+            allSuccess = false;
+            errors.push(`Non-Veg KOT: ${nonVegResult.error || 'Failed'}`);
+          } else {
+            console.log('✅ Non-Veg KOT printed successfully');
+          }
+        } else {
+          console.log('⚠️ No non-veg items to print');
+        }
+        
+        // Return combined result
+        if (allSuccess && results.length > 0) {
+          return {
+            success: true,
+            method: 'printnode-split',
+            jobId: results.map(r => r.jobId?.toString() || '').join('+')
+          };
+        } else {
+          return {
+            success: false,
+            error: errors.join('; ') || 'Failed to print KOTs',
+            method: 'printnode-split-failed'
+          };
+        }
+      }
+      
+      // For other cafes, use normal single KOT printing
       const formattedReceiptData = { ...receiptData, cafe_name: cafeName };
       
       // Get cafe printer configuration

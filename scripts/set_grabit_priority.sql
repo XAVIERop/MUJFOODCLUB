@@ -12,3 +12,5 @@ SELECT id, name, slug, priority
 FROM public.cafes
 WHERE LOWER(name) LIKE '%grabit%' OR LOWER(slug) = 'grabit';
 
+
+

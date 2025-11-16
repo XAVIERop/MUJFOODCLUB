@@ -25,8 +25,14 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
   const navigate = useNavigate();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleCafeClick = (cafeId: string) => {
-    navigate(`/menu/${cafeId}`);
+  const handleCafeClick = (cafe: Cafe) => {
+    // Special route for Banna's Chowki
+    if (cafe.name.toLowerCase().includes('banna') && cafe.name.toLowerCase().includes('chowki')) {
+      navigate('/bannaschowki');
+      return;
+    }
+    const identifier = cafe.slug || cafe.id;
+    navigate(`/menu/${identifier}`);
   };
 
   const scrollLeft = () => {
@@ -264,7 +270,7 @@ const CafeIconGrid: React.FC<CafeIconGridProps> = ({ cafes }) => {
             return (
               <div
                 key={cafe.id}
-                onClick={() => handleCafeClick(cafe.id)}
+                onClick={() => handleCafeClick(cafe)}
                 className="flex flex-col items-center cursor-pointer group transition-all duration-200 hover:scale-105 min-w-[80px]"
               >
                 {/* Cafe Logo/Icon - Very Small Size */}

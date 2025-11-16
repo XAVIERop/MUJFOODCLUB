@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,30 +8,37 @@ import { AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { CAFE_CANCELLATION_PASSWORD } from '@/constants/cancellation';
 
 interface CafeCancellationDialogProps {
   orderId: string;
   orderNumber: string;
   onCancel: () => void;
   trigger: React.ReactNode;
+  onTriggerClick?: () => void;
 }
 
 const CafeCancellationDialog: React.FC<CafeCancellationDialogProps> = ({
   orderId,
   orderNumber,
   onCancel,
-  trigger
+  trigger,
+  onTriggerClick
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Auto-open dialog when component mounts if trigger is hidden (for programmatic opening)
+  useEffect(() => {
+    if (trigger && React.isValidElement(trigger) && (trigger.props as any)?.style?.display === 'none') {
+      setIsOpen(true);
+    }
+  }, [trigger]);
   const [password, setPassword] = useState('');
   const [reason, setReason] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-
-  // Cafe cancellation password - in a real app, this should be configurable per cafe
-  const CAFE_CANCELLATION_PASSWORD = 'cafe123';
 
   const handleCancel = async () => {
     if (!password.trim()) {
@@ -67,13 +74,20 @@ const CafeCancellationDialog: React.FC<CafeCancellationDialogProps> = ({
         throw new Error('User not authenticated');
       }
 
-      const { error } = await supabase.rpc('cancel_order_with_reason', {
+      const { data, error } = await supabase.rpc('cancel_order_with_reason', {
         p_order_id: orderId,
         p_cancelled_by: user.id,
         p_cancellation_reason: `Cafe cancellation: ${reason}`
       });
 
       if (error) throw error;
+
+      // Handle new JSONB response format
+      if (data && typeof data === 'object' && 'success' in data) {
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to cancel order');
+        }
+      }
 
       toast({
         title: "Order Cancelled",
@@ -85,8 +99,10 @@ const CafeCancellationDialog: React.FC<CafeCancellationDialogProps> = ({
       setReason('');
       setIsOpen(false);
       
-      // Call parent callback
-      onCancel();
+      // Call parent callback after a small delay to ensure state is updated
+      setTimeout(() => {
+        onCancel();
+      }, 100);
     } catch (error) {
       console.error('Error cancelling order:', error);
       toast({
@@ -99,20 +115,32 @@ const CafeCancellationDialog: React.FC<CafeCancellationDialogProps> = ({
     }
   };
 
-  const handleClose = () => {
+  const handleOpenChange = (open: boolean) => {
     if (!isCancelling) {
-      setPassword('');
-      setReason('');
-      setIsOpen(false);
+      setIsOpen(open);
+      if (!open) {
+        // Reset form when closing
+        setPassword('');
+        setReason('');
+      }
     }
   };
 
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsOpen(true);
+    onTriggerClick?.();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogTrigger asChild>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <div onClick={handleTriggerClick}>
         {trigger}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      </div>
+      <DialogContent 
+        className="sm:max-w-md z-[100]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-red-600">
             <AlertTriangle className="w-5 h-5" />
@@ -134,6 +162,8 @@ const CafeCancellationDialog: React.FC<CafeCancellationDialogProps> = ({
                 placeholder="Enter cancellation password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                onFocus={(e) => e.stopPropagation()}
                 disabled={isCancelling}
                 className="pr-10"
               />
@@ -162,6 +192,8 @@ const CafeCancellationDialog: React.FC<CafeCancellationDialogProps> = ({
               placeholder="Please provide a reason for cancelling this order..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => e.stopPropagation()}
               disabled={isCancelling}
               rows={3}
               className="resize-none"
@@ -183,7 +215,7 @@ const CafeCancellationDialog: React.FC<CafeCancellationDialogProps> = ({
         <DialogFooter className="gap-2">
           <Button
             variant="outline"
-            onClick={handleClose}
+            onClick={() => handleOpenChange(false)}
             disabled={isCancelling}
           >
             Cancel

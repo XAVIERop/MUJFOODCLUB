@@ -3,6 +3,7 @@ import { withSupabaseClient } from '@/lib/supabasePool';
 import { orderRateLimiter } from '@/lib/rateLimiter';
 import { queryKeys } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
+import { isOffCampusUser, isOffCampusCafe } from '@/utils/residencyUtils';
 
 export interface OrderCreationData {
   cafe_id: string;
@@ -26,7 +27,7 @@ export interface OrderCreationData {
 
 export const useOptimizedOrderCreation = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   return useMutation({
     mutationFn: async (orderData: OrderCreationData) => {
@@ -46,6 +47,23 @@ export const useOptimizedOrderCreation = () => {
 
       // Use connection pool for better concurrent handling
       return await withSupabaseClient(async (supabase) => {
+        if (isOffCampusUser(profile)) {
+          const { data: cafeRecord, error: cafeLookupError } = await supabase
+            .from('cafes')
+            .select('id, location_scope, slug, name')
+            .eq('id', orderData.cafe_id)
+            .single();
+
+          if (cafeLookupError) {
+            console.error('Cafe lookup failed during order creation:', cafeLookupError);
+            throw new Error('Unable to verify cafe availability for this order.');
+          }
+
+          if (!isOffCampusCafe(cafeRecord)) {
+            throw new Error('This cafe is available to GHS residents only.');
+          }
+        }
+
         // Start transaction-like operation
         const { data: order, error: orderError } = await supabase
           .from('orders')

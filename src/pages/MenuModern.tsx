@@ -67,10 +67,13 @@ interface Cafe {
 }
 
 const MenuModern = () => {
-  const { cafeIdentifier } = useParams();
+  const { cafeIdentifier } = useParams<{ cafeIdentifier?: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  
+  // Handle /bannaschowki route - set identifier to 'bannaschowki' if path is /bannaschowki
+  const actualIdentifier = window.location.pathname === '/bannaschowki' ? 'bannaschowki' : cafeIdentifier;
   
   const [cafe, setCafe] = useState<Cafe | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -105,16 +108,31 @@ const MenuModern = () => {
 
   // Helper function to get cafe ID from identifier
   const getCafeId = async (): Promise<string | null> => {
-    if (!cafeIdentifier) return null;
+    if (!actualIdentifier) return null;
     
-    if (isUUID(cafeIdentifier)) {
-      return cafeIdentifier;
+    // Special handling for /bannaschowki route
+    if (actualIdentifier === 'bannaschowki') {
+      const { data, error } = await supabase
+        .from('cafes')
+        .select('id')
+        .or('slug.eq.bannaschowki,name.ilike.%banna%chowki%')
+        .single();
+      
+      if (error || !data) {
+        // Fallback to hardcoded ID if query fails
+        return '956b3ff2-4311-4227-b955-9d4144c3406d';
+      }
+      return data.id;
+    }
+    
+    if (isUUID(actualIdentifier)) {
+      return actualIdentifier;
     } else {
       // It's a slug, query the database
       const { data, error } = await supabase
         .from('cafes')
         .select('id')
-        .eq('slug', cafeIdentifier)
+        .eq('slug', actualIdentifier)
         .single();
       
       if (error || !data) return null;
@@ -509,10 +527,10 @@ const MenuModern = () => {
       }
     };
 
-    if (cafeIdentifier) {
+    if (actualIdentifier) {
       fetchData();
     }
-  }, [cafeIdentifier, navigate, toast]);
+  }, [actualIdentifier, navigate, toast]);
 
   // Helper function to check if a cafe is Grabit
   const isGrabitCafe = (cafeId: string | null, cafeName: string | null, cafeSlug?: string | null) => {
@@ -731,7 +749,19 @@ const MenuModern = () => {
   };
 
   const handleCheckout = async () => {
-    if (!user) {
+    // Get the cafe that the cart items belong to
+    const cartCafeId = getCartCafeId();
+    const cartCafeName = getCartCafeName();
+    
+    // Check if this is Banna's Chowki (allows guest ordering for dine-in)
+    const isBannasChowki = cartCafeName?.toLowerCase().includes('banna') ||
+                           cafe?.name?.toLowerCase().includes('banna') ||
+                           cafe?.slug === 'bannaschowki' ||
+                           actualIdentifier === 'bannaschowki';
+    
+    // Allow unauthenticated users to proceed to checkout only for Banna's Chowki
+    // (they can place guest orders for dine-in)
+    if (!user && !isBannasChowki) {
       navigate('/auth');
       return;
     }
@@ -744,10 +774,6 @@ const MenuModern = () => {
       });
       return;
     }
-
-    // Get the cafe that the cart items belong to
-    const cartCafeId = getCartCafeId();
-    const cartCafeName = getCartCafeName();
     
     if (!cartCafeId) {
       toast({
@@ -867,7 +893,7 @@ const MenuModern = () => {
   }
 
   // Error states
-  if (!cafeIdentifier) {
+  if (!actualIdentifier) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 pt-16 pb-20 lg:pb-0">
         <Header />
@@ -939,4 +965,6 @@ const MenuModern = () => {
 };
 
 export default MenuModern;
+
+
 

@@ -1,4 +1,6 @@
 // Service Worker for caching and performance optimization
+// Note: OneSignal handles push notifications through their SDK
+// This service worker focuses on caching and offline support
 const APP_VERSION = '1.2.0'; // Update this with each major deployment
 const CACHE_NAME = `muj-food-club-v${APP_VERSION}`;
 const STATIC_CACHE = `static-v${APP_VERSION}`;
@@ -72,9 +74,20 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
+  // Bypass service worker for Supabase API calls (let them go directly to network)
+  // This includes all HTTP methods (GET, POST, PUT, DELETE, etc.)
+  if (url.hostname.includes('supabase.co') || url.hostname.includes('supabase')) {
+    return; // Don't intercept - let the browser handle it
+  }
+
+  // Skip non-GET requests for other domains
   if (request.method !== 'GET') {
     return;
+  }
+
+  // Bypass service worker for external API calls
+  if (url.origin !== self.location.origin && !url.pathname.startsWith('/api/')) {
+    return; // Don't intercept external requests
   }
 
   // Handle different types of requests
@@ -138,10 +151,17 @@ async function staleWhileRevalidateStrategy(request) {
     if (networkResponse.ok) {
       cache.put(request, networkResponse.clone());
     }
+    // Always return the network response, even if it's an error (503, 404, etc.)
+    // This allows the app to handle errors properly instead of showing "Offline"
     return networkResponse;
-  }).catch(() => {
-    // Network failed, return cached version if available
-    return cachedResponse || new Response('Offline', { status: 503 });
+  }).catch((error) => {
+    // Only return cached version if it's a real network failure (no connection)
+    // For server errors (503, 500, etc.), let them propagate
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    // Re-throw the error so the app can handle it
+    throw error;
   });
 
   return cachedResponse || fetchPromise;

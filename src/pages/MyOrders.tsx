@@ -293,8 +293,19 @@ const MyOrders = () => {
   const handleCancelOrder = useCallback(async (orderId: string) => {
     if (!user?.id) return;
     
+    // Check if order is in 'received' status (customers can only cancel received orders)
+    const order = filteredOrders.find(o => o.id === orderId);
+    if (order && order.status !== 'received') {
+      toast({
+        title: "Cannot Cancel Order",
+        description: "You can only cancel orders that are still pending confirmation",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
-      const { error } = await supabase.rpc('cancel_order_with_reason', {
+      const { data, error } = await supabase.rpc('cancel_order_with_reason', {
         p_order_id: orderId,
         p_cancelled_by: user.id,
         p_cancellation_reason: 'Cancelled by customer from My Orders'
@@ -302,25 +313,33 @@ const MyOrders = () => {
 
       if (error) throw error;
 
+      // Handle new JSONB response format
+      if (data && typeof data === 'object' && 'success' in data) {
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to cancel order');
+        }
+      }
+
       toast({
         title: "Order Cancelled",
         description: "Your order has been cancelled successfully"
       });
 
       refetch();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cancelling order:', error);
       toast({
         title: "Error",
-        description: "Failed to cancel order",
+        description: error?.message || "Failed to cancel order",
         variant: "destructive"
       });
     }
-  }, [toast, refetch, user?.id]);
+  }, [toast, refetch, user?.id, filteredOrders]);
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16">
+        <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-16">
             <h1 className="text-2xl font-bold mb-4">Please Sign In</h1>
@@ -336,7 +355,8 @@ const MyOrders = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16">
+        <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center py-16">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -348,7 +368,8 @@ const MyOrders = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16">
+        <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-16">
             <AlertCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
@@ -364,7 +385,7 @@ const MyOrders = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+    <div className="min-h-screen bg-background pt-16 pb-24 lg:pb-8">
       <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">

@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { VitePWA } from 'vite-plugin-pwa';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -76,7 +77,14 @@ export default defineConfig({
         ],
       },
     }),
-  ],
+    // Bundle analyzer (only when ANALYZE=true)
+    process.env.ANALYZE && visualizer({
+      filename: 'dist/bundle-analysis.html',
+      open: false, // Don't auto-open, user can open manually
+      gzipSize: true,
+      brotliSize: true,
+    }),
+  ].filter(Boolean), // Remove falsy values (when ANALYZE is not set)
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -133,8 +141,8 @@ export default defineConfig({
           // Router
           router: ['react-router-dom'],
           
-          // Charts and analytics
-          charts: ['recharts'],
+          // Charts and analytics - REMOVED: Now lazy loaded in POSAnalytics
+          // charts: ['recharts'], // Lazy loaded to save ~100KB on initial load
           
           // Utilities
           utils: ['clsx', 'tailwind-merge', 'class-variance-authority'],

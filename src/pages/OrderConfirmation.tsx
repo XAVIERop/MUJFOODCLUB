@@ -127,15 +127,32 @@ const OrderConfirmation = () => {
   const handleCancelOrder = async () => {
     if (!order || !user) return;
     
+    // Customers can only cancel 'received' orders
+    if (order.status !== 'received') {
+      toast({
+        title: "Cannot Cancel Order",
+        description: "You can only cancel orders that are still pending confirmation",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsCancelling(true);
     try {
-      const { error } = await supabase.rpc('cancel_order_with_reason', {
+      const { data, error } = await supabase.rpc('cancel_order_with_reason', {
         p_order_id: order.id,
         p_cancelled_by: user.id,
         p_cancellation_reason: 'Cancelled by customer within 2-minute window'
       });
 
       if (error) throw error;
+
+      // Handle new JSONB response format
+      if (data && typeof data === 'object' && 'success' in data) {
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to cancel order');
+        }
+      }
 
       toast({
         title: "Order Cancelled",
@@ -144,11 +161,11 @@ const OrderConfirmation = () => {
 
       // Refetch order data to get updated status
       refetchOrder();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cancelling order:', error);
       toast({
         title: "Error",
-        description: "Failed to cancel order",
+        description: error?.message || "Failed to cancel order",
         variant: "destructive"
       });
     } finally {
@@ -327,7 +344,7 @@ const OrderConfirmation = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center py-16">
@@ -340,7 +357,7 @@ const OrderConfirmation = () => {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-16">
@@ -363,7 +380,7 @@ const OrderConfirmation = () => {
   const StatusIcon = getStatusIcon(order.status);
 
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+    <div className="min-h-screen bg-background pt-16 pb-24 lg:pb-8">
       <Header />
       
       <div className="container mx-auto px-4 py-8">

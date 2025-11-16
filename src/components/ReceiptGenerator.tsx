@@ -169,12 +169,14 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     console.log('  - Cafe name type:', typeof orderData.cafe_name);
     console.log('  - Cafe name length:', orderData.cafe_name?.length);
     
-    const isChatkara = orderData.cafe_name?.toLowerCase().includes('chatkara') || 
+    const normalizedCafeName = orderData.cafe_name?.toLowerCase() || '';
+    const isChatkara = normalizedCafeName.includes('chatkara') || 
                        orderData.cafe_name === 'CHATKARA' ||
-                       orderData.cafe_name?.toLowerCase() === 'chatkara';
-    const isGrabit = orderData.cafe_name?.toLowerCase().includes('grabit') || 
+                       normalizedCafeName === 'chatkara';
+    const isBannasChowki = normalizedCafeName.includes('banna');
+    const isGrabit = normalizedCafeName.includes('grabit') || 
                      orderData.cafe_name === 'GRABIT' ||
-                     orderData.cafe_name?.toLowerCase() === 'grabit';
+                     normalizedCafeName === 'grabit';
     const isFoodCourt = orderData.cafe_name?.toLowerCase().includes('food court') || 
                        orderData.cafe_name === 'FOOD COURT' ||
                        orderData.cafe_name?.toLowerCase() === 'food court';
@@ -184,9 +186,9 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
     console.log('  - Is Food Court:', isFoodCourt);
     
     let receiptFormat = 'mujfoodclub'; // default
-    if (isChatkara || isGrabit) {
+    if (isChatkara || isGrabit || isBannasChowki) {
       receiptFormat = 'chatkara';
-      console.log('✅ Using Chatkara format (for Chatkara or Grabit)');
+      console.log('✅ Using Chatkara format (for Chatkara, Grabit, or Banna\'s Chowki)');
     } else if (isFoodCourt) {
       receiptFormat = 'foodcourt';
       console.log('✅ Using Food Court format');
@@ -950,3 +952,5 @@ const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 };
 
 export default ReceiptGenerator;
+export default ReceiptGenerator;
+

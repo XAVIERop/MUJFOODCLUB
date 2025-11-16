@@ -13,6 +13,7 @@ import { useNotificationSubscriptions } from '@/hooks/useSubscriptionManager';
 import { useLocation as useLocationContext } from '@/contexts/LocationContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import NotificationCenter from './NotificationCenter';
+import { isOffCampusUser } from '@/utils/residencyUtils';
 
 // Available hostel blocks
 const HOSTEL_BLOCKS = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'B12', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8'];
@@ -23,12 +24,12 @@ interface HeaderProps {
 }
 
 const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockChange }: HeaderProps = {}) => {
+  const { user, profile, signOut, loading } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [isCafeOwner, setIsCafeOwner] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const { user, profile, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -236,17 +237,19 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
               <span>Food</span>
             </a> */}
             {/* Grabit Link */}
-            <Link
-              to="/grabit"
-              className={`flex items-center space-x-2 transition-smooth story-link ${
-                location.pathname.startsWith('/grabit')
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-primary'
-              }`}
-            >
-              <ShoppingCart className="w-4 h-4" />
-              <span>Grabit</span>
-            </Link>
+            {(!profile || !isOffCampusUser(profile)) && (
+              <Link
+                to="/grabit"
+                className={`flex items-center space-x-2 transition-smooth story-link ${
+                  location.pathname.startsWith('/grabit')
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-primary'
+                }`}
+              >
+                <ShoppingCart className="w-4 h-4" />
+                <span>Grabit (24/7 DS)</span>
+              </Link>
+            )}
           </nav>
 
           {/* Right Section - User Actions */}

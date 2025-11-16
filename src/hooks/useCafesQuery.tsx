@@ -1,11 +1,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { shouldUserSeeCafe } from '@/utils/residencyUtils';
 
 interface Cafe {
   id: string;
   name: string;
   description: string;
   image_url: string;
+  slug?: string;
   average_rating: number;
   total_ratings: number;
   priority: number;
@@ -13,6 +16,7 @@ interface Cafe {
   is_exclusive: boolean;
   created_at: string;
   updated_at: string;
+  location_scope?: 'ghs' | 'off_campus';
 }
 
 // Query key factory for cafes
@@ -29,6 +33,8 @@ export const useCafesQuery = (options?: {
   enabled?: boolean;
   staleTime?: number;
 }) => {
+  const { profile } = useAuth();
+
   return useQuery({
     queryKey: cafeKeys.lists(),
     queryFn: async (): Promise<Cafe[]> => {
@@ -44,8 +50,7 @@ export const useCafesQuery = (options?: {
 
       const cafes = Array.isArray(data) ? data : [];
       console.log(`✅ Fetched ${cafes.length} cafes`);
-      
-      return cafes;
+      return cafes.filter((cafe) => shouldUserSeeCafe(profile, cafe));
     },
     staleTime: options?.staleTime || 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -90,6 +95,7 @@ export const useCafeQuery = (cafeId: string | null, options?: {
 // Hook to prefetch cafes data
 export const usePrefetchCafes = () => {
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
 
   return () => {
     queryClient.prefetchQuery({
@@ -102,7 +108,8 @@ export const usePrefetchCafes = () => {
           throw new Error(`Failed to prefetch cafes: ${error.message}`);
         }
 
-        return Array.isArray(data) ? data : [];
+        const cafes = Array.isArray(data) ? data : [];
+        return cafes.filter((cafe) => shouldUserSeeCafe(profile, cafe));
       },
       staleTime: 5 * 60 * 1000,
     });

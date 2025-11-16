@@ -78,9 +78,9 @@ BEGIN
     RAISE NOTICE 'Sending WhatsApp notification to % for cafe %: %', 
         cafe_record.whatsapp_phone, cafe_record.name, message_text;
     
-    -- In a real implementation, you would call the WhatsApp API here
+    -- Placeholder: WhatsApp API integration (future enhancement)
+    -- In a real implementation, you would call the WhatsApp API service here
     -- For now, we'll just log it and return success
-    -- TODO: Integrate with actual WhatsApp API service
     
     success := true;
     RETURN success;

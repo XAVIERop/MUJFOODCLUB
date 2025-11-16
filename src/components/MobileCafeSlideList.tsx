@@ -78,7 +78,10 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
       'Tea Tradition': '/teatradition_card.jpeg',
       'China Town': '/china_card.png',
       'Let\'s Go Live': '/letsgolive_card.jpg',
-      'LETS GO LIVE': '/letsgolive_card.jpg'
+      'LETS GO LIVE': '/letsgolive_card.jpg',
+      'BG The Food Cart': 'https://ik.imagekit.io/foodclub/Cafe/Food%20Cart/Food%20Cart.jpg?updatedAt=1763167203799',
+      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/Banna.jpg?updatedAt=1763167090456',
+      'Koko\'ro': 'https://ik.imagekit.io/foodclub/Cafe/Koko\'ro/Koko\'ro.jpeg?updatedAt=1763167147690'
     };
 
     // Try to find exact match first
@@ -113,9 +116,15 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
         className="flex space-x-4 overflow-x-auto scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {featuredCafes.map((cafe) => (
+        {featuredCafes.map((cafe) => {
+          // Special route for Banna's Chowki
+          const menuPath = (cafe.name.toLowerCase().includes('banna') && cafe.name.toLowerCase().includes('chowki'))
+            ? '/bannaschowki'
+            : `/menu/${cafe.slug || cafe.id}`;
+          
+          return (
           <Link
-            to={`/menu/${cafe.slug || cafe.id}`}
+            to={menuPath}
             key={cafe.id}
             className="min-w-[240px] bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
           >
@@ -206,7 +215,8 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
               </Button>
             </div>
           </Link>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

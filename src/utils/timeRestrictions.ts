@@ -72,7 +72,7 @@ export function isDeliveryAllowed(cafeName?: string): boolean {
   // Check if this cafe has extended delivery hours (11 AM to 2 AM)
   const extendedDeliveryCafes = [
     'cook house', 'taste of india', 'pizza bakers', 'food court', 
-    'punjabi tadka', 'munch box', 'mini meals', 'kitchen', 'curry'
+    'punjabi tadka', 'munch box', 'mini meals', 'kitchen', 'curry', 'stardom'
   ];
   
   const isExtendedDeliveryCafe = cafeName && extendedDeliveryCafes.some(cafe => 
@@ -124,7 +124,7 @@ export function getNextDeliveryTime(cafeName?: string): string {
   // Check if this cafe has extended delivery hours (11 AM to 2 AM)
   const extendedDeliveryCafes = [
     'cook house', 'taste of india', 'pizza bakers', 'food court', 
-    'punjabi tadka', 'munch box', 'mini meals', 'kitchen', 'curry'
+    'punjabi tadka', 'munch box', 'mini meals', 'kitchen', 'curry', 'stardom'
   ];
   
   const isExtendedDeliveryCafe = cafeName && extendedDeliveryCafes.some(cafe => 

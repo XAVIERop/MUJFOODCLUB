@@ -7,6 +7,12 @@ interface CartItem {
   notes: string;
 }
 
+const isFreeBogoCartItem = (item: any): boolean => {
+  if (!item || typeof item.name !== 'string') return false;
+  const itemPrice = item.price ?? item.portions?.[0]?.price ?? 0;
+  return item.name.startsWith('FREE ') && itemPrice === 0;
+};
+
 // localStorage keys
 const CART_STORAGE_KEY = 'muj_food_club_cart';
 const CAFE_STORAGE_KEY = 'muj_food_club_cafe';
@@ -114,6 +120,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [cafe, isInitialized]);
 
   const addToCart = (item: any, quantity: number = 1, notes: string = '') => {
+    if (isFreeBogoCartItem(item)) {
+      console.log('⚠️ Skipping manual add for FREE BOGO item:', item.name);
+      return;
+    }
     console.log('✅ Adding item to cart:', {
       itemName: item.name,
       cafeName: cafe?.name,

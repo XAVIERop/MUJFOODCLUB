@@ -47,17 +47,24 @@ const SwiggyStyleHero: React.FC<SwiggyStyleHeroProps> = ({
       'MUNCH BOX': '/munchbox_card.png',
       'PUNJABI TADKA': '/punjabitadka_card.jpg',
       'CHINA TOWN': '/china_card.png',
+      'BG The Food Cart': 'https://ik.imagekit.io/foodclub/Cafe/Food%20Cart/Food%20Cart.jpg?updatedAt=1763167203799',
+      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/Banna.jpg?updatedAt=1763167090456',
+      'Koko\'ro': 'https://ik.imagekit.io/foodclub/Cafe/Koko\'ro/Koko\'ro.jpeg?updatedAt=1763167147690'
     };
 
-    // Try exact match first
-    if (cafeImages[cafe.name.toUpperCase()]) {
-      return cafeImages[cafe.name.toUpperCase()];
+    // Try exact match first (case-insensitive)
+    const cafeNameUpper = cafe.name.toUpperCase();
+    if (cafeImages[cafe.name] || cafeImages[cafeNameUpper]) {
+      return cafeImages[cafe.name] || cafeImages[cafeNameUpper];
     }
 
-    // Try partial matches
-    const cafeNameUpper = cafe.name.toUpperCase();
+    // Try partial matches (case-insensitive)
+    const cafeNameLower = cafe.name.toLowerCase();
     for (const [cafeKey, imagePath] of Object.entries(cafeImages)) {
-      if (cafeNameUpper.includes(cafeKey) || cafeKey.includes(cafeNameUpper)) {
+      const cafeKeyLower = cafeKey.toLowerCase();
+      const cafeKeyUpper = cafeKey.toUpperCase();
+      if (cafeNameUpper.includes(cafeKeyUpper) || cafeKeyUpper.includes(cafeNameUpper) ||
+          cafeNameLower.includes(cafeKeyLower) || cafeKeyLower.includes(cafeNameLower)) {
         return imagePath;
       }
     }
@@ -77,7 +84,7 @@ const SwiggyStyleHero: React.FC<SwiggyStyleHeroProps> = ({
   };
 
   const handleShowImages = () => {
-    // TODO: Implement image gallery modal
+    // Placeholder: Image gallery modal feature (future enhancement)
     console.log('Show all images clicked');
   };
 
@@ -138,8 +145,8 @@ const SwiggyStyleHero: React.FC<SwiggyStyleHeroProps> = ({
           {/* Right Side - Swiggy Style Info Card */}
           <div className="lg:ml-auto">
             <div className="bg-white/95 backdrop-blur-sm rounded-lg p-6 max-w-md shadow-xl">
-              {/* Rating */}
-              <div className="flex items-center mb-4">
+              {/* Rating - Temporarily Hidden */}
+              {/* <div className="flex items-center mb-4">
                 <Star className="w-5 h-5 fill-yellow-400 text-yellow-400 mr-2" />
                 <span className="text-lg font-semibold text-gray-800">
                   {cafe.average_rating ? cafe.average_rating.toFixed(1) : '0.0'}
@@ -147,7 +154,7 @@ const SwiggyStyleHero: React.FC<SwiggyStyleHeroProps> = ({
                 <span className="text-sm text-gray-600 ml-2">
                   • {cafe.total_ratings || 0}+ reviews
                 </span>
-              </div>
+              </div> */}
               
               {/* Cost Estimate */}
               <div className="flex items-center mb-4">
