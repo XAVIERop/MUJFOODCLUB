@@ -55,6 +55,8 @@ const POSDashboard = lazy(() => import("./pages/POSDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const EnvCheck = lazy(() => import("./pages/EnvCheck"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const TableOrder = lazy(() => import("./pages/TableOrder"));
+const TableQRGenerator = lazy(() => import("./pages/TableQRGenerator"));
 
 // Using optimized query client from lib/queryClient.ts
 
@@ -99,6 +101,11 @@ const App = () => {
                       <Route path="/pos-dashboard" element={<POSDashboard />} />
                       <Route path="/admin" element={<AdminDashboard />} />
                       <Route path="/env-check" element={<EnvCheck />} />
+                      
+                      {/* Table QR Order Route */}
+                      <Route path="/table-order/:cafeSlug/:tableNumber" element={<TableOrder />} />
+                      <Route path="/table-qr-generator" element={<TableQRGenerator />} />
+                      
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>

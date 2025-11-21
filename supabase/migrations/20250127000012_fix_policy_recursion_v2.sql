@@ -171,3 +171,5 @@ COMMENT ON POLICY "Cafe owners can manage staff" ON public.cafe_staff IS 'Allows
 
 
 
+
+

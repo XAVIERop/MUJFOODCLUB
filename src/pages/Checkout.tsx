@@ -24,6 +24,7 @@ import Header from '@/components/Header';
 import ReferralCodeInput from '@/components/ReferralCodeInput';
 import { ReferralValidation } from '@/services/referralService';
 import { getUserResidency, shouldUserOrderFromCafe, isOffCampusUser } from '@/utils/residencyUtils';
+import LocationPicker from '@/components/LocationPickerEnhanced';
 
 // Helper function to get dropdown options based on order type and cafe
 const getLocationOptions = (orderType: string, cafeName: string, residencyScope: 'ghs' | 'off_campus') => {
@@ -116,6 +117,8 @@ const Checkout = () => {
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [cafeAcceptingOrders, setCafeAcceptingOrders] = useState<boolean | null>(null);
+  const [isCheckingCafeStatus, setIsCheckingCafeStatus] = useState(false);
   
   // Calculate total amount from global cart
   const totalAmount = getTotalAmount();
@@ -171,11 +174,28 @@ const Checkout = () => {
     return isBannasChowki() && deliveryDetails.orderType === 'dine_in';
   };
 
+  // Check if dine-in/takeaway is allowed (with temporary bypass for Banna's Chowki dine-in)
+  const isDineInTakeawayAllowedForCafe = () => {
+    // TEMPORARY: Allow dine-in for Banna's Chowki regardless of time (for testing)
+    // This allows the dine-in option to be selectable even outside normal hours
+    if (isBannasChowki()) {
+      return true; // Always allow dine-in/takeaway for Banna's Chowki (temporary for testing)
+    }
+    return isDineInTakeawayAllowed();
+  };
+
+  // Check if cafe is outside campus (for delivery address requirement)
+  const isOutsideCafe = () => {
+    return cafe?.location_scope === 'off_campus';
+  };
+
   // Form states
   const [deliveryDetails, setDeliveryDetails] = useState({
     orderType: 'delivery', // 'delivery', 'takeaway', or 'dine_in'
     block: isOffCampusResident ? 'OFF_CAMPUS' : selectedBlock,
     deliveryNotes: '',
+    deliveryAddress: '', // For outside cafe delivery orders
+    deliveryCoordinates: null as { lat: number; lng: number } | null, // GPS coordinates
     paymentMethod: 'cod',
     phoneNumber: profile?.phone || ''
   });
@@ -255,6 +275,42 @@ const Checkout = () => {
       setDeliveryDetails(prev => ({ ...prev, phoneNumber: profile.phone }));
     }
   }, [profile?.phone]);
+  // Always fetch latest accepting_orders state from Supabase to avoid stale cached data
+  useEffect(() => {
+    const fetchLatestCafeStatus = async () => {
+      const cafeId = getCartCafeId();
+      if (!cafeId) {
+        setCafeAcceptingOrders(null);
+        return;
+      }
+
+      try {
+        setIsCheckingCafeStatus(true);
+        const { data, error: cafeStatusError } = await supabase
+          .from('cafes')
+          .select('accepting_orders')
+          .eq('id', cafeId)
+          .single();
+
+        if (cafeStatusError) {
+          console.warn('⚠️ Failed to fetch latest cafe status:', cafeStatusError);
+          setCafeAcceptingOrders(null);
+          return;
+        }
+
+        setCafeAcceptingOrders(data?.accepting_orders ?? null);
+      } catch (statusError) {
+        console.warn('⚠️ Unexpected error while fetching cafe status:', statusError);
+        setCafeAcceptingOrders(null);
+      } finally {
+        setIsCheckingCafeStatus(false);
+      }
+    };
+
+    fetchLatestCafeStatus();
+    // We intentionally depend on cart and cafe?.id to refresh status when the cart or cafe changes
+  }, [cart, cafe?.id]);
+
 
   useEffect(() => {
     if (isOffCampusResident) {
@@ -360,9 +416,12 @@ const Checkout = () => {
       }
     }
 
-    // Check if cafe is accepting orders from database
+    const isCafeCurrentlyAcceptingOrders =
+      cafeAcceptingOrders ?? cafe?.accepting_orders ?? true;
+
+    // Check if cafe is accepting orders from database (latest status)
     // This check applies to ALL cafes including Grabit
-    if (cafe && !cafe.accepting_orders) {
+    if (cafe && !isCafeCurrentlyAcceptingOrders) {
       setError('This cafe is temporarily not accepting orders. They will resume service in the next 2 days.');
       return;
     }
@@ -375,7 +434,7 @@ const Checkout = () => {
         return;
       }
       
-      if ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed()) {
+      if ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowedForCafe()) {
         return;
       }
     }
@@ -397,6 +456,14 @@ const Checkout = () => {
         return;
       } else if (deliveryDetails.orderType === 'takeaway') {
         setError('Please select a location for takeaway orders');
+        return;
+      }
+    }
+
+    // Validate delivery address for outside cafe delivery orders
+    if (isOutsideCafe() && deliveryDetails.orderType === 'delivery') {
+      if (!deliveryDetails.deliveryAddress || deliveryDetails.deliveryAddress.trim() === '') {
+        setError('Please provide your delivery address');
         return;
       }
     }
@@ -485,28 +552,45 @@ const Checkout = () => {
         deliveryBlock = deliveryDetails.block;
       }
 
+      const orderData = {
+        user_id: isGuestOrder ? null : user.id, // NULL for guest orders
+        cafe_id: cartCafeId, // CRITICAL FIX: Use cafe_id from cart items, not context
+        order_number: orderNumber,
+        total_amount: finalAmount,
+        order_type: deliveryDetails.orderType,
+        delivery_block: deliveryBlock,
+        table_number: tableNumber,
+        delivery_notes: deliveryDetails.deliveryNotes || '',
+        delivery_address: isOutsideCafe() && deliveryDetails.orderType === 'delivery' 
+          ? deliveryDetails.deliveryAddress.trim() 
+          : null,
+        delivery_latitude: isOutsideCafe() && deliveryDetails.orderType === 'delivery' && deliveryDetails.deliveryCoordinates
+          ? deliveryDetails.deliveryCoordinates.lat
+          : null,
+        delivery_longitude: isOutsideCafe() && deliveryDetails.orderType === 'delivery' && deliveryDetails.deliveryCoordinates
+          ? deliveryDetails.deliveryCoordinates.lng
+          : null,
+        payment_method: deliveryDetails.paymentMethod,
+        phone_number: phoneNumberToUse, // Use guest phone or delivery details phone
+        customer_name: isGuestOrder ? guestName.trim() : (profile?.full_name || ''),
+        points_earned: 0, // No points in simplified version
+        status: 'received',
+        estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+        referral_code_used: isGuestOrder ? null : (referralCode || null), // No referral codes for guest orders
+        discount_amount: isGuestOrder ? 0 : referralDiscount, // No referral discount for guest orders
+        team_member_credit: 0 // No team member credit for guest orders
+      };
+
       console.log('🛒 Inserting order into database...');
+      console.log('🛒 Order data being inserted:', JSON.stringify(orderData, null, 2));
+      console.log('🛒 isGuestOrder:', isGuestOrder);
+      console.log('🛒 user_id value:', orderData.user_id);
+      console.log('🛒 user_id type:', typeof orderData.user_id);
+      console.log('🛒 user_id === null:', orderData.user_id === null);
+      
       const { data: order, error: orderError } = await supabase
         .from('orders')
-        .insert({
-          user_id: isGuestOrder ? null : user.id, // NULL for guest orders
-          cafe_id: cartCafeId, // CRITICAL FIX: Use cafe_id from cart items, not context
-          order_number: orderNumber,
-          total_amount: finalAmount,
-          order_type: deliveryDetails.orderType,
-          delivery_block: deliveryBlock,
-          table_number: tableNumber,
-          delivery_notes: deliveryDetails.deliveryNotes || '',
-          payment_method: deliveryDetails.paymentMethod,
-          phone_number: phoneNumberToUse, // Use guest phone or delivery details phone
-          customer_name: isGuestOrder ? guestName.trim() : (profile?.full_name || ''),
-          points_earned: 0, // No points in simplified version
-          status: 'received',
-          estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-          referral_code_used: isGuestOrder ? null : (referralCode || null), // No referral codes for guest orders
-          discount_amount: isGuestOrder ? 0 : referralDiscount, // No referral discount for guest orders
-          team_member_credit: 0 // No team member credit for guest orders
-        })
+        .insert(orderData)
         .select(`
           id,
           order_number,
@@ -823,12 +907,12 @@ const Checkout = () => {
                           value="takeaway"
                           checked={deliveryDetails.orderType === 'takeaway'}
                           onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
-                          disabled={!isDineInTakeawayAllowed()}
+                          disabled={!isDineInTakeawayAllowedForCafe()}
                         />
                         <Label htmlFor="takeaway" className="flex items-center">
                           <Clock className="w-4 h-4 mr-2" />
                           Takeaway
-                          {!isDineInTakeawayAllowed() && (
+                          {!isDineInTakeawayAllowedForCafe() && (
                             <Badge variant="secondary" className="ml-2">Not Available</Badge>
                           )}
                         </Label>
@@ -842,12 +926,12 @@ const Checkout = () => {
                           value="dine_in"
                           checked={deliveryDetails.orderType === 'dine_in'}
                           onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
-                          disabled={!isDineInTakeawayAllowed()}
+                          disabled={!isDineInTakeawayAllowedForCafe()}
                         />
                         <Label htmlFor="dine_in" className="flex items-center">
                           <Clock className="w-4 h-4 mr-2" />
                           Dine In
-                          {!isDineInTakeawayAllowed() && (
+                          {!isDineInTakeawayAllowedForCafe() && (
                             <Badge variant="secondary" className="ml-2">Not Available</Badge>
                           )}
                         </Label>
@@ -953,6 +1037,24 @@ const Checkout = () => {
                           </SelectContent>
                         </Select>
                       </div>
+
+                    {/* Delivery Address - Only for outside cafes with delivery orders */}
+                    {isOutsideCafe() && deliveryDetails.orderType === 'delivery' && (
+                      <div>
+                        <LocationPicker
+                          value={deliveryDetails.deliveryAddress}
+                          coordinates={deliveryDetails.deliveryCoordinates}
+                          onChange={(address, coordinates) => {
+                            setDeliveryDetails(prev => ({
+                              ...prev,
+                              deliveryAddress: address,
+                              deliveryCoordinates: coordinates || null
+                            }));
+                          }}
+                          required
+                        />
+                      </div>
+                    )}
 
                     {/* Phone Number - Only show if not a guest order */}
                     {!(isGuestOrderingAllowed() && (!user || !profile)) && (
@@ -1244,16 +1346,17 @@ const Checkout = () => {
                   e.stopPropagation();
                   handlePlaceOrder();
                 }}
-                disabled={isLoading || !isMinimumOrderMet || 
+                disabled={isLoading || isCheckingCafeStatus || !isMinimumOrderMet || 
                   (!isGroceryOrder() && !isGrabitOrder() && deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) ||
-                  (!isGroceryOrder() && !isGrabitOrder() && (deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowed())
+                  (!isGroceryOrder() && !isGrabitOrder() && (deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowedForCafe())
                 }
                 className="w-full"
                 size="lg"
                 variant="hero"
                 type="button"
               >
-                    {isLoading ? 'Placing Order...' :
+                    {isCheckingCafeStatus ? 'Checking cafe status...' :
+                     isLoading ? 'Placing Order...' :
                      !isMinimumOrderMet ? `Minimum Order ₹${ORDER_CONSTANTS.MINIMUM_ORDER_AMOUNT} Required` :
                      `Place Order - ₹${finalAmount.toFixed(2)}`}
               </Button>

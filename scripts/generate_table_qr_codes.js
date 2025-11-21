@@ -5,6 +5,10 @@ import { createClient } from '@supabase/supabase-js';
 import QRCode from 'qrcode';
 import fs from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' });
 
 // Supabase configuration
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -17,6 +21,9 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Production website URL for QR codes
+const PRODUCTION_URL = 'https://mujfoodclub.in';
 
 async function generateQRCodes() {
   try {
@@ -35,7 +42,6 @@ async function generateQRCodes() {
           location
         )
       `)
-      .order('cafes.name')
       .order('table_number');
 
     if (error) {
@@ -71,7 +77,7 @@ async function generateQRCodes() {
     // Generate QR codes for each table
     for (const table of tables) {
       const cafe = table.cafes;
-      const qrData = `${supabaseUrl}/menu/${cafe.id}?table=${table.id}&dine_in=true`;
+      const qrData = `${PRODUCTION_URL}/menu/${cafe.id}?table=${table.id}&dine_in=true`;
       
       try {
         // Generate QR code
