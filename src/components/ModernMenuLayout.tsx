@@ -9,6 +9,7 @@ import PromotionalBanner from '@/components/PromotionalBanner';
 import { promotionalBannerService, PromotionalBannerData } from '@/services/promotionalBannerService';
 import FloatingMenuButton from '@/components/FloatingMenuButton';
 import { useFavorites } from '@/hooks/useFavorites';
+import { getCafeScope } from '@/utils/residencyUtils';
 
 interface ModernMenuLayoutProps {
   // Search and filters
@@ -62,6 +63,12 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
 }) => {
   // Add favorites functionality
   const { toggleFavorite, isFavorite: isCafeFavorite } = useFavorites();
+  const cafeScope = getCafeScope(cafe);
+  const scopeBadgeLabel = cafeScope === 'off_campus' ? 'Outside Delivery' : 'GHS Only';
+  const scopeBadgeClasses =
+    cafeScope === 'off_campus'
+      ? 'bg-emerald-100/90 text-emerald-800 border border-emerald-200'
+      : 'bg-purple-100/90 text-purple-800 border border-purple-200';
   
   // Add call and favorite handlers
   const handleCall = (phone: string) => {
@@ -175,11 +182,22 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
       'Soya Chaap Corner': '/chatkara_logo.jpg',
       'Tea Tradition': '/teatradition_card.jpeg',
       'China Town': '/china_card.png',
-      'Let\'s Go Live': '/letsgolive_card.jpg'
+      'Let\'s Go Live': '/letsgolive_card.jpg',
+      'BG The Food Cart': 'https://ik.imagekit.io/foodclub/Cafe/Food%20Cart/Food%20Cart.jpg?updatedAt=1763167203799',
+      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/Banna.jpg?updatedAt=1763167090456',
+      'Koko\'ro': 'https://ik.imagekit.io/foodclub/Cafe/Koko\'ro/Koko\'ro.jpeg?updatedAt=1763167147690'
     };
 
     if (cafe?.name && cafeImages[cafe.name]) {
       return cafeImages[cafe.name];
+    }
+    
+    // Try partial matches for variations in naming
+    const cafeNameLower = cafe?.name?.toLowerCase() || '';
+    for (const [cafeKey, imagePath] of Object.entries(cafeImages)) {
+      if (cafeNameLower.includes(cafeKey.toLowerCase()) || cafeKey.toLowerCase().includes(cafeNameLower)) {
+        return imagePath;
+      }
     }
 
     // Fallback to default cafe image
@@ -236,12 +254,18 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
               <MapPin className="w-4 h-4" />
               <span className="text-sm">{cafe?.location}</span>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
+            <div className="flex items-center gap-4 flex-wrap">
+              {/* Rating - Temporarily Hidden */}
+              {/* <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
                 <span className="text-sm font-medium text-white">
                   {cafe?.average_rating ? cafe.average_rating.toFixed(1) : '4.5'} ({cafe?.total_ratings || 1256} Reviews)
                 </span>
+              </div> */}
+              <div
+                className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold shadow-sm backdrop-blur-sm ${scopeBadgeClasses}`}
+              >
+                {scopeBadgeLabel}
               </div>
               
               {/* Call Button - Same for Mobile and Desktop */}
@@ -634,7 +658,7 @@ const ModernFoodCard: React.FC<{
                 </span>
               )}
             </div>
-            <p className={`text-sm text-gray-600 ${item.category === 'Thali' ? 'whitespace-normal leading-relaxed' : 'line-clamp-2'}`}>
+            <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
               {item.description}
             </p>
           </div>
@@ -896,4 +920,6 @@ const ModernCartPanel: React.FC<{
 };
 
 export default ModernMenuLayout;
+
+
 

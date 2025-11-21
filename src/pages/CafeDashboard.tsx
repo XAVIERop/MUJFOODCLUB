@@ -653,39 +653,6 @@ const CafeDashboard = () => {
     }
   };
 
-  const cancelOrder = async (orderId: string) => {
-    if (!confirm('Are you sure you want to cancel this order?')) {
-      return;
-    }
-
-    try {
-      const { error } = await (supabase as any)
-        .from('orders')
-        .update({ 
-          status: 'cancelled',
-          status_updated_at: new Date().toISOString()
-        })
-        .eq('id', orderId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Order Cancelled",
-        description: "Order has been cancelled",
-      });
-
-      // Refresh orders and analytics
-      fetchOrders();
-      fetchAnalytics();
-    } catch (error) {
-      console.error('Error cancelling order:', error);
-      toast({
-        title: "Error",
-        description: "Failed to cancel order",
-        variant: "destructive"
-      });
-    }
-  };
 
   // Filter and sort orders
   useEffect(() => {

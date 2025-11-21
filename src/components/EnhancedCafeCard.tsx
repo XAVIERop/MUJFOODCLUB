@@ -6,6 +6,7 @@ import { Badge } from './ui/badge';
 import { useFavorites } from '../hooks/useFavorites';
 import { useToast } from '../hooks/use-toast';
 import DirectPdfViewer from './DirectPdfViewer';
+import { getCafeScope } from '@/utils/residencyUtils';
 
 interface Cafe {
   id: string;
@@ -23,6 +24,7 @@ interface Cafe {
   priority: number | null;
   menu_pdf_url?: string | null;
   image_url?: string | null;
+  location_scope?: 'ghs' | 'off_campus';
 }
 
 interface EnhancedCafeCardProps {
@@ -31,6 +33,12 @@ interface EnhancedCafeCardProps {
 }
 
 export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, showAll = false }) => {
+  const cafeScope = getCafeScope(cafe);
+  const scopeLabel = cafeScope === 'off_campus' ? 'Outside Delivery' : 'GHS Only';
+  const scopeBadgeClasses = cafeScope === 'off_campus'
+    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+    : 'bg-purple-100 text-purple-700 border border-purple-200';
+
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { toast } = useToast();
@@ -44,6 +52,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
                      cafe.name.toLowerCase().includes('cook house') ||
                      cafe.name.toLowerCase().includes('pizza bakers') ||
                      cafe.name.toLowerCase().includes('taste of india') ||
+                     cafe.name.toLowerCase().includes('stardom') ||
                      cafe.name.toLowerCase().includes('havmor') ||
                      cafe.name.toLowerCase().includes('china town') ||
                      (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry'));
@@ -88,7 +97,10 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
       'Tea Tradition': '/teatradition_card.jpeg',
       'China Town': '/china_card.png',
       'Let\'s Go Live': '/letsgolive_card.jpg',
-      'LETS GO LIVE': '/letsgolive_card.jpg'
+      'LETS GO LIVE': '/letsgolive_card.jpg',
+      'BG The Food Cart': 'https://ik.imagekit.io/foodclub/Cafe/Food%20Cart/Food%20Cart.jpg?updatedAt=1763167203799',
+      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/Banna.jpg?updatedAt=1763167090456',
+      'Koko\'ro': 'https://ik.imagekit.io/foodclub/Cafe/Koko\'ro/Koko\'ro.jpeg?updatedAt=1763167147690'
     };
 
     // Try to find exact match first
@@ -109,11 +121,21 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
   };
 
   const handleViewMenu = (cafeId: string) => {
+    // Special route for Banna's Chowki
+    if (cafe.name.toLowerCase().includes('banna') && cafe.name.toLowerCase().includes('chowki')) {
+      navigate('/bannaschowki');
+      return;
+    }
     const identifier = cafe.slug || cafeId;
     navigate(`/menu/${identifier}`);
   };
 
   const handleModernMenu = (cafeId: string) => {
+    // Special route for Banna's Chowki
+    if (cafe.name.toLowerCase().includes('banna') && cafe.name.toLowerCase().includes('chowki')) {
+      navigate('/bannaschowki');
+      return;
+    }
     const identifier = cafe.slug || cafeId;
     navigate(`/menu-modern/${identifier}`);
   };
@@ -121,6 +143,11 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
   const handleOrderNow = (cafeId: string) => {
     // Allow orders for cafes that are accepting orders
     if (cafe.accepting_orders) {
+      // Special route for Banna's Chowki
+      if (cafe.name.toLowerCase().includes('banna') && cafe.name.toLowerCase().includes('chowki')) {
+        navigate('/bannaschowki');
+        return;
+      }
       const identifier = cafe.slug || cafeId;
       navigate(`/menu/${identifier}`);
     } else {
@@ -185,6 +212,13 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
         </div>
       )}
 
+      {/* Residency Scope Badge */}
+      <div className="absolute top-3 right-3 z-20">
+        <Badge className={`${scopeBadgeClasses} text-[10px] font-semibold px-3 py-1`}>
+          {scopeLabel}
+        </Badge>
+      </div>
+
       {/* Closed Cafe Overlay */}
       {!cafe.accepting_orders && (
         <div className="absolute inset-0 bg-black/10 z-10 pointer-events-none" />
@@ -229,7 +263,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               ? 'group-hover:text-yellow-300 drop-shadow-lg' 
               : 'group-hover:text-orange-300'
           }`}>
-            {cafe.name}
+            {cafe.slug === 'grabit' ? 'Grabit (24/7 Departmental Store)' : cafe.name}
           </h3>
           <div className="flex items-center gap-2">
             
@@ -325,14 +359,14 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               className={`text-xs font-medium ${
                 !cafe.accepting_orders
                   ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed text-gray-600"
-                  : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || cafe.name.toLowerCase().includes('grabit') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry'))
+                  : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || cafe.name.toLowerCase().includes('stardom') || cafe.name.toLowerCase().includes('grabit') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry'))
                     ? "bg-orange-100 hover:bg-orange-200 text-orange-600 hover:text-orange-700"
                     : "bg-gray-500 hover:bg-gray-600 text-white"
               } disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-600`}
             >
               {!cafe.accepting_orders
                 ? "Closed"
-                : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || cafe.name.toLowerCase().includes('grabit') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry'))
+                : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || cafe.name.toLowerCase().includes('stardom') || cafe.name.toLowerCase().includes('grabit') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry'))
                   ? "Order Now"
                   : "Coming Soon"
               }
@@ -390,4 +424,6 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
     prevProps.cafe.accepting_orders === nextProps.cafe.accepting_orders
   );
 });
+
+
 

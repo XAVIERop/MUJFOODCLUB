@@ -139,26 +139,52 @@ export class CafeSpecificPrintService {
     console.log(`🔍 Getting API key for cafe: ${cafeName} (ID: ${cafeId})`);
     
     // Return cafe-specific API key
-    if (cafeName.toLowerCase().includes('chatkara')) {
+    const normalizedCafeName = cafeName.toLowerCase();
+
+    if (normalizedCafeName.includes('chatkara')) {
       console.log('✅ Using Chatkara API key');
       return import.meta.env.VITE_CHATKARA_PRINTNODE_API_KEY || '';
-    } else if (cafeName.toLowerCase().includes('food court')) {
+    } else if (normalizedCafeName.includes('food court')) {
       console.log('✅ Using Food Court API key');
       return import.meta.env.VITE_FOODCOURT_PRINTNODE_API_KEY || '';
-    } else if (cafeName.toLowerCase().includes('punjabi') && cafeName.toLowerCase().includes('tadka')) {
+    } else if (normalizedCafeName.includes('punjabi') && normalizedCafeName.includes('tadka')) {
       console.log('✅ Using Punjabi Tadka API key');
       return import.meta.env.VITE_PUNJABI_TADKA_PRINTNODE_API_KEY || '';
-    } else if (cafeName.toLowerCase().includes('munch') && cafeName.toLowerCase().includes('box')) {
+    } else if (normalizedCafeName.includes('munch') && normalizedCafeName.includes('box')) {
       console.log('✅ Using Munch Box API key');
       return import.meta.env.VITE_MUNCHBOX_PRINTNODE_API_KEY || '';
-    } else if (cafeName.toLowerCase().includes('pizza') && cafeName.toLowerCase().includes('bakers')) {
+    } else if (normalizedCafeName.includes('pizza') && normalizedCafeName.includes('bakers')) {
       console.log('✅ Using Pizza Bakers API key');
       return import.meta.env.VITE_PIZZA_BAKERS_PRINTNODE_API_KEY || '';
-    } else if (cafeName.toLowerCase().includes('grabit')) {
+    } else if (normalizedCafeName.includes('grabit')) {
       console.log('✅ Using Grabit API key');
       const apiKey = import.meta.env.VITE_GRABIT_PRINTNODE_API_KEY || import.meta.env.VITE_24_SEVEN_MART_PRINTNODE_API_KEY || '';
       if (!apiKey) {
         console.warn('⚠️ VITE_GRABIT_PRINTNODE_API_KEY not set, using fallback');
+        return import.meta.env.VITE_PRINTNODE_API_KEY || '';
+      }
+      return apiKey;
+    } else if (normalizedCafeName.includes('banna')) {
+      console.log('✅ Using Banna\'s Chowki API key');
+      const apiKey = import.meta.env.VITE_BANNAS_CHOWKI_PRINTNODE_API_KEY || '';
+      if (!apiKey) {
+        console.warn('⚠️ VITE_BANNAS_CHOWKI_PRINTNODE_API_KEY not set, using fallback');
+        return import.meta.env.VITE_PRINTNODE_API_KEY || '';
+      }
+      return apiKey;
+    } else if (normalizedCafeName.includes('amor')) {
+      console.log('✅ Using Amor API key');
+      const apiKey = import.meta.env.VITE_AMOR_PRINTNODE_API_KEY || '';
+      if (!apiKey) {
+        console.warn('⚠️ VITE_AMOR_PRINTNODE_API_KEY not set, using fallback');
+        return import.meta.env.VITE_PRINTNODE_API_KEY || '';
+      }
+      return apiKey;
+    } else if (normalizedCafeName.includes('stardom')) {
+      console.log('✅ Using Stardom API key');
+      const apiKey = import.meta.env.VITE_STARDOM_PRINTNODE_API_KEY || '';
+      if (!apiKey) {
+        console.warn('⚠️ VITE_STARDOM_PRINTNODE_API_KEY not set, using fallback');
         return import.meta.env.VITE_PRINTNODE_API_KEY || '';
       }
       return apiKey;
@@ -233,14 +259,22 @@ export class CafeSpecificPrintService {
 
       // Determine printer ID based on cafe
       let printerId: number;
-      if (cafe.name.toLowerCase().includes('chatkara')) {
+      const normalizedCafeName = cafe.name.toLowerCase();
+
+      if (normalizedCafeName.includes('chatkara')) {
         printerId = 74698272; // Chatkara POS-80-Series
-      } else if (cafe.name.toLowerCase().includes('food court')) {
+      } else if (normalizedCafeName.includes('food court')) {
         printerId = 74692682; // Food Court EPSON TM-T82 Receipt
-      } else if (cafe.name.toLowerCase().includes('punjabi') && cafe.name.toLowerCase().includes('tadka')) {
+      } else if (normalizedCafeName.includes('punjabi') && normalizedCafeName.includes('tadka')) {
         printerId = 74782622; // Punjabi Tadka Printer (POS-60C)
-      } else if (cafe.name.toLowerCase().includes('grabit')) {
+      } else if (normalizedCafeName.includes('grabit')) {
         printerId = 74883417; // Grabit POS80 Printer
+      } else if (normalizedCafeName.includes('banna')) {
+        printerId = 74903987; // Banna's Chowki Printer
+      } else if (normalizedCafeName.includes('amor')) {
+        printerId = 74902514; // Amor POS80 Printer
+      } else if (normalizedCafeName.includes('stardom')) {
+        printerId = 74910967; // Stardom THERMAL Receipt Printer
       } else {
         return { success: false, error: 'No printer ID configured for this cafe' };
       }
@@ -423,10 +457,11 @@ export class CafeSpecificPrintService {
   private formatKOTForBrowser(data: ReceiptData): string {
     const { order_number, items, cafe_name } = data;
     
-    // Check if this is Chatkara cafe
-    const isChatkara = cafe_name.toLowerCase().includes('chatkara');
+    const normalizedCafeName = cafe_name?.toLowerCase() || '';
+    const isChatkara = normalizedCafeName.includes('chatkara');
+    const isBannasChowki = normalizedCafeName.includes('banna');
     
-    if (isChatkara) {
+    if (isChatkara || isBannasChowki) {
       return this.formatChatkaraKOT(data);
     } else {
       return this.formatGenericKOT(data);
@@ -498,11 +533,12 @@ MUJFOODCLUB
   private formatReceiptForBrowser(data: ReceiptData): string {
     const { order_number, cafe_name, customer_name, customer_phone, items, final_amount, payment_method, delivery_block } = data;
     
-    // Check if this is Chatkara or Grabit cafe (both use Chatkara format)
-    const isChatkara = cafe_name.toLowerCase().includes('chatkara');
-    const isGrabit = cafe_name.toLowerCase().includes('grabit') || cafe_name.toLowerCase() === 'grabit';
+    const normalizedCafeName = cafe_name?.toLowerCase() || '';
+    const isChatkara = normalizedCafeName.includes('chatkara');
+    const isGrabit = normalizedCafeName.includes('grabit');
+    const isBannasChowki = normalizedCafeName.includes('banna');
     
-    if (isChatkara || isGrabit) {
+    if (isChatkara || isGrabit || isBannasChowki) {
       return this.formatChatkaraReceipt(data);
     } else {
       return this.formatGenericReceipt(data);

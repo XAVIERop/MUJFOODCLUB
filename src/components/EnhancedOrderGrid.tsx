@@ -34,6 +34,8 @@ import { usePrinter } from '@/hooks/usePrinter';
 import { directPrinterService } from '@/services/directPrinterService';
 // import { useLocalPrint } from '@/hooks/useLocalPrint'; // Disabled - using cafe-specific PrintNode service
 import { usePrintNode } from '@/hooks/usePrintNode';
+import { unifiedPrintService } from '@/services/unifiedPrintService';
+import CafeCancellationDialog from './CafeCancellationDialog';
 
 interface OrderItem {
   id: string;
@@ -45,6 +47,7 @@ interface OrderItem {
   menu_item: {
     name: string;
     description: string;
+    is_vegetarian?: boolean;
   };
 }
 
@@ -109,11 +112,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
   const [simpleReceiptOrder, setSimpleReceiptOrder] = useState<Order | null>(null);
   const [hoveredOrder, setHoveredOrder] = useState<Order | null>(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [cancelOrder, setCancelOrder] = useState<Order | null>(null);
-  const [cancelPassword, setCancelPassword] = useState('');
-  const [showCancelPassword, setShowCancelPassword] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelDialogOrder, setCancelDialogOrder] = useState<Order | null>(null);
 
   // Calculate time elapsed since order creation
   const getTimeElapsed = (createdAt: string): string => {
@@ -252,63 +251,6 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
     setHoveredOrder(null);
   };
 
-  const handleCancelOrder = (order: Order) => {
-    setCancelOrder(order);
-    setShowCancelDialog(true);
-    setCancelPassword('');
-    setShowCancelPassword(false);
-    // Don't close popup immediately - let user enter password
-  };
-
-  const handleConfirmCancel = async () => {
-    if (!cancelOrder) return;
-
-    if (!cancelPassword.trim()) {
-      toast({
-        title: "Password Required",
-        description: "Please enter the cancellation password",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Cafe cancellation password - in a real app, this should be configurable per cafe
-    const CAFE_CANCELLATION_PASSWORD = 'cafe123';
-
-    if (cancelPassword !== CAFE_CANCELLATION_PASSWORD) {
-      toast({
-        title: "Invalid Password",
-        description: "The cancellation password is incorrect",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsCancelling(true);
-    try {
-      // Call the onStatusUpdate function to update the order status to cancelled
-      await onStatusUpdate(cancelOrder.id, 'cancelled');
-      
-      toast({
-        title: "Order Cancelled",
-        description: `Order ${cancelOrder.order_number} has been cancelled successfully`,
-      });
-      
-      setShowCancelDialog(false);
-      setCancelOrder(null);
-      setCancelPassword('');
-      closePopup();
-    } catch (error) {
-      console.error('Error cancelling order:', error);
-      toast({
-        title: "Cancellation Failed",
-        description: "Failed to cancel the order. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsCancelling(false);
-    }
-  };
 
   // Improved popup positioning logic
   const getPopupTransform = (x: number, y: number) => {
@@ -382,7 +324,8 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
         quantity: item.quantity,
         unit_price: item.unit_price,
         total_price: item.total_price,
-        special_instructions: item.special_instructions
+        special_instructions: item.special_instructions,
+        is_vegetarian: item.menu_item?.is_vegetarian ?? true // Default to true if not specified
       })),
       subtotal: order.total_amount || 0,
       tax_amount: 0,
@@ -396,32 +339,40 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
     };
   };
 
-  // Print KOT only
+  // Print KOT only - Uses unified print service for Banna's Chowki split printing
   const handlePrintKOT = async (order: Order) => {
     try {
       const receiptData = createReceiptData(order);
       if (!receiptData) return;
 
-      if (printNodeAvailable) {
-        const result = await printNodePrintKOT(receiptData);
+      // Use unified print service which handles Banna's Chowki split printing
+      if (!cafeId) {
+        toast({
+          title: "Cafe ID Missing",
+          description: "Cafe ID is required for printing",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const result = await unifiedPrintService.printKOT(receiptData, cafeId);
+      
+      if (result.success) {
+        // Check if this is Banna's Chowki for split printing message
+        const isBannasChowki = receiptData.cafe_name?.toLowerCase().includes('banna');
+        const message = isBannasChowki && result.method?.includes('split')
+          ? "KOTs (Veg & Non-Veg) printed to separate printers"
+          : "Kitchen Order Ticket sent via PrintNode";
         
-        if (result.success) {
-          toast({
-            title: "KOT Printed",
-            description: "Kitchen Order Ticket sent via PrintNode",
-            variant: "default",
-          });
-        } else {
-          toast({
-            title: "KOT Print Error",
-            description: result.error || "Failed to print KOT",
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "KOT Printed",
+          description: message,
+          variant: "default",
+        });
       } else {
         toast({
-          title: "PrintNode Not Available",
-          description: "PrintNode service is not configured or available",
+          title: "KOT Print Error",
+          description: result.error || "Failed to print KOT",
           variant: "destructive",
         });
       }
@@ -536,6 +487,16 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
 
   // Status update handler
   const handleStatusUpdate = (orderId: string, currentStatus: Order['status']) => {
+    // Prevent updating cancelled or completed orders
+    if (currentStatus === 'cancelled' || currentStatus === 'completed') {
+      toast({
+        title: "Cannot Update Order",
+        description: `Cannot update orders that are ${currentStatus}`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const statusFlow: Order['status'][] = ['received', 'confirmed', 'preparing', 'on_the_way', 'completed'];
     const currentIndex = statusFlow.indexOf(currentStatus);
     const nextStatus = currentIndex < statusFlow.length - 1 ? statusFlow[currentIndex + 1] : 'completed';
@@ -711,18 +672,21 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
 
                 {/* Action Buttons */}
                 <div className="flex space-x-1.5">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStatusUpdate(order.id, order.status);
-                    }}
-                    className="text-lg px-2 py-1 h-7 w-7"
-                    title="Update Status"
-                  >
-                    ✏️
-                  </Button>
+                  {/* Only show Update button for orders that are not cancelled or completed */}
+                  {order.status !== 'cancelled' && order.status !== 'completed' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStatusUpdate(order.id, order.status);
+                      }}
+                      className="text-lg px-2 py-1 h-7 w-7"
+                      title="Update Status"
+                    >
+                      ✏️
+                    </Button>
+                  )}
                   
                   <Button
                     size="sm"
@@ -789,6 +753,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
               top: `${popupPosition.y}px`,
               transform: getPopupTransform(popupPosition.x, popupPosition.y)
             }}
+            onClick={(e) => e.stopPropagation()}
           >
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-gray-900">Order Details</h3>
@@ -859,86 +824,25 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
               </div>
             </div>
 
-            {/* Cancel Password Prompt */}
-            {showCancelDialog && cancelOrder && hoveredOrder && hoveredOrder.id === cancelOrder.id && (
-              <div className="pt-3 border-t border-red-200 bg-red-50 p-3 rounded-lg">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-red-600" />
-                    <span className="font-medium text-red-800">Cancel Order #{cancelOrder.order_number}</span>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="cancel-password" className="text-sm font-medium">
-                      Cancellation Password:
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="cancel-password"
-                        type={showCancelPassword ? "text" : "password"}
-                        value={cancelPassword}
-                        onChange={(e) => setCancelPassword(e.target.value)}
-                        placeholder="Enter cancellation password"
-                        className="pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowCancelPassword(!showCancelPassword)}
-                      >
-                        {showCancelPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={handleConfirmCancel}
-                      disabled={isCancelling}
-                      className="flex-1"
-                    >
-                      {isCancelling ? 'Cancelling...' : 'Confirm Cancel'}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setShowCancelDialog(false);
-                        setCancelOrder(null);
-                        setCancelPassword('');
-                      }}
-                      disabled={isCancelling}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Actions */}
             <div className="flex flex-wrap gap-2 pt-2 border-t">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleStatusUpdate(hoveredOrder.id, hoveredOrder.status);
-                  closePopup();
-                }}
-                className="text-lg px-3 py-2"
-                title="Update Status"
-              >
-                ✏️ Update
-              </Button>
+              {/* Only show Update button for orders that are not cancelled or completed */}
+              {hoveredOrder && hoveredOrder.status !== 'cancelled' && hoveredOrder.status !== 'completed' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStatusUpdate(hoveredOrder.id, hoveredOrder.status);
+                    closePopup();
+                  }}
+                  className="text-lg px-3 py-2"
+                  title="Update Status"
+                >
+                  ✏️ Update
+                </Button>
+              )}
               
               <Button
                 size="sm"
@@ -970,17 +874,19 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                 🧾 Receipt
               </Button>
 
-              {/* Cancel Button - Only show for orders that can be cancelled and not already in cancel mode */}
-              {hoveredOrder && !['completed', 'cancelled'].includes(hoveredOrder.status) && !showCancelDialog && (
+              {/* Cancel Button - Only show for orders that can be cancelled (up to 'preparing' status) */}
+              {hoveredOrder && !['completed', 'cancelled', 'on_the_way'].includes(hoveredOrder.status) && (
                 <Button
                   size="sm"
                   variant="destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCancelOrder(hoveredOrder);
-                  }}
                   className="text-lg px-3 py-2"
                   title="Cancel Order"
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCancelDialogOrder(hoveredOrder);
+                    closePopup();
+                  }}
                 >
                   ❌ Cancel
                 </Button>
@@ -989,6 +895,20 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
           </div>
           </div>
         </>
+      )}
+
+      {/* Cancel Order Dialog - Rendered outside popup to avoid unmounting issues */}
+      {cancelDialogOrder && (
+        <CafeCancellationDialog
+          orderId={cancelDialogOrder.id}
+          orderNumber={cancelDialogOrder.order_number}
+          onCancel={() => {
+            // Refresh the order list by calling onStatusUpdate
+            onStatusUpdate(cancelDialogOrder.id, 'cancelled');
+            setCancelDialogOrder(null);
+          }}
+          trigger={<div style={{ display: 'none' }} />}
+        />
       )}
 
       {/* Receipt Modals */}

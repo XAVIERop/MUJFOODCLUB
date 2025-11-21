@@ -8,7 +8,15 @@ interface AuthContextType {
   session: Session | null;
   profile: any | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, block: string, phone: string, referralCode?: string) => Promise<{ error: any }>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    block: string,
+    phone: string,
+    residencyScope: 'ghs' | 'off_campus',
+    referralCode?: string
+  ) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: any) => Promise<{ error: any }>;
@@ -51,7 +59,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const createProfile = async (userId: string, email: string, fullName: string, block: string, phone: string, referralCode?: string) => {
+  const createProfile = async (
+    userId: string,
+    email: string,
+    fullName: string,
+    block: string,
+    phone: string,
+    residencyScope: 'ghs' | 'off_campus',
+    referralCode?: string
+  ) => {
     try {
       // Extract name from email if fullName is not provided
       const displayName = fullName || email.split('@')[0];
@@ -66,6 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user_type: 'student',
         block: block,
         phone: phone,
+        residency_scope: residencyScope,
         loyalty_points: 0,
         loyalty_tier: 'foodie',
         total_orders: 0,
@@ -172,10 +189,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   );
 
-  const signUp = async (email: string, password: string, fullName: string, block: string, phone: string, referralCode?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    block: string,
+    phone: string,
+    residencyScope: 'ghs' | 'off_campus',
+    referralCode?: string
+  ) => {
     try {
-      // Validate email domain
-      if (!email.endsWith('@muj.manipal.edu')) {
+      const isGhsResident = residencyScope === 'ghs';
+
+      // Validate email domain only for GHS residents
+      if (isGhsResident && !email.endsWith('@muj.manipal.edu')) {
         return { error: { message: 'Please use a valid MUJ email address (@muj.manipal.edu)' } };
       }
 
@@ -212,7 +239,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           data: {
             full_name: fullName,
             block: block,
-            phone: phone
+            phone: phone,
+            residency_scope: residencyScope
           }
         }
       });
@@ -287,7 +315,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // Create profile for student (without referral processing yet)
         console.log('Creating profile for new user:', data.user.id);
-        await createProfile(data.user.id, email, fullName, block, phone, cleanReferralCode);
+        await createProfile(data.user.id, email, fullName, block, phone, residencyScope, cleanReferralCode);
         console.log('Profile created successfully for:', email);
         
         // Final check: Make sure we actually created a new user
@@ -484,7 +512,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const phone = data.user.user_metadata?.phone || '';
         const pendingReferralCode = data.user.user_metadata?.pending_referral_code;
         
-        await createProfile(data.user.id, email, fullName, block, phone);
+        await createProfile(data.user.id, email, fullName, block, phone, residencyScope);
         
         // Process referral code only after email verification
         if (pendingReferralCode) {

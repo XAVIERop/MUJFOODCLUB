@@ -1,4 +1,4 @@
-import React, { useState, useMemo, memo, useCallback } from 'react';
+import React, { useState, useMemo, memo, useCallback, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import { usePrinter } from '@/hooks/usePrinter';
 import { directPrinterService } from '@/services/directPrinterService';
 // import { useLocalPrint } from '@/hooks/useLocalPrint'; // Disabled - using cafe-specific PrintNode service
 import { usePrintNode } from '@/hooks/usePrintNode';
+import CafeCancellationDialog from './CafeCancellationDialog';
 
 interface OrderItem {
   id: string;
@@ -164,6 +165,25 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
     onOrderSelect(order);
   };
 
+  // Prevent body scroll when order details card is open on mobile
+  useEffect(() => {
+    if (selectedOrder) {
+      // Check if we're on mobile (viewport width < 1024px)
+      const isMobile = window.innerWidth < 1024;
+      if (isMobile) {
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+        return () => {
+          // Restore body scroll when component unmounts or selectedOrder changes
+          document.body.style.overflow = '';
+        };
+      }
+    } else {
+      // Restore body scroll when no order is selected
+      document.body.style.overflow = '';
+    }
+  }, [selectedOrder]);
+
   const handleStatusUpdate = async (orderId: string, newStatus: Order['status']) => {
     try {
       await onStatusUpdate(orderId, newStatus);
@@ -196,13 +216,6 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
       const isFoodCourt = orderData.cafes?.name?.toLowerCase().includes('food court') || 
                          orderData.cafes?.name === 'FOOD COURT' ||
                          orderData.cafes?.name?.toLowerCase() === 'food court';
-      
-      console.log('CompactOrderGrid - Full order data:', orderData);
-      console.log('CompactOrderGrid - Cafe name:', orderData.cafes?.name);
-      console.log('CompactOrderGrid - Is Food Court:', isFoodCourt);
-      
-      // Temporary alert to verify the data
-      alert(`DEBUG: Cafe name: ${orderData.cafes?.name}, Is Food Court: ${isFoodCourt}`);
       
       if (isFoodCourt) {
         return generateFoodCourtReceipt(orderData, items);
@@ -983,8 +996,8 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
                             onClick={async (e) => {
                               e.stopPropagation();
                               
-                              // For now, hardcode Food Court detection based on cafe ID
-                              // TODO: Fix cafe data fetching issue
+                              // Detect Food Court cafe (workaround: checks both cafe_id and name)
+                              // Note: Using multiple checks to handle cases where cafe data might not be fully loaded
                               const isFoodCourt = order.cafe_id === '3e5955ba-9b90-48ce-9d07-cc686678a10e' ||
                                                  order.cafes?.name?.toLowerCase().includes('food court') || 
                                                  order.cafes?.name === 'FOOD COURT' ||
@@ -1143,8 +1156,16 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
 
       {/* Selected Order Details */}
       {selectedOrder && (
-        <Card className="mt-6 sticky top-4 z-10 bg-white shadow-lg border-2 border-orange-200">
-          <CardContent className="p-4">
+        <>
+          {/* Mobile: Fixed overlay backdrop */}
+          <div 
+            className="lg:hidden fixed inset-0 bg-black/50 z-40"
+            onClick={() => setSelectedOrder(null)}
+          />
+          
+          {/* Mobile: Centered modal card, Desktop: Sticky card */}
+          <Card className="lg:mt-6 lg:sticky lg:top-4 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 lg:translate-x-0 lg:translate-y-0 lg:relative z-50 bg-white shadow-lg border-2 border-orange-200 w-[95vw] max-w-md lg:max-w-none lg:w-auto max-h-[90vh] lg:max-h-none overflow-y-auto">
+            <CardContent className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">Order Details: {selectedOrder.order_number}</h3>
               <Button
@@ -1179,21 +1200,12 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
                    selectedOrder.delivery_block}
                 </span>
               </div>
-              <div className="bg-yellow-200 p-2 text-xs mb-2">
-                🔍 DEBUG: delivery_block = "{selectedOrder.delivery_block}" | Is DINE_IN? {selectedOrder.delivery_block === 'DINE_IN' ? 'YES' : 'NO'}
-              </div>
               {selectedOrder.delivery_block === 'DINE_IN' && (
                 <div>
-                  <div className="bg-red-500 text-white p-2 mb-2 text-sm">
-                    🚨 DEBUG: This code is working! Order delivery_block = {selectedOrder.delivery_block}
-                  </div>
                   <span className="text-muted-foreground">Table Number:</span>
                   <span className="ml-2 font-medium text-orange-600">
                     {selectedOrder.table_number ? `Table ${selectedOrder.table_number}` : 'N/A'}
                   </span>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Debug: table_number = "{selectedOrder.table_number}" (type: {typeof selectedOrder.table_number})
-                  </div>
                 </div>
               )}
               <div>
@@ -1250,25 +1262,35 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
               )}
             </div>
             
-            {/* Order Actions - Only Cancel Button */}
+            {/* Order Actions - Cancel Button with Dialog */}
             <div className="mt-4 border-t pt-4">
               <h4 className="font-semibold mb-3 text-sm">Order Actions:</h4>
               
-              {/* Cancel Order Section */}
+              {/* Cancel Order Section - Only show for orders that can be cancelled */}
               {getAvailableStatuses(selectedOrder.status).includes('cancelled') && (
                 <div className="flex flex-col sm:flex-row gap-3 mb-4">
                   <div className="flex-1">
                     <label className="block text-sm font-medium text-muted-foreground mb-2">
                       Cancel Order:
                     </label>
-                    <Button
-                      onClick={() => handleStatusUpdate(selectedOrder.id, 'cancelled')}
-                      variant="destructive"
-                      size="sm"
-                      className="text-xs"
-                    >
-                      Cancel Order
-                    </Button>
+                    <CafeCancellationDialog
+                      orderId={selectedOrder.id}
+                      orderNumber={selectedOrder.order_number}
+                      onCancel={() => {
+                        // Refresh the order list by calling onStatusUpdate
+                        // This will trigger a refresh in the parent component
+                        onStatusUpdate(selectedOrder.id, 'cancelled');
+                      }}
+                      trigger={
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          Cancel Order
+                        </Button>
+                      }
+                    />
                   </div>
                 </div>
               )}
@@ -1301,6 +1323,7 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
             </div>
           </CardContent>
         </Card>
+        </>
       )}
       
       {/* Simple Receipt Component */}
@@ -1340,6 +1363,8 @@ const getNextStatus = (currentStatus: Order['status']): Order['status'] => {
 };
 
 // Helper function to get available status options
+// Cafes can only cancel orders up to 'preparing' status
+// Cannot cancel orders that are 'on_the_way' or 'completed'
 const getAvailableStatuses = (currentStatus: Order['status']): Order['status'][] => {
   switch (currentStatus) {
     case 'received':
@@ -1349,7 +1374,7 @@ const getAvailableStatuses = (currentStatus: Order['status']): Order['status'][]
     case 'preparing':
       return ['on_the_way', 'cancelled'];
     case 'on_the_way':
-      return ['completed', 'cancelled'];
+      return ['completed']; // Cannot cancel orders that are out for delivery
     case 'completed':
       return []; // No further status changes
     case 'cancelled':

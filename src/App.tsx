@@ -13,16 +13,23 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import { SecurityProvider, SecurityIndicator } from "@/components/SecurityProvider";
 import PWAUpdateManager from "@/components/PWAUpdateManager";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import PushNotificationPrompt from "@/components/PushNotificationPrompt";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import BottomNavigation from "./components/BottomNavigation";
 import ScrollToTop from "./components/ScrollToTop";
 import MobileFloatingCart from "./components/MobileFloatingCart";
-import { PerformanceMonitor } from "./components/PerformanceMonitor";
 import { usePerformanceMonitor } from "./components/PerformanceMonitor";
 import LoadingSpinner from "./components/LoadingSpinner";
 import ErrorBoundary from "./components/ErrorBoundary";
 // import MobileErrorHandler from "./components/MobileErrorHandler";
-import PerformanceDashboard from "./components/PerformanceDashboard";
+
+// Lazy load DEV-only performance components to reduce bundle size
+const PerformanceMonitor = lazy(() => 
+  import("./components/PerformanceMonitor").then(module => ({ 
+    default: module.PerformanceMonitor 
+  }))
+);
+const PerformanceDashboard = lazy(() => import("./components/PerformanceDashboard"));
 
 // Lazy load all pages for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -48,6 +55,8 @@ const POSDashboard = lazy(() => import("./pages/POSDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const EnvCheck = lazy(() => import("./pages/EnvCheck"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const TableOrder = lazy(() => import("./pages/TableOrder"));
+const TableQRGenerator = lazy(() => import("./pages/TableQRGenerator"));
 
 // Using optimized query client from lib/queryClient.ts
 
@@ -76,6 +85,7 @@ const App = () => {
                       <Route path="/orders" element={<MyOrders />} />
                       <Route path="/order-analytics" element={<OrderAnalyticsPage />} />
                       <Route path="/cafes" element={<Cafes />} />
+                      <Route path="/bannaschowki" element={<MenuModern />} />
                       <Route path="/grabit" element={<Grocery />} />
                       <Route path="/grabit/category/:categoryId" element={<GroceryCategory />} />
                       {/* <Route path="/rewards" element={<CafeRewards />} /> */} {/* Disabled for simplified version */}
@@ -91,6 +101,11 @@ const App = () => {
                       <Route path="/pos-dashboard" element={<POSDashboard />} />
                       <Route path="/admin" element={<AdminDashboard />} />
                       <Route path="/env-check" element={<EnvCheck />} />
+                      
+                      {/* Table QR Order Route */}
+                      <Route path="/table-order/:cafeSlug/:tableNumber" element={<TableOrder />} />
+                      <Route path="/table-qr-generator" element={<TableQRGenerator />} />
+                      
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
@@ -100,16 +115,17 @@ const App = () => {
               {/* Bottom Navigation - Mobile Only */}
               <BottomNavigation />
               
-              {/* Performance Monitor - Development Only */}
+              {/* Performance Monitor - Development Only (Lazy Loaded) */}
               {import.meta.env.DEV && (
-                <>
+                <Suspense fallback={null}>
                   <PerformanceMonitor />
                   <PerformanceDashboard />
-                </>
+                </Suspense>
               )}
               {/* <SecurityIndicator /> */}
               <PWAUpdateManager />
               <PWAInstallPrompt />
+              <PushNotificationPrompt />
               <MobileFloatingCart />
             </BrowserRouter>
           </TooltipProvider>

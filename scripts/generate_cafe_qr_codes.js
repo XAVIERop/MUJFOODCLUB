@@ -5,6 +5,10 @@ import { createClient } from '@supabase/supabase-js';
 import QRCode from 'qrcode';
 import fs from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' });
 
 // Supabase configuration
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -17,6 +21,9 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Production website URL for QR codes
+const PRODUCTION_URL = 'https://mujfoodclub.in';
 
 async function generateCafeQRCodes() {
   try {
@@ -49,7 +56,7 @@ async function generateCafeQRCodes() {
 
     // Generate QR codes for each cafe
     for (const cafe of cafes) {
-      const qrData = `${supabaseUrl}/menu/${cafe.id}?dine_in=true`;
+      const qrData = `${PRODUCTION_URL}/menu/${cafe.id}?dine_in=true`;
       
       try {
         // Generate QR code
@@ -133,7 +140,7 @@ function generateSummaryHTML(cafes) {
         <p><strong>Location:</strong> ${cafe.location}</p>
         <div class="qr-info">
           <strong>QR Code File:</strong> ${cafe.name.replace(/[^a-zA-Z0-9]/g, '_')}_DineIn_QR.png<br>
-          <strong>URL:</strong> ${supabaseUrl}/menu/${cafe.id}?dine_in=true<br>
+          <strong>URL:</strong> ${PRODUCTION_URL}/menu/${cafe.id}?dine_in=true<br>
           <strong>Usage:</strong> Print and place on all tables at this cafe
         </div>
       </div>

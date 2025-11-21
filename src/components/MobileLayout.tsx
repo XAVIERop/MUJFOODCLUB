@@ -18,6 +18,9 @@ interface Cafe {
   average_rating: number | null;
   total_ratings: number | null;
   priority: number | null;
+  location_scope?: 'ghs' | 'off_campus';
+  slug?: string;
+  image_url?: string | null;
 }
 
 interface MobileLayoutProps {

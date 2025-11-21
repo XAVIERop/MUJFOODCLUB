@@ -17,6 +17,9 @@ interface Cafe {
   total_ratings: number | null;
   cuisine_categories: string[] | null;
   priority: number | null;
+  image_url?: string | null;
+  slug?: string;
+  location_scope?: 'ghs' | 'off_campus';
 }
 
 interface FeaturedCafeGridProps {

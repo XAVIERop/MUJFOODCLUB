@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Star, Truck, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { getImageUrl } from '@/utils/imageSource';
+import { shouldUserSeeCafe, getUserResidency } from '@/utils/residencyUtils';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Cafe {
   id: string;
@@ -18,6 +20,7 @@ interface Cafe {
   slug?: string | null;
   priority?: number | null;
   accepting_orders?: boolean;
+  location_scope?: 'ghs' | 'off_campus';
 }
 
 interface HeroBanner {
@@ -55,6 +58,8 @@ const HeroBannerSection: React.FC = () => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(true);
   const [preloadedImages, setPreloadedImages] = useState<Set<string>>(new Set());
+  const { profile } = useAuth();
+  const userScope = getUserResidency(profile);
 
   // Fetch cafes data
   useEffect(() => {
@@ -69,7 +74,7 @@ const HeroBannerSection: React.FC = () => {
           // Fallback to direct table query if RPC fails
           const { data: fallbackData, error: fallbackError } = await supabase
             .from('cafes')
-            .select('id, name, description, image_url, rating, total_reviews, type, location, slug')
+            .select('id, name, description, image_url, rating, total_reviews, type, location, slug, location_scope')
             .eq('is_active', true)
             .order('priority', { ascending: true })
             .limit(6);
@@ -77,11 +82,24 @@ const HeroBannerSection: React.FC = () => {
           if (fallbackError) {
             console.error('Fallback query also failed:', fallbackError);
           } else {
-            setCafes(fallbackData || []);
+            const filteredFallback = (fallbackData || []).filter((cafe) =>
+              shouldUserSeeCafe(profile, cafe)
+            );
+            setCafes(filteredFallback);
           }
         } else {
+          const scopedData = (data || []).filter((cafe: any) =>
+            shouldUserSeeCafe(profile, cafe)
+          );
+
+          if (scopedData.length === 0) {
+            setCafes([]);
+            setLoading(false);
+            return;
+          }
+
           // First, get the top 10 cafes by priority (regardless of open/closed status)
-          const top10Cafes = (data || []).sort((a, b) => (a.priority || 99) - (b.priority || 99)).slice(0, 10);
+          const top10Cafes = scopedData.sort((a: Cafe, b: Cafe) => (a.priority || 99) - (b.priority || 99)).slice(0, 10);
           
           // Then reorder within those 10: open cafes first, then closed cafes
           const openCafes = top10Cafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
@@ -99,7 +117,7 @@ const HeroBannerSection: React.FC = () => {
     };
 
     fetchCafes();
-  }, []);
+  }, [profile]);
 
   // Get cafe card image mapping (same as EnhancedCafeCard)
   const getCafeCardImage = (cafeName: string): string => {
@@ -164,7 +182,7 @@ const HeroBannerSection: React.FC = () => {
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
         imageUrl: getImageUrl('/optimized_images/minimeals_bb.webp'),
-        cafeId: 'mini-meals'
+        cafeId: 'b09e9dcb-f7e2-4eac-87f1-a4555c4ecde7'
       },
       {
         id: 'mini-meals-special-banner',
@@ -179,7 +197,7 @@ const HeroBannerSection: React.FC = () => {
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
         imageUrl: getImageUrl('/optimized_images/minimeals_bbb.png'),
-        cafeId: 'mini-meals'
+        cafeId: 'b09e9dcb-f7e2-4eac-87f1-a4555c4ecde7'
       },
       {
         id: 'cook-house-banner',
@@ -194,7 +212,7 @@ const HeroBannerSection: React.FC = () => {
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
         imageUrl: getImageUrl('/optimized_images/cookhouse_bb.webp'),
-        cafeId: 'cook-house'
+        cafeId: '48cabbce-6b24-4be6-8be6-f2f01f21752b'
       },
       {
         id: 'food-court-banner',
@@ -209,14 +227,75 @@ const HeroBannerSection: React.FC = () => {
         ratingCount: 100,
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
         imageUrl: getImageUrl('/optimized_images/fodcourt_bb.webp'),
-        cafeId: 'food-court'
+        cafeId: '3e5955ba-9b90-48ce-9d07-cc686678a10e'
       }
     ];
 
     return specificBanners;
   };
 
-  const heroBanners: HeroBanner[] = createHeroBanners();
+  const heroBanners: HeroBanner[] = useMemo(() => {
+    if (userScope === 'off_campus') {
+      return [
+        {
+          id: 'outside-delivery',
+          title: "Outside Cafés, Delivered",
+          subtitle: "Campus Gate & PG Service",
+          description: "Late-night cravings? Discover trusted partners delivering directly to MUJ gates and nearby hostels.",
+          ctaText: 'Explore Options',
+          ctaAction: 'scroll_to_cafes',
+          backgroundColor: 'bg-gradient-to-r from-emerald-500 to-sky-600',
+          textColor: 'text-white',
+          rating: 4.6,
+          ratingCount: 120,
+          features: ['Easy delivery', 'Trusted partners', 'Late-night availability']
+        },
+        {
+          id: 'bannas-chowki-highlight',
+          title: "Banna's Chowki",
+          subtitle: 'Tandoor • Rolls • Meals',
+          description: "Signature tandoori nights, hearty combos, and quick bites—now just a tap away.",
+          ctaText: 'View Menu',
+          ctaAction: 'menu_bannas-chowki',
+          backgroundColor: 'bg-gradient-to-r from-amber-500 to-orange-600',
+          textColor: 'text-white',
+          rating: 4.5,
+          ratingCount: 95,
+          features: ['Open till 2 AM', 'Campus gate delivery', 'Student favourites'],
+          cafeId: 'bannas-chowki'
+        },
+        {
+          id: 'kokoro-highlight',
+          title: "Koko'ro Korean-Italian Café",
+          subtitle: 'Mocktails • Korean bowls • Pizzas',
+          description: "From ramen to sushi and mocktails—discover the entire Koko'ro menu in one place.",
+          ctaText: 'Explore Koko\'ro',
+          ctaAction: 'menu_kokoro',
+          backgroundColor: 'bg-gradient-to-r from-rose-500 to-orange-500',
+          textColor: 'text-white',
+          rating: 4.6,
+          ratingCount: 142,
+          features: ['Korean specials', 'Italian pizzas', 'Refreshing mocktails'],
+          cafeId: 'kokoro'
+        },
+        {
+          id: 'pg-discovery',
+          title: 'Stay Nearby?',
+          subtitle: 'Handpicked Outside Cafés',
+          description: 'Browse curated lists for PG residents and off-campus students with transparent delivery options.',
+          ctaText: 'Browse Cafés',
+          ctaAction: 'scroll_to_cafes',
+          backgroundColor: 'bg-gradient-to-r from-purple-500 to-indigo-600',
+          textColor: 'text-white',
+          rating: 4.4,
+          ratingCount: 88,
+          features: ['Verified partners', 'Clear delivery fees', 'Quick reorder']
+        }
+      ];
+    }
+
+    return createHeroBanners();
+  }, [userScope]);
 
   // Preload next banner image
   useEffect(() => {
@@ -237,35 +316,69 @@ const HeroBannerSection: React.FC = () => {
   }, [currentBannerIndex, heroBanners, preloadedImages]);
 
   // Promotional cards data with background images
-  const promotionalCards: PromotionalCard[] = [
-    {
-      id: 'pizza-special',
-      title: 'Pizza Lovers Special',
-      description: 'Buy 2 Get 1 Free on all pizzas',
-      backgroundColor: 'bg-gradient-to-br from-yellow-400 to-red-500',
-      imageUrl: getImageUrl('/pizzalover.png'),
-      ctaText: 'Order Now →',
-      ctaAction: 'navigate_to_pizza'
-    },
-    {
-      id: 'chinese-delight',
-      title: 'Chinese Delight',
-      description: 'Hot momos and noodles',
-      backgroundColor: 'bg-gradient-to-br from-red-400 to-orange-500',
-      imageUrl: getImageUrl('/chinesedelight.png'),
-      ctaText: 'Order Now →',
-      ctaAction: 'navigate_to_chinese'
-    },
-    {
-      id: 'indian-authentic',
-      title: 'Authentic Indian',
-      description: 'Biryani and curry specials',
-      backgroundColor: 'bg-gradient-to-br from-orange-400 to-yellow-500',
-      imageUrl: getImageUrl('/authenticindian.png'),
-      ctaText: 'Order Now →',
-      ctaAction: 'navigate_to_indian'
+  const promotionalCards: PromotionalCard[] = useMemo(() => {
+    if (userScope === 'off_campus') {
+      return [
+        {
+          id: 'off-campus-curation',
+          title: 'Curated Off-Campus List',
+          description: 'Handpicked cafés delivering to MUJ gates & PG clusters.',
+          backgroundColor: 'bg-gradient-to-br from-teal-500 to-emerald-600',
+          imageUrl: undefined,
+          ctaText: 'See Recommendations →',
+          ctaAction: 'scroll_to_cafes'
+        },
+        {
+          id: 'late-night-bites',
+          title: 'Late-Night Bites',
+          description: 'Discover kitchens serving till 2 AM around Manipal Road.',
+          backgroundColor: 'bg-gradient-to-br from-slate-800 to-indigo-600',
+          imageUrl: undefined,
+          ctaText: 'Browse Menus →',
+          ctaAction: 'scroll_to_cafes'
+        },
+        {
+          id: 'gate-delivery',
+          title: 'Gate Delivery Ready',
+          description: 'Quick pickups at GHS gate with live rider updates.',
+          backgroundColor: 'bg-gradient-to-br from-amber-500 to-orange-500',
+          imageUrl: undefined,
+          ctaText: 'Plan Your Order →',
+          ctaAction: 'scroll_to_cafes'
+        }
+      ];
     }
-  ];
+
+    return [
+      {
+        id: 'cook-house-promo',
+        title: 'Cook House',
+        description: 'Delicious food and great service',
+        backgroundColor: 'bg-gradient-to-br from-orange-400 to-yellow-500',
+        imageUrl: 'https://ik.imagekit.io/foodclub/Banners/Website/web%20banners%20fc-05.jpg?updatedAt=1761686134713',
+        ctaText: 'Order Now →',
+        ctaAction: 'menu_48cabbce-6b24-4be6-8be6-f2f01f21752b'
+      },
+      {
+        id: 'pizza-bakers-promo',
+        title: 'Pizza Bakers',
+        description: 'Buy 2 Get 1 Free on all pizzas',
+        backgroundColor: 'bg-gradient-to-br from-yellow-400 to-red-500',
+        imageUrl: 'https://ik.imagekit.io/foodclub/Banners/Website/web%20banners%20fc-07.jpg?updatedAt=1761686136765',
+        ctaText: 'Order Now →',
+        ctaAction: 'menu_9fb950ad-fa96-495a-809f-d112d4933ede'
+      },
+      {
+        id: 'taste-of-india-promo',
+        title: 'Taste of India',
+        description: 'Authentic Indian cuisine',
+        backgroundColor: 'bg-gradient-to-br from-red-400 to-orange-500',
+        imageUrl: 'https://ik.imagekit.io/foodclub/Banners/Website/web%20banners%20fc-08.jpg?updatedAt=1761686136098',
+        ctaText: 'Order Now →',
+        ctaAction: 'menu_tasteofindia'
+      }
+    ];
+  }, [userScope]);
 
   // Auto-rotation logic
   useEffect(() => {
@@ -296,11 +409,10 @@ const HeroBannerSection: React.FC = () => {
 
   const handleBannerClick = (index: number) => {
     setCurrentBannerIndex(index);
-    
-    // Navigate to respective cafe based on banner index
-    const cafeRoutes = ['chatkara', 'mini-meals', 'mini-meals', 'cook-house', 'food-court'];
-    if (cafeRoutes[index]) {
-      window.location.href = `/menu/${cafeRoutes[index]}`;
+
+    const banner = heroBanners[index];
+    if (banner?.cafeId) {
+      window.location.href = `/menu/${banner.cafeId}`;
     }
   };
 
@@ -434,18 +546,17 @@ const HeroBannerSection: React.FC = () => {
                 "rounded-lg shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer relative overflow-hidden",
               card.backgroundColor
             )}
-            style={{
-                width: '100%',
-                height: '150px',
-              backgroundImage: card.imageUrl 
-                  ? `url(${card.imageUrl})`
-                : undefined,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
-            }}
             onClick={() => handleCtaClick(card.ctaAction)}
           >
+            {card.imageUrl ? (
+              <img
+                src={card.imageUrl}
+                alt={card.title}
+                className="w-full h-auto object-cover"
+              />
+            ) : (
+              <div className="w-full h-32" />
+            )}
               {/* Only show discount badge - no overlay text */}
                 {card.discount && (
                 <div className="absolute top-2 right-2 z-10">

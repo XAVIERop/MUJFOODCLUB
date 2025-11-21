@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
+import NotificationPreferences from '@/components/NotificationPreferences';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -233,7 +234,7 @@ const Profile = () => {
 
   if (!user || !profile) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-16">
@@ -249,7 +250,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+    <div className="min-h-screen bg-background pt-16 pb-24 lg:pb-8">
       <Header />
       
       <div className="container mx-auto px-4 py-8">
@@ -429,6 +430,11 @@ const Profile = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Notification Preferences */}
+              <div className="mt-6">
+                <NotificationPreferences />
+              </div>
             </div>
           </div>
         </div>

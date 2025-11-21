@@ -30,3 +30,7 @@ JOIN public.cafes c ON mi.cafe_id = c.id
 WHERE (LOWER(c.name) LIKE '%grabit%' OR LOWER(c.slug) = 'grabit')
   AND mi.name ILIKE 'Maggi%';
 
+
+
+
+

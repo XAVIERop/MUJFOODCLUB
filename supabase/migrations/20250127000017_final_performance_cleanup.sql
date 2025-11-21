@@ -444,3 +444,8 @@ COMMENT ON POLICY "cafe_ratings_comprehensive" ON public.cafe_ratings IS 'Compre
 
 
 
+
+
+
+
+

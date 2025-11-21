@@ -18,7 +18,8 @@ const PrintNodeStatus: React.FC<PrintNodeStatusProps> = ({ cafeId }) => {
     isPrinting, 
     refreshPrinters, 
     accountInfo, 
-    error 
+    error,
+    isConfigured
   } = usePrintNode(cafeId);
 
   const getStatusIcon = () => {
@@ -135,7 +136,7 @@ const PrintNodeStatus: React.FC<PrintNodeStatusProps> = ({ cafeId }) => {
         )}
 
         {/* Setup Instructions */}
-        {!isAvailable && (
+        {!isConfigured && (
           <Alert>
             <Printer className="h-4 w-4" />
             <AlertDescription>

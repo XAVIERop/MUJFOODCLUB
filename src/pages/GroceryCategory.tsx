@@ -4,13 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Filter, ShoppingCart, Plus, Minus, ArrowLeft } from 'lucide-react';
+import { Search, Filter, ShoppingCart, Plus, Minus, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import { getImageUrl } from '@/utils/imageSource';
 import { getGroceryProductImage } from '@/utils/groceryImageMatcher';
 import { CafeSwitchDialog } from '@/components/CafeSwitchDialog';
+import { isOffCampusUser, isOffCampusCafe } from '@/utils/residencyUtils';
 
 interface GroceryItem {
   id: string;
@@ -27,8 +29,9 @@ interface GroceryItem {
 const GroceryCategory: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { addToCart, removeFromCart, getItemCount, getTotalAmount, cart, cafe, clearCart, setCafe } = useCart();
+  const { toast } = useToast();
   
   const [items, setItems] = useState<GroceryItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<GroceryItem[]>([]);
@@ -42,12 +45,15 @@ const GroceryCategory: React.FC = () => {
   // Dialog state
   const [showCafeSwitchDialog, setShowCafeSwitchDialog] = useState(false);
   const [pendingItem, setPendingItem] = useState<GroceryItem | null>(null);
+  
+  // Cart bar collapse state
+  const [isCartBarCollapsed, setIsCartBarCollapsed] = useState(false);
 
   useEffect(() => {
     if (categoryId) {
       fetchItems();
     }
-  }, [categoryId]);
+  }, [categoryId, profile]);
 
   useEffect(() => {
     filterItems();
@@ -60,22 +66,41 @@ const GroceryCategory: React.FC = () => {
       // Get Grabit cafe ID
       const { data: cafeData, error: cafeError } = await supabase
         .from('cafes')
-        .select('id, name, slug')
+        .select('*')
         .eq('slug', 'grabit')
         .single();
       
       if (cafeError || !cafeData) {
-        console.error('Cafe not found:', cafeError);
+        console.error('Cafe not found or inaccessible:', cafeError);
+        toast({
+          title: 'Store unavailable',
+          description: 'This store is currently not accessible with your account.',
+          variant: 'destructive'
+        });
+        setLoading(false);
+        navigate('/');
         return;
       }
-      
-      // Get items for the category
+
+      if (isOffCampusUser(profile) && !isOffCampusCafe(cafeData)) {
+        toast({
+          title: 'GHS exclusive cafe',
+          description: 'This store is reserved for GHS residents. Please explore other cafés available to you.',
+          variant: 'destructive'
+        });
+        setLoading(false);
+        navigate('/');
+        return;
+      }
+
+      setGrabitCafe(cafeData);
+
+      // Get items for the category (including out-of-stock items so they show in search and category view)
       const { data: itemsData, error: itemsError } = await supabase
         .from('menu_items')
         .select('*')
         .eq('cafe_id', cafeData.id)
         .eq('category', categoryId)
-        .eq('is_available', true)
         .order('name');
       
       if (itemsError) {
@@ -92,11 +117,16 @@ const GroceryCategory: React.FC = () => {
         // Extract brand from item name (case-insensitive matching)
         if (name.includes('LAYS') || name.includes('LAY\'S')) brand = 'Lays';
         else if (name.includes('BINGO')) brand = 'Bingo';
+        else if (name.includes('BIKANO')) brand = 'Bikano';
+        else if (name.includes('BIKAJI')) brand = 'Bikaji';
         else if (name.includes('CORNITOS')) brand = 'Cornitos';
         else if (name.includes('CRAX')) brand = 'Crax';
+        else if (name.includes('DORITOS')) brand = 'Doritos';
         else if (name.includes('BALAJI')) brand = 'Balaji';
         else if (name.includes('ACT2') || name.includes('ACT II') || name.includes('ACT 2')) brand = 'Act II';
         else if (name.includes('POPZ')) brand = 'Popz';
+        else if (name.includes('PARLE')) brand = 'Parle';
+        else if (name.includes('UNCLE CHIPS')) brand = 'Uncle Chips';
         else if (name.includes('PEPSI')) brand = 'Pepsi';
         else if (name.includes('COKE') || name.includes('COCA-COLA') || name.includes('COCA COLA')) brand = 'Coca Cola';
         else if (name.includes('THUMS UP') || name.includes('THUMSUP')) brand = 'Thums Up';
@@ -104,7 +134,22 @@ const GroceryCategory: React.FC = () => {
         else if (name.includes('FANTA')) brand = 'Fanta';
         else if (name.includes('MIRINDA')) brand = 'Mirinda';
         else if (name.includes('DEW') || name.includes('MOUNTAIN DEW')) brand = 'Mountain Dew';
+        else if (name.includes('LIMCA')) brand = 'Limca';
+        else if (name.includes('MAAZA') || name.includes('MAZZA')) brand = 'Maaza';
+        else if (name.includes('FROOTI')) brand = 'Frooti';
+        else if (name.includes('ALO FRUIT')) brand = 'Alo Fruit';
+        else if (name.includes('MOGU MOGU')) brand = 'Mogu Mogu';
+        else if (name.includes('LAHORI ZEERA')) brand = 'Lahori Zeera';
+        else if (name.includes('OCEAN')) brand = 'Ocean';
         else if (name.includes('PAPERBOAT')) brand = 'Paperboat';
+        else if (name.includes('PROLYTE')) brand = 'Prolyte';
+        else if (name.includes('STING')) brand = 'Sting';
+        else if (name.includes('MAYORA')) brand = 'Mayora';
+        else if (name.includes('KELLOGG') || name.includes('KELLOGS')) brand = 'Kellogg\'s';
+        else if (name.includes('KURKURE')) brand = 'Kurkure';
+        else if (name.includes('MAX PROTEIN')) brand = 'Max Protein';
+        else if (name.startsWith('MOM') || name.includes(' MOM')) brand = 'MOM';
+        else if (name.includes('OYES')) brand = 'Oyes';
         else if (name.includes('WINKIES')) brand = 'Winkies';
         else if (name.includes('MONSTER')) brand = 'Monster';
         else if (name.includes('PREDATOR')) brand = 'Predator';
@@ -115,6 +160,14 @@ const GroceryCategory: React.FC = () => {
         else if (name.includes('BISLERI')) brand = 'Bisleri';
         else if (name.includes('TROPICANA')) brand = 'Tropicana';
         else if (name.includes('RED BULL') || name.includes('REDBULL')) brand = 'Red Bull';
+        else if (name.includes('MAGGI')) brand = 'Maggi';
+        else if (name.includes('BULDAK')) brand = 'Buldak';
+        else if (name.includes('GEKI')) brand = 'Geki';
+        else if (name.includes('NISSIN')) brand = 'Nissin';
+        else if (name.includes('NONGSHIM') || name.includes('NONG SHIM')) brand = 'NongShim';
+        else if (name.includes('SAMYANG')) brand = 'Samyang';
+        else if (name.includes('WAI WAI')) brand = 'Wai Wai';
+        else if (name.includes('YIPPEE')) brand = 'Yippee';
         
         extractedBrands.add(brand);
         
@@ -253,6 +306,17 @@ const GroceryCategory: React.FC = () => {
   };
 
   const handleAddToCart = (item: GroceryItem) => {
+    // Check if item is out of stock
+    const isOutOfStock = item.out_of_stock || !item.is_available;
+    if (isOutOfStock) {
+      toast({
+        title: 'Item Out of Stock',
+        description: `${item.name} is currently out of stock and cannot be added to cart.`,
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     // Check if cart has items from different cafe (including Grabit detection)
     console.log('🔍 Checking cafe mismatch:', {
       cartCafe: cafe,
@@ -386,7 +450,7 @@ const GroceryCategory: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16 pb-20 lg:pb-0">
+    <div className="min-h-screen bg-gray-50 pt-16 pb-20 lg:pb-24">
       {/* Header - Normal scroll, not fixed */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -534,7 +598,7 @@ const GroceryCategory: React.FC = () => {
                       {/* Product Info */}
                       <div className={`px-3 pb-3 flex flex-col flex-grow ${productImage ? '' : 'pt-4'}`}>
                         {/* Product Name */}
-                        <h3 className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight mb-1 min-h-[2.5rem]">
+                        <h3 className="text-sm font-medium text-gray-900 line-clamp-3 leading-tight mb-1 min-h-[3.75rem]">
                           {item.name}
                         </h3>
                         
@@ -588,46 +652,71 @@ const GroceryCategory: React.FC = () => {
         </div>
       </div>
       
-      {/* Floating Cart Bar - Desktop Only (Green Bar like Mobile) */}
+      {/* Floating Cart Bar - Desktop Only (Green Bar like Mobile) - Collapsible */}
       {Object.keys(cart).length > 0 && (
-        <div className="hidden lg:block fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-md w-full mx-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="bg-white/20 rounded-lg px-3 py-1.5">
-                <span className="font-medium text-sm">
-                  {getItemCount()} {getItemCount() === 1 ? 'Item' : 'Items'} • ₹{getTotalAmount().toFixed(2)}
-                </span>
-              </div>
-              <div className="text-sm">
-                {getTotalAmount() >= 89 ? (
-                  <span className="text-green-100">Free Delivery</span>
-                ) : (
-                  <span className="text-yellow-200">₹{(89 - getTotalAmount()).toFixed(2)} more for free delivery</span>
-                )}
+        <div className={`hidden lg:block fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-green-600 text-white rounded-lg shadow-lg z-50 transition-all duration-300 ease-in-out ${
+          isCartBarCollapsed ? 'max-w-[120px]' : 'max-w-md w-full'
+        } mx-4`}>
+          {isCartBarCollapsed ? (
+            // Collapsed State - Minimal Badge
+            <button
+              onClick={() => setIsCartBarCollapsed(false)}
+              className="w-full p-3 flex items-center justify-center space-x-2 hover:bg-green-700 rounded-lg transition-colors"
+              aria-label="Expand cart"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              <span className="font-bold text-lg">{getItemCount()}</span>
+              <ChevronUp className="w-4 h-4" />
+            </button>
+          ) : (
+            // Expanded State - Full Bar
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="bg-white/20 rounded-lg px-3 py-1.5">
+                    <span className="font-medium text-sm">
+                      {getItemCount()} {getItemCount() === 1 ? 'Item' : 'Items'} • ₹{getTotalAmount().toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="text-sm">
+                    {getTotalAmount() >= 89 ? (
+                      <span className="text-green-100">Free Delivery</span>
+                    ) : (
+                      <span className="text-yellow-200">₹{(89 - getTotalAmount()).toFixed(2)} more for free delivery</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to remove all items from your cart?')) {
+                        clearCart();
+                      }
+                    }}
+                    className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
+                    aria-label="Clear cart"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  <Button
+                    onClick={handleCheckout}
+                    className="bg-white text-green-600 px-6 py-2 rounded-md font-medium text-sm hover:bg-gray-100 transition-colors"
+                  >
+                    View Cart &gt;
+                  </Button>
+                  <button
+                    onClick={() => setIsCartBarCollapsed(true)}
+                    className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
+                    aria-label="Collapse cart"
+                  >
+                    <ChevronDown className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => {
-                  if (window.confirm('Are you sure you want to remove all items from your cart?')) {
-                    clearCart();
-                  }
-                }}
-                className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
-                aria-label="Clear cart"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              <Button
-                onClick={handleCheckout}
-                className="bg-white text-green-600 px-6 py-2 rounded-md font-medium text-sm hover:bg-gray-100 transition-colors"
-              >
-                View Cart &gt;
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
       )}
       

@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useActiveOrder } from '@/hooks/useActiveOrder';
 import { Star } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { shouldUserSeeCafe } from '@/utils/residencyUtils';
 
 interface Cafe {
   id: string;
@@ -30,6 +31,8 @@ interface Cafe {
   total_ratings: number | null;
   cuisine_categories: string[] | null;
   priority: number | null;
+  slug?: string;
+  location_scope?: 'ghs' | 'off_campus';
 }
 
 // Rewards Section removed for simplified version
@@ -38,6 +41,7 @@ const Index = () => {
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBlock, setSelectedBlock] = useState("B1");
+  const { profile } = useAuth();
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
   
   // Active order status
@@ -45,7 +49,7 @@ const Index = () => {
 
   useEffect(() => {
     fetchCafes();
-  }, []);
+}, [profile]);
 
   // Real-time subscription for cafe updates (ratings, etc.)
   useEffect(() => {
@@ -98,7 +102,7 @@ const Index = () => {
         // Fallback to direct query
         const { data: directData, error: directError } = await supabase
           .from('cafes')
-          .select('*')
+          .select('id, name, type, description, location, phone, hours, image_url, rating, total_reviews, is_active, created_at, updated_at, average_rating, total_ratings, cuisine_categories, accepting_orders, priority, slug, location_scope')
           .eq('is_active', true)
           .order('priority', { ascending: true, nullsLast: true })
           .order('average_rating', { ascending: false, nullsLast: true })
@@ -119,19 +123,29 @@ const Index = () => {
       const cafesData = Array.isArray(data) ? data : [];
       
       if (cafesData.length > 0) {
-        // First, get the top 15 cafes by priority (regardless of open/closed status)
-        const top15Cafes = cafesData.sort((a, b) => (a.priority || 99) - (b.priority || 99)).slice(0, 15);
+        const scopedCafes = cafesData.filter((cafe: any) =>
+          shouldUserSeeCafe(profile, cafe)
+        );
+
+        if (scopedCafes.length === 0) {
+          setCafes([]);
+          setLastFetchTime(now);
+          return;
+        }
+
+        // First, get the top 20 cafes by priority (regardless of open/closed status)
+        const top20Cafes = [...scopedCafes].sort((a: Cafe, b: Cafe) => (a.priority || 99) - (b.priority || 99)).slice(0, 20);
         
         // Then reorder within those 15: open cafes first, then closed cafes
-        const openCafes = top15Cafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
-        const closedCafes = top15Cafes.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+        const openCafes = top20Cafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+        const closedCafes = top20Cafes.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
         
         // Combine: open cafes first, then closed cafes (all within the top 15)
         const reorderedCafes = [...openCafes, ...closedCafes];
         
         setCafes(reorderedCafes);
         setLastFetchTime(now);
-        console.log('✅ Homepage: Set cafes (top 15 by priority, reordered: open first, closed last):', reorderedCafes.map(c => `${c.name} (${c.accepting_orders ? 'OPEN' : 'CLOSED'})`));
+        console.log('✅ Homepage: Set cafes (top 20 by priority, reordered: open first, closed last):', reorderedCafes.map(c => `${c.name} (${c.accepting_orders ? 'OPEN' : 'CLOSED'})`));
       } else {
         console.warn('⚠️ Homepage: No cafes found');
         setCafes([]);
@@ -192,7 +206,7 @@ const Index = () => {
                 </div>
               )} */}
 
-              {/* Limited Cafe Grid - Show top 15 cafes */}
+              {/* Limited Cafe Grid - Show top 20 cafes */}
               <div className="cafe-grid">
                 <FeaturedCafeGrid showAll={false} maxCafes={15} cafes={cafes} loading={loading} />
               </div>

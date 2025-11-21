@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from './ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import { CAFE_CANCELLATION_PASSWORD } from '@/constants/cancellation';
 
 interface PasswordProtectedSectionProps {
   children: React.ReactNode;
@@ -80,11 +81,11 @@ const PasswordProtectedSection: React.FC<PasswordProtectedSectionProps> = ({
       switch (passwordKey) {
         case 'analytics':
           // Analytics access: Only cafe owners with specific password
-          isCorrectPassword = password === 'cafe123' && profileData.user_type === 'cafe_owner';
+          isCorrectPassword = password === CAFE_CANCELLATION_PASSWORD && profileData.user_type === 'cafe_owner';
           break;
         case 'database':
           // Database access: Only cafe owners with specific password
-          isCorrectPassword = password === 'cafe123' && profileData.user_type === 'cafe_owner';
+          isCorrectPassword = password === CAFE_CANCELLATION_PASSWORD && profileData.user_type === 'cafe_owner';
           break;
         default:
           isCorrectPassword = false;

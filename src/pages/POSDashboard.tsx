@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,9 +41,11 @@ import { soundNotificationService } from '@/services/soundNotificationService';
 import { useOrderSubscriptions, useNotificationSubscriptions } from '@/hooks/useSubscriptionManager';
 import { useSimplePOSUpdates } from '@/hooks/useSimplePOSUpdates';
 import { useCafeStaff } from '@/hooks/useCafeStaff';
+import { orderPushNotificationService } from '@/services/orderPushNotificationService';
 import StaffManagement from '@/components/StaffManagement';
 import EnhancedOrderGrid from '@/components/EnhancedOrderGrid';
-import POSAnalytics from '@/components/POSAnalytics';
+// Lazy load POSAnalytics to avoid loading recharts (391KB) on initial page load
+const POSAnalytics = lazy(() => import('@/components/POSAnalytics'));
 import ThermalPrinter from '@/components/ThermalPrinter';
 import { thermalPrinterService, formatOrderForPrinting } from '@/api/thermalPrinter';
 import { unifiedPrintService } from '@/services/unifiedPrintService';
@@ -103,6 +105,7 @@ interface OrderItem {
   menu_item: {
     name: string;
     description: string;
+    is_vegetarian?: boolean;
   };
 }
 
@@ -253,7 +256,7 @@ const POSDashboard = () => {
             unit_price,
             total_price,
             special_instructions,
-            menu_item:menu_items(name, description)
+            menu_item:menu_items(name, description, is_vegetarian)
           )
         `)
         .eq('cafe_id', cafeId)
@@ -291,7 +294,7 @@ const POSDashboard = () => {
             .from('order_items')
             .select(`
               *,
-              menu_item:menu_items(name, description)
+              menu_item:menu_items(name, description, is_vegetarian)
             `)
             .eq('order_id', order.id);
 
@@ -451,6 +454,20 @@ const POSDashboard = () => {
       return;
     }
     
+    // Find the current order to check its status
+    const currentOrder = orders.find(o => o.id === orderId);
+    if (currentOrder) {
+      // Prevent updating cancelled or completed orders
+      if (currentOrder.status === 'cancelled' || currentOrder.status === 'completed') {
+        toast({
+          title: "Cannot Update Order",
+          description: `Cannot update orders that are ${currentOrder.status}`,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
     setUpdatingOrder(orderId);
     
     // OPTIMISTIC UPDATE: Update UI immediately for faster response
@@ -520,6 +537,24 @@ const POSDashboard = () => {
       
       if (data && data.length > 0) {
         console.log('✅ POS Dashboard: Order updated successfully:', data[0]);
+        
+        // Send push notification to customer about status update
+        try {
+          if (import.meta.env.VITE_ENABLE_PUSH_NOTIFICATIONS === 'true' && data[0]) {
+            const updatedOrder = data[0];
+            await orderPushNotificationService.sendOrderStatusNotification({
+              orderId: updatedOrder.id,
+              orderNumber: updatedOrder.order_number || '',
+              userId: updatedOrder.user_id,
+              cafeId: updatedOrder.cafe_id,
+              status: newStatus,
+            });
+            console.log('✅ Push notification sent to customer for status update');
+          }
+        } catch (pushError) {
+          console.error('❌ Push notification error:', pushError);
+          // Don't fail the status update if push notification fails
+        }
       } else {
         console.log('⚠️ POS Dashboard: No data returned from update');
       }
@@ -742,7 +777,7 @@ const POSDashboard = () => {
         return;
       }
 
-      // Get order items
+      // Get order items with vegetarian status for Banna's Chowki split printing
       const { data: items, error: itemsError } = await supabase
         .from('order_items')
         .select(`
@@ -751,7 +786,7 @@ const POSDashboard = () => {
           unit_price,
           total_price,
           special_instructions,
-          menu_item:menu_items(name, description)
+          menu_item:menu_items(name, description, is_vegetarian)
         `)
         .eq('order_id', order.id);
 
@@ -775,7 +810,8 @@ const POSDashboard = () => {
           quantity: item.quantity,
           unit_price: item.unit_price,
           total_price: item.total_price,
-          special_instructions: item.special_instructions
+          special_instructions: item.special_instructions,
+          is_vegetarian: item.menu_item?.is_vegetarian ?? true // Default to true if not specified
         })),
         subtotal: completeOrder.subtotal || 0,
         tax_amount: completeOrder.tax_amount || 0,
@@ -817,9 +853,15 @@ const POSDashboard = () => {
           localStorage.setItem('printedOrders', JSON.stringify(printedOrdersArray));
         }
         
+        // Check if this is Banna's Chowki for split printing message
+        const isBannasChowki = receiptData.cafe_name?.toLowerCase().includes('banna');
+        const printMessage = isBannasChowki && result.method?.includes('split')
+          ? `KOTs (Veg & Non-Veg) and Receipt for order #${order.order_number} printed`
+          : `KOT and Receipt for order #${order.order_number} printed using ${result.method}${isGrabit ? ' (Auto-printed for Grabit)' : ''}`;
+        
         toast({
           title: "Receipt Printed",
-          description: `KOT and Receipt for order #${order.order_number} printed using ${result.method}${isGrabit ? ' (Auto-printed for Grabit)' : ''}`,
+          description: printMessage,
         });
       } else {
         console.error('❌ UNIFIED PRINT: Failed:', result);
@@ -847,7 +889,7 @@ const POSDashboard = () => {
         .from('order_items')
         .select(`
           *,
-          menu_item:menu_items(name, description)
+          menu_item:menu_items(name, description, is_vegetarian)
         `)
         .eq('order_id', order.id);
 
@@ -870,7 +912,8 @@ const POSDashboard = () => {
           quantity: item.quantity,
           unit_price: item.unit_price,
           total_price: item.total_price,
-          special_instructions: item.special_instructions
+          special_instructions: item.special_instructions,
+          is_vegetarian: item.menu_item?.is_vegetarian ?? true // Default to true if not specified
         })),
         subtotal: order.subtotal || 0,
         tax_amount: order.tax_amount || 0,
@@ -2691,19 +2734,28 @@ const POSDashboard = () => {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
-            <POSAnalytics 
-              orders={orders}
-              orderItems={orderItems}
-              loading={loading}
-              dateRange={dateRange}
-              customDateRange={customDateRange}
-              onDateRangeChange={(newDateRange, newCustomRange) => {
-                setDateRange(newDateRange as any);
-                if (newCustomRange) {
-                  setCustomDateRange(newCustomRange);
-                }
-              }}
-            />
+            <Suspense fallback={
+              <div className="flex items-center justify-center p-8">
+                <div className="text-center">
+                  <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+                  <p className="text-sm text-muted-foreground">Loading analytics...</p>
+                </div>
+              </div>
+            }>
+              <POSAnalytics 
+                orders={orders}
+                orderItems={orderItems}
+                loading={loading}
+                dateRange={dateRange}
+                customDateRange={customDateRange}
+                onDateRangeChange={(newDateRange, newCustomRange) => {
+                  setDateRange(newDateRange as any);
+                  if (newCustomRange) {
+                    setCustomDateRange(newCustomRange);
+                  }
+                }}
+              />
+            </Suspense>
           </TabsContent>
 
           {/* Database Tab */}

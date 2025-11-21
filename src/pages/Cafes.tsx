@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Search, Filter, X, Heart, Store } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { shouldUserSeeCafe } from '@/utils/residencyUtils';
 
 import { useFavorites } from '../hooks/useFavorites';
 import { Button } from '../components/ui/button';
@@ -29,6 +31,8 @@ interface Cafe {
   cuisine_categories: string[] | null;
   priority: number | null;
   menu_pdf_url?: string | null;
+  slug?: string;
+  location_scope?: 'ghs' | 'off_campus';
 }
 
 const Cafes = () => {
@@ -43,6 +47,7 @@ const Cafes = () => {
 
 
   const { toggleFavorite, isFavorite, getFavoriteCafes } = useFavorites();
+  const { profile } = useAuth();
 
   // Available cuisine categories (matching the database cuisine_categories)
   const cuisineCategories = [
@@ -60,8 +65,6 @@ const Cafes = () => {
   ];
 
   useEffect(() => {
-    fetchCafes();
-    
     // Check URL parameters for favorites, search, and category
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('favorites') === 'true') {
@@ -74,6 +77,10 @@ const Cafes = () => {
       setSelectedCategory(urlParams.get('category') || 'All');
     }
   }, []);
+
+  useEffect(() => {
+    fetchCafes();
+}, [profile]);
 
   // Listen to URL parameter changes (when user clicks different categories)
   useEffect(() => {
@@ -142,12 +149,21 @@ const Cafes = () => {
 
       // Ensure data is an array
       const cafesData = Array.isArray(data) ? data : [];
+      const scopedCafes = cafesData.filter((cafe: any) =>
+        shouldUserSeeCafe(profile, cafe)
+      );
+
+      if (scopedCafes.length === 0) {
+        console.log('Cafes page: No cafes available for current residency scope.');
+        setCafes([]);
+        return;
+      }
       
       console.log('Cafes page: Raw cafes data:', cafesData);
       console.log('Cafes page: Total cafes found:', cafesData.length);
       
       // Log each cafe name to see what's available
-      cafesData.forEach((cafe: any, index) => {
+      scopedCafes.forEach((cafe: any, index) => {
         console.log(`Cafes page: Cafe ${index + 1}:`, {
           name: cafe.name,
           priority: cafe.priority,
@@ -159,32 +175,38 @@ const Cafes = () => {
       });
 
       // Filter cafes that are accepting orders (if the column exists)
-      let filteredCafes = cafesData;
+      let filteredCafes = scopedCafes;
       
       // Check if accepting_orders column exists and filter accordingly
-      if (cafesData.length > 0 && 'accepting_orders' in cafesData[0]) {
+      if (scopedCafes.length > 0 && 'accepting_orders' in scopedCafes[0]) {
         console.log('Cafes page: accepting_orders column exists, showing all cafes...');
-        filteredCafes = cafesData; // Show all cafes, don't filter out closed ones
+        filteredCafes = scopedCafes; // Show all cafes, don't filter out closed ones
         console.log('Cafes page: Showing all cafes:', filteredCafes.length, 'cafes');
       } else {
         console.log('Cafes page: accepting_orders column does not exist, skipping filter');
-        filteredCafes = cafesData;
+        filteredCafes = scopedCafes;
       }
 
       // Cafes are already ordered by priority, rating, and name from the database function
       console.log('Cafes page: Cafes already ordered by priority:', filteredCafes);
       console.log('Cafes page: Final cafe names:', filteredCafes.map(c => c.name));
       
-      // First, get the top 10 cafes by priority (regardless of open/closed status)
-      const top10Cafes = filteredCafes.sort((a, b) => (a.priority || 99) - (b.priority || 99)).slice(0, 10);
+      // First, get the top 20 cafes by priority (regardless of open/closed status)
+      const topPriorityCafes = filteredCafes
+        .sort((a, b) => (a.priority || 99) - (b.priority || 99))
+        .slice(0, 20);
       
-      // Then reorder within those 10: open cafes first, then closed cafes
-      const openCafes = top10Cafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
-      const closedCafes = top10Cafes.filter(cafe => !cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
+      // Then reorder within those 20: open cafes first, then closed cafes
+      const openCafes = topPriorityCafes
+        .filter(cafe => cafe.accepting_orders)
+        .sort((a, b) => (a.priority || 99) - (b.priority || 99));
+      const closedCafes = topPriorityCafes
+        .filter(cafe => !cafe.accepting_orders)
+        .sort((a, b) => (a.priority || 99) - (b.priority || 99));
       
-      // Combine: open cafes first, then closed cafes (all within the top 10)
+      // Combine: open cafes first, then closed cafes (all within the top 20)
       const reorderedCafes = [...openCafes, ...closedCafes];
-      console.log('Cafes page: Top 10 by priority, reordered: open first, closed last:', reorderedCafes.map(c => `${c.name} (${c.accepting_orders ? 'OPEN' : 'CLOSED'})`));
+      console.log('Cafes page: Top 20 by priority, reordered: open first, closed last:', reorderedCafes.map(c => `${c.name} (${c.accepting_orders ? 'OPEN' : 'CLOSED'})`));
       
       setCafes(reorderedCafes || []);
       

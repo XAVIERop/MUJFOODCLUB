@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { 
   Mail, 
   Lock, 
@@ -71,7 +72,8 @@ const Auth = () => {
     fullName: '', 
     block: 'B1',
     phone: '',
-    referralCode: ''
+    referralCode: '',
+    residencyScope: 'ghs' as 'ghs' | 'off_campus'
   });
 
   // OTP form
@@ -166,6 +168,9 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
 
+    const isGhsResident = signupForm.residencyScope === 'ghs';
+    const blockValue = isGhsResident ? signupForm.block : outsideResidencyBlock;
+
     // Validate password match
     if (signupForm.password !== signupForm.confirmPassword) {
       toast({
@@ -177,8 +182,8 @@ const Auth = () => {
         return;
       }
 
-    // Validate email domain
-    if (!signupForm.email.endsWith('@muj.manipal.edu')) {
+    // Validate email domain (only for GHS residents)
+    if (isGhsResident && !signupForm.email.endsWith('@muj.manipal.edu')) {
       toast({
         title: "Invalid Email",
         description: "Please use your MUJ email address (@muj.manipal.edu).",
@@ -215,8 +220,9 @@ const Auth = () => {
         signupForm.email,
         signupForm.password,
         signupForm.fullName,
-        signupForm.block,
+        blockValue,
         signupForm.phone,
+        signupForm.residencyScope,
         signupForm.referralCode || undefined // Ensure it's undefined if empty
       );
       
@@ -417,6 +423,8 @@ const Auth = () => {
     'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'B12',
     'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8'
   ];
+
+  const outsideResidencyBlock = 'OFF_CAMPUS';
 
   return (
     <div className="min-h-screen bg-gray-50 relative overflow-hidden pb-24 lg:pb-0">
@@ -674,7 +682,7 @@ const Auth = () => {
                   <Alert className="mb-5 border-green-200 bg-green-50 rounded-xl">
                     <CheckCircle className="h-5 w-5 text-green-600" />
                     <AlertDescription className="text-green-800 font-medium text-sm">
-                      Only MUJ students with @muj.manipal.edu emails can sign up.
+                      Choose your residency. GHS residents must sign up with their @muj.manipal.edu email; off-campus students and PG residents can use any email address.
                     </AlertDescription>
                   </Alert>
 
@@ -688,21 +696,86 @@ const Auth = () => {
 
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
-                      <Label htmlFor="signup-email" className="text-sm font-medium text-gray-700">MUJ Email</Label>
+                    <Label className="text-sm font-medium text-gray-700">Residency Type</Label>
+                    <RadioGroup
+                      value={signupForm.residencyScope}
+                      onValueChange={(value) => {
+                        const scope = value as 'ghs' | 'off_campus';
+                        setSignupForm((prev) => ({
+                          ...prev,
+                          residencyScope: scope,
+                          block: scope === 'ghs' ? 'B1' : outsideResidencyBlock
+                        }));
+                      }}
+                      className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                    >
+                      <div
+                        className={`flex items-start gap-3 rounded-xl border px-4 py-3 transition-colors ${
+                          signupForm.residencyScope === 'ghs'
+                            ? 'border-orange-500 bg-orange-50'
+                            : 'border-gray-200 bg-white hover:border-orange-300'
+                        }`}
+                      >
+                        <RadioGroupItem value="ghs" id="res-ghs" className="mt-1" />
+                        <div>
+                          <Label htmlFor="res-ghs" className="font-medium text-gray-900">
+                            I live in GHS Hostel
+                          </Label>
+                          <p className="text-xs text-gray-500">
+                            Full access to all cafés. Requires <strong>@muj.manipal.edu</strong> email.
+                          </p>
+                        </div>
+                      </div>
+                      <div
+                        className={`flex items-start gap-3 rounded-xl border px-4 py-3 transition-colors ${
+                          signupForm.residencyScope === 'off_campus'
+                            ? 'border-orange-500 bg-orange-50'
+                            : 'border-gray-200 bg-white hover:border-orange-300'
+                        }`}
+                      >
+                        <RadioGroupItem value="off_campus" id="res-off" className="mt-1" />
+                        <div>
+                          <Label htmlFor="res-off" className="font-medium text-gray-900">
+                            I stay outside GHS / PG
+                          </Label>
+                          <p className="text-xs text-gray-500">
+                            View delivery cafés serving campus and PG. Any email address is accepted.
+                          </p>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                    <p className="text-xs text-gray-500">
+                      You can update this later from your profile if you move between GHS and off-campus.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                      <Label htmlFor="signup-email" className="text-sm font-medium text-gray-700">
+                        {signupForm.residencyScope === 'ghs' ? 'MUJ Email' : 'Email'}
+                      </Label>
                       <div className="relative">
                         <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <Input
                           id="signup-email"
                           type="email"
-                          placeholder="your.email@muj.manipal.edu"
+                          placeholder={
+                            signupForm.residencyScope === 'ghs'
+                              ? 'your.email@muj.manipal.edu'
+                              : 'your.email@example.com'
+                          }
                           value={signupForm.email}
                           onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
                           className="pl-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
                       required
                     />
                   </div>
-                      {signupForm.email && !signupForm.email.endsWith('@muj.manipal.edu') && (
+                      {signupForm.residencyScope === 'ghs' && signupForm.email && !signupForm.email.endsWith('@muj.manipal.edu') && (
                         <p className="text-sm text-red-500">Please use your MUJ email address</p>
+                      )}
+                      {signupForm.residencyScope === 'off_campus' && (
+                        <p className="text-xs text-gray-500">
+                          Off-campus users can sign up with any valid email address.
+                        </p>
                       )}
                     </div>
 
@@ -722,25 +795,34 @@ const Auth = () => {
                   </div>
                   </div>
                   
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-block" className="text-sm font-medium text-gray-700">Hostel Block</Label>
-                      <div className="relative">
-                        <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <select
-                          id="signup-block"
-                          value={signupForm.block}
-                          onChange={(e) => setSignupForm({ ...signupForm, block: e.target.value })}
-                          className="w-full pl-12 pr-3 py-3 h-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors bg-white"
-                          required
-                        >
-                          {blockOptions.map((block) => (
-                            <option key={block} value={block}>
-                              Block {block}
-                            </option>
-                          ))}
-                        </select>
+                    {signupForm.residencyScope === 'ghs' ? (
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-block" className="text-sm font-medium text-gray-700">Hostel Block</Label>
+                        <div className="relative">
+                          <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                          <select
+                            id="signup-block"
+                            value={signupForm.block}
+                            onChange={(e) => setSignupForm({ ...signupForm, block: e.target.value })}
+                            className="w-full pl-12 pr-3 py-3 h-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors bg-white"
+                            required
+                          >
+                            {blockOptions.map((block) => (
+                              <option key={block} value={block}>
+                                Block {block}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-gray-700">Delivery Area</Label>
+                        <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                          We’ll capture your delivery address (PG / off-campus) during checkout. No hostel block required.
+                        </div>
+                      </div>
+                    )}
 
                   <div className="space-y-2">
                       <Label htmlFor="signup-phone" className="text-sm font-medium text-gray-700">Phone Number</Label>

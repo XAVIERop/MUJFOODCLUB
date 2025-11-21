@@ -15,6 +15,7 @@ interface UsePrintNodeReturn {
   refreshPrinters: () => Promise<void>;
   accountInfo: any;
   error: string | null;
+  isConfigured: boolean;
 }
 
 export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
@@ -24,6 +25,7 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
   const [isPrinting, setIsPrinting] = useState(false);
   const [accountInfo, setAccountInfo] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isConfigured, setIsConfigured] = useState(false);
 
   // Initialize PrintNode service
   const [printNodeService, setPrintNodeService] = useState<PrintNodeService | null>(null);
@@ -190,6 +192,56 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
         }
         console.log('✅ usePrintNode - Grabit API key is valid, using it');
         return apiKey;
+      } else if (cafe.name.toLowerCase().includes('banna')) {
+        console.log('✅ usePrintNode - Using Banna\'s Chowki API key');
+        const apiKey = import.meta.env.VITE_BANNAS_CHOWKI_PRINTNODE_API_KEY;
+        if (!apiKey || apiKey === 'your-bannas-chowki-printnode-api-key') {
+          console.warn('VITE_BANNAS_CHOWKI_PRINTNODE_API_KEY not set, using main API key');
+          const fallbackKey =
+            import.meta.env.VITE_PRINTNODE_API_KEY ||
+            import.meta.env.VITE_SHARED_PRINTNODE_API_KEY;
+          if (!fallbackKey || fallbackKey === 'your-shared-printnode-api-key') {
+            console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+            return '';
+          }
+          return fallbackKey;
+        }
+        console.log('✅ usePrintNode - Banna\'s Chowki API key is valid, using it');
+        return apiKey;
+      } else if (cafe.name.toLowerCase().includes('amor')) {
+        console.log('✅ usePrintNode - Using Amor API key');
+        const apiKey = import.meta.env.VITE_AMOR_PRINTNODE_API_KEY;
+        if (!apiKey || apiKey === 'your-amor-printnode-api-key') {
+          console.warn('VITE_AMOR_PRINTNODE_API_KEY not set, using main API key');
+          const fallbackKey =
+            import.meta.env.VITE_PRINTNODE_API_KEY ||
+            import.meta.env.VITE_SHARED_PRINTNODE_API_KEY;
+          if (!fallbackKey || fallbackKey === 'your-shared-printnode-api-key') {
+            console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+            return '';
+          }
+          return fallbackKey;
+        }
+        console.log('✅ usePrintNode - Amor API key is valid, using it');
+        return apiKey;
+      } else if (cafe.name.toLowerCase().includes('stardom')) {
+        console.log('✅ usePrintNode - Using Stardom API key');
+        console.log('✅ usePrintNode - Stardom API key value:', import.meta.env.VITE_STARDOM_PRINTNODE_API_KEY ? 'Found' : 'Not found');
+        const apiKey = import.meta.env.VITE_STARDOM_PRINTNODE_API_KEY;
+        if (!apiKey || apiKey === 'your-stardom-printnode-api-key') {
+          console.warn('⚠️ VITE_STARDOM_PRINTNODE_API_KEY not set, using main API key');
+          console.warn('⚠️ This will show the wrong PrintNode account!');
+          const fallbackKey =
+            import.meta.env.VITE_PRINTNODE_API_KEY ||
+            import.meta.env.VITE_SHARED_PRINTNODE_API_KEY;
+          if (!fallbackKey || fallbackKey === 'your-shared-printnode-api-key') {
+            console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
+            return '';
+          }
+          return fallbackKey;
+        }
+        console.log('✅ usePrintNode - Stardom API key is valid, using it');
+        return apiKey;
       }
 
       // Fallback to general API key
@@ -223,9 +275,16 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
         const service = new PrintNodeService({ apiKey });
         setPrintNodeService(service);
         console.log('PrintNode service initialized with API key:', apiKey.substring(0, 10) + '...');
+        setError(null);
+        setIsConfigured(true);
       } else {
-        console.warn('PrintNode API key not found. Set VITE_PRINTNODE_API_KEY in your environment variables.');
-        setError('PrintNode API key not configured');
+        setIsConfigured(false);
+        if (cafeId) {
+          console.warn('PrintNode API key not found for this cafe. Check cafe-specific environment variables.');
+          setError('PrintNode API key not configured');
+        } else {
+          console.log('PrintNode fallback key not provided. Waiting for cafe-specific key.');
+        }
       }
     };
 
@@ -334,6 +393,8 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
               targetPrinterId = 74756354; // Mini Meals Printer
             } else if (cafe.name.toLowerCase().includes('punjabi') && cafe.name.toLowerCase().includes('tadka')) {
               targetPrinterId = 74782622; // Punjabi Tadka Printer (POS-60C)
+            } else if (cafe.name.toLowerCase().includes('stardom')) {
+              targetPrinterId = 74910967; // Stardom THERMAL Receipt Printer
             }
           }
         } catch (error) {
@@ -387,6 +448,8 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
               targetPrinterId = 74756354; // Mini Meals Printer
             } else if (cafe.name.toLowerCase().includes('punjabi') && cafe.name.toLowerCase().includes('tadka')) {
               targetPrinterId = 74782622; // Punjabi Tadka Printer (POS-60C)
+            } else if (cafe.name.toLowerCase().includes('stardom')) {
+              targetPrinterId = 74910967; // Stardom THERMAL Receipt Printer
             }
           }
         } catch (error) {
@@ -460,6 +523,7 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
     testPrint,
     refreshPrinters,
     accountInfo,
-    error
+    error,
+    isConfigured
   };
 };

@@ -31,3 +31,7 @@ WHERE (LOWER(c.name) LIKE '%grabit%' OR LOWER(c.slug) = 'grabit')
   AND mi.name ILIKE '%cornitos%'
   AND mi.name ILIKE '%jalapeno%';
 
+
+
+
+

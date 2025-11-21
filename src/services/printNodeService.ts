@@ -221,10 +221,12 @@ export class PrintNodeService {
       // Print Order Receipt only with paper cut commands
       const receiptContent = this.formatReceiptForThermal(receiptData) + '\n\n\x1D\x56\x00';
       
-      // Debug: Log receipt content length and preview for Grabit
-      const isGrabit = receiptData.cafe_name?.toLowerCase().includes('grabit');
-      if (isGrabit) {
-        console.log('🔍 Grabit Receipt Debug:');
+      // Debug: Log receipt content length and preview for Grabit/Banna's Chowki
+      const normalizedCafeName = receiptData.cafe_name?.toLowerCase() || '';
+      const isGrabit = normalizedCafeName.includes('grabit');
+      const isBannasChowki = normalizedCafeName.includes('banna');
+      if (isGrabit || isBannasChowki) {
+        console.log(`🔍 ${isGrabit ? 'Grabit' : "Banna's Chowki"} Receipt Debug:`);
         console.log('  - Receipt content length:', receiptContent.length);
         console.log('  - Receipt content preview (first 200 chars):', receiptContent.substring(0, 200));
         console.log('  - Receipt content preview (last 200 chars):', receiptContent.substring(Math.max(0, receiptContent.length - 200)));
@@ -239,7 +241,7 @@ export class PrintNodeService {
       }
       
       const base64Content = this.unicodeToBase64(receiptContent);
-      if (isGrabit) {
+      if (isGrabit || isBannasChowki) {
         console.log('  - Base64 content length:', base64Content.length);
         console.log('  - Base64 content preview (first 100 chars):', base64Content.substring(0, 100));
       }
@@ -300,10 +302,12 @@ export class PrintNodeService {
       // Print Order Receipt only with paper cut commands
       const receiptContent = this.formatReceiptForThermal(receiptData) + '\n\n\x1D\x56\x00';
       
-      // Debug: Log receipt content length and preview for Grabit
-      const isGrabit = receiptData.cafe_name?.toLowerCase().includes('grabit');
-      if (isGrabit) {
-        console.log('🔍 Grabit Receipt Debug (printReceipt):');
+      // Debug: Log receipt content length and preview for Grabit/Banna's Chowki
+      const normalizedCafeName = receiptData.cafe_name?.toLowerCase() || '';
+      const isGrabit = normalizedCafeName.includes('grabit');
+      const isBannasChowki = normalizedCafeName.includes('banna');
+      if (isGrabit || isBannasChowki) {
+        console.log(`🔍 ${(isGrabit ? 'Grabit' : "Banna's Chowki")} Receipt Debug (printReceipt):`);
         console.log('  - Receipt content length:', receiptContent.length);
         console.log('  - Receipt content preview (first 200 chars):', receiptContent.substring(0, 200));
         console.log('  - Receipt content preview (last 200 chars):', receiptContent.substring(Math.max(0, receiptContent.length - 200)));
@@ -318,7 +322,7 @@ export class PrintNodeService {
       }
       
       const base64Content = this.unicodeToBase64(receiptContent);
-      if (isGrabit) {
+      if (isGrabit || isBannasChowki) {
         console.log('  - Base64 content length:', base64Content.length);
         console.log('  - Base64 content preview (first 100 chars):', base64Content.substring(0, 100));
       }
@@ -450,6 +454,9 @@ MUJFOODCLUB!`;
     const isChatkara = cafe_name?.toLowerCase().includes('chatkara') || 
                        cafe_name === 'CHATKARA' ||
                        cafe_name?.toLowerCase() === 'chatkara';
+    const isBannasChowki = cafe_name?.toLowerCase().includes('banna') ||
+                           cafe_name === 'BANNA\'S CHOWKI' ||
+                           cafe_name?.toLowerCase() === 'banna\'s chowki';
     const isGrabit = cafe_name?.toLowerCase().includes('grabit') || 
                      cafe_name === 'GRABIT' ||
                      cafe_name?.toLowerCase() === 'grabit';
@@ -496,18 +503,32 @@ MUJFOODCLUB!`;
     console.log('🔍 PrintNode Service - Cafe name:', cafe_name);
     console.log('🔍 PrintNode Service - Is Chatkara:', isChatkara);
     console.log('🔍 PrintNode Service - Is Grabit:', isGrabit);
+    console.log('🔍 PrintNode Service - Is Banna\'s Chowki:', isBannasChowki);
     console.log('🔍 PrintNode Service - Is Cook House:', isCookHouse);
     console.log('🔍 PrintNode Service - Is Mini Meals:', isMiniMeals);
     console.log('🔍 PrintNode Service - Is Food Court:', isFoodCourt);
     console.log('🔍 PrintNode Service - Is Punjabi Tadka:', isPunjabiTadka);
     console.log('🔍 PrintNode Service - Cafe name exact:', `"${cafe_name}"`);
     console.log('🔍 PrintNode Service - Cafe name length:', cafe_name?.length);
-    console.log('🔍 PrintNode Service - Using format:', isChatkara || isGrabit ? 'CHATKARA' : isCookHouse ? 'COOK HOUSE' : isMiniMeals ? 'MINI MEALS' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : 'MUJ FOOD CLUB');
+    console.log('🔍 PrintNode Service - Using format:', isBannasChowki ? 'BANNA\'S CHOWKI (58mm)' : (isChatkara || isGrabit) ? 'CHATKARA' : isCookHouse ? 'COOK HOUSE' : isMiniMeals ? 'MINI MEALS' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : 'MUJ FOOD CLUB');
     
     let receipt;
     
-    if (isChatkara || isGrabit) {
-      // Chatkara/Grabit format (compact, thermal printer optimized with bold text)
+    if (isBannasChowki) {
+      // Banna's Chowki format (58mm/2 inch printer - narrower format)
+      receipt = `\x1B\x21\x30    ${cafe_name?.toUpperCase() || 'BANNA\'S CHOWKI'}\x1B\x21\x00
+    ---------------------------
+    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `T${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30Token: ${order_number}\x1B\x21\x00
+    \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
+    \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
+    \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
+    \x1B\x21\x08Bill: ${order_number}\x1B\x21\x00
+    ---------------------------
+    \x1B\x21\x08Item          Qty Price\x1B\x21\x00
+    ---------------------------`;
+    } else if (isChatkara || isGrabit) {
+      // Chatkara/Grabit format (80mm, thermal printer optimized with bold text)
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || (isGrabit ? 'GRABIT' : 'CHATKARA')}\x1B\x21\x00
     ---------------------------------------
     \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
@@ -589,38 +610,110 @@ MUJFOODCLUB!`;
     items.forEach(item => {
       let itemName, qty, price, amount;
       
-      if (isPunjabiTadka || isMunchBox) {
+      if (isBannasChowki) {
+        // 58mm printer format for Banna's Chowki (narrower paper)
+        // Allow full item names to wrap to multiple lines instead of truncating
+        const fullItemName = item.name.toUpperCase();
+        const itemNameWidth = 14; // Width for item name column
+        const qtyWidth = 2;
+        const priceWidth = 4;
+        const amountWidth = 5;
+        
+        // Split long item names into multiple lines
+        const words = fullItemName.split(' ');
+        let currentLine = '';
+        let lines = [];
+        
+        for (const word of words) {
+          if ((currentLine + ' ' + word).length <= itemNameWidth) {
+            currentLine = currentLine ? currentLine + ' ' + word : word;
+          } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+        
+        // Add each line with proper spacing
+        lines.forEach((line, index) => {
+          const paddedLine = line.padEnd(itemNameWidth);
+          const paddedQty = index === 0 ? item.quantity.toString().padStart(qtyWidth) : ' '.repeat(qtyWidth);
+          const paddedPrice = index === 0 ? item.unit_price.toFixed(0).padStart(priceWidth) : ' '.repeat(priceWidth);
+          const paddedAmount = index === 0 ? item.total_price.toFixed(0).padStart(amountWidth) : ' '.repeat(amountWidth);
+          receipt += `\n    \x1B\x21\x08${paddedLine}\x1B\x21\x00 ${paddedQty}  ${paddedPrice}  ${paddedAmount}`;
+        });
+      } else if (isPunjabiTadka || isMunchBox) {
         // POS-60C formatting for Punjabi Tadka and Munch Box (narrower paper)
         itemName = item.name.toUpperCase().substring(0, 12).padEnd(12);
         qty = item.quantity.toString().padStart(2);
         price = item.unit_price.toFixed(0).padStart(4);
         amount = item.total_price.toFixed(0).padStart(5);
         receipt += `\n    \x1B\x21\x08${itemName}\x1B\x21\x00 ${qty}  ${price}  ${amount}`;
+      } else if (isChatkara || isGrabit || isMiniMeals || isCookHouse) {
+        // 80mm printer format for Chatkara, Grabit, Mini Meals, Cook House
+        // Allow full item names to wrap to multiple lines instead of truncating
+        const fullItemName = item.name.toUpperCase();
+        const itemNameWidth = 20; // Width for item name column
+        const qtyWidth = 2;
+        const priceWidth = 4;
+        const amountWidth = 5;
+        
+        // Split long item names into multiple lines
+        const words = fullItemName.split(' ');
+        let currentLine = '';
+        let lines = [];
+        
+        for (const word of words) {
+          if ((currentLine + ' ' + word).length <= itemNameWidth) {
+            currentLine = currentLine ? currentLine + ' ' + word : word;
+          } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+        
+        // Add each line with proper spacing
+        lines.forEach((line, index) => {
+          const paddedLine = line.padEnd(itemNameWidth);
+          const paddedQty = index === 0 ? item.quantity.toString().padStart(qtyWidth) : ' '.repeat(qtyWidth);
+          const paddedPrice = index === 0 ? item.unit_price.toFixed(0).padStart(priceWidth) : ' '.repeat(priceWidth);
+          const paddedAmount = index === 0 ? item.total_price.toFixed(0).padStart(amountWidth) : ' '.repeat(amountWidth);
+          receipt += `\n    \x1B\x21\x08${paddedLine}\x1B\x21\x00 ${paddedQty}    ${paddedPrice}    ${paddedAmount}`;
+        });
       } else {
         // 80mm printer format for other cafes
         itemName = item.name.toUpperCase().substring(0, 20).padEnd(20);
         qty = item.quantity.toString().padStart(2);
-        
-        // Use different format for Chatkara, Grabit, Mini Meals, Cook House vs others
-        if (isChatkara || isGrabit || isMiniMeals || isCookHouse) {
-          price = item.unit_price.toFixed(0).padStart(4);
-          amount = item.total_price.toFixed(0).padStart(5);
-        } else {
-          price = item.unit_price.toFixed(0).padStart(4);
-          amount = item.total_price.toFixed(0).padStart(5);
-        }
-        
-        if (isChatkara || isGrabit || isMiniMeals || isCookHouse) {
-          // Keep normal size for item names in receipt
-          receipt += `\n    \x1B\x21\x08${itemName}\x1B\x21\x00 ${qty}    ${price}    ${amount}`;
-        } else {
-          receipt += `\n    ${itemName} ${qty}    ${price}    ${amount}`;
-        }
+        price = item.unit_price.toFixed(0).padStart(4);
+        amount = item.total_price.toFixed(0).padStart(5);
+        receipt += `\n    ${itemName} ${qty}    ${price}    ${amount}`;
       }
     });
 
     // Add cafe-specific footer
-    if (isChatkara || isGrabit) {
+    if (isBannasChowki) {
+      // Banna's Chowki footer (58mm paper width)
+      const isDelivery = data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block);
+      const deliveryCharge = isDelivery ? 10 : 0;
+      const finalTotal = final_amount; // Use actual final amount from database
+      
+      receipt += `\n    ---------------------------
+    \x1B\x21\x08Total Qty: ${totalQty}\x1B\x21\x00
+    \x1B\x21\x08Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00`;
+      
+      // Only show delivery charge if it's a delivery order
+      if (deliveryCharge > 0) {
+        receipt += `\n    \x1B\x21\x08Delivery: +${deliveryCharge}\x1B\x21\x00`;
+      }
+      
+      receipt += `\n    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
+    ---------------------------
+    \x1B\x21\x08Thanks Order Again\x1B\x21\x00
+    \x1B\x21\x08mujfoodclub.in\x1B\x21\x00
+    ---------------------------
+    ---------------------------`;
+    } else if (isChatkara || isGrabit) {
       // Determine if it's a delivery order based on delivery_block
       const isDelivery = data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block);
       const deliveryCharge = isDelivery ? 10 : 0;
@@ -784,10 +877,13 @@ MUJFOODCLUB!`;
     const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '/');
     const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }).substring(0, 5);
     
-    // Determine cafe-specific format (Chatkara first, then Mini Meals, then Cook House, then Food Court, then Punjabi Tadka)
+    // Determine cafe-specific format (Chatkara first, then Mini Meals, then Cook House, then Food Court, then Punjabi Tadka, then Banna's Chowki)
     const isChatkara = cafe_name?.toLowerCase().includes('chatkara') || 
                        cafe_name === 'CHATKARA' ||
                        cafe_name?.toLowerCase() === 'chatkara';
+    const isBannasChowki = cafe_name?.toLowerCase().includes('banna') ||
+                           cafe_name === 'BANNA\'S CHOWKI' ||
+                           cafe_name?.toLowerCase() === 'banna\'s chowki';
     const isMiniMeals = cafe_name?.toLowerCase().includes('mini meals') || 
                         cafe_name === 'MINI MEALS' ||
                         cafe_name?.toLowerCase() === 'mini meals';
@@ -810,12 +906,13 @@ MUJFOODCLUB!`;
     
     console.log('🔍 PrintNode KOT - Cafe name:', cafe_name);
     console.log('🔍 PrintNode KOT - Is Chatkara:', isChatkara);
+    console.log('🔍 PrintNode KOT - Is Banna\'s Chowki:', isBannasChowki);
     console.log('🔍 PrintNode KOT - Is Mini Meals:', isMiniMeals);
     console.log('🔍 PrintNode KOT - Is Cook House:', isCookHouse);
     console.log('🔍 PrintNode KOT - Is Food Court:', isFoodCourt);
     console.log('🔍 PrintNode KOT - Is Punjabi Tadka:', isPunjabiTadka);
     console.log('🔍 PrintNode KOT - Is Munch Box:', isMunchBox);
-    console.log('🔍 PrintNode KOT - Using format:', isChatkara ? 'CHATKARA' : isMiniMeals ? 'MINI MEALS' : isCookHouse ? 'COOK HOUSE' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : isMunchBox ? 'MUNCH BOX' : 'MUJ FOOD CLUB');
+    console.log('🔍 PrintNode KOT - Using format:', isChatkara ? 'CHATKARA' : isBannasChowki ? 'BANNA\'S CHOWKI (58mm)' : isMiniMeals ? 'MINI MEALS' : isCookHouse ? 'COOK HOUSE' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : isMunchBox ? 'MUNCH BOX' : 'MUJ FOOD CLUB');
     
     // Determine location display for KOT
     let locationDisplay = '';
@@ -831,7 +928,15 @@ MUJFOODCLUB!`;
 
     // Proper center-aligned KOT format with bold formatting
     let kot;
-    if (isPunjabiTadka || isMunchBox) {
+    if (isBannasChowki) {
+      // 58mm KOT format for Banna's Chowki
+      kot = `${dateStr} ${timeStr}
+    \x1B\x21\x30KOT - ${order_number}\x1B\x21\x00
+    \x1B\x21\x08${locationDisplay}\x1B\x21\x00
+    ---------------------------
+    \x1B\x21\x08ITEM          QTY\x1B\x21\x00
+    ---------------------------`;
+    } else if (isPunjabiTadka || isMunchBox) {
       // POS-60C KOT format for Punjabi Tadka and Munch Box
       kot = `${dateStr} ${timeStr}
     \x1B\x21\x30KOT - ${order_number}\x1B\x21\x00
@@ -854,7 +959,35 @@ MUJFOODCLUB!`;
       const itemName = item.name.toUpperCase();
       const qty = item.quantity.toString();
       
-      if (isPunjabiTadka || isMunchBox) {
+      if (isBannasChowki) {
+        // 58mm KOT formatting for Banna's Chowki
+        const totalWidth = 26; // Total width for 58mm paper (slightly narrower than 60mm)
+        const qtyWidth = 4; // Width for quantity column
+        const itemWidth = totalWidth - qtyWidth - 1; // Width for item name column (minus 1 for space)
+        
+        // Don't truncate - allow full item names to wrap to multiple lines
+        // Split long item names into multiple lines
+        const words = itemName.split(' ');
+        let currentLine = '';
+        let lines = [];
+        
+        for (const word of words) {
+          if ((currentLine + ' ' + word).length <= itemWidth) {
+            currentLine = currentLine ? currentLine + ' ' + word : word;
+          } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+        
+        // Add each line with proper spacing
+        lines.forEach((line, index) => {
+          const paddedLine = line.padEnd(itemWidth);
+          const paddedQty = index === 0 ? qty.padStart(qtyWidth) : ' '.repeat(qtyWidth);
+          kot += `\n    \x1B\x21\x08${paddedLine} ${paddedQty}\x1B\x21\x00`;
+        });
+      } else if (isPunjabiTadka || isMunchBox) {
         // POS-60C KOT formatting for Punjabi Tadka and Munch Box
         const totalWidth = 28; // Total width for 60mm paper
         const qtyWidth = 4; // Width for quantity column
@@ -884,17 +1017,15 @@ MUJFOODCLUB!`;
           const paddedQty = index === 0 ? qty.padStart(qtyWidth) : ' '.repeat(qtyWidth);
           kot += `\n    \x1B\x21\x08${paddedLine} ${paddedQty}\x1B\x21\x00`;
         });
-      } else if (isChatkara || isMiniMeals || isCookHouse || isFoodCourt) {
+      } else if (isChatkara || isGrabit || isMiniMeals || isCookHouse || isFoodCourt) {
         // Create proper two-column layout: item name (left) and quantity (right)
         const totalWidth = 40; // Total width of the line
         const qtyWidth = 4; // Width for quantity column
         const itemWidth = totalWidth - qtyWidth - 1; // Width for item name column (minus 1 for space)
         
-        // Truncate very long item names to prevent excessive wrapping
-        const truncatedName = itemName.length > itemWidth ? itemName.substring(0, itemWidth - 3) + '...' : itemName;
-        
+        // Don't truncate - allow full item names to wrap to multiple lines
         // Split long item names into multiple lines
-        const words = truncatedName.split(' ');
+        const words = itemName.split(' ');
         let currentLine = '';
         let lines = [];
         
@@ -927,7 +1058,12 @@ MUJFOODCLUB!`;
     });
 
     // Add cafe-specific footer
-    if (isPunjabiTadka || isMunchBox) {
+    if (isBannasChowki) {
+      // 58mm KOT footer for Banna's Chowki
+      kot += `\n    ---------------------------
+    \x1B\x21\x08Thanks\x1B\x21\x00
+    ---------------------------`;
+    } else if (isPunjabiTadka || isMunchBox) {
       // POS-60C KOT footer for Punjabi Tadka and Munch Box
       kot += `\n    ------------------------------
     \x1B\x21\x08Thanks\x1B\x21\x00

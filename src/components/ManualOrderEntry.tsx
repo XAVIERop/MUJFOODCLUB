@@ -415,11 +415,11 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
     setIsLoading(true);
 
     try {
-      // For now, use the current user's ID or create a simple order
-      // TODO: Implement proper manual order system with database functions
+      // Generate manual order number (MO prefix for Manual Order)
       const orderNumber = `MO-${Date.now().toString().slice(-6)}`;
 
-      // Create order directly (temporary solution)
+      // Create order directly via Supabase
+      // Note: Could be refactored to use a database function for consistency, but current implementation works
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -1020,3 +1020,4 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
 };
 
 export default ManualOrderEntry;
+

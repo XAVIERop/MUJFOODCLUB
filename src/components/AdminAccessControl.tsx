@@ -17,8 +17,8 @@ const AdminAccessControl: React.FC<AdminAccessControlProps> = ({ children }) => 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Simple admin password - in production, this should be more secure
-  const ADMIN_PASSWORD = 'mujfoodclub_admin_2024';
+  // Admin password from environment variable (fallback for development)
+  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_ACCESS_PASSWORD || 'mujfoodclub_admin_2024';
   const ADMIN_EMAIL = 'pulkit.verma@muj.manipal.edu';
 
   useEffect(() => {
