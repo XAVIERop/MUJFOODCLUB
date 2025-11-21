@@ -286,6 +286,20 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent" />
       </div>
 
+      {/* Cafe Closed Banner */}
+      {cafe?.accepting_orders === false && (
+        <div className="bg-red-50 border-b-2 border-red-300 px-4 py-3 -mt-2 relative z-20">
+          <div className="flex items-center gap-3 text-center justify-center">
+            <div className="w-5 h-5 rounded-full bg-red-500 flex-shrink-0 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">!</span>
+            </div>
+            <p className="text-sm font-semibold text-red-800">
+              This cafe is currently not accepting orders. Browse the menu but items cannot be added to cart.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Dev Sweets Ordering Notice Banner */}
       {cafe?.name && (cafe.name.toLowerCase().includes('dev') && cafe.name.toLowerCase().includes('sweet')) && (
         <div className="bg-blue-50 border-b-2 border-blue-200 px-4 py-3 -mt-2 relative z-20">
@@ -764,8 +778,9 @@ const ModernFoodCard: React.FC<{
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-8 h-8 p-0 rounded-full border-orange-200 hover:bg-orange-50"
-                  onClick={() => onAddToCart(item, selectedSize || uniquePortions[0]?.id)}
+                  className="w-8 h-8 p-0 rounded-full border-orange-200 hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => cafe?.accepting_orders !== false && onAddToCart(item, selectedSize || uniquePortions[0]?.id)}
+                  disabled={cafe?.accepting_orders === false}
                 >
                   <Plus className="w-3 h-3" />
                 </Button>
@@ -773,6 +788,10 @@ const ModernFoodCard: React.FC<{
             ) : isDevSweets ? (
               <Badge className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium">
                 📞 Call to Order
+              </Badge>
+            ) : cafe?.accepting_orders === false ? (
+              <Badge className="bg-gray-100 text-gray-600 px-4 py-2 rounded-full text-sm font-medium border border-gray-300">
+                Closed
               </Badge>
             ) : (
               <Button

@@ -416,6 +416,20 @@ useEffect(() => {
     <div className="min-h-screen bg-white grocery-font pt-16 pb-20 lg:pb-24">
       <Header />
 
+      {/* Cafe Closed Banner */}
+      {grabitCafe?.accepting_orders === false && (
+        <div className="bg-red-50 border-b-2 border-red-300 px-4 py-3 relative z-20">
+          <div className="flex items-center gap-3 text-center justify-center">
+            <div className="w-5 h-5 rounded-full bg-red-500 flex-shrink-0 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">!</span>
+            </div>
+            <p className="text-sm font-semibold text-red-800">
+              Grabit is currently not accepting orders. Browse items but they cannot be added to cart.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Search Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="max-w-5xl mx-auto">
@@ -476,17 +490,23 @@ useEffect(() => {
                           <div className="text-sm font-semibold text-orange-600">
                             ₹{item.price.toFixed(2)}
       </div>
-                          <Button
-                            size="sm"
-                            className="ml-3"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleAddToCart(item);
-                            }}
-                          >
-                            Add
-                          </Button>
+                          {grabitCafe?.accepting_orders === false ? (
+                            <Badge className="bg-gray-100 text-gray-600 px-3 py-1 rounded-md text-xs font-medium border border-gray-300 ml-3">
+                              Closed
+                            </Badge>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="ml-3"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleAddToCart(item);
+                              }}
+                            >
+                              Add
+                            </Button>
+                          )}
                         </div>
                   </div>
                     );
@@ -637,12 +657,17 @@ useEffect(() => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleAddToCart(item)}
-                            className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400 rounded-full"
+                            onClick={() => grabitCafe?.accepting_orders !== false && handleAddToCart(item)}
+                            disabled={grabitCafe?.accepting_orders === false}
+                            className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
                         </div>
+                      ) : grabitCafe?.accepting_orders === false ? (
+                        <Badge className="bg-gray-100 text-gray-600 px-3 py-1 rounded-md text-xs font-medium border border-gray-300">
+                          Closed
+                        </Badge>
                       ) : (
                         <Button
                           variant="default" 
@@ -792,12 +817,17 @@ useEffect(() => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleAddToCart(item)}
-                            className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400 rounded-full"
+                            onClick={() => grabitCafe?.accepting_orders !== false && handleAddToCart(item)}
+                            disabled={grabitCafe?.accepting_orders === false}
+                            className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
                         </div>
+                      ) : grabitCafe?.accepting_orders === false ? (
+                        <Badge className="bg-gray-100 text-gray-600 px-3 py-1 rounded-md text-xs font-medium border border-gray-300">
+                          Closed
+                        </Badge>
                       ) : (
                         <Button
                           variant="default" 

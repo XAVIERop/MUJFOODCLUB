@@ -203,8 +203,24 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
         borderRadius: '12px'
       } : {}}
     >
+      {/* Closed Badge - Most Prominent */}
+      {!cafe.accepting_orders && (
+        <div className="absolute top-3 left-3 z-30">
+          <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white font-bold text-xs px-3 py-1 shadow-lg border border-red-400">
+            🔴 CLOSED
+          </Badge>
+        </div>
+      )}
+
       {/* Exclusive Badge */}
-      {isExclusive && (
+      {isExclusive && !cafe.accepting_orders && (
+        <div className="absolute top-3 left-24 z-20">
+          <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-900 font-bold text-xs px-3 py-1 shadow-lg border border-yellow-300">
+            ⭐ EXCLUSIVE
+          </Badge>
+        </div>
+      )}
+      {isExclusive && cafe.accepting_orders && (
         <div className="absolute top-3 left-3 z-20">
           <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-900 font-bold text-xs px-3 py-1 shadow-lg border border-yellow-300">
             ⭐ EXCLUSIVE

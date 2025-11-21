@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ArrowLeft, MapPin, Clock, Banknote, AlertCircle, Plus, Minus, Gift, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -863,6 +863,40 @@ const Checkout = () => {
             </div>
           </div>
 
+          {/* Cafe Closed Warning */}
+          {cafe?.accepting_orders === false && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Cafe is Closed</AlertTitle>
+              <AlertDescription className="flex flex-col gap-3">
+                <span>
+                  {cafe.name} is currently not accepting orders. You cannot proceed with checkout.
+                </span>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      clearCart();
+                      navigate('/cafes');
+                    }}
+                    className="bg-white hover:bg-gray-50"
+                  >
+                    Clear Cart & Browse Cafes
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => navigate(-1)}
+                    className="bg-white hover:bg-gray-50"
+                  >
+                    Go Back
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Order Details */}
             <div className="space-y-6">
@@ -1347,6 +1381,7 @@ const Checkout = () => {
                   handlePlaceOrder();
                 }}
                 disabled={isLoading || isCheckingCafeStatus || !isMinimumOrderMet || 
+                  cafe?.accepting_orders === false ||
                   (!isGroceryOrder() && !isGrabitOrder() && deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) ||
                   (!isGroceryOrder() && !isGrabitOrder() && (deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowedForCafe())
                 }
@@ -1355,7 +1390,8 @@ const Checkout = () => {
                 variant="hero"
                 type="button"
               >
-                    {isCheckingCafeStatus ? 'Checking cafe status...' :
+                    {cafe?.accepting_orders === false ? 'Cafe is Closed - Cannot Place Order' :
+                     isCheckingCafeStatus ? 'Checking cafe status...' :
                      isLoading ? 'Placing Order...' :
                      !isMinimumOrderMet ? `Minimum Order ₹${ORDER_CONSTANTS.MINIMUM_ORDER_AMOUNT} Required` :
                      `Place Order - ₹${finalAmount.toFixed(2)}`}
