@@ -116,6 +116,16 @@ const Checkout = () => {
     return firstItem.item.cafe_name || '';
   };
 
+  // Helper function to get cart's cafe ID (CRITICAL: Use this instead of cart context cafe.id)
+  const getCartCafeId = () => {
+    const cartItems = Object.values(cart);
+    if (cartItems.length === 0) return null;
+    
+    // Get the first item's cafe_id (assuming all items are from same cafe)
+    const firstItem = cartItems[0] as any;
+    return firstItem.item.cafe_id || null;
+  };
+
   // Check if this is a grocery order (24 Seven Mart only - Grabit is now a regular cafe)
   const isGroceryOrder = () => {
     const cartCafeName = getCartCafeName();
@@ -333,19 +343,40 @@ const Checkout = () => {
     setIsLoading(true);
     setError('');
 
-    // Validate cafe exists
+    // CRITICAL FIX: Get cafe_id from cart items, not from cart context
+    // This ensures orders go to the correct cafe even if cart context is stale
+    const cartCafeId = getCartCafeId();
+    if (!cartCafeId) {
+      setError('Cafe information is missing from cart items. Please try again.');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate cafe exists (still check cart context for other info, but use cart item's cafe_id)
     if (!cafe || !cafe.id) {
       setError('Cafe information is missing. Please try again.');
       setIsLoading(false);
       return;
     }
 
+    // Verify that cart context cafe matches cart items cafe (safety check)
+    if (cafe.id !== cartCafeId) {
+      console.warn('⚠️ WARNING: Cart context cafe.id does not match cart items cafe_id!', {
+        contextCafeId: cafe.id,
+        contextCafeName: cafe.name,
+        cartItemsCafeId: cartCafeId,
+        cartItemsCafeName: getCartCafeName()
+      });
+      // Use the cart items cafe_id (more reliable)
+    }
+
     try {
       console.log('🛒 Starting order creation...');
       console.log('🛒 Order data:', {
         user_id: user.id,
-        cafe_id: cafe.id,
-        cafe_name: cafe.name,
+        cafe_id: cartCafeId, // Use cart items cafe_id, not context cafe.id
+        cafe_id_from_context: cafe.id,
+        cafe_name: getCartCafeName() || cafe.name,
         cafe_type: cafe.type,
         cafe_slug: cafe.slug,
         is_grocery_order: isGroceryOrder(),
@@ -356,11 +387,11 @@ const Checkout = () => {
       });
 
       // Generate order number using new daily reset system
-      console.log('🔄 Generating order number for cafe:', cafe.id);
+      console.log('🔄 Generating order number for cafe:', cartCafeId);
       let orderNumber: string;
       
       try {
-        orderNumber = await generateDailyOrderNumber(cafe.id);
+        orderNumber = await generateDailyOrderNumber(cartCafeId); // Use cart items cafe_id
         console.log('✅ Generated daily order number:', orderNumber);
       } catch (error) {
         console.error('❌ Failed to generate daily order number, using fallback:', error);
@@ -391,7 +422,7 @@ const Checkout = () => {
         .from('orders')
         .insert({
           user_id: user.id,
-          cafe_id: cafe.id,
+          cafe_id: cartCafeId, // CRITICAL FIX: Use cafe_id from cart items, not context
           order_number: orderNumber,
           total_amount: finalAmount,
           order_type: deliveryDetails.orderType,
