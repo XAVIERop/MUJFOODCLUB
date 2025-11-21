@@ -412,6 +412,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
             {/* Menu Items - Grouped by Category */}
             <MenuCategorySections
               menuItems={menuItems}
+              searchQuery={searchQuery}
               onAddToCart={onAddToCart}
               onRemoveFromCart={onRemoveFromCart}
               getCartQuantity={getCartQuantity}
@@ -459,6 +460,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
 // Menu Category Sections Component (Swiggy-style)
 const MenuCategorySections: React.FC<{
   menuItems: any[];
+  searchQuery?: string;
   onAddToCart: (item: any, selectedPortion?: string) => void;
   onRemoveFromCart: (item: any) => void;
   getCartQuantity: (itemId: string) => number;
@@ -466,11 +468,29 @@ const MenuCategorySections: React.FC<{
   isFavorite?: (itemId: string) => boolean;
   selectedCategory: string;
   cafe?: any;
-}> = ({ menuItems, onAddToCart, onRemoveFromCart, getCartQuantity, onToggleFavorite, isFavorite, selectedCategory, cafe }) => {
+}> = ({ menuItems, searchQuery = '', onAddToCart, onRemoveFromCart, getCartQuantity, onToggleFavorite, isFavorite, selectedCategory, cafe }) => {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
+  // Filter menu items based on search query
+  const filteredMenuItems = useMemo(() => {
+    if (!searchQuery || searchQuery.trim() === '') {
+      return menuItems;
+    }
+    
+    const query = searchQuery.toLowerCase();
+    return menuItems.filter(item => {
+      const name = (item.baseName || item.name || '').toLowerCase();
+      const description = (item.description || '').toLowerCase();
+      const category = (item.category || '').toLowerCase();
+      
+      return name.includes(query) || 
+             description.includes(query) || 
+             category.includes(query);
+    });
+  }, [menuItems, searchQuery]);
+
   // Group menu items by category
-  const groupedItems = menuItems.reduce((acc, item) => {
+  const groupedItems = filteredMenuItems.reduce((acc, item) => {
     const category = item.category;
     if (!acc[category]) {
       acc[category] = [];
