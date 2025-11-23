@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { QrCode, User, LogOut, Settings, Menu, Home, Coffee, Utensils, Bell, Receipt, Store, Package, Heart, MapPin, ChevronDown, ShoppingCart, BarChart3 } from 'lucide-react';
+import { User, LogOut, Settings, Menu, Home, Coffee, Utensils, Bell, Receipt, Store, Package, Heart, MapPin, ChevronDown, ShoppingCart, BarChart3 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +13,8 @@ import { useNotificationSubscriptions } from '@/hooks/useSubscriptionManager';
 import { useLocation as useLocationContext } from '@/contexts/LocationContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import NotificationCenter from './NotificationCenter';
-import { isOffCampusUser } from '@/utils/residencyUtils';
+import { isOffCampusUser, getUserResidency } from '@/utils/residencyUtils';
+import { LocationSelector } from './LocationSelector';
 
 // Available hostel blocks
 const HOSTEL_BLOCKS = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'B12', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8'];
@@ -175,26 +176,11 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
           {/* Left Section - Logo (Desktop) or Location Dropdown (Mobile) */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             {isMobile ? (
-              /* Mobile Location Dropdown - Simple Style */
-              <Select value={selectedBlock} onValueChange={setSelectedBlock}>
-                <SelectTrigger className="w-auto h-auto p-0 bg-transparent border-none shadow-none [&>svg]:hidden">
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="w-4 h-4 text-red-500" />
-                    <div className="flex flex-col items-start">
-                      <span className="text-base font-bold text-gray-900">{selectedBlock}</span>
-                      <span className="text-xs text-gray-600">Block {selectedBlock}, MUJ Hostel</span>
-                    </div>
-                    <ChevronDown className="w-3 h-3 text-gray-500 ml-1" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {HOSTEL_BLOCKS.map((block) => (
-                    <SelectItem key={block} value={block}>
-                      {block}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              /* Mobile Location Selector */
+              <LocationSelector 
+                selectedBlock={selectedBlock} 
+                onBlockChange={setSelectedBlock}
+              />
             ) : (
               /* Desktop Logo */
               <Link 
@@ -236,20 +222,18 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
               <Store className="w-4 h-4" />
               <span>Food</span>
             </a> */}
-            {/* Grabit Link */}
-            {(!profile || !isOffCampusUser(profile)) && (
-              <Link
-                to="/grabit"
-                className={`flex items-center space-x-2 transition-smooth story-link ${
-                  location.pathname.startsWith('/grabit')
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-primary'
-                }`}
-              >
-                <ShoppingCart className="w-4 h-4" />
-                <span>Grabit (24/7 DS)</span>
-              </Link>
-            )}
+            {/* Grabit Link - Show to everyone */}
+            <Link
+              to="/grabit"
+              className={`flex items-center space-x-2 transition-smooth story-link ${
+                location.pathname.startsWith('/grabit')
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-primary'
+              }`}
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span>Grabit (24/7 DS)</span>
+            </Link>
           </nav>
 
           {/* Right Section - User Actions */}
@@ -304,13 +288,6 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
                     }}>
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      setIsProfileDropdownOpen(false);
-                      navigate('/qr-code');
-                    }}>
-                      <QrCode className="mr-2 h-4 w-4" />
-                      <span>My QR Code</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => {
                       setIsProfileDropdownOpen(false);
@@ -407,14 +384,12 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
                 </SheetHeader>
                 
                 {/* Mobile Location Selector */}
-                <div className="flex items-center justify-between mt-4 p-3 bg-muted/50 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">
-                      Delivery to: {selectedBlock}
-                    </span>
-                  </div>
-                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                <div className="mt-4">
+                  <LocationSelector 
+                    selectedBlock={selectedBlock} 
+                    onBlockChange={setSelectedBlock}
+                    className="w-full"
+                  />
                 </div>
                 <div className="flex flex-col space-y-4 mt-6">
                   {/* Mobile Notifications */}

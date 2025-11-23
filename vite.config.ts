@@ -18,6 +18,8 @@ export default defineConfig({
       'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
     },
   },
+  // Public directory configuration
+  publicDir: 'public',
   plugins: [
     react(),
     VitePWA({

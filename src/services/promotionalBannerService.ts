@@ -16,13 +16,39 @@ export interface PromotionalBannerData {
   priority: number;
   start_date?: string;
   end_date?: string;
+  location_scope?: 'ghs' | 'off_campus' | 'all';
   created_at: string;
   updated_at: string;
 }
 
 class PromotionalBannerService {
+  // Helper function to check if user should see banners with specific scope
+  private shouldUserSeeBannerScope(userEmail: string | null, bannerScope: string): boolean {
+    const MUJ_EMAIL_DOMAIN = '@muj.manipal.edu';
+    const FOODCLUB_EMAIL_DOMAIN = '@mujfoodclub.in';
+    
+    // Banners with scope 'all' are visible to everyone
+    if (bannerScope === 'all') {
+      return true;
+    }
+    
+    // If no user email (guest), only show off_campus banners
+    if (!userEmail) {
+      return bannerScope === 'off_campus';
+    }
+    
+    // Users with MUJ or FoodClub email can see all banners
+    if (userEmail.endsWith(MUJ_EMAIL_DOMAIN) || userEmail.endsWith(FOODCLUB_EMAIL_DOMAIN)) {
+      return true;
+    }
+    
+    // Other users can only see off_campus banners
+    return bannerScope === 'off_campus';
+  }
+
   // Get active promotional banners for a specific cafe or all cafes
-  async getActiveBanners(cafeId?: string): Promise<PromotionalBannerData[]> {
+  // Filtered by user's email domain for GHS/off-campus scope
+  async getActiveBanners(cafeId?: string, userEmail?: string | null): Promise<PromotionalBannerData[]> {
     try {
       let query = supabase
         .from('promotional_banners')
@@ -44,7 +70,13 @@ class PromotionalBannerService {
         return [];
       }
 
-      return data || [];
+      // Filter banners based on user's email and banner scope
+      const filteredBanners = (data || []).filter(banner => {
+        const scope = banner.location_scope || 'ghs'; // Default to ghs if not set
+        return this.shouldUserSeeBannerScope(userEmail || null, scope);
+      });
+
+      return filteredBanners;
     } catch (error) {
       console.error('Error fetching promotional banners:', error);
       return [];

@@ -11,7 +11,7 @@ const MobileFloatingCart: React.FC = () => {
   const itemCount = getItemCount();
   const totalAmount = getTotalAmount();
 
-  // Don't render if no items or not on a menu/grabit page
+  // Don't render if no items or not on a menu/grabit page (table orders have their own button)
   if (itemCount === 0 || (!location.pathname.startsWith('/menu/') && !location.pathname.startsWith('/grabit'))) return null;
   
   // Don't render for Dev Sweets (no online ordering)

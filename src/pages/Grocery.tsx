@@ -495,17 +495,17 @@ useEffect(() => {
                               Closed
                             </Badge>
                           ) : (
-                            <Button
-                              size="sm"
-                              className="ml-3"
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleAddToCart(item);
-                              }}
-                            >
-                              Add
-                            </Button>
+                          <Button
+                            size="sm"
+                            className="ml-3"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleAddToCart(item);
+                            }}
+                          >
+                            Add
+                          </Button>
                           )}
                         </div>
                   </div>

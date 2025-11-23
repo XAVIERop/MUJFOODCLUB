@@ -15,7 +15,7 @@ import { useCart } from '@/hooks/useCart';
 import { useLocation } from '@/contexts/LocationContext';
 import { useToast } from '@/hooks/use-toast';
 import { ORDER_CONSTANTS } from '@/lib/constants';
-import { isDineInTakeawayAllowed, isDeliveryAllowed, getDineInTakeawayMessage, getDeliveryMessage } from '@/utils/timeRestrictions';
+// Timing checks now come from database cafe configuration
 import { generateDailyOrderNumber } from '@/utils/orderNumberGenerator';
 import { getCafeTableOptions } from '@/utils/tableMapping';
 import { WhatsAppService } from '@/services/whatsappService';
@@ -24,7 +24,9 @@ import Header from '@/components/Header';
 import ReferralCodeInput from '@/components/ReferralCodeInput';
 import { ReferralValidation } from '@/services/referralService';
 import { getUserResidency, shouldUserOrderFromCafe, isOffCampusUser } from '@/utils/residencyUtils';
-import LocationPicker from '@/components/LocationPickerEnhanced';
+import LocationPicker from '@/components/LocationPicker';
+import { SavedAddressList } from '@/components/SavedAddressList';
+import { SavedAddress, savedAddressService } from '@/services/savedAddressService';
 
 // Helper function to get dropdown options based on order type and cafe
 const getLocationOptions = (orderType: string, cafeName: string, residencyScope: 'ghs' | 'off_campus') => {
@@ -97,6 +99,17 @@ interface Cafe {
   total_reviews: number;
   accepting_orders: boolean;
   location_scope?: string | null;
+  // Timing configuration
+  delivery_enabled?: boolean;
+  delivery_start_time?: string;
+  delivery_end_time?: string;
+  delivery_crosses_midnight?: boolean;
+  dine_in_enabled?: boolean;
+  dine_in_start_time?: string;
+  dine_in_end_time?: string;
+  takeaway_enabled?: boolean;
+  takeaway_start_time?: string;
+  takeaway_end_time?: string;
 }
 
 interface CartItem {
@@ -112,7 +125,7 @@ const Checkout = () => {
   const { cart, cafe, getTotalAmount, addToCart, removeFromCart, clearCart } = useCart();
   const { selectedBlock, setSelectedBlock } = useLocation();
   const { toast } = useToast();
-  const userResidency = getUserResidency(profile);
+  const { scope: userResidency } = getUserResidency(profile);
   const isOffCampusResident = userResidency === 'off_campus';
   
   const [isLoading, setIsLoading] = useState(false);
@@ -174,19 +187,90 @@ const Checkout = () => {
     return isBannasChowki() && deliveryDetails.orderType === 'dine_in';
   };
 
-  // Check if dine-in/takeaway is allowed (with temporary bypass for Banna's Chowki dine-in)
-  const isDineInTakeawayAllowedForCafe = () => {
-    // TEMPORARY: Allow dine-in for Banna's Chowki regardless of time (for testing)
-    // This allows the dine-in option to be selectable even outside normal hours
-    if (isBannasChowki()) {
-      return true; // Always allow dine-in/takeaway for Banna's Chowki (temporary for testing)
+  // Check if an order type is allowed based on current time and cafe configuration
+  const isOrderTypeAllowed = (orderType: 'delivery' | 'dine_in' | 'takeaway'): boolean => {
+    console.log('🔍 isOrderTypeAllowed called:', { orderType, cafe });
+    if (!cafe) return false;
+
+    // Check if this order type is enabled for this cafe
+    if (orderType === 'delivery' && !cafe.delivery_enabled) return false;
+    if (orderType === 'dine_in' && !cafe.dine_in_enabled) return false;
+    if (orderType === 'takeaway' && !cafe.takeaway_enabled) return false;
+
+    // Get timing configuration from cafe
+    let startTime: string | null = null;
+    let endTime: string | null = null;
+    let crossesMidnight = false;
+
+    if (orderType === 'delivery') {
+      startTime = cafe.delivery_start_time;
+      endTime = cafe.delivery_end_time;
+      crossesMidnight = cafe.delivery_crosses_midnight ?? false;
+    } else if (orderType === 'dine_in') {
+      startTime = cafe.dine_in_start_time;
+      endTime = cafe.dine_in_end_time;
+    } else if (orderType === 'takeaway') {
+      startTime = cafe.takeaway_start_time;
+      endTime = cafe.takeaway_end_time;
     }
-    return isDineInTakeawayAllowed();
+
+    // If no timing configured, allow it
+    if (!startTime || !endTime) return true;
+
+    // Get current time in minutes since midnight
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    // Parse start and end times (format: "HH:MM:SS" or "HH:MM")
+    const parseTime = (timeStr: string): number => {
+      const parts = timeStr.split(':');
+      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    };
+
+    const startMinutes = parseTime(startTime);
+    const endMinutes = parseTime(endTime);
+
+    // Check if current time is within allowed window
+    if (crossesMidnight) {
+      // Time window crosses midnight (e.g., 11 PM to 2 AM)
+      return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+    } else {
+      // Normal time window (e.g., 11 AM to 11 PM)
+      return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+    }
   };
 
   // Check if cafe is outside campus (for delivery address requirement)
   const isOutsideCafe = () => {
     return cafe?.location_scope === 'off_campus';
+  };
+
+  // Saved address state
+  const [selectedSavedAddress, setSelectedSavedAddress] = useState<SavedAddress | null>(null);
+  const [showManualAddress, setShowManualAddress] = useState(false);
+
+  // Handle saved address selection
+  const handleSelectSavedAddress = (address: SavedAddress) => {
+    setSelectedSavedAddress(address);
+    
+    // Pre-fill delivery details with saved address
+    const formattedAddress = savedAddressService.formatAddress(address);
+    
+    setDeliveryDetails(prev => ({
+      ...prev,
+      orderType: 'delivery', // Saved addresses are for delivery
+      deliveryAddress: formattedAddress,
+      deliveryCoordinates: {
+        lat: address.latitude,
+        lng: address.longitude
+      },
+      block: isOffCampusResident ? 'OFF_CAMPUS' : prev.block
+    }));
+    
+    toast({
+      title: 'Address selected',
+      description: `Delivering to ${address.label}`,
+    });
   };
 
   // Form states
@@ -430,24 +514,32 @@ const Checkout = () => {
     // Skip time restrictions for grocery orders and Grabit
     // Note: Time restriction messages removed - orders will be blocked silently if not available
     if (!isGroceryOrder() && !isGrabitOrder()) {
-      if (deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) {
+      if (deliveryDetails.orderType === 'delivery' && !isOrderTypeAllowed('delivery')) {
         return;
       }
       
-      if ((deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowedForCafe()) {
+      if (deliveryDetails.orderType === 'dine_in' && !isOrderTypeAllowed('dine_in')) {
+        return;
+      }
+      
+      if (deliveryDetails.orderType === 'takeaway' && !isOrderTypeAllowed('takeaway')) {
         return;
       }
     }
 
     // Validate phone number (use guest phone for guest orders, otherwise use delivery details)
     const phoneNumberToUse = isGuestOrder ? guestPhone : deliveryDetails.phoneNumber;
-    if (!phoneNumberToUse || phoneNumberToUse.length !== 10) {
+    // Strip out non-digit characters for validation
+    const cleanPhone = phoneNumberToUse?.replace(/\D/g, '');
+    // Accept 10 digits or 12 digits (with country code 91)
+    if (!cleanPhone || (cleanPhone.length !== 10 && cleanPhone.length !== 12)) {
       setError('Please enter a valid 10-digit phone number');
       return;
     }
 
-    // Validate location selection for all order types
-    if (!deliveryDetails.block) {
+    // Validate location selection for all order types (except outside cafe delivery)
+    // For outside cafe delivery, we use the delivery address instead
+    if (!deliveryDetails.block && !(isOutsideCafe() && deliveryDetails.orderType === 'delivery')) {
       if (deliveryDetails.orderType === 'dine_in') {
         setError('Please select a table number for dine-in orders');
         return;
@@ -549,7 +641,8 @@ const Checkout = () => {
         deliveryBlock = 'TAKEAWAY';
       } else {
         // For delivery, use the block directly (B1, B2, etc.)
-        deliveryBlock = deliveryDetails.block;
+        // For outside cafes, use 'OFF_CAMPUS' since they don't have block selection
+        deliveryBlock = isOutsideCafe() ? 'OFF_CAMPUS' : deliveryDetails.block;
       }
 
       const orderData = {
@@ -897,6 +990,42 @@ const Checkout = () => {
             </Alert>
           )}
 
+          {/* Saved Addresses Section - Only show for authenticated users and delivery orders */}
+          {user && !isGuestOrderingAllowed() && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">Select Delivery Address</h2>
+                {selectedSavedAddress && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedSavedAddress(null);
+                      setShowManualAddress(true);
+                    }}
+                  >
+                    Enter New Address
+                  </Button>
+                )}
+              </div>
+              
+              {!showManualAddress ? (
+                <SavedAddressList 
+                  onSelectAddress={handleSelectSavedAddress}
+                  selectedAddressId={selectedSavedAddress?.id}
+                />
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowManualAddress(false)}
+                  className="w-full mb-4"
+                >
+                  ← Back to Saved Addresses
+                </Button>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Order Details */}
             <div className="space-y-6">
@@ -919,12 +1048,12 @@ const Checkout = () => {
                           value="delivery"
                           checked={deliveryDetails.orderType === 'delivery'}
                           onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
-                          disabled={!isGroceryOrder() && !isGrabitOrder() && !isDeliveryAllowed(cafe?.name)}
+                          disabled={!isGroceryOrder() && !isGrabitOrder() && !isOrderTypeAllowed('delivery')}
                         />
                         <Label htmlFor="delivery" className="flex items-center">
                           <MapPin className="w-4 h-4 mr-2" />
                           Delivery
-                          {!isGroceryOrder() && !isGrabitOrder() && !isDeliveryAllowed(cafe?.name) && (
+                          {!isGroceryOrder() && !isGrabitOrder() && !isOrderTypeAllowed('delivery') && (
                             <Badge variant="secondary" className="ml-2">Not Available</Badge>
                           )}
                         </Label>
@@ -941,12 +1070,12 @@ const Checkout = () => {
                           value="takeaway"
                           checked={deliveryDetails.orderType === 'takeaway'}
                           onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
-                          disabled={!isDineInTakeawayAllowedForCafe()}
+                          disabled={!isOrderTypeAllowed('takeaway')}
                         />
                         <Label htmlFor="takeaway" className="flex items-center">
                           <Clock className="w-4 h-4 mr-2" />
                           Takeaway
-                          {!isDineInTakeawayAllowedForCafe() && (
+                          {!isOrderTypeAllowed('takeaway') && (
                             <Badge variant="secondary" className="ml-2">Not Available</Badge>
                           )}
                         </Label>
@@ -960,12 +1089,12 @@ const Checkout = () => {
                           value="dine_in"
                           checked={deliveryDetails.orderType === 'dine_in'}
                           onChange={(e) => setDeliveryDetails(prev => ({ ...prev, orderType: e.target.value, block: '' }))}
-                          disabled={!isDineInTakeawayAllowedForCafe()}
+                          disabled={!isOrderTypeAllowed('dine_in')}
                         />
                         <Label htmlFor="dine_in" className="flex items-center">
                           <Clock className="w-4 h-4 mr-2" />
                           Dine In
-                          {!isDineInTakeawayAllowedForCafe() && (
+                          {!isOrderTypeAllowed('dine_in') && (
                             <Badge variant="secondary" className="ml-2">Not Available</Badge>
                           )}
                         </Label>
@@ -1021,7 +1150,10 @@ const Checkout = () => {
                         maxLength={10}
                         className="bg-white"
                       />
-                      {guestPhone && guestPhone.length !== 10 && (
+                      {guestPhone && (() => {
+                        const cleanPhone = guestPhone.replace(/\D/g, '');
+                        return cleanPhone.length !== 10 && cleanPhone.length !== 12;
+                      })() && (
                         <p className="text-red-500 text-sm mt-1">Phone number must be 10 digits</p>
                       )}
                     </div>
@@ -1029,27 +1161,27 @@ const Checkout = () => {
                 </Card>
               )}
 
-              {/* Location Details - Dynamic based on order type */}
-                  {(deliveryDetails.orderType === 'delivery' || deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && (
+              {/* Order Details - Block/Table, Phone, Notes */}
+              {(deliveryDetails.orderType === 'delivery' || deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && (
                 <Card>
-                <CardHeader>
+                  <CardHeader>
                     <CardTitle className="flex items-center">
                       <MapPin className="w-5 h-5 mr-2" />
-                        {deliveryDetails.orderType === 'delivery' ? 'Delivery Details' : 
-                         deliveryDetails.orderType === 'dine_in' ? 'Dine In Details' : 
-                         'Takeaway Details'}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="location">
-                        {deliveryDetails.orderType === 'delivery' ? 'Block' : 
-                         deliveryDetails.orderType === 'dine_in' ? 'Table Number *' : 
-                         'Location'}
-                      </Label>
+                      Order Details
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Block/Table/Location dropdown - Hide for outside cafe delivery orders */}
+                    {!(isOutsideCafe() && deliveryDetails.orderType === 'delivery') && (
+                      <div>
+                        <Label htmlFor="location">
+                          {deliveryDetails.orderType === 'delivery' ? 'Block' : 
+                           deliveryDetails.orderType === 'dine_in' ? 'Table Number *' : 
+                           'Location'}
+                        </Label>
                         <Select 
                           value={deliveryDetails.block} 
-                        onValueChange={(value) => setDeliveryDetails(prev => ({ ...prev, block: value }))}
+                          onValueChange={(value) => setDeliveryDetails(prev => ({ ...prev, block: value }))}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder={
@@ -1059,34 +1191,17 @@ const Checkout = () => {
                             } />
                           </SelectTrigger>
                           <SelectContent>
-                          {getLocationOptions(
-                            deliveryDetails.orderType,
-                            cafe.name,
-                            userResidency
-                          ).map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
+                            {getLocationOptions(
+                              deliveryDetails.orderType,
+                              cafe.name,
+                              userResidency
+                            ).map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
-                      </div>
-
-                    {/* Delivery Address - Only for outside cafes with delivery orders */}
-                    {isOutsideCafe() && deliveryDetails.orderType === 'delivery' && (
-                      <div>
-                        <LocationPicker
-                          value={deliveryDetails.deliveryAddress}
-                          coordinates={deliveryDetails.deliveryCoordinates}
-                          onChange={(address, coordinates) => {
-                            setDeliveryDetails(prev => ({
-                              ...prev,
-                              deliveryAddress: address,
-                              deliveryCoordinates: coordinates || null
-                            }));
-                          }}
-                          required
-                        />
                       </div>
                     )}
 
@@ -1106,7 +1221,10 @@ const Checkout = () => {
                             maxLength={10}
                           />
                         </div>
-                        {deliveryDetails.phoneNumber && deliveryDetails.phoneNumber.length !== 10 && (
+                        {deliveryDetails.phoneNumber && (() => {
+                          const cleanPhone = deliveryDetails.phoneNumber.replace(/\D/g, '');
+                          return cleanPhone.length !== 10 && cleanPhone.length !== 12;
+                        })() && (
                           <p className="text-red-500 text-sm mt-1">Phone number must be 10 digits</p>
                         )}
                       </div>
@@ -1122,10 +1240,9 @@ const Checkout = () => {
                         rows={3}
                       />
                     </div>
-
                   </CardContent>
                 </Card>
-                  )}
+              )}
 
               {/* Referral Code Input - Hidden for guest orders */}
               {!(isGuestOrderingAllowed() && (!user || !profile)) && (
@@ -1382,8 +1499,9 @@ const Checkout = () => {
                 }}
                 disabled={isLoading || isCheckingCafeStatus || !isMinimumOrderMet || 
                   cafe?.accepting_orders === false ||
-                  (!isGroceryOrder() && !isGrabitOrder() && deliveryDetails.orderType === 'delivery' && !isDeliveryAllowed(cafe?.name)) ||
-                  (!isGroceryOrder() && !isGrabitOrder() && (deliveryDetails.orderType === 'dine_in' || deliveryDetails.orderType === 'takeaway') && !isDineInTakeawayAllowedForCafe())
+                  (!isGroceryOrder() && !isGrabitOrder() && deliveryDetails.orderType === 'delivery' && !isOrderTypeAllowed('delivery')) ||
+                  (!isGroceryOrder() && !isGrabitOrder() && deliveryDetails.orderType === 'dine_in' && !isOrderTypeAllowed('dine_in')) ||
+                  (!isGroceryOrder() && !isGrabitOrder() && deliveryDetails.orderType === 'takeaway' && !isOrderTypeAllowed('takeaway'))
                 }
                 className="w-full"
                 size="lg"

@@ -1,0 +1,24 @@
+[
+  {
+    "name": "GHS Boys Hostel",
+    "category": "Campus",
+    "lat": 26.8432,
+    "lng": 75.5659,
+    "address": "GHS Boys Hostel, Manipal University Jaipur, Dehmi Kalan, Jaipur"
+  },
+  {
+    "name": "Harlin Boys Hostel",
+    "category": "Boys Hostel",
+    "lat": 26.8472,
+    "lng": 75.5698,
+    "address": "Harlin Boys Hostel, Vinayak Marg, Near MUJ, Jaipur"
+  },
+  {
+    "name": "ADD MORE HERE - COPY THIS TEMPLATE",
+    "category": "Boys Hostel",
+    "lat": 26.8475,
+    "lng": 75.5705,
+    "address": "Your PG Address Here"
+  }
+]
+

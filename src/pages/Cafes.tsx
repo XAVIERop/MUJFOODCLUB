@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Search, Filter, X, Heart, Store } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { shouldUserSeeCafe } from '@/utils/residencyUtils';
+import { shouldUserSeeCafe, getUserResidency } from '@/utils/residencyUtils';
 
 import { useFavorites } from '../hooks/useFavorites';
 import { Button } from '../components/ui/button';
@@ -43,11 +43,27 @@ const Cafes = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [selectedBlock, setSelectedBlock] = useState("B1");
-
+  const { profile } = useAuth();
+  const { scope: userScope } = getUserResidency(profile);
+  
+  // Initialize selectedBlock based on user type
+  const getInitialBlock = (): string => {
+    if (!profile) return ''; // Guest - no default location
+    if (userScope === 'off_campus') return 'OFF_CAMPUS'; // Outside user
+    return profile.block || ''; // GHS user - use their block or empty
+  };
+  
+  const [selectedBlock, setSelectedBlock] = useState<string>(getInitialBlock());
 
   const { toggleFavorite, isFavorite, getFavoriteCafes } = useFavorites();
-  const { profile } = useAuth();
+  
+  // Update block when profile changes
+  useEffect(() => {
+    const newBlock = getInitialBlock();
+    if (newBlock !== selectedBlock) {
+      setSelectedBlock(newBlock);
+    }
+  }, [profile, userScope]);
 
   // Available cuisine categories (matching the database cuisine_categories)
   const cuisineCategories = [

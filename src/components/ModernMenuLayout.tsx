@@ -10,6 +10,7 @@ import { promotionalBannerService, PromotionalBannerData } from '@/services/prom
 import FloatingMenuButton from '@/components/FloatingMenuButton';
 import { useFavorites } from '@/hooks/useFavorites';
 import { getCafeScope } from '@/utils/residencyUtils';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ModernMenuLayoutProps {
   // Search and filters
@@ -63,6 +64,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
 }) => {
   // Add favorites functionality
   const { toggleFavorite, isFavorite: isCafeFavorite } = useFavorites();
+  const { profile } = useAuth(); // Get user profile for banner filtering
   const cafeScope = getCafeScope(cafe);
   const scopeBadgeLabel = cafeScope === 'off_campus' ? 'Outside Delivery' : 'GHS Only';
   const scopeBadgeClasses =
@@ -130,8 +132,9 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
       try {
         console.log('Loading promotional banners for cafe:', cafe?.id);
         
-        // Try to load from database first
-        const banners = await promotionalBannerService.getActiveBanners(cafe?.id);
+        // Try to load from database first, filtered by user's email domain
+        const userEmail = profile?.email || null;
+        const banners = await promotionalBannerService.getActiveBanners(cafe?.id, userEmail);
         console.log('Database banners:', banners);
         
         if (banners.length > 0) {
@@ -152,14 +155,17 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
     };
 
     loadBanners();
-  }, [cafe?.id]);
+  }, [cafe?.id, profile?.email]);
 
   // Get cafe image for header background
   const getCafeHeaderImage = () => {
     // First, try to use the database image_url if available
     if (cafe?.image_url) {
+      console.log('✅ Using database image_url for', cafe.name, ':', cafe.image_url);
       return cafe.image_url;
     }
+    
+    console.log('⚠️ No image_url in database for', cafe?.name, '- using fallback');
     
     const cafeImages: { [key: string]: string } = {
       'CHATKARA': '/chatkara_card.png',
@@ -451,8 +457,8 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
         />
       )}
 
-      {/* Bottom Spacing for Mobile Navigation */}
-      <div className="h-32 pb-safe lg:hidden"></div>
+      {/* Bottom Spacing for Mobile Navigation - Extra padding to clear bottom nav bar */}
+      <div className="h-32 pb-20 pb-safe lg:hidden" />
     </div>
   );
 };

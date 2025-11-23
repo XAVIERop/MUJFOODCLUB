@@ -59,7 +59,7 @@ const HeroBannerSection: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [preloadedImages, setPreloadedImages] = useState<Set<string>>(new Set());
   const { profile } = useAuth();
-  const userScope = getUserResidency(profile);
+  const { scope: userScope, canSeeGHSContent } = getUserResidency(profile);
 
   // Fetch cafes data
   useEffect(() => {
@@ -235,67 +235,24 @@ const HeroBannerSection: React.FC = () => {
   };
 
   const heroBanners: HeroBanner[] = useMemo(() => {
-    if (userScope === 'off_campus') {
-      return [
-        {
-          id: 'outside-delivery',
-          title: "Outside Cafés, Delivered",
-          subtitle: "Campus Gate & PG Service",
-          description: "Late-night cravings? Discover trusted partners delivering directly to MUJ gates and nearby hostels.",
-          ctaText: 'Explore Options',
-          ctaAction: 'scroll_to_cafes',
-          backgroundColor: 'bg-gradient-to-r from-emerald-500 to-sky-600',
-          textColor: 'text-white',
-          rating: 4.6,
-          ratingCount: 120,
-          features: ['Easy delivery', 'Trusted partners', 'Late-night availability']
-        },
-        {
-          id: 'bannas-chowki-highlight',
-          title: "Banna's Chowki",
-          subtitle: 'Tandoor • Rolls • Meals',
-          description: "Signature tandoori nights, hearty combos, and quick bites—now just a tap away.",
-          ctaText: 'View Menu',
-          ctaAction: 'menu_bannas-chowki',
-          backgroundColor: 'bg-gradient-to-r from-amber-500 to-orange-600',
-          textColor: 'text-white',
-          rating: 4.5,
-          ratingCount: 95,
-          features: ['Open till 2 AM', 'Campus gate delivery', 'Student favourites'],
-          cafeId: 'bannas-chowki'
-        },
-        {
-          id: 'kokoro-highlight',
-          title: "Koko'ro Korean-Italian Café",
-          subtitle: 'Mocktails • Korean bowls • Pizzas',
-          description: "From ramen to sushi and mocktails—discover the entire Koko'ro menu in one place.",
-          ctaText: 'Explore Koko\'ro',
-          ctaAction: 'menu_kokoro',
-          backgroundColor: 'bg-gradient-to-r from-rose-500 to-orange-500',
-          textColor: 'text-white',
-          rating: 4.6,
-          ratingCount: 142,
-          features: ['Korean specials', 'Italian pizzas', 'Refreshing mocktails'],
-          cafeId: 'kokoro'
-        },
-        {
-          id: 'pg-discovery',
-          title: 'Stay Nearby?',
-          subtitle: 'Handpicked Outside Cafés',
-          description: 'Browse curated lists for PG residents and off-campus students with transparent delivery options.',
-          ctaText: 'Browse Cafés',
-          ctaAction: 'scroll_to_cafes',
-          backgroundColor: 'bg-gradient-to-r from-purple-500 to-indigo-600',
-          textColor: 'text-white',
-          rating: 4.4,
-          ratingCount: 88,
-          features: ['Verified partners', 'Clear delivery fees', 'Quick reorder']
-        }
-      ];
+    // Filter banners based on user's residency and cafe location_scope
+    if (!canSeeGHSContent) {
+      // For outside users, only show banners for off-campus cafes
+      const allBanners = createHeroBanners();
+      return allBanners.filter(banner => {
+        // Find the cafe in the fetched cafes list
+        const cafe = cafes.find(c => 
+          c.id === banner.cafeId || 
+          c.slug === banner.cafeId || 
+          c.name.toLowerCase() === banner.cafeId.toLowerCase()
+        );
+        // Only show if cafe is off-campus
+        return cafe && cafe.location_scope === 'off_campus';
+      });
     }
-
+    // GHS users see all banners
     return createHeroBanners();
-  }, [userScope]);
+  }, [canSeeGHSContent, cafes]);
 
   // Preload next banner image
   useEffect(() => {
@@ -315,41 +272,8 @@ const HeroBannerSection: React.FC = () => {
     preloadNextImage();
   }, [currentBannerIndex, heroBanners, preloadedImages]);
 
-  // Promotional cards data with background images
   const promotionalCards: PromotionalCard[] = useMemo(() => {
-    if (userScope === 'off_campus') {
-      return [
-        {
-          id: 'off-campus-curation',
-          title: 'Curated Off-Campus List',
-          description: 'Handpicked cafés delivering to MUJ gates & PG clusters.',
-          backgroundColor: 'bg-gradient-to-br from-teal-500 to-emerald-600',
-          imageUrl: undefined,
-          ctaText: 'See Recommendations →',
-          ctaAction: 'scroll_to_cafes'
-        },
-        {
-          id: 'late-night-bites',
-          title: 'Late-Night Bites',
-          description: 'Discover kitchens serving till 2 AM around Manipal Road.',
-          backgroundColor: 'bg-gradient-to-br from-slate-800 to-indigo-600',
-          imageUrl: undefined,
-          ctaText: 'Browse Menus →',
-          ctaAction: 'scroll_to_cafes'
-        },
-        {
-          id: 'gate-delivery',
-          title: 'Gate Delivery Ready',
-          description: 'Quick pickups at GHS gate with live rider updates.',
-          backgroundColor: 'bg-gradient-to-br from-amber-500 to-orange-500',
-          imageUrl: undefined,
-          ctaText: 'Plan Your Order →',
-          ctaAction: 'scroll_to_cafes'
-        }
-      ];
-    }
-
-    return [
+    const allCards: PromotionalCard[] = [
       {
         id: 'cook-house-promo',
         title: 'Cook House',
@@ -378,7 +302,29 @@ const HeroBannerSection: React.FC = () => {
         ctaAction: 'menu_tasteofindia'
       }
     ];
-  }, [userScope]);
+
+    // Filter promotional cards based on user's residency and cafe location_scope
+    if (!canSeeGHSContent) {
+      // For outside users, only show cards for off-campus cafes
+      return allCards.filter(card => {
+        // Find the cafe in the fetched cafes list
+        const cafe = cafes.find(c => {
+          // Match by cafe ID or name
+          if (card.ctaAction.startsWith('menu_')) {
+            const cafeId = card.ctaAction.replace('menu_', '');
+            return c.id === cafeId || 
+                   c.slug === cafeId || 
+                   c.name.toLowerCase().includes(cafeId.toLowerCase());
+          }
+          return false;
+        });
+        // Only show if cafe is off-campus
+        return cafe && cafe.location_scope === 'off_campus';
+      });
+    }
+    // GHS users see all promotional cards
+    return allCards;
+  }, [canSeeGHSContent, cafes]);
 
   // Auto-rotation logic
   useEffect(() => {
@@ -454,6 +400,13 @@ const HeroBannerSection: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  // Hide banner section entirely if there are no banners to show
+  // For outside users, only show banners marked as 'off_campus' in the database
+  // When off-campus banners are added to the database, they'll automatically appear
+  if (heroBanners.length === 0 && promotionalCards.length === 0) {
+    return null;
   }
 
   return (
@@ -538,6 +491,7 @@ const HeroBannerSection: React.FC = () => {
       </div>
 
         {/* Promotional Cards - Right side on desktop, stacked vertically */}
+        {promotionalCards.length > 0 && (
         <div className="flex flex-col gap-4 lg:flex-1">
         {promotionalCards.map((card) => (
           <div
@@ -568,6 +522,7 @@ const HeroBannerSection: React.FC = () => {
             </div>
           ))}
           </div>
+        )}
       </div>
     </div>
   );

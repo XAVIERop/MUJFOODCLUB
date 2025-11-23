@@ -50,6 +50,10 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
                      cafe.name.toLowerCase().includes('punjabi tadka') ||
                      cafe.name.toLowerCase().includes('munch box') ||
                      cafe.name.toLowerCase().includes('cook house') ||
+                     cafe.name.toLowerCase().includes('amor') ||
+                     (cafe.name.toLowerCase().includes('bg') && cafe.name.toLowerCase().includes('food cart')) ||
+                     cafe.name.toLowerCase().includes('koko') ||
+                     (cafe.name.toLowerCase().includes('banna') && cafe.name.toLowerCase().includes('chowki')) ||
                      cafe.name.toLowerCase().includes('pizza bakers') ||
                      cafe.name.toLowerCase().includes('taste of india') ||
                      cafe.name.toLowerCase().includes('stardom') ||
@@ -375,14 +379,14 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               className={`text-xs font-medium ${
                 !cafe.accepting_orders
                   ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed text-gray-600"
-                  : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || cafe.name.toLowerCase().includes('stardom') || cafe.name.toLowerCase().includes('grabit') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry'))
+                  : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || cafe.name.toLowerCase().includes('stardom') || cafe.name.toLowerCase().includes('grabit') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry')) || cafe.name.toLowerCase().includes('amor') || (cafe.name.toLowerCase().includes('bg') && cafe.name.toLowerCase().includes('food cart')) || cafe.name.toLowerCase().includes('koko') || (cafe.name.toLowerCase().includes('banna') && cafe.name.toLowerCase().includes('chowki'))
                     ? "bg-orange-100 hover:bg-orange-200 text-orange-600 hover:text-orange-700"
                     : "bg-gray-500 hover:bg-gray-600 text-white"
               } disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-600`}
             >
               {!cafe.accepting_orders
                 ? "Closed"
-                : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || cafe.name.toLowerCase().includes('stardom') || cafe.name.toLowerCase().includes('grabit') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry'))
+                : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || cafe.name.toLowerCase().includes('stardom') || cafe.name.toLowerCase().includes('grabit') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry')) || cafe.name.toLowerCase().includes('amor') || (cafe.name.toLowerCase().includes('bg') && cafe.name.toLowerCase().includes('food cart')) || cafe.name.toLowerCase().includes('koko') || (cafe.name.toLowerCase().includes('banna') && cafe.name.toLowerCase().includes('chowki'))
                   ? "Order Now"
                   : "Coming Soon"
               }

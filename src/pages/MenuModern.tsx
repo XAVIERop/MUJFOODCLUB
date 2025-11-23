@@ -483,6 +483,12 @@ const MenuModern = () => {
           return;
         }
         
+        console.log('📸 Cafe data fetched:', {
+          name: cafeData.name,
+          image_url: cafeData.image_url,
+          has_image: !!cafeData.image_url
+        });
+        
         setCafe(cafeData);
 
         // Fetch menu items (including out-of-stock items)
@@ -919,10 +925,8 @@ const MenuModern = () => {
 
   return (
     <div className="min-h-screen pt-16 pb-24 lg:pb-8">
-      {/* Header hidden on mobile, shown on desktop */}
-      <div className="hidden lg:block">
-        <Header />
-      </div>
+      {/* Header now visible on both mobile and desktop */}
+      <Header />
       <ModernMenuLayout
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}

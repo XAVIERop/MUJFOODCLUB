@@ -1,8 +1,10 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { getUserResidency } from '@/utils/residencyUtils';
 
 interface PromotionalBanner {
   id: string;
@@ -84,6 +86,43 @@ const MobilePromotionalBanners: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const [cafes, setCafes] = useState<any[]>([]);
+  
+  // Get user residency to determine which banners to show
+  const { canSeeGHSContent } = getUserResidency(profile);
+  
+  // Fetch cafes to check their location_scope
+  useEffect(() => {
+    const fetchCafes = async () => {
+      const { data } = await supabase
+        .from('cafes')
+        .select('id, name, location_scope')
+        .eq('is_active', true);
+      
+      if (data) {
+        setCafes(data);
+      }
+    };
+    fetchCafes();
+  }, []);
+  
+  // Filter banners based on user residency and cafe location_scope
+  const filteredBanners = useMemo(() => {
+    if (canSeeGHSContent) {
+      // GHS users see all banners
+      return PROMOTIONAL_BANNERS;
+    }
+    
+    // Outside users only see banners for off-campus cafes
+    return PROMOTIONAL_BANNERS.filter(banner => {
+      const cafe = cafes.find(c => 
+        c.name === banner.cafeId || 
+        c.name.toLowerCase() === banner.cafeId.toLowerCase()
+      );
+      return cafe && cafe.location_scope === 'off_campus';
+    });
+  }, [canSeeGHSContent, cafes]);
 
   const handleBannerClick = async (cafeName: string) => {
     try {
@@ -111,9 +150,11 @@ const MobilePromotionalBanners: React.FC = () => {
 
   // Auto-slide functionality
   useEffect(() => {
+    if (filteredBanners.length === 0) return; // Don't auto-slide if no banners
+    
     const interval = setInterval(() => {
       if (scrollRef.current) {
-        const nextIndex = (currentIndex + 1) % PROMOTIONAL_BANNERS.length;
+        const nextIndex = (currentIndex + 1) % filteredBanners.length;
         setCurrentIndex(nextIndex);
         
         // Smooth scroll to next banner
@@ -126,8 +167,14 @@ const MobilePromotionalBanners: React.FC = () => {
     }, 5000); // Auto-slide every 5 seconds
 
     return () => clearInterval(interval);
-  }, [currentIndex]);
+  }, [currentIndex, filteredBanners.length]);
 
+  // Hide banner section entirely for non-GHS users (no banners to show yet)
+  // When off-campus banners are added, they'll automatically appear
+  if (filteredBanners.length === 0) {
+    return null;
+  }
+  
   return (
     <div className="px-6 py-4">
       {/* Banners Scroll Container - No slide buttons */}
@@ -136,7 +183,7 @@ const MobilePromotionalBanners: React.FC = () => {
         className="flex space-x-4 overflow-x-auto scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {PROMOTIONAL_BANNERS.map((banner) => (
+        {filteredBanners.map((banner) => (
           <div
             key={banner.id}
             className={`relative rounded-xl overflow-hidden ${banner.backgroundColor} w-[320px] h-32 flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity`}

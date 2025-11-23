@@ -4,6 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from '@/hooks/useAuth';
+import { shouldUserSeeCafe } from '@/utils/residencyUtils';
 
 interface SearchSectionProps {
   selectedBlock: string;
@@ -18,20 +20,26 @@ const SearchSection: React.FC<SearchSectionProps> = ({ selectedBlock, onBlockCha
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [showCafeDropdown, setShowCafeDropdown] = useState(false);
   const [showMenuDropdown, setShowMenuDropdown] = useState(false);
+  const { user } = useAuth();
 
   // Fetch cafes and menu items
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch cafes
+        // Fetch cafes with location_scope for filtering
         const { data: cafesData, error: cafesError } = await supabase
           .from('cafes')
-          .select('id, name, description, image_url, average_rating')
+          .select('id, name, description, image_url, average_rating, location_scope, accepting_orders, priority')
           .order('priority', { ascending: true });
 
         if (!cafesError && cafesData) {
+          // Filter cafes based on user's residency
+          const visibleCafes = cafesData.filter(cafe => 
+            shouldUserSeeCafe(user, cafe)
+          );
+          
           // First, get the top 10 cafes by priority (regardless of open/closed status)
-          const top10Cafes = cafesData.sort((a, b) => (a.priority || 99) - (b.priority || 99)).slice(0, 10);
+          const top10Cafes = visibleCafes.sort((a, b) => (a.priority || 99) - (b.priority || 99)).slice(0, 10);
           
           // Then reorder within those 10: open cafes first, then closed cafes
           const openCafes = top10Cafes.filter(cafe => cafe.accepting_orders).sort((a, b) => (a.priority || 99) - (b.priority || 99));
@@ -42,14 +50,21 @@ const SearchSection: React.FC<SearchSectionProps> = ({ selectedBlock, onBlockCha
           setCafes(reorderedCafes);
         }
 
-        // Fetch menu items
+        // Fetch menu items with cafe info including location_scope
         const { data: menuData, error: menuError } = await supabase
           .from('menu_items')
-          .select('id, name, description, price, cafe_id, cafes(name)')
+          .select('id, name, description, price, cafe_id, cafes(name, location_scope)')
           .order('name', { ascending: true });
 
         if (!menuError && menuData) {
-          setMenuItems(menuData);
+          // Filter menu items to only include items from cafes user can see
+          const visibleMenuItems = menuData.filter(item => 
+            item.cafes && shouldUserSeeCafe(
+              user,
+              { location_scope: item.cafes.location_scope } as any
+            )
+          );
+          setMenuItems(visibleMenuItems);
         }
       } catch (error) {
         console.error('Error fetching search data:', error);
@@ -57,7 +72,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({ selectedBlock, onBlockCha
     };
 
     fetchData();
-  }, []);
+  }, [user?.email]);
 
   // Memoized filtered results for better performance
   const filteredResults = useMemo(() => {

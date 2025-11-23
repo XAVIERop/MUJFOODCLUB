@@ -58,6 +58,9 @@ interface Order {
   total_amount: number;
   created_at: string;
   delivery_block: string;
+  delivery_address?: string | null;
+  delivery_latitude?: number | null;
+  delivery_longitude?: number | null;
   table_number?: string;
   customer_name?: string;
   phone_number?: string;
@@ -195,7 +198,8 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
       const matchesSearch = searchQuery === '' || 
         order.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
         order.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.delivery_block.toLowerCase().includes(searchQuery.toLowerCase());
+        order.delivery_block.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.delivery_address?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
       
@@ -635,9 +639,11 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                       <span className="truncate">{order.user?.full_name || order.customer_name || 'Walk-in'}</span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <MapPin className="h-2.5 w-2.5" />
-                      <span className="truncate">
-                        {order.delivery_block === 'DINE_IN' && order.table_number ? 
+                      <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
+                      <span className="truncate" title={order.delivery_address || ''}>
+                        {order.delivery_address ? 
+                         (order.delivery_address.length > 20 ? order.delivery_address.substring(0, 20) + '...' : order.delivery_address) :
+                         order.delivery_block === 'DINE_IN' && order.table_number ? 
                          `Table ${order.table_number}` :
                          order.delivery_block === 'DINE_IN' ? 'Dine In' :
                          order.delivery_block === 'TAKEAWAY' ? 'Takeaway' :
@@ -783,13 +789,37 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                   <Phone className="h-3 w-3" />
                   <span>{hoveredOrder.user?.phone || hoveredOrder.phone_number || 'N/A'}</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-3 w-3" />
-                  <span>
-                    {hoveredOrder.delivery_block === 'DINE_IN' ? 'Dine In' :
-                     hoveredOrder.delivery_block === 'TAKEAWAY' ? 'Takeaway' :
-                     `Block ${hoveredOrder.delivery_block}`}
-                  </span>
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="h-3 w-3 flex-shrink-0" />
+                    <span className="text-xs text-muted-foreground">
+                      {hoveredOrder.delivery_address ? 'Address:' : 
+                       hoveredOrder.delivery_block === 'DINE_IN' ? 'Location:' :
+                       hoveredOrder.delivery_block === 'TAKEAWAY' ? 'Type:' : 'Block:'}
+                    </span>
+                  </div>
+                  {hoveredOrder.delivery_address ? (
+                    <div className="ml-5">
+                      <p className="text-sm font-medium">{hoveredOrder.delivery_address}</p>
+                      {hoveredOrder.delivery_latitude && hoveredOrder.delivery_longitude && (
+                        <a
+                          href={`https://www.google.com/maps?q=${hoveredOrder.delivery_latitude},${hoveredOrder.delivery_longitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-xs flex items-center gap-1 mt-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          📍 Open in Google Maps
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="ml-5 text-sm font-medium">
+                      {hoveredOrder.delivery_block === 'DINE_IN' ? 'Dine In' :
+                       hoveredOrder.delivery_block === 'TAKEAWAY' ? 'Takeaway' :
+                       `Block ${hoveredOrder.delivery_block}`}
+                    </p>
+                  )}
                 </div>
                 {hoveredOrder.delivery_block === 'DINE_IN' && hoveredOrder.table_number && (
                   <div className="flex items-center space-x-2">

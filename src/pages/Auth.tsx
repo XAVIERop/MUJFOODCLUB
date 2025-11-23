@@ -21,7 +21,8 @@ import {
   Shield,
   Smartphone,
   Eye,
-  EyeOff
+  EyeOff,
+  X
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -31,14 +32,63 @@ import Header from '@/components/Header';
 import ReferralCodeInput from '@/components/ReferralCodeInput';
 import { ReferralValidation } from '@/services/referralService';
 
+// Quick locations for sign-up (same as LocationPicker)
+const ALL_LOCATIONS = [
+  // Campus Hostels
+  { name: 'GHS Boys Hostel', category: 'Campus', lat: 26.8432, lng: 75.5659, address: 'GHS Boys Hostel, Manipal University Jaipur, Dehmi Kalan, Jaipur' },
+  { name: 'GHS Girls Hostel', category: 'Campus', lat: 26.8428, lng: 75.5655, address: 'GHS Girls Hostel, Manipal University Jaipur, Dehmi Kalan, Jaipur' },
+  { name: 'MUJ Main Gate', category: 'Campus', lat: 26.8445, lng: 75.5670, address: 'Main Gate, Manipal University Jaipur, Jaipur-Ajmer Expressway' },
+  { name: 'Academic Block MUJ', category: 'Campus', lat: 26.8425, lng: 75.5665, address: 'Academic Block, Manipal University Jaipur, Dehmi Kalan' },
+  
+  // Boys Hostels
+  { name: 'Harlin Boys Hostel', category: 'Boys Hostel', lat: 26.8472, lng: 75.5698, address: 'Harlin Boys Hostel, Vinayak Marg, Near MUJ, Jaipur' },
+  { name: 'ChillOut Hostels Boys', category: 'Boys Hostel', lat: 26.8476, lng: 75.5708, address: 'ChillOut Hostels, Elegance Hostel Rd, Near MUJ, Jaipur' },
+  { name: 'Hotel O SS', category: 'Boys Hostel', lat: 26.8470, lng: 75.5705, address: 'Hotel O SS, Near Manipal University Jaipur, Dehmi Kalan' },
+  { name: 'Narbada Hostel', category: 'Boys Hostel', lat: 26.8478, lng: 75.5710, address: 'Narbada Hostel, Near MUJ, Dehmi Kalan, Jaipur' },
+  { name: 'Pioneer Hostel', category: 'Boys Hostel', lat: 26.8468, lng: 75.5712, address: 'Pioneer Hostel, Near Manipal University Jaipur, Dehmi Kalan' },
+  { name: 'Sundarone Hostel', category: 'Boys Hostel', lat: 26.8477, lng: 75.5715, address: 'Sundarone Hostel, Near Manipal University Jaipur, Dehmi Kalan' },
+  { name: 'Hostel SS', category: 'Boys Hostel', lat: 26.8475, lng: 75.5707, address: 'Hostel SS, Near Manipal University Jaipur, Dehmi Kalan' },
+  { name: 'Stay Well Hostel', category: 'Boys Hostel', lat: 26.8480, lng: 75.5718, address: 'Stay Well Hostel, Manipal University Road, Dehmi Kalan' },
+  { name: 'Pankh Hostel', category: 'Boys Hostel', lat: 26.8474, lng: 75.5704, address: 'Pankh Hostel, Sanjharia Vatika Road, Near MUJ' },
+  { name: 'Elegance Hostel', category: 'Boys Hostel', lat: 26.8476, lng: 75.5709, address: 'Elegance Hostel, Elegance Hostel Rd, Near MUJ, Jaipur' },
+  
+  // Girls Hostels & PGs
+  { name: 'Manu Shri PG For Girls', category: 'Girls PG', lat: 26.8473, lng: 75.5700, address: 'Manu Shri PG For Girls, Vinayak Marg, Near MUJ' },
+  { name: 'ChillOut Hostels Girls', category: 'Girls PG', lat: 26.8476, lng: 75.5708, address: 'ChillOut Hostels Girls, Elegance Hostel Rd, Near MUJ' },
+  
+  // Mixed/Residential
+  { name: 'Narayan Residency Hostel', category: 'Residency', lat: 26.8471, lng: 75.5702, address: 'Narayan Residency Hostel & Flats, Near MUJ, Dehmi Kalan' },
+  { name: 'Lakshay Residency', category: 'Residency', lat: 26.8482, lng: 75.5720, address: 'Lakshay Residency & Flats, Near Manipal University Jaipur' },
+  { name: 'Samarth Ghar', category: 'Residency', lat: 26.8467, lng: 75.5714, address: 'Samarth Ghar, Near MUJ, Dehmi Kalan, Jaipur' },
+  
+  // General PG Areas
+  { name: 'Dehmi Kalan Main Area', category: 'Area', lat: 26.8475, lng: 75.5705, address: 'Dehmi Kalan Main Area, Near MUJ, Jaipur' },
+  { name: 'Kardhani Village', category: 'Area', lat: 26.8380, lng: 75.5620, address: 'Kardhani Village, Near MUJ, Jaipur' },
+  { name: 'NH-8 Side Area', category: 'Area', lat: 26.8485, lng: 75.5725, address: 'NH-8, Near Manipal University, Jaipur' },
+  { name: 'Sanjharia Vatika Road', category: 'Area', lat: 26.8474, lng: 75.5706, address: 'Sanjharia Vatika Road, Near MUJ, Jaipur' },
+  { name: 'Vinayak Marg Area', category: 'Area', lat: 26.8472, lng: 75.5698, address: 'Vinayak Marg, Dehmi Kalan, Near MUJ, Jaipur' },
+  { name: 'Elegance Hostel Road Area', category: 'Area', lat: 26.8476, lng: 75.5709, address: 'Elegance Hostel Road, Near MUJ, Jaipur' },
+  
+  // Key Landmarks
+  { name: 'Water Tank, Dehmi Kalan', category: 'Landmark', lat: 26.8478, lng: 75.5708, address: 'Water Tank, Dehmi Kalan, Jaipur' },
+  { name: 'Main Market, Dehmi Kalan', category: 'Landmark', lat: 26.8475, lng: 75.5710, address: 'Main Market, Dehmi Kalan, Jaipur' },
+  { name: 'Bus Stop, MUJ Gate', category: 'Landmark', lat: 26.8445, lng: 75.5672, address: 'Bus Stop, Near MUJ Gate, Jaipur-Ajmer Expressway' },
+  { name: 'Medical Store, Near MUJ', category: 'Landmark', lat: 26.8476, lng: 75.5707, address: 'Medical Store, Near MUJ, Dehmi Kalan' },
+  { name: 'Petrol Pump, NH-8', category: 'Landmark', lat: 26.8488, lng: 75.5728, address: 'Petrol Pump, NH-8, Near Manipal University' },
+  { name: 'Shree Food Court', category: 'Landmark', lat: 26.8470, lng: 75.5696, address: 'Shree Food Court, Near MUJ, Dehmi Kalan' },
+  { name: 'The Bamboo Canopy', category: 'Landmark', lat: 26.8483, lng: 75.5722, address: 'The Bamboo Canopy, Near MUJ, Jaipur' },
+  { name: 'Pioneer Cafe', category: 'Landmark', lat: 26.8468, lng: 75.5713, address: 'Pioneer Cafe, Near MUJ, Dehmi Kalan' },
+].sort((a, b) => a.name.localeCompare(b.name));
+
 const Auth = () => {
   const navigate = useNavigate();
-  const { signUp, signIn, sendOTP, verifyOTP, resendConfirmationEmail, resetPassword, updatePassword } = useAuth();
+  const { signUp, signIn, signInWithGoogle, sendOTP, verifyOTP, resendConfirmationEmail, resetPassword, updatePassword } = useAuth();
   const { toast } = useToast();
 
   // Form states
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('signin');
+  const [signInUserType, setSignInUserType] = useState<'ghs' | 'outside'>('ghs'); // GHS or Outside user
   const [showOTP, setShowOTP] = useState(false);
   const [otpEmail, setOtpEmail] = useState('');
   const [otpValue, setOtpValue] = useState('');
@@ -73,8 +123,13 @@ const Auth = () => {
     block: 'B1',
     phone: '',
     referralCode: '',
-    residencyScope: 'ghs' as 'ghs' | 'off_campus'
+    residencyScope: 'ghs' as 'ghs' | 'off_campus',
+    deliveryLocation: '' // For outside users - selected quick location
   });
+
+  // Quick locations state for outside users
+  const [showQuickLocations, setShowQuickLocations] = useState(false);
+  const [quickLocationSearch, setQuickLocationSearch] = useState('');
 
   // OTP form
   const [otpForm, setOtpForm] = useState({
@@ -88,16 +143,20 @@ const Auth = () => {
   // Scroll to top hook
   const { scrollToTopOnTabChange } = useScrollToTop();
 
-  // Handle password reset flow - simplified approach
+  // Handle password reset and set password flows
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
     
-    if (mode === 'reset-password') {
-      // User clicked password reset link - they're already signed in via email
+    if (mode === 'reset-password' || mode === 'set-password') {
+      // User clicked password reset/set link
+      // For Google OAuth users, this allows them to set a password
+      // For email/password users, this allows them to reset their password
       toast({
-        title: "Password Reset Complete!",
-        description: "You have been signed in successfully. You can now change your password from your profile if needed.",
+        title: mode === 'set-password' ? "Set Your Password" : "Password Reset",
+        description: mode === 'set-password' 
+          ? "You can now set a password for your account. You'll be able to sign in with email and password in the future."
+          : "You have been signed in successfully. You can now change your password from your profile if needed.",
         variant: "default"
       });
       // Clear URL parameters
@@ -147,11 +206,14 @@ const Auth = () => {
           description: error.message || "Please check your credentials and try again.",
           variant: "destructive"
         });
+        setIsLoading(false);
     } else {
         toast({
           title: "Welcome Back!",
           description: "Successfully signed in to your account.",
         });
+        // Note: signIn() in useAuth.tsx already handles redirect via window.location.href
+        // No need to navigate here - the redirect happens automatically
       }
     } catch (error) {
       toast({
@@ -159,7 +221,6 @@ const Auth = () => {
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive"
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -186,7 +247,18 @@ const Auth = () => {
     if (isGhsResident && !signupForm.email.endsWith('@muj.manipal.edu')) {
       toast({
         title: "Invalid Email",
-        description: "Please use your MUJ email address (@muj.manipal.edu).",
+        description: "Please use your MUJ email address (@muj.manipal.edu) for GHS residency.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
+    
+    // Enforce: Non-MUJ emails must be off-campus
+    if (!isGhsResident && signupForm.email.endsWith('@muj.manipal.edu')) {
+      toast({
+        title: "Invalid Residency",
+        description: "MUJ email addresses must select GHS residency.",
         variant: "destructive"
       });
       setIsLoading(false);
@@ -583,60 +655,196 @@ const Auth = () => {
             
                 {/* Sign In Tab */}
                 <TabsContent value="signin" className="space-y-5">
-                  <form onSubmit={handleSignIn} className="space-y-5">
-                  <div className="space-y-2">
-                      <Label htmlFor="signin-email" className="text-sm font-medium text-gray-700">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <Input
-                      id="signin-email"
-                      type="email"
-                          placeholder="your.email@muj.manipal.edu"
-                          value={signinForm.email}
-                          onChange={(e) => setSigninForm({ ...signinForm, email: e.target.value })}
-                          className="pl-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
-                      required
-                    />
+                  {/* User Type Selection - GHS or Outside */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-gray-700">I am a</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        type="button"
+                        variant={signInUserType === 'ghs' ? 'default' : 'outline'}
+                        onClick={() => setSignInUserType('ghs')}
+                        className={`h-12 rounded-xl font-medium transition-all ${
+                          signInUserType === 'ghs'
+                            ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md'
+                            : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50'
+                        }`}
+                      >
+                        🏠 GHS User
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={signInUserType === 'outside' ? 'default' : 'outline'}
+                        onClick={() => setSignInUserType('outside')}
+                        className={`h-12 rounded-xl font-medium transition-all ${
+                          signInUserType === 'outside'
+                            ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md'
+                            : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50'
+                        }`}
+                      >
+                        🏢 Outside User
+                      </Button>
+                    </div>
+                    {signInUserType === 'ghs' && (
+                      <p className="text-xs text-gray-500 text-center">
+                        Sign in with your @muj.manipal.edu email
+                      </p>
+                    )}
+                    {signInUserType === 'outside' && (
+                      <p className="text-xs text-gray-500 text-center">
+                        Sign in with Google (Gmail, Yahoo, or any email)
+                      </p>
+                    )}
                   </div>
-                    </div>
 
-                  <div className="space-y-2">
-                      <Label htmlFor="signin-password" className="text-sm font-medium text-gray-700">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <Input
-                      id="signin-password"
-                      type="password"
-                          placeholder="Enter your password"
-                          value={signinForm.password}
-                          onChange={(e) => setSigninForm({ ...signinForm, password: e.target.value })}
-                          className="pl-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
-                      required
-                    />
+                  {/* GHS User Sign-In Form */}
+                  {signInUserType === 'ghs' && (
+                    <form onSubmit={handleSignIn} className="space-y-5">
+                      <div className="space-y-2">
+                        <Label htmlFor="signin-email" className="text-sm font-medium text-gray-700">Email</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                          <Input
+                            id="signin-email"
+                            type="email"
+                            placeholder="your.email@muj.manipal.edu"
+                            value={signinForm.email}
+                            onChange={(e) => setSigninForm({ ...signinForm, email: e.target.value })}
+                            className="pl-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
+                            required
+                          />
+                        </div>
                       </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="signin-password" className="text-sm font-medium text-gray-700">Password</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                          <Input
+                            id="signin-password"
+                            type="password"
+                            placeholder="Enter your password"
+                            value={signinForm.password}
+                            onChange={(e) => setSigninForm({ ...signinForm, password: e.target.value })}
+                            className="pl-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <Button 
+                        type="submit" 
+                        className="w-full h-12 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200" 
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            Signing In...
+                          </>
+                        ) : (
+                          'Sign In'
+                        )}
+                      </Button>
+                    </form>
+                  )}
+
+                  {/* Outside User - Google Sign-In */}
+                  {signInUserType === 'outside' && (
+                    <div className="space-y-4">
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="bg-blue-500 rounded-full p-2 flex-shrink-0">
+                            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24">
+                              <path
+                                fill="currentColor"
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                              />
+                              <path
+                                fill="currentColor"
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                              />
+                              <path
+                                fill="currentColor"
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                              />
+                              <path
+                                fill="currentColor"
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-blue-900 mb-1">Quick & Easy Sign-In</p>
+                            <p className="text-sm text-blue-700">
+                              Sign in with your Google account. Perfect for outside users, PG residents, and anyone with a Gmail account.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-14 rounded-xl border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 flex items-center justify-center gap-3 shadow-md"
+                        onClick={async () => {
+                          setIsLoading(true);
+                          const { error } = await signInWithGoogle();
+                          if (error) {
+                            toast({
+                              title: "Google Sign-In Failed",
+                              description: error.message || "Please try again.",
+                              variant: "destructive"
+                            });
+                            setIsLoading(false);
+                          }
+                          // OAuth flow will redirect, so we don't set loading to false here
+                        }}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <span className="text-gray-700 font-medium">Connecting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-6 h-6" viewBox="0 0 24 24">
+                              <path
+                                fill="#4285F4"
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                              />
+                              <path
+                                fill="#34A853"
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                              />
+                              <path
+                                fill="#FBBC05"
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                              />
+                              <path
+                                fill="#EA4335"
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                              />
+                            </svg>
+                            <span className="text-gray-700 font-semibold text-base">Sign in with Google</span>
+                          </>
+                        )}
+                      </Button>
+                      
+                      <p className="text-xs text-center text-gray-500">
+                        Your profile will be created automatically with outside user access
+                      </p>
                     </div>
+                  )}
 
-                    <Button 
-                      type="submit" 
-                      className="w-full h-12 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200" 
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                          Signing In...
-                        </>
-                      ) : (
-                        'Sign In'
-                      )}
-                    </Button>
-                  </form>
-
-                  {/* Forgot Password */}
+                  {/* Forgot Password / Set Password */}
                   <div className="text-center py-4">
                     <div className="border-t border-gray-200 pt-3">
                       <p className="text-sm text-gray-600 mb-2">
-                        Forgot your password?
+                        {signInUserType === 'outside' 
+                          ? "Signed up with Google? Set a password to sign in with email/password"
+                          : "Forgot your password?"
+                        }
                       </p>
                       <Button
                         type="button"
@@ -649,13 +857,15 @@ const Auth = () => {
                             if (error) {
                               toast({
                                 title: "Error",
-                                description: error.message || "Failed to send password reset email",
+                                description: error.message || "Failed to send email",
                                 variant: "destructive"
                               });
                             } else {
                               toast({
-                                title: "Password Reset Email Sent",
-                                description: "Check your email for instructions to reset your password.",
+                                title: signInUserType === 'outside' ? "Password Setup Email Sent" : "Password Reset Email Sent",
+                                description: signInUserType === 'outside'
+                                  ? "Check your email for a link to set your password. After setting a password, you can sign in with email and password."
+                                  : "Check your email for instructions to reset your password.",
                               });
                             }
                             setIsLoading(false);
@@ -670,7 +880,7 @@ const Auth = () => {
                         disabled={!signinForm.email || isLoading}
                         className="text-sm h-10 rounded-lg border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors"
                       >
-                        Send Login Link
+                        {signInUserType === 'outside' ? "Set Password" : "Send Login Link"}
                       </Button>
                     </div>
                   </div>
@@ -693,6 +903,104 @@ const Auth = () => {
                       <strong>📧 Important:</strong> Check your <strong>junk/spam folder</strong> for verification email.
                     </AlertDescription>
                   </Alert>
+
+                  {/* Google Sign-Up - For Outside Users (shown at top when residencyScope is off_campus) */}
+                  {signupForm.residencyScope === 'off_campus' && (
+                    <div className="space-y-3 mb-5">
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="bg-blue-500 rounded-full p-2 flex-shrink-0">
+                            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24">
+                              <path
+                                fill="currentColor"
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                              />
+                              <path
+                                fill="currentColor"
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                              />
+                              <path
+                                fill="currentColor"
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                              />
+                              <path
+                                fill="currentColor"
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-blue-900 mb-1">Quick & Easy Sign-Up</p>
+                            <p className="text-sm text-blue-700">
+                              Sign up with your Google account. Perfect for outside users, PG residents, and anyone with a Gmail account.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-14 rounded-xl border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 flex items-center justify-center gap-3 shadow-md"
+                        onClick={async () => {
+                          setIsLoading(true);
+                          const { error } = await signInWithGoogle();
+                          if (error) {
+                            toast({
+                              title: "Google Sign-Up Failed",
+                              description: error.message || "Please try again.",
+                              variant: "destructive"
+                            });
+                            setIsLoading(false);
+                          }
+                          // OAuth flow will redirect, so we don't set loading to false here
+                        }}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <span className="text-gray-700 font-medium">Connecting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-6 h-6" viewBox="0 0 24 24">
+                              <path
+                                fill="#4285F4"
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                              />
+                              <path
+                                fill="#34A853"
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                              />
+                              <path
+                                fill="#FBBC05"
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                              />
+                              <path
+                                fill="#EA4335"
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                              />
+                            </svg>
+                            <span className="text-gray-700 font-semibold text-base">Sign up with Google</span>
+                          </>
+                        )}
+                      </Button>
+                      
+                      <p className="text-xs text-center text-gray-500">
+                        Your profile will be created automatically with outside user access
+                      </p>
+
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-gray-200"></span>
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-white px-2 text-gray-500">Or continue with email</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
@@ -817,10 +1125,115 @@ const Auth = () => {
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">Delivery Area</Label>
-                        <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-                          We’ll capture your delivery address (PG / off-campus) during checkout. No hostel block required.
+                        <Label className="text-sm font-medium text-gray-700">
+                          Delivery Area <span className="text-xs text-gray-500 font-normal">(Optional)</span>
+                        </Label>
+                        <div className="relative">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setShowQuickLocations(!showQuickLocations)}
+                            className="w-full h-12 rounded-xl border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-gray-400" />
+                              <span className={signupForm.deliveryLocation ? 'text-gray-900' : 'text-gray-500'}>
+                                {signupForm.deliveryLocation || 'Select your PG/Hostel/Area (optional)'}
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-400">▼</span>
+                          </Button>
+
+                          {/* Quick Locations Dropdown */}
+                          {showQuickLocations && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-96 overflow-hidden flex flex-col">
+                              {/* Header */}
+                              <div className="sticky top-0 bg-white border-b px-3 py-2 flex items-center justify-between z-10">
+                                <p className="text-sm text-gray-700 font-semibold">📍 {ALL_LOCATIONS.length} Locations Near MUJ</p>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setShowQuickLocations(false);
+                                    setQuickLocationSearch('');
+                                  }}
+                                  className="text-gray-400 hover:text-gray-600"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </div>
+                              
+                              {/* Search Box */}
+                              <div className="sticky top-12 bg-white border-b px-3 py-2 z-10">
+                                <Input
+                                  type="text"
+                                  placeholder="Search by PG name, hostel, or area..."
+                                  value={quickLocationSearch}
+                                  onChange={(e) => setQuickLocationSearch(e.target.value)}
+                                  className="w-full text-sm"
+                                  autoFocus
+                                />
+                              </div>
+                              
+                              {/* Scrollable Results */}
+                              <div className="overflow-y-auto flex-1 p-2">
+                                {(() => {
+                                  const searchTerm = quickLocationSearch.toLowerCase().trim();
+                                  const filtered = searchTerm 
+                                    ? ALL_LOCATIONS.filter(loc => 
+                                        loc.name.toLowerCase().includes(searchTerm) ||
+                                        loc.category.toLowerCase().includes(searchTerm) ||
+                                        loc.address.toLowerCase().includes(searchTerm)
+                                      )
+                                    : ALL_LOCATIONS;
+                                  
+                                  if (filtered.length === 0) {
+                                    return (
+                                      <div className="text-center py-8 text-gray-500">
+                                        <p className="text-sm">No locations found for "{quickLocationSearch}"</p>
+                                        <p className="text-xs mt-2">Try searching by PG name, hostel, or area</p>
+                                      </div>
+                                    );
+                                  }
+                                  
+                                  // Group filtered results by category
+                                  const groupedFiltered = filtered.reduce((acc, loc) => {
+                                    if (!acc[loc.category]) acc[loc.category] = [];
+                                    acc[loc.category].push(loc);
+                                    return acc;
+                                  }, {} as Record<string, typeof ALL_LOCATIONS>);
+                                  
+                                  return Object.entries(groupedFiltered).map(([category, locations]) => (
+                                    <div key={category} className="mb-3">
+                                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-2 py-1 mb-1 sticky top-0 bg-white">
+                                        {category} ({locations.length})
+                                      </p>
+                                      <div className="space-y-1">
+                                        {locations.map((location) => (
+                                          <button
+                                            key={location.name}
+                                            type="button"
+                                            onClick={() => {
+                                              setSignupForm({ ...signupForm, deliveryLocation: location.name });
+                                              setShowQuickLocations(false);
+                                              setQuickLocationSearch('');
+                                            }}
+                                            className="w-full text-left px-3 py-2.5 hover:bg-orange-50 hover:border-orange-200 border border-transparent rounded-lg text-sm transition-all group"
+                                          >
+                                            <div className="font-medium text-gray-900 group-hover:text-orange-700">{location.name}</div>
+                                            <div className="text-xs text-gray-500 mt-0.5 line-clamp-1">{location.address}</div>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ));
+                                })()}
+                              </div>
+                            </div>
+                          )}
                         </div>
+                        <p className="text-xs text-gray-500">
+                          Select your PG/Hostel/Area to speed up checkout. You can also add details during checkout.
+                        </p>
                       </div>
                     )}
 

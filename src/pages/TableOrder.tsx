@@ -106,6 +106,8 @@ const TableOrder = () => {
           throw new Error('Cafe not found');
         }
 
+        console.log('🏪 Cafe data from DB:', cafeData);
+        console.log('🏪 Cafe ID from DB:', cafeData.id);
         setCafe(cafeData);
 
         if (!cafeData.accepting_orders) {
@@ -212,12 +214,25 @@ const TableOrder = () => {
     });
   };
 
-  const handleRemoveFromCart = (item: GroupedMenuItem) => {
-    // Remove one quantity from any portion of this item
-    const portionIds = item.portions.map(p => p.id);
-    const cartItemId = portionIds.find(id => cart[id]);
+  const handleRemoveFromCart = (item: any) => {
+    // Handle both GroupedMenuItem and CartItem structures
+    let cartItemId: string;
     
-    if (!cartItemId) return;
+    if (item.portions && Array.isArray(item.portions)) {
+      // GroupedMenuItem with portions array
+      const portionIds = item.portions.map((p: any) => p.id);
+      const foundId = portionIds.find((id: string) => cart[id]);
+      if (!foundId) return;
+      cartItemId = foundId;
+    } else if (item.item && item.item.id) {
+      // CartItem structure from ModernMenuLayout
+      cartItemId = item.item.id;
+    } else {
+      // Direct item with id
+      cartItemId = item.id;
+    }
+    
+    if (!cartItemId || !cart[cartItemId]) return;
 
     setCart(prev => {
       const existing = prev[cartItemId];
@@ -302,31 +317,39 @@ const TableOrder = () => {
     setIsSubmitting(true);
 
     try {
+      // Check current auth status
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      console.log('🔐 Current auth user:', currentUser);
+      console.log('🔐 Is anonymous?', currentUser === null);
+
       // Generate order number
       const timestamp = Date.now();
       const random = Math.random().toString(36).substr(2, 6).toUpperCase();
       const generatedOrderNumber = `TBL-${tableNumber}-${random}`;
 
-      // Insert order
+      // Prepare order items for RPC function
+      const orderItems = Object.values(cart).map(({ item, quantity }) => ({
+        menu_item_id: item.id,
+        quantity,
+        unit_price: item.price,
+        total_price: item.price * quantity
+      }));
+
+      console.log('📦 Calling create_table_order RPC...');
+      console.log('📦 Cafe ID:', cafe.id);
+      console.log('📦 Order items:', orderItems);
+
+      // Use RPC function instead of direct insert (bypasses API restrictions)
       const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: null, // Guest order
-          cafe_id: cafe.id,
-          order_number: generatedOrderNumber,
-          order_type: 'table_order',
-          table_number: tableNumber,
-          customer_name: guestName.trim(),
-          phone_number: guestPhone,
-          delivery_notes: notes.trim() || null,
-          total_amount: getTotalAmount(),
-          status: 'received',
-          payment_method: 'cash',
-          delivery_block: 'DINE_IN',
-          estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString()
-        })
-        .select('id, order_number')
-        .single();
+        .rpc('create_table_order', {
+          p_cafe_id: cafe.id,
+          p_table_number: tableNumber,
+          p_customer_name: guestName.trim(),
+          p_phone_number: guestPhone,
+          p_delivery_notes: notes.trim() || null,
+          p_total_amount: getTotalAmount(),
+          p_order_items: orderItems
+        });
 
       if (orderError) {
         console.error('Order creation error:', orderError);
@@ -337,25 +360,9 @@ const TableOrder = () => {
         throw new Error('Order was not created');
       }
 
-      // Insert order items
-      const orderItems = Object.values(cart).map(({ item, quantity }) => ({
-        order_id: order.id,
-        menu_item_id: item.id,
-        quantity,
-        unit_price: item.price,
-        total_price: item.price * quantity
-      }));
+      console.log('✅ Order created via RPC:', order);
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) {
-        console.error('Order items error:', itemsError);
-        throw new Error('Failed to add items to order');
-      }
-
-      // Success
+      // Success - RPC function returns JSON object
       setOrderNumber(order.order_number);
       setOrderPlaced(true);
       
@@ -416,7 +423,7 @@ const TableOrder = () => {
   }
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen pt-16 pb-20 lg:pb-0">
       <Header />
       
       {/* Main Menu Display */}
@@ -437,34 +444,55 @@ const TableOrder = () => {
         cafe={cafe}
       />
 
+      {/* Mobile Floating Checkout Button - Only for mobile, triggers guest form */}
+      {getCartItemCount() > 0 && !showGuestForm && (
+        <div className="fixed bottom-20 left-4 right-4 bg-green-600 text-white p-3 rounded-lg shadow-lg z-[60] block lg:hidden">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="font-medium text-sm">
+                {getCartItemCount()} {getCartItemCount() === 1 ? 'Item' : 'Items'} • ₹{getTotalAmount()}
+              </span>
+            </div>
+            <button 
+              onClick={handleCheckout}
+              className="bg-white text-green-600 px-4 py-1.5 rounded-md font-medium text-sm hover:bg-gray-100 transition-colors flex items-center space-x-1"
+            >
+              <span>Place Order</span>
+              <span>&gt;</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Guest Checkout Form - Overlay */}
       {showGuestForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
-          <Card className="w-full sm:max-w-md mx-4 sm:mx-0 rounded-t-2xl sm:rounded-2xl">
-            <CardHeader className="relative">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center pb-16 sm:pb-0">
+          <Card className="w-full sm:max-w-md sm:mx-4 rounded-t-2xl sm:rounded-2xl max-h-[calc(90vh-4rem)] sm:max-h-[85vh] flex flex-col overflow-hidden">
+            <CardHeader className="relative flex-shrink-0 pb-3">
               <Button
                 variant="ghost"
                 size="sm"
-                className="absolute right-4 top-4"
+                className="absolute right-2 top-2 h-8 w-8 p-0"
                 onClick={() => setShowGuestForm(false)}
               >
                 <X className="w-4 h-4" />
               </Button>
-              <CardTitle>Complete Your Order</CardTitle>
-              <p className="text-sm text-gray-600">Table {tableNumber} • {cafe?.name}</p>
+              <CardTitle className="text-lg">Complete Your Order</CardTitle>
+              <p className="text-xs text-gray-600">Table {tableNumber} • {cafe?.name}</p>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 overflow-y-auto flex-1 px-4 pb-4 sm:pb-6">
               <div>
-                <Label htmlFor="name">Name *</Label>
+                <Label htmlFor="name" className="text-sm">Name *</Label>
                 <Input
                   id="name"
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
                   placeholder="Enter your name"
+                  className="h-10"
                 />
               </div>
               <div>
-                <Label htmlFor="phone">Phone *</Label>
+                <Label htmlFor="phone" className="text-sm">Phone *</Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -472,29 +500,31 @@ const TableOrder = () => {
                   onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   placeholder="10-digit number"
                   maxLength={10}
+                  className="h-10"
                 />
               </div>
               <div>
-                <Label htmlFor="notes">Special Instructions (Optional)</Label>
+                <Label htmlFor="notes" className="text-sm">Special Instructions (Optional)</Label>
                 <Textarea
                   id="notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Any special requests?"
-                  rows={3}
+                  rows={2}
+                  className="text-sm resize-none"
                 />
               </div>
 
               {/* Order Summary */}
-              <div className="border-t pt-4 space-y-2">
-                <h3 className="font-semibold">Order Summary</h3>
+              <div className="border-t pt-3 space-y-1.5">
+                <h3 className="font-semibold text-sm">Order Summary</h3>
                 {Object.values(cart).map(({ item, quantity }) => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span>{item.name} x{quantity}</span>
-                    <span>₹{item.price * quantity}</span>
+                  <div key={item.id} className="flex justify-between text-xs">
+                    <span className="truncate pr-2">{item.name} x{quantity}</span>
+                    <span className="flex-shrink-0">₹{item.price * quantity}</span>
                   </div>
                 ))}
-                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                <div className="flex justify-between font-bold text-base border-t pt-2 mt-2">
                   <span>Total</span>
                   <span>₹{getTotalAmount()}</span>
                 </div>
@@ -503,7 +533,7 @@ const TableOrder = () => {
               <Button
                 onClick={handlePlaceOrder}
                 disabled={isSubmitting || !cafe?.accepting_orders}
-                className="w-full"
+                className="w-full h-11 mt-2"
                 size="lg"
               >
                 {isSubmitting ? (

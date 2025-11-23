@@ -391,9 +391,40 @@ class UnifiedPrintService {
       const formattedReceiptData = { ...receiptData, cafe_name: cafeName };
       
       // Get cafe printer configuration
-      const config = await this.getCafePrinterConfig(cafeId);
+      let config = await this.getCafePrinterConfig(cafeId);
+      
+      // If no config found, try to use hardcoded printer IDs as fallback (same as receipt printing)
       if (!config) {
-        console.error('❌ Unified Print Service: No printer configuration found for this cafe');
+        console.warn('⚠️ Unified Print Service: No printer configuration found, trying hardcoded fallback');
+        
+        // Try to get printer ID from hardcoded fallback (same logic as usePrintNode hook)
+        let fallbackPrinterId: number | null = null;
+        const normalizedCafeName = cafeName.toLowerCase();
+        
+        if (normalizedCafeName.includes('chatkara')) {
+          fallbackPrinterId = 74698272; // Chatkara POS-80-Series
+        } else if (normalizedCafeName.includes('food court')) {
+          fallbackPrinterId = 74692682; // Food Court EPSON TM-T82 Receipt
+        } else if (normalizedCafeName.includes('mini meals')) {
+          fallbackPrinterId = 74756354; // Mini Meals Printer
+        } else if (normalizedCafeName.includes('punjabi') && normalizedCafeName.includes('tadka')) {
+          fallbackPrinterId = 74782622; // Punjabi Tadka Printer (POS-60C)
+        } else if (normalizedCafeName.includes('stardom')) {
+          fallbackPrinterId = 74910967; // Stardom THERMAL Receipt Printer
+        }
+        
+        // If we have a fallback printer ID, use PrintNode directly
+        if (fallbackPrinterId && this.printNodeService) {
+          console.log(`🖨️ Using hardcoded fallback printer ID ${fallbackPrinterId} for ${cafeName}`);
+          const result = await this.printNodeService.printKOT(formattedReceiptData, fallbackPrinterId);
+          if (result.success) {
+            return { ...result, method: 'printnode-fallback', jobId: result.jobId?.toString() };
+          }
+          console.error('❌ Hardcoded fallback PrintNode KOT failed');
+        }
+        
+        // If no fallback available, return error
+        console.error('❌ Unified Print Service: No printer configuration found for this cafe and no fallback available');
         return { 
           success: false, 
           error: 'No printer configuration found for this cafe',

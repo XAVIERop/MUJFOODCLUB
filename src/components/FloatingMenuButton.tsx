@@ -71,7 +71,7 @@ const FloatingMenuButton: React.FC<FloatingMenuButtonProps> = ({
 
   return (
     <div className={cn(
-      "floating-menu-container fixed right-6 bottom-6 z-50 transition-all duration-300"
+      "floating-menu-container fixed right-6 bottom-24 lg:bottom-6 z-[10000] transition-all duration-300"
     )}>
       {/* Floating Menu Button */}
       <Button
@@ -86,7 +86,7 @@ const FloatingMenuButton: React.FC<FloatingMenuButtonProps> = ({
             : "bg-black hover:bg-gray-800"
         )}
         style={{ 
-          zIndex: 51,
+          zIndex: 10001,
           position: 'relative'
         }}
       >

@@ -46,6 +46,9 @@ interface Order {
   total_amount: number;
   created_at: string;
   delivery_block: string;
+  delivery_address?: string | null;
+  delivery_latitude?: number | null;
+  delivery_longitude?: number | null;
   table_number?: string;
   customer_name?: string;
   phone_number?: string;
@@ -130,7 +133,8 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
       const matchesSearch = searchQuery === '' || 
         order.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
         order.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.delivery_block.toLowerCase().includes(searchQuery.toLowerCase());
+        order.delivery_block.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.delivery_address?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
       
@@ -359,8 +363,8 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
                 <span>${orderData.user?.phone || orderData.phone_number || 'N/A'}</span>
               </div>
               <div class="info-row">
-                <span>Block:</span>
-                <span>${orderData.user?.block || orderData.delivery_block || 'N/A'}</span>
+                <span>${orderData.delivery_address ? 'Address:' : 'Block:'}</span>
+                <span>${orderData.delivery_address || orderData.user?.block || orderData.delivery_block || 'N/A'}</span>
               </div>
             </div>
             
@@ -1192,13 +1196,30 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
               <div>
                 <span className="text-muted-foreground">
                   {selectedOrder.delivery_block === 'DINE_IN' ? 'Location:' : 
-                   selectedOrder.delivery_block === 'TAKEAWAY' ? 'Type:' : 'Block:'}
+                   selectedOrder.delivery_block === 'TAKEAWAY' ? 'Type:' : 
+                   selectedOrder.delivery_address ? 'Address:' : 'Block:'}
                 </span>
-                <span className="ml-2 font-medium">
-                  {selectedOrder.delivery_block === 'DINE_IN' ? 'Dine In' :
-                   selectedOrder.delivery_block === 'TAKEAWAY' ? 'Takeaway' :
-                   selectedOrder.delivery_block}
-                </span>
+                {selectedOrder.delivery_address ? (
+                  <div className="mt-1">
+                    <p className="font-medium text-sm">{selectedOrder.delivery_address}</p>
+                    {selectedOrder.delivery_latitude && selectedOrder.delivery_longitude && (
+                      <a
+                        href={`https://www.google.com/maps?q=${selectedOrder.delivery_latitude},${selectedOrder.delivery_longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline text-xs flex items-center gap-1 mt-1"
+                      >
+                        📍 Open in Google Maps
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <span className="ml-2 font-medium">
+                    {selectedOrder.delivery_block === 'DINE_IN' ? 'Dine In' :
+                     selectedOrder.delivery_block === 'TAKEAWAY' ? 'Takeaway' :
+                     selectedOrder.delivery_block}
+                  </span>
+                )}
               </div>
               {selectedOrder.delivery_block === 'DINE_IN' && (
                 <div>

@@ -18,6 +18,7 @@ interface AuthContextType {
     referralCode?: string
   ) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: any) => Promise<{ error: any }>;
   refreshProfile: () => Promise<void>;
@@ -147,10 +148,102 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(session?.user ?? null);
           
           if (session?.user) {
+            const user = session.user;
+            const email = user.email || '';
+            
+            // Handle Google OAuth users - ensure profile has residency_scope = 'off_campus'
+            // Check if this is a Google OAuth user (has google provider)
+            const isGoogleUser = user.app_metadata?.provider === 'google' || 
+                                 user.identities?.some((identity: any) => identity.provider === 'google');
+            
             // Defer profile fetching to avoid deadlocks
             setTimeout(() => {
-              fetchProfile(session.user.id);
+              fetchProfile(user.id);
             }, 0);
+            
+            // Handle Google OAuth users asynchronously (don't block auth state change)
+            if (isGoogleUser) {
+              // Run profile creation/update in background without blocking
+              (async () => {
+                try {
+                  // Check if profile exists
+                  const { data: existingProfile } = await supabase
+                    .from('profiles')
+                    .select('id, residency_scope')
+                    .eq('id', user.id)
+                    .maybeSingle();
+                  
+                  if (!existingProfile) {
+                    // Profile doesn't exist - create it
+                    console.log('Creating profile for Google OAuth user:', email);
+                    
+                    // Determine residency_scope based on email domain
+                    let residencyScope: 'ghs' | 'off_campus' = 'off_campus';
+                    if (email.endsWith('@mujfoodclub.in')) {
+                      residencyScope = 'ghs';
+                    } else if (email.endsWith('@muj.manipal.edu')) {
+                      // @muj.manipal.edu Google users default to off_campus
+                      // (they can update later if they're actually GHS residents)
+                      residencyScope = 'off_campus';
+                    } else {
+                      // Gmail and other providers -> off_campus
+                      residencyScope = 'off_campus';
+                    }
+                    
+                    // Create profile with proper residency_scope
+                    const displayName = user.user_metadata?.full_name || 
+                                      user.user_metadata?.name || 
+                                      email.split('@')[0];
+                    
+                    await createProfile(
+                      user.id,
+                      email,
+                      displayName,
+                      'OFF_CAMPUS', // Default block for outside users
+                      user.user_metadata?.phone || '',
+                      residencyScope,
+                      undefined // No referral code for OAuth sign-ups
+                    );
+                    
+                    console.log('Profile created for Google user with residency_scope:', residencyScope);
+                    
+                    // Re-fetch profile after creation (with small delay to ensure DB update completes)
+                    setTimeout(async () => {
+                      await fetchProfile(user.id);
+                      console.log('✅ Profile re-fetched after Google OAuth creation');
+                    }, 500);
+                  } else if (existingProfile && !existingProfile.residency_scope) {
+                    // Profile exists but doesn't have residency_scope - update it
+                    console.log('Updating profile with residency_scope for Google user:', email);
+                    
+                    let residencyScope: 'ghs' | 'off_campus' = 'off_campus';
+                    if (email.endsWith('@mujfoodclub.in')) {
+                      residencyScope = 'ghs';
+                    } else if (!email.endsWith('@muj.manipal.edu')) {
+                      // Gmail and other providers -> off_campus
+                      residencyScope = 'off_campus';
+                    }
+                    // For @muj.manipal.edu, keep existing or leave null (user can update later)
+                    
+                if (residencyScope) {
+                  await supabase
+                    .from('profiles')
+                    .update({ residency_scope: residencyScope })
+                    .eq('id', user.id);
+                  
+                  // Re-fetch profile after update (with small delay to ensure DB update completes)
+                  setTimeout(async () => {
+                    await fetchProfile(user.id);
+                    console.log('✅ Profile re-fetched after Google OAuth update');
+                  }, 500);
+                }
+                  }
+                } catch (error) {
+                  console.error('Error handling Google OAuth profile:', error);
+                  // Don't block auth flow if profile creation fails
+                }
+              })();
+            }
           } else {
             setProfile(null);
           }
@@ -282,40 +375,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       if (data.user && !error) {
-        // CRITICAL CHECK: If session is null, user already exists
-        if (!data.session) {
-          console.log('User already exists - session is null');
-          return { 
-            error: { 
-              message: 'This email is already registered. Please try signing in instead.',
-              code: 'user_already_exists'
-            } 
-          };
-        }
+        // NOTE: data.session is null when email confirmation is required - this is NORMAL
+        // Only check if user already exists in profiles table, not session status
+        console.log('Signup successful, session:', data.session ? 'exists' : 'null (email confirmation required)');
         
-        // Double-check: Verify this is actually a new user
-        const { data: checkProfile, error: checkError } = await supabase
+        // Database trigger (on_auth_user_created) automatically creates profile
+        // So we should check if it exists and only create if needed
+        const { data: existingNewProfile } = await supabase
           .from('profiles')
           .select('id')
           .eq('email', email)
-          .single();
+          .maybeSingle(); // Use maybeSingle to avoid error if not found
         
-        console.log('Double-check profile:', { checkProfile, checkError });
-        
-        if (checkProfile) {
-          console.log('User already exists in profiles after signup - this is unexpected');
-          // User already exists in profiles, this shouldn't happen but handle it
-          return { 
-            error: { 
-              message: 'This email is already registered. Please try signing in instead.',
-              code: 'user_already_exists'
-            } 
-          };
+        if (!existingNewProfile) {
+          // Trigger didn't create it (edge case), create it manually
+          console.log('Creating profile manually for new user:', data.user.id);
+          await createProfile(data.user.id, email, fullName, block, phone, residencyScope, cleanReferralCode);
+        } else {
+          // Profile already created by trigger, just update any missing fields if needed
+          console.log('Profile already created by trigger for:', email);
         }
-        
-        // Create profile for student (without referral processing yet)
-        console.log('Creating profile for new user:', data.user.id);
-        await createProfile(data.user.id, email, fullName, block, phone, residencyScope, cleanReferralCode);
         console.log('Profile created successfully for:', email);
         
         // Final check: Make sure we actually created a new user
@@ -420,6 +499,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       return { error: null };
     } catch (error) {
+      return { error };
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      const redirectUrl = `${window.location.origin}/auth`;
+      
+      // Initiate Google OAuth sign-in
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) {
+        console.error('Google OAuth error:', error);
+        return { error };
+      }
+
+      // OAuth flow will redirect to Google, then back to redirectUrl
+      // The profile will be created/updated in the auth state change listener
+      // We'll handle profile creation in useEffect when session is detected
+      
+      return { error: null };
+    } catch (error) {
+      console.error('Error initiating Google sign-in:', error);
       return { error };
     }
   };
@@ -603,14 +714,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Simplified reset password - just send confirmation email
+  // Reset password or set password for Google OAuth users
+  // Works for both email/password users (reset) and Google OAuth users (set password)
   const resetPassword = async (email: string) => {
     try {
-      // Validate email domain
-      if (!email.endsWith('@muj.manipal.edu')) {
-        return { error: { message: 'Please use a valid MUJ email address (@muj.manipal.edu)' } };
-      }
-
       // Check if email exists
       const { exists, error: checkError } = await checkEmailExists(email);
       if (checkError) {
@@ -621,12 +728,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error: { message: 'This email is not registered. Please sign up first.', code: 'email_not_found' } };
       }
 
-      // Send magic link instead of confirmation email (to avoid rate limits)
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth`
-        }
+      // Use password reset flow for all users
+      // For Google OAuth users, this will allow them to set a password
+      // For email/password users, this will allow them to reset their password
+      // Supabase automatically links the password to existing OAuth accounts
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?mode=reset-password`
       });
       
       return { error };
@@ -655,6 +762,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     updateProfile,
     refreshProfile,

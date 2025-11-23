@@ -20,7 +20,7 @@ const TableQRGenerator = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [qrCodes, setQrCodes] = useState<{ table: number; dataUrl: string }[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  
+
   // Production website URL for QR codes
   const PRODUCTION_URL = 'https://mujfoodclub.in';
 

@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -14,6 +14,9 @@ const BottomNavigation = () => {
     }
     return location.pathname.startsWith(path);
   };
+
+  // Show Grabit to everyone (guests and logged-in users)
+  const canSeeGrabit = true;
 
 
   return (
@@ -55,7 +58,7 @@ const BottomNavigation = () => {
           <span className="text-[11px] font-medium">Food</span>
         </button>
 
-        {/* Grabit Tab */}
+        {/* Grabit Tab - Show to everyone */}
         <button
           onClick={() => navigate('/grabit')}
           className={`flex flex-col items-center py-1.5 px-2 rounded-lg transition-all duration-200 ${
