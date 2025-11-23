@@ -93,24 +93,31 @@ export const AddressMapModal = ({
 
     // Load the script
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry&loading=async`;
     script.async = true;
     script.defer = true;
+    script.crossOrigin = 'anonymous';
     
     script.onload = () => {
       setIsGoogleMapsLoaded(true);
     };
     
-    script.onerror = () => {
+    script.onerror = (error) => {
       console.error('❌ Failed to load Google Maps script');
+      console.error('Error details:', error);
+      console.error('Script URL attempted:', script.src.substring(0, 50) + '...');
+      console.error('API Key present:', !!apiKey);
+      console.error('API Key prefix:', apiKey ? apiKey.substring(0, 10) + '...' : 'NOT FOUND');
+      console.error('Current URL:', window.location.href);
       console.error('Possible causes:');
       console.error('1. API key is invalid or restricted');
       console.error('2. Billing not enabled in Google Cloud Console');
-      console.error('3. Required APIs not enabled (Maps JavaScript API, Places API)');
-      console.error('4. API key restrictions blocking localhost');
+      console.error('3. Required APIs not enabled (Maps JavaScript API, Places API, Geocoding API)');
+      console.error('4. API key restrictions blocking mujfoodclub.in domain');
+      console.error('5. Environment variable not set in Vercel (check Vercel dashboard)');
       toast({
         title: 'Map loading failed',
-        description: 'Check console for details. Ensure API key is valid, billing is enabled, and localhost is allowed.',
+        description: 'Check browser console for details. Verify API key is set in Vercel and domain is allowed.',
         variant: 'destructive',
       });
     };
