@@ -7,13 +7,13 @@
 - Select project: `MUJFOODCLUB`
 - Settings → Environment Variables
 - Check: `VITE_GOOGLE_MAPS_API_KEY` exists
-- Value should be: `AIzaSyBZ13lKr8MHqE3t57LGbCUgl1B5-gjas5M` (or your actual key)
+- Value should be your Google Maps API key (never commit API keys to git!)
 - **IMPORTANT**: Make sure it's set for **Production** environment
 - After adding/updating: **Redeploy** the site
 
 ### 2. Check Browser Console
 Open browser console (F12) and look for:
-- `🗺️ Google Maps API Key found: AIzaSyBZ1...` (means key is loaded)
+- `🗺️ Google Maps API Key found: [first 10 chars]...` (means key is loaded)
 - `❌ Google Maps API key not found` (means key is missing)
 - Any network errors when loading `maps.googleapis.com`
 
