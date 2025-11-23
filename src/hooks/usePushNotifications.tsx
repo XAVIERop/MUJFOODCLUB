@@ -28,80 +28,81 @@ export const usePushNotifications = () => {
     checkSupport();
   }, []);
 
+  // DISABLED: OneSignal initialization - will be replaced with Web Push API
   // Initialize OneSignal when user is logged in (only once)
-  useEffect(() => {
-    let isMounted = true;
-    let initAttempted = false;
+  // useEffect(() => {
+  //   let isMounted = true;
+  //   let initAttempted = false;
 
-    const initOneSignal = async () => {
-      // Prevent multiple initialization attempts
-      if (initAttempted || !user || !isSupported) return;
-      initAttempted = true;
+  //   const initOneSignal = async () => {
+  //     // Prevent multiple initialization attempts
+  //     if (initAttempted || !user || !isSupported) return;
+  //     initAttempted = true;
 
-      const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
-      if (!appId) {
-        console.warn('OneSignal App ID not configured');
-        return;
-      }
+  //     const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
+  //     if (!appId) {
+  //       console.warn('OneSignal App ID not configured');
+  //       return;
+  //     }
 
-      try {
-        const initialized = await pushNotificationService.initialize(appId);
-        if (!initialized || !isMounted) return;
+  //     try {
+  //       const initialized = await pushNotificationService.initialize(appId);
+  //       if (!initialized || !isMounted) return;
         
-        // Wait for OneSignal to fully initialize
-        await new Promise(resolve => setTimeout(resolve, 1500));
+  //       // Wait for OneSignal to fully initialize
+  //       await new Promise(resolve => setTimeout(resolve, 1500));
         
-        // Check current permission status
-        const currentPermission = await pushNotificationService.getPermissionStatus();
-        if (!isMounted) return;
-        setPermission(currentPermission);
+  //       // Check current permission status
+  //       const currentPermission = await pushNotificationService.getPermissionStatus();
+  //       if (!isMounted) return;
+  //       setPermission(currentPermission);
         
-        // If permission is granted, check if user is subscribed
-        if (currentPermission === 'granted') {
-          // Wait for player ID to be available
-          await new Promise(resolve => setTimeout(resolve, 1000));
+  //       // If permission is granted, check if user is subscribed
+  //       if (currentPermission === 'granted') {
+  //         // Wait for player ID to be available
+  //         await new Promise(resolve => setTimeout(resolve, 1000));
           
-          const playerId = await pushNotificationService.getPlayerId();
-          if (playerId && isMounted) {
-            // Check if subscription exists in database
-            const { data: subscription, error } = await supabase
-              .from('push_subscriptions')
-              .select('*')
-              .eq('player_id', playerId)
-              .eq('is_active', true)
-              .maybeSingle();
+  //         const playerId = await pushNotificationService.getPlayerId();
+  //         if (playerId && isMounted) {
+  //           // Check if subscription exists in database
+  //           const { data: subscription, error } = await supabase
+  //             .from('push_subscriptions')
+  //             .select('*')
+  //             .eq('player_id', playerId)
+  //             .eq('is_active', true)
+  //             .maybeSingle();
             
-            if (error) {
-              console.error('Error checking subscription:', error);
-            } else if (subscription && isMounted) {
-              setIsSubscribed(true);
-              setPreferences(subscription.preferences);
-            } else if (isMounted) {
-              // Permission granted but no subscription - try to subscribe
-              console.log('Permission granted but no subscription found, creating subscription...');
-              const newSubscription = await pushNotificationService.subscribe(user.id);
-              if (newSubscription && isMounted) {
-                setIsSubscribed(true);
-                setPreferences(newSubscription.preferences);
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Failed to initialize push notifications:', error);
-        initAttempted = false; // Allow retry on error
-      }
-    };
+  //           if (error) {
+  //             console.error('Error checking subscription:', error);
+  //           } else if (subscription && isMounted) {
+  //             setIsSubscribed(true);
+  //             setPreferences(subscription.preferences);
+  //           } else if (isMounted) {
+  //             // Permission granted but no subscription - try to subscribe
+  //             console.log('Permission granted but no subscription found, creating subscription...');
+  //             const newSubscription = await pushNotificationService.subscribe(user.id);
+  //             if (newSubscription && isMounted) {
+  //               setIsSubscribed(true);
+  //               setPreferences(newSubscription.preferences);
+  //             }
+  //           }
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error('Failed to initialize push notifications:', error);
+  //       initAttempted = false; // Allow retry on error
+  //     }
+  //   };
 
-    // Only initialize once when user and support are available
-    if (user && isSupported) {
-      initOneSignal();
-    }
+  //   // Only initialize once when user and support are available
+  //   if (user && isSupported) {
+  //     initOneSignal();
+  //   }
 
-    return () => {
-      isMounted = false;
-    };
-  }, [user, isSupported]);
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, [user, isSupported]);
 
   /**
    * Request notification permission and subscribe

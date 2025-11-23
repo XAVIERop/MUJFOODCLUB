@@ -57,6 +57,8 @@ const EnvCheck = lazy(() => import("./pages/EnvCheck"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TableOrder = lazy(() => import("./pages/TableOrder"));
 const TableQRGenerator = lazy(() => import("./pages/TableQRGenerator"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 
 // Using optimized query client from lib/queryClient.ts
 
@@ -106,6 +108,10 @@ const App = () => {
                       <Route path="/table-order/:cafeSlug/:tableNumber" element={<TableOrder />} />
                       <Route path="/table-qr-generator" element={<TableQRGenerator />} />
                       
+                      {/* Legal Pages */}
+                      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                      <Route path="/terms-of-service" element={<TermsOfService />} />
+                      
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
@@ -125,7 +131,8 @@ const App = () => {
               {/* <SecurityIndicator /> */}
               <PWAUpdateManager />
               <PWAInstallPrompt />
-              <PushNotificationPrompt />
+              {/* DISABLED: OneSignal push notifications - will be replaced with Web Push API */}
+              {/* <PushNotificationPrompt /> */}
               <MobileFloatingCart />
             </BrowserRouter>
           </TooltipProvider>
