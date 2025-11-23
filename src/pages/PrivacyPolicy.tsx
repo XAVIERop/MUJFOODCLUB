@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const PrivacyPolicy = () => {
   return (
@@ -86,7 +87,7 @@ const PrivacyPolicy = () => {
                   <li>Request a copy of your data</li>
                 </ul>
                 <p className="mt-3">
-                  To exercise these rights, please contact us at <a href="mailto:plattrtechnologies@gmail.com" className="text-primary hover:underline">plattrtechnologies@gmail.com</a>
+                  To exercise these rights, please contact us at <a href="mailto:support@mujfoodclub.in" className="text-primary hover:underline">support@mujfoodclub.in</a>
                 </p>
               </section>
 
@@ -131,7 +132,7 @@ const PrivacyPolicy = () => {
                   If you have any questions about this Privacy Policy, please contact us:
                 </p>
                 <ul className="list-none pl-0 space-y-1 mt-2">
-                  <li><strong>Email:</strong> <a href="mailto:plattrtechnologies@gmail.com" className="text-primary hover:underline">plattrtechnologies@gmail.com</a></li>
+                  <li><strong>Email:</strong> <a href="mailto:support@mujfoodclub.in" className="text-primary hover:underline">support@mujfoodclub.in</a></li>
                   <li><strong>Website:</strong> <a href="https://mujfoodclub.in" className="text-primary hover:underline">https://mujfoodclub.in</a></li>
                 </ul>
               </section>
@@ -139,6 +140,7 @@ const PrivacyPolicy = () => {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const TermsOfService = () => {
   return (
@@ -163,7 +164,7 @@ const TermsOfService = () => {
                   If you have any questions about these Terms of Service, please contact us:
                 </p>
                 <ul className="list-none pl-0 space-y-1 mt-2">
-                  <li><strong>Email:</strong> <a href="mailto:plattrtechnologies@gmail.com" className="text-primary hover:underline">plattrtechnologies@gmail.com</a></li>
+                  <li><strong>Email:</strong> <a href="mailto:support@mujfoodclub.in" className="text-primary hover:underline">support@mujfoodclub.in</a></li>
                   <li><strong>Website:</strong> <a href="https://mujfoodclub.in" className="text-primary hover:underline">https://mujfoodclub.in</a></li>
                 </ul>
               </section>
@@ -171,6 +172,7 @@ const TermsOfService = () => {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </div>
   );
 };
