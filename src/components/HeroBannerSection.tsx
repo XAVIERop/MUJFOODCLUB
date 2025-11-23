@@ -235,6 +235,11 @@ const HeroBannerSection: React.FC = () => {
   };
 
   const heroBanners: HeroBanner[] = useMemo(() => {
+    // Guests (no profile) see all banners, just like all cafes
+    if (!profile) {
+      return createHeroBanners();
+    }
+    
     // Filter banners based on user's residency and cafe location_scope
     if (!canSeeGHSContent) {
       // For outside users, only show banners for off-campus cafes
@@ -252,7 +257,7 @@ const HeroBannerSection: React.FC = () => {
     }
     // GHS users see all banners
     return createHeroBanners();
-  }, [canSeeGHSContent, cafes]);
+  }, [canSeeGHSContent, cafes, profile]);
 
   // Preload next banner image
   useEffect(() => {
@@ -303,6 +308,11 @@ const HeroBannerSection: React.FC = () => {
       }
     ];
 
+    // Guests (no profile) see all promotional cards, just like all cafes
+    if (!profile) {
+      return allCards;
+    }
+    
     // Filter promotional cards based on user's residency and cafe location_scope
     if (!canSeeGHSContent) {
       // For outside users, only show cards for off-campus cafes
@@ -324,7 +334,7 @@ const HeroBannerSection: React.FC = () => {
     }
     // GHS users see all promotional cards
     return allCards;
-  }, [canSeeGHSContent, cafes]);
+  }, [canSeeGHSContent, cafes, profile]);
 
   // Auto-rotation logic
   useEffect(() => {

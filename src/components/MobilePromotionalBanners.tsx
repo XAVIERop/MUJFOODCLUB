@@ -109,6 +109,11 @@ const MobilePromotionalBanners: React.FC = () => {
   
   // Filter banners based on user residency and cafe location_scope
   const filteredBanners = useMemo(() => {
+    // Guests (no profile) see all banners, just like all cafes
+    if (!profile) {
+      return PROMOTIONAL_BANNERS;
+    }
+    
     if (canSeeGHSContent) {
       // GHS users see all banners
       return PROMOTIONAL_BANNERS;
@@ -122,7 +127,7 @@ const MobilePromotionalBanners: React.FC = () => {
       );
       return cafe && cafe.location_scope === 'off_campus';
     });
-  }, [canSeeGHSContent, cafes]);
+  }, [canSeeGHSContent, cafes, profile]);
 
   const handleBannerClick = async (cafeName: string) => {
     try {

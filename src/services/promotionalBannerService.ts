@@ -32,9 +32,9 @@ class PromotionalBannerService {
       return true;
     }
     
-    // If no user email (guest), only show off_campus banners
+    // If no user email (guest), show all banners (same as cafes - guests see everything)
     if (!userEmail) {
-      return bannerScope === 'off_campus';
+      return true;
     }
     
     // Users with MUJ or FoodClub email can see all banners

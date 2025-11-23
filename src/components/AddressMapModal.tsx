@@ -72,6 +72,24 @@ export const AddressMapModal = ({
     
     // Log API key status (first 10 chars only for security)
     console.log('🗺️ Google Maps API Key found:', apiKey.substring(0, 10) + '...');
+    console.log('🌐 Current URL:', window.location.href);
+    console.log('🔑 API Key length:', apiKey.length);
+    
+    // Set up global error handler for Google Maps auth failures
+    (window as any).gm_authFailure = () => {
+      console.error('❌ Google Maps authentication failed');
+      console.error('This usually means:');
+      console.error('1. API key is invalid or expired');
+      console.error('2. API key restrictions are blocking this domain');
+      console.error('3. Required APIs are not enabled');
+      console.error('4. Billing is not enabled');
+      console.error('Current domain:', window.location.hostname);
+      toast({
+        title: 'Google Maps authentication failed',
+        description: 'Check API key restrictions and enabled APIs in Google Cloud Console.',
+        variant: 'destructive',
+      });
+    };
 
     // Check if already loaded
     if (window.google && window.google.maps) {
@@ -99,7 +117,20 @@ export const AddressMapModal = ({
     script.crossOrigin = 'anonymous';
     
     script.onload = () => {
-      setIsGoogleMapsLoaded(true);
+      // Wait a bit for Google Maps to fully initialize
+      setTimeout(() => {
+        if (window.google && window.google.maps) {
+          console.log('✅ Google Maps script loaded successfully');
+          setIsGoogleMapsLoaded(true);
+        } else {
+          console.error('⚠️ Script loaded but window.google.maps is not available');
+          toast({
+            title: 'Map initialization failed',
+            description: 'Google Maps script loaded but initialization failed. Check console for details.',
+            variant: 'destructive',
+          });
+        }
+      }, 500);
     };
     
     script.onerror = (error) => {
@@ -173,12 +204,27 @@ export const AddressMapModal = ({
 
   // Initialize map
   const initializeMap = () => {
-    if (!mapRef.current || !window.google || !window.google.maps) {
-      console.error('Google Maps not available');
+    if (!mapRef.current) {
+      console.error('❌ Map container ref not available');
       return;
     }
-
-    const map = new window.google.maps.Map(mapRef.current, {
+    
+    if (!window.google || !window.google.maps) {
+      console.error('❌ Google Maps not available');
+      console.error('window.google:', !!window.google);
+      console.error('window.google.maps:', window.google ? !!window.google.maps : 'N/A');
+      toast({
+        title: 'Map initialization failed',
+        description: 'Google Maps library not loaded. Check API key and restrictions.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      console.log('🗺️ Initializing Google Map...');
+      
+      const map = new window.google.maps.Map(mapRef.current, {
       center: coords,
       zoom: 17,
       disableDefaultUI: true,
@@ -215,15 +261,25 @@ export const AddressMapModal = ({
       }
     });
 
-    // Get address when dragging stops
-    map.addListener('idle', () => {
-      const center = map.getCenter();
-      if (center) {
-        const newLat = center.lat();
-        const newLng = center.lng();
-        getAddressFromCoords(newLat, newLng);
-      }
-    });
+      // Get address when dragging stops
+      map.addListener('idle', () => {
+        const center = map.getCenter();
+        if (center) {
+          const newLat = center.lat();
+          const newLng = center.lng();
+          getAddressFromCoords(newLat, newLng);
+        }
+      });
+      
+      console.log('✅ Google Map initialized successfully');
+    } catch (error) {
+      console.error('❌ Error initializing Google Map:', error);
+      toast({
+        title: 'Map initialization error',
+        description: error instanceof Error ? error.message : 'Failed to initialize map. Check console for details.',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Get current location via GPS
@@ -325,7 +381,8 @@ export const AddressMapModal = ({
     if (!isOpen) {
       mapInstanceRef.current = null;
     }
-  }, [isOpen, isGoogleMapsLoaded, mode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, isGoogleMapsLoaded, mode]); // coords intentionally excluded to prevent infinite loop
 
   // Handle save
   const handleSave = () => {
