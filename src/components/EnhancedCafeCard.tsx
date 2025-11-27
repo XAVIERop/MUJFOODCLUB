@@ -103,7 +103,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
       'Let\'s Go Live': '/letsgolive_card.jpg',
       'LETS GO LIVE': '/letsgolive_card.jpg',
       'BG The Food Cart': 'https://ik.imagekit.io/foodclub/Cafe/Food%20Cart/Food%20Cart.jpg?updatedAt=1763167203799',
-      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/Banna.jpg?updatedAt=1763167090456',
+      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/PHOTO-2025-11-23-19-46-23.jpg',
       'Koko\'ro': 'https://ik.imagekit.io/foodclub/Cafe/Koko\'ro/Koko\'ro.jpeg?updatedAt=1763167147690'
     };
 
@@ -377,19 +377,12 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
               onClick={() => handleOrderNow(cafe.id)}
               disabled={!cafe.accepting_orders}
               className={`text-xs font-medium ${
-                !cafe.accepting_orders
-                  ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed text-gray-600"
-                  : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || cafe.name.toLowerCase().includes('stardom') || cafe.name.toLowerCase().includes('grabit') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry')) || cafe.name.toLowerCase().includes('amor') || (cafe.name.toLowerCase().includes('bg') && cafe.name.toLowerCase().includes('food cart')) || cafe.name.toLowerCase().includes('koko') || (cafe.name.toLowerCase().includes('banna') && cafe.name.toLowerCase().includes('chowki'))
-                    ? "bg-orange-100 hover:bg-orange-200 text-orange-600 hover:text-orange-700"
-                    : "bg-gray-500 hover:bg-gray-600 text-white"
+                cafe.accepting_orders
+                  ? "bg-orange-100 hover:bg-orange-200 text-orange-600 hover:text-orange-700"
+                  : "bg-gray-400 hover:bg-gray-400 cursor-not-allowed text-gray-600"
               } disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-600`}
             >
-              {!cafe.accepting_orders
-                ? "Closed"
-                : cafe.name.toLowerCase().includes('chatkara') || cafe.name.toLowerCase().includes('cook house') || cafe.name.toLowerCase().includes('mini meals') || cafe.name.toLowerCase().includes('food court') || cafe.name.toLowerCase().includes('punjabi tadka') || cafe.name.toLowerCase().includes('munch box') || cafe.name.toLowerCase().includes('pizza bakers') || cafe.name.toLowerCase().includes('taste of india') || cafe.name.toLowerCase().includes('stardom') || cafe.name.toLowerCase().includes('grabit') || (cafe.name.toLowerCase().includes('kitchen') && cafe.name.toLowerCase().includes('curry')) || cafe.name.toLowerCase().includes('amor') || (cafe.name.toLowerCase().includes('bg') && cafe.name.toLowerCase().includes('food cart')) || cafe.name.toLowerCase().includes('koko') || (cafe.name.toLowerCase().includes('banna') && cafe.name.toLowerCase().includes('chowki'))
-                  ? "Order Now"
-                  : "Coming Soon"
-              }
+              {cafe.accepting_orders ? "Order Now" : "Closed"}
             </Button>
           </div>
 

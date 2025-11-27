@@ -80,7 +80,7 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
       'Let\'s Go Live': '/letsgolive_card.jpg',
       'LETS GO LIVE': '/letsgolive_card.jpg',
       'BG The Food Cart': 'https://ik.imagekit.io/foodclub/Cafe/Food%20Cart/Food%20Cart.jpg?updatedAt=1763167203799',
-      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/Banna.jpg?updatedAt=1763167090456',
+      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/PHOTO-2025-11-23-19-46-23.jpg',
       'Koko\'ro': 'https://ik.imagekit.io/foodclub/Cafe/Koko\'ro/Koko\'ro.jpeg?updatedAt=1763167147690'
     };
 

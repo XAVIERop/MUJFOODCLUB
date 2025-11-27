@@ -178,15 +178,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     console.log('Creating profile for Google OAuth user:', email);
                     
                     // Determine residency_scope based on email domain
+                    // Google OAuth signups default to off_campus (even @muj.manipal.edu)
                     let residencyScope: 'ghs' | 'off_campus' = 'off_campus';
                     if (email.endsWith('@mujfoodclub.in')) {
                       residencyScope = 'ghs';
-                    } else if (email.endsWith('@muj.manipal.edu')) {
-                      // @muj.manipal.edu Google users default to off_campus
-                      // (they can update later if they're actually GHS residents)
-                      residencyScope = 'off_campus';
                     } else {
-                      // Gmail and other providers -> off_campus
+                      // All Google OAuth signups (including @muj.manipal.edu) -> off_campus
+                      // Regular signups with @muj.manipal.edu will be handled in signUp function
                       residencyScope = 'off_campus';
                     }
                     
@@ -195,11 +193,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                                       user.user_metadata?.name || 
                                       email.split('@')[0];
                     
+                    // Google OAuth signups always use OFF_CAMPUS block
                     await createProfile(
                       user.id,
                       email,
                       displayName,
-                      'OFF_CAMPUS', // Default block for outside users
+                      'OFF_CAMPUS', // Google OAuth signups default to off_campus
                       user.user_metadata?.phone || '',
                       residencyScope,
                       undefined // No referral code for OAuth sign-ups
@@ -216,16 +215,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     // Profile exists but doesn't have residency_scope - update it
                     console.log('Updating profile with residency_scope for Google user:', email);
                     
+                    // Google OAuth signups default to off_campus (even @muj.manipal.edu)
                     let residencyScope: 'ghs' | 'off_campus' = 'off_campus';
                     if (email.endsWith('@mujfoodclub.in')) {
                       residencyScope = 'ghs';
-                    } else if (!email.endsWith('@muj.manipal.edu')) {
-                      // Gmail and other providers -> off_campus
+                    } else {
+                      // All Google OAuth signups -> off_campus
                       residencyScope = 'off_campus';
                     }
-                    // For @muj.manipal.edu, keep existing or leave null (user can update later)
                     
-                if (residencyScope) {
+                    // Update profile with correct residency_scope
+                    if (residencyScope) {
                   await supabase
                     .from('profiles')
                     .update({ residency_scope: residencyScope })
@@ -321,7 +321,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
       }
 
-      const redirectUrl = `${window.location.origin}/auth`;
+      const redirectUrl = `${window.location.origin}/`;
       
       // PROPER EMAIL CONFIRMATION: User must verify email before login
       const { data, error } = await supabase.auth.signUp({
@@ -505,7 +505,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signInWithGoogle = async () => {
     try {
-      const redirectUrl = `${window.location.origin}/auth`;
+      const redirectUrl = `${window.location.origin}/`;
       
       // Initiate Google OAuth sign-in
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -594,7 +594,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth`,
+          emailRedirectTo: `${window.location.origin}/`,
           shouldCreateUser: true // This will create a user if they don't exist
         }
       });
@@ -680,7 +680,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         type: 'signup',
         email: email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth`
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
       

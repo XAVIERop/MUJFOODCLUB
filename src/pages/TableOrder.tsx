@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, CheckCircle, X } from 'lucide-react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import ModernMenuLayout from '@/components/ModernMenuLayout';
 
 interface MenuItem {
@@ -408,13 +409,21 @@ const TableOrder = () => {
               <p className="text-sm text-gray-500">
                 Thank you for dining with us!
               </p>
-              <Button
-                onClick={() => navigate('/')}
-                variant="outline"
-                className="w-full mt-4"
-              >
-                Back to Home
-              </Button>
+              <div className="flex flex-col gap-2 mt-4">
+                <Button
+                  onClick={() => navigate(`/table-order/${cafeSlug}/${tableNumber}`)}
+                  className="w-full"
+                >
+                  Order Again
+                </Button>
+                <Button
+                  onClick={() => navigate('/')}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Back to Home
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -549,6 +558,11 @@ const TableOrder = () => {
           </Card>
         </div>
       )}
+      
+      {/* Footer - Desktop only (mobile has bottom nav) */}
+      <div className="hidden lg:block">
+        <Footer />
+      </div>
     </div>
   );
 };

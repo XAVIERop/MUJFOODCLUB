@@ -52,7 +52,7 @@ export const LocationProvider: React.FC<LocationProviderProps> = ({ children }) 
       const savedLocation = localStorage.getItem('selectedBlock');
       if (savedLocation && savedLocation !== 'B1' && HOSTEL_BLOCKS.includes(savedLocation)) {
         // Only use saved location if it's a valid block and not the default B1
-        setSelectedBlock(savedLocation);
+      setSelectedBlock(savedLocation);
       } else if (profile.block && HOSTEL_BLOCKS.includes(profile.block)) {
         // Use profile block if available and valid
         setSelectedBlock(profile.block);

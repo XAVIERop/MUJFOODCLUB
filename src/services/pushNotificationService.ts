@@ -89,12 +89,12 @@ class PushNotificationService {
         try {
           const existingUserId = await nativeOneSignal.getUserId();
           if (existingUserId) {
-            this.isInitialized = true;
-            this.playerId = existingUserId;
+              this.isInitialized = true;
+              this.playerId = existingUserId;
             console.log('✅ OneSignal already initialized, using existing instance');
-            return true;
-          }
-        } catch (e) {
+              return true;
+            }
+          } catch (e) {
           console.log('OneSignal SDK exists but not fully initialized yet');
         }
       }
@@ -103,13 +103,13 @@ class PushNotificationService {
       // Note: Service worker errors in dev are common - OneSignal will work without explicit path
       // The SDK will try to auto-detect or use CDN-hosted service worker
       try {
-        await OneSignal.init({
-          appId: appId,
-          allowLocalhostAsSecureOrigin: true,
-          notifyButton: {
-            enable: false,
-          },
-          autoResubscribe: true,
+      await OneSignal.init({
+        appId: appId,
+        allowLocalhostAsSecureOrigin: true,
+        notifyButton: {
+          enable: false,
+        },
+        autoResubscribe: true,
           // Don't specify serviceWorkerPath - let OneSignal handle it automatically
           // This avoids MIME type issues in Vite dev server
         });
@@ -125,7 +125,7 @@ class PushNotificationService {
               enable: false,
             },
             autoResubscribe: true,
-          });
+      });
         } else {
           throw swError;
         }
@@ -200,41 +200,41 @@ class PushNotificationService {
         console.warn('⚠️ Could not obtain OneSignal player ID after initialization');
         console.log('OneSignal SDK object:', this.getNativeOneSignal());
         console.log('Available methods:', Object.keys(this.getNativeOneSignal() || {}));
-      }
+            }
 
       // Set up listeners using native SDK if available
       const nativeSDK = this.getNativeOneSignal();
       if (nativeSDK) {
-        // Listen for notification opened events
+      // Listen for notification opened events
         if (this.hasMethod(nativeSDK, 'addListenerForNotificationOpened')) {
-          try {
+      try {
             nativeSDK.addListenerForNotificationOpened((notification: any) => {
               console.log('📬 Notification opened:', notification);
-              this.handleNotificationClick(notification);
-            });
+          this.handleNotificationClick(notification);
+        });
             console.log('✅ Notification opened listener added');
-          } catch (error) {
+      } catch (error) {
             console.warn('⚠️ Could not add notification opened listener:', error);
           }
-        }
+      }
 
-        // Listen for subscription changes
+      // Listen for subscription changes
         if (this.hasMethod(nativeSDK, 'addListenerForSubscriptionChange')) {
-          try {
+      try {
             nativeSDK.addListenerForSubscriptionChange((isSubscribed: boolean) => {
               console.log('📱 Subscription changed:', isSubscribed);
-              if (isSubscribed) {
+          if (isSubscribed) {
                 nativeSDK.getUserId().then((id: string | null) => {
                   if (id) {
                     this.playerId = id;
                   }
                 }).catch((e: any) => {
-                  console.error('Error getting player ID on subscription change:', e);
-                });
-              }
+              console.error('Error getting player ID on subscription change:', e);
             });
+          }
+        });
             console.log('✅ Subscription change listener added');
-          } catch (error) {
+      } catch (error) {
             console.warn('⚠️ Could not add subscription change listener:', error);
           }
         }
@@ -254,13 +254,13 @@ class PushNotificationService {
         setTimeout(async () => {
           const nativeSDK = this.getNativeOneSignal();
           if (nativeSDK && this.hasMethod(nativeSDK, 'getUserId')) {
-            try {
+          try {
               const userId = await nativeSDK.getUserId();
-              if (userId) {
-                this.playerId = userId;
-              }
-            } catch (e) {
-              console.warn('Could not get player ID:', e);
+            if (userId) {
+              this.playerId = userId;
+            }
+          } catch (e) {
+            console.warn('Could not get player ID:', e);
             }
           }
         }, 1000);
@@ -325,7 +325,7 @@ class PushNotificationService {
             await nativeSDK.registerForPushNotifications();
           } else {
             // Fallback to react-onesignal
-            await OneSignal.registerForPushNotifications();
+          await OneSignal.registerForPushNotifications();
           }
           return 'granted';
         }
@@ -337,7 +337,7 @@ class PushNotificationService {
       if (nativeSDK && this.hasMethod(nativeSDK, 'registerForPushNotifications')) {
         await nativeSDK.registerForPushNotifications();
       } else {
-        await OneSignal.registerForPushNotifications();
+      await OneSignal.registerForPushNotifications();
       }
       
       // Check the actual permission status
@@ -518,7 +518,7 @@ class PushNotificationService {
       if (nativeSDK && this.hasMethod(nativeSDK, 'setSubscription')) {
         await nativeSDK.setSubscription(false);
       } else {
-        await OneSignal.setSubscription(false);
+      await OneSignal.setSubscription(false);
       }
       
       return true;

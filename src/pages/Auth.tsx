@@ -82,8 +82,19 @@ const ALL_LOCATIONS = [
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { signUp, signIn, signInWithGoogle, sendOTP, verifyOTP, resendConfirmationEmail, resetPassword, updatePassword } = useAuth();
+  const { signUp, signIn, signInWithGoogle, sendOTP, verifyOTP, resendConfirmationEmail, resetPassword, updatePassword, user } = useAuth();
   const { toast } = useToast();
+  
+  // Redirect to home if user is already logged in (but allow password reset flow)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    
+    // Don't redirect if user is on password reset/set password flow
+    if (user && mode !== 'reset-password' && mode !== 'set-password') {
+      navigate('/', { replace: true });
+    }
+  }, [user, navigate]);
 
   // Form states
   const [isLoading, setIsLoading] = useState(false);
@@ -379,7 +390,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOtp({
         email: otpForm.email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth`,
+          emailRedirectTo: `${window.location.origin}/`,
           shouldCreateUser: true
         }
       });
@@ -698,54 +709,54 @@ const Auth = () => {
 
                   {/* GHS User Sign-In Form */}
                   {signInUserType === 'ghs' && (
-                    <form onSubmit={handleSignIn} className="space-y-5">
-                      <div className="space-y-2">
-                        <Label htmlFor="signin-email" className="text-sm font-medium text-gray-700">Email</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                          <Input
-                            id="signin-email"
-                            type="email"
-                            placeholder="your.email@muj.manipal.edu"
-                            value={signinForm.email}
-                            onChange={(e) => setSigninForm({ ...signinForm, email: e.target.value })}
-                            className="pl-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
-                            required
-                          />
-                        </div>
-                      </div>
+                  <form onSubmit={handleSignIn} className="space-y-5">
+                  <div className="space-y-2">
+                      <Label htmlFor="signin-email" className="text-sm font-medium text-gray-700">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Input
+                      id="signin-email"
+                      type="email"
+                          placeholder="your.email@muj.manipal.edu"
+                          value={signinForm.email}
+                          onChange={(e) => setSigninForm({ ...signinForm, email: e.target.value })}
+                          className="pl-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
+                      required
+                    />
+                  </div>
+                    </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="signin-password" className="text-sm font-medium text-gray-700">Password</Label>
-                        <div className="relative">
-                          <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                          <Input
-                            id="signin-password"
-                            type="password"
-                            placeholder="Enter your password"
-                            value={signinForm.password}
-                            onChange={(e) => setSigninForm({ ...signinForm, password: e.target.value })}
-                            className="pl-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
-                            required
-                          />
-                        </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="signin-password" className="text-sm font-medium text-gray-700">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Input
+                      id="signin-password"
+                      type="password"
+                          placeholder="Enter your password"
+                          value={signinForm.password}
+                          onChange={(e) => setSigninForm({ ...signinForm, password: e.target.value })}
+                          className="pl-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
+                      required
+                    />
                       </div>
+                    </div>
 
-                      <Button 
-                        type="submit" 
-                        className="w-full h-12 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200" 
-                        disabled={isLoading}
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            Signing In...
-                          </>
-                        ) : (
-                          'Sign In'
-                        )}
-                      </Button>
-                    </form>
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200" 
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Signing In...
+                        </>
+                      ) : (
+                        'Sign In'
+                      )}
+                    </Button>
+                  </form>
                   )}
 
                   {/* Outside User - Google Sign-In */}
@@ -1140,7 +1151,7 @@ const Auth = () => {
                               <span className={signupForm.deliveryLocation ? 'text-gray-900' : 'text-gray-500'}>
                                 {signupForm.deliveryLocation || 'Select your PG/Hostel/Area (optional)'}
                               </span>
-                            </div>
+                        </div>
                             <span className="text-xs text-gray-400">▼</span>
                           </Button>
 

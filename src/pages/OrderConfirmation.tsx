@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useOrderByNumberQuery } from '@/hooks/useOrdersQuery';
 import { useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import OrderRating from '@/components/OrderRating';
 
 const OrderConfirmation = () => {
@@ -601,6 +602,11 @@ const OrderConfirmation = () => {
             </div>
           </div>
         </div>
+      </div>
+      
+      {/* Footer - Desktop only (mobile has bottom nav) */}
+      <div className="hidden lg:block">
+        <Footer />
       </div>
     </div>
   );

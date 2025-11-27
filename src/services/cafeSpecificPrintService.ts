@@ -272,7 +272,7 @@ export class CafeSpecificPrintService {
       } else if (normalizedCafeName.includes('banna')) {
         printerId = 74903987; // Banna's Chowki Printer
       } else if (normalizedCafeName.includes('amor')) {
-        printerId = 74902514; // Amor POS80 Printer
+        printerId = 74902516; // Amor POS80 Printer
       } else if (normalizedCafeName.includes('stardom')) {
         printerId = 74910967; // Stardom THERMAL Receipt Printer
       } else {

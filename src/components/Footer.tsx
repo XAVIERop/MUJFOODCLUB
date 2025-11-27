@@ -10,7 +10,12 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* About Section */}
           <div>
-            <h3 className="text-gray-900 font-semibold text-lg mb-4">Food Club</h3>
+            <img 
+              src="https://ik.imagekit.io/foodclub/LOGO/Untitled%20design%20(10).png" 
+              alt="Food Club Logo" 
+              className="h-10 mb-4"
+              loading="lazy"
+            />
             <p className="text-sm leading-relaxed mb-4">
               Your trusted food delivery platform connecting students and food lovers with amazing local cafes and restaurants. 
               Order from your favorite eateries and enjoy delicious meals delivered fresh to your doorstep.

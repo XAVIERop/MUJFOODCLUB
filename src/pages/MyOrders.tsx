@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { 
   Clock, 
   CheckCircle, 
@@ -690,6 +691,11 @@ const MyOrders = () => {
             </div>
           )}
         </div>
+      </div>
+      
+      {/* Footer - Desktop only (mobile has bottom nav) */}
+      <div className="hidden lg:block">
+        <Footer />
       </div>
     </div>
   );

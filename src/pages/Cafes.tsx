@@ -10,6 +10,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import { HorizontalCafeCard } from '../components/HorizontalCafeCard';
 import { EnhancedCafeCard } from '../components/EnhancedCafeCard';
 import CafeIconGrid from '../components/CafeIconGrid';
@@ -557,6 +558,11 @@ const Cafes = () => {
         </div>
       </div>
     </MobileLayoutWrapper>
+    
+    {/* Footer - Desktop only (mobile has bottom nav) */}
+    <div className="hidden lg:block">
+      <Footer />
+    </div>
     </div>
   );
 };

@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getImageUrl } from '@/utils/imageSource';
 import { getGroceryProductImage } from '@/utils/groceryImageMatcher';
 import { CafeSwitchDialog } from '@/components/CafeSwitchDialog';
+import Footer from '@/components/Footer';
 import { isOffCampusUser, isOffCampusCafe } from '@/utils/residencyUtils';
 
 interface GroceryItem {
@@ -729,6 +730,11 @@ const GroceryCategory: React.FC = () => {
         newCafeName={grabitCafe?.name || 'Grabit'}
         currentCartItems={Object.keys(cart).length}
       />
+      
+      {/* Footer - Desktop only (mobile has bottom nav) */}
+      <div className="hidden lg:block">
+        <Footer />
+      </div>
     </div>
   );
 };

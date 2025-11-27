@@ -68,7 +68,7 @@ const Index = () => {
 
   useEffect(() => {
     fetchCafes();
-  }, [profile]);
+}, [profile]);
 
   // Real-time subscription for cafe updates (ratings, etc.)
   useEffect(() => {

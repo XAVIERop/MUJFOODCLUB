@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import NotificationPreferences from '@/components/NotificationPreferences';
 
 const Profile = () => {
@@ -438,6 +439,11 @@ const Profile = () => {
             </div>
           </div>
         </div>
+      </div>
+      
+      {/* Footer - Desktop only (mobile has bottom nav) */}
+      <div className="hidden lg:block">
+        <Footer />
       </div>
     </div>
   );

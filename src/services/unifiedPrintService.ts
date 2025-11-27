@@ -175,7 +175,10 @@ class UnifiedPrintService {
           console.log('✅ Unified Print Service: Using Amor API key');
         }
       } else if (cafe.name.toLowerCase().includes('stardom')) {
-        apiKey = import.meta.env.VITE_STARDOM_PRINTNODE_API_KEY || '';
+        apiKey = import.meta.env.VITE_STARDOM_PRINTNODE_API_KEY 
+          || import.meta.env.VITE_PRINTNODE_API_KEY 
+          || import.meta.env.VITE_SHARED_PRINTNODE_API_KEY 
+          || '';
         if (!apiKey || apiKey === 'your-stardom-printnode-api-key') {
           console.error('❌ Unified Print Service: VITE_STARDOM_PRINTNODE_API_KEY not configured');
           this.printNodeService = null;
@@ -284,6 +287,30 @@ class UnifiedPrintService {
   }
 
   /**
+   * Resolve cafe ID from a cafe name (case-insensitive)
+   */
+  private async getCafeIdByName(cafeName: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('cafes')
+        .select('id')
+        .ilike('name', cafeName)
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.error(`Error resolving cafe ID for name "${cafeName}":`, error);
+        return null;
+      }
+
+      return data?.id || null;
+    } catch (error) {
+      console.error(`Unexpected error resolving cafe ID for name "${cafeName}":`, error);
+      return null;
+    }
+  }
+
+  /**
    * Print KOT for a specific cafe
    * For Banna's Chowki: Splits items by vegetarian status and prints to separate printers
    */
@@ -292,9 +319,9 @@ class UnifiedPrintService {
     
     try {
       // Get proper cafe name for formatting
-      const cafeName = await this.getCafeName(cafeId);
-      const normalizedCafeName = cafeName.toLowerCase();
-      const isBannasChowki = normalizedCafeName.includes('banna');
+      let cafeName = await this.getCafeName(cafeId);
+      let normalizedCafeName = cafeName.toLowerCase();
+      let isBannasChowki = normalizedCafeName.includes('banna');
       
       // Taste of India: PrintNode service disabled
       if (normalizedCafeName.includes('taste') && normalizedCafeName.includes('india')) {
@@ -389,9 +416,35 @@ class UnifiedPrintService {
       
       // For other cafes, use normal single KOT printing
       const formattedReceiptData = { ...receiptData, cafe_name: cafeName };
+
+      // Stardom: always print KOT to same printer as receipt (THERMAL Receipt Printer – 74910967)
+      if (normalizedCafeName.includes('stardom') && this.printNodeService) {
+        const stardomPrinterId = 74910967;
+        console.log(`🖨️ Stardom KOT: Using dedicated printer ${stardomPrinterId}`);
+        const stardomResult = await this.printNodeService.printKOT(formattedReceiptData, stardomPrinterId);
+        if (stardomResult.success) {
+          return { ...stardomResult, method: 'printnode-stardom', jobId: stardomResult.jobId?.toString() };
+        }
+        console.error('❌ Stardom KOT: Dedicated printer attempt failed, falling back to generic logic');
+      }
       
       // Get cafe printer configuration
       let config = await this.getCafePrinterConfig(cafeId);
+
+      // If no config found, try to resolve by cafe name from receipt data
+      if (!config && receiptData?.cafe_name) {
+        console.warn(`⚠️ Unified Print Service: No config for ${cafeId}. Trying receipt cafe name "${receiptData.cafe_name}"`);
+        const resolvedCafeId = await this.getCafeIdByName(receiptData.cafe_name);
+        if (resolvedCafeId && resolvedCafeId !== cafeId) {
+          console.log(`✅ Resolved cafe ID ${resolvedCafeId} from receipt data. Retrying config lookup.`);
+          cafeId = resolvedCafeId;
+          cafeName = await this.getCafeName(cafeId);
+          normalizedCafeName = cafeName.toLowerCase();
+          isBannasChowki = normalizedCafeName.includes('banna');
+          await this.initializePrintNode(cafeId);
+          config = await this.getCafePrinterConfig(cafeId);
+        }
+      }
       
       // If no config found, try to use hardcoded printer IDs as fallback (same as receipt printing)
       if (!config) {
@@ -403,6 +456,8 @@ class UnifiedPrintService {
         
         if (normalizedCafeName.includes('chatkara')) {
           fallbackPrinterId = 74698272; // Chatkara POS-80-Series
+        } else if (normalizedCafeName.includes('amor')) {
+          fallbackPrinterId = 74902516; // Amor POS80 Printer
         } else if (normalizedCafeName.includes('food court')) {
           fallbackPrinterId = 74692682; // Food Court EPSON TM-T82 Receipt
         } else if (normalizedCafeName.includes('mini meals')) {

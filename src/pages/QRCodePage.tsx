@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, QrCode, User, MapPin, Trophy, Star, Package, DollarSign } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
+import Footer from '@/components/Footer';
 
 const QRCodePage = () => {
   const { user, profile } = useAuth();
@@ -215,6 +216,11 @@ const QRCodePage = () => {
             </Card>
           </div>
         </div>
+      </div>
+      
+      {/* Footer - Desktop only (mobile has bottom nav) */}
+      <div className="hidden lg:block">
+        <Footer />
       </div>
     </div>
   );

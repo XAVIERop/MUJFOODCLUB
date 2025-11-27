@@ -21,6 +21,7 @@ import { getCafeTableOptions } from '@/utils/tableMapping';
 import { WhatsAppService } from '@/services/whatsappService';
 import { orderPushNotificationService } from '@/services/orderPushNotificationService';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import ReferralCodeInput from '@/components/ReferralCodeInput';
 import { ReferralValidation } from '@/services/referralService';
 import { getUserResidency, shouldUserOrderFromCafe, isOffCampusUser } from '@/utils/residencyUtils';
@@ -990,8 +991,8 @@ const Checkout = () => {
             </Alert>
           )}
 
-          {/* Saved Addresses Section - Only show for authenticated users and delivery orders */}
-          {user && !isGuestOrderingAllowed() && (
+          {/* Saved Addresses Section - Only show for authenticated users, delivery orders, and non-GHS cafes */}
+          {user && !isGuestOrderingAllowed() && cafe?.location_scope !== 'ghs' && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900">Select Delivery Address</h2>
@@ -1010,10 +1011,82 @@ const Checkout = () => {
               </div>
               
               {!showManualAddress ? (
-                <SavedAddressList 
-                  onSelectAddress={handleSelectSavedAddress}
-                  selectedAddressId={selectedSavedAddress?.id}
-                />
+                <>
+                  <SavedAddressList 
+                    onSelectAddress={handleSelectSavedAddress}
+                    selectedAddressId={selectedSavedAddress?.id}
+                  />
+                  {isOutsideCafe() && deliveryDetails.orderType === 'delivery' && userResidency === 'ghs' && (
+                    <>
+                      <div className="flex items-center my-4">
+                        <div className="flex-grow border-t border-dashed border-gray-300"></div>
+                        <span className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">OR</span>
+                        <div className="flex-grow border-t border-dashed border-gray-300"></div>
+                      </div>
+                      <Card 
+                        className={`transition-all ${
+                          deliveryDetails.deliveryAddress === 'GHS' || deliveryDetails.deliveryAddress === 'GHS Gate'
+                            ? 'border-2 border-orange-500 shadow-md' 
+                            : 'hover:border-gray-300'
+                        }`}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-orange-100 p-2 rounded-full">
+                              <MapPin className="h-5 w-5 text-orange-600" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900">GHS</div>
+                              <div className="text-sm text-gray-500">Manipal University Jaipur, GHS</div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  const isSelected = deliveryDetails.deliveryAddress === 'GHS' || deliveryDetails.deliveryAddress === 'GHS Gate';
+                                  if (isSelected) {
+                                    // Unselect GHS
+                                    setDeliveryDetails(prev => ({
+                                      ...prev,
+                                      deliveryAddress: '',
+                                      deliveryCoordinates: null
+                                    }));
+                                    toast({
+                                      title: 'GHS location unselected',
+                                      description: 'Please select or enter a delivery address',
+                                    });
+                                  } else {
+                                    // Select GHS
+                                    setDeliveryDetails(prev => ({
+                                      ...prev,
+                                      deliveryAddress: 'GHS',
+                                      deliveryCoordinates: {
+                                        lat: 26.8432, // MUJ center coordinates
+                                        lng: 75.5659
+                                      }
+                                    }));
+                                    setSelectedSavedAddress(null);
+                                    toast({
+                                      title: 'GHS location selected',
+                                      description: 'Delivering to GHS',
+                                    });
+                                  }
+                                }}
+                                className={
+                                  (deliveryDetails.deliveryAddress === 'GHS' || deliveryDetails.deliveryAddress === 'GHS Gate')
+                                    ? 'bg-gray-400 hover:bg-gray-500'
+                                    : 'bg-orange-200 hover:bg-orange-300 text-orange-700'
+                                }
+                              >
+                                {(deliveryDetails.deliveryAddress === 'GHS' || deliveryDetails.deliveryAddress === 'GHS Gate') ? 'Unselect' : 'Select'}
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </>
+                  )}
+                </>
               ) : (
                 <Button
                   variant="outline"
@@ -1527,6 +1600,11 @@ const Checkout = () => {
             </div>
           </div>
         </div>
+      </div>
+      
+      {/* Footer - Desktop only (mobile has bottom nav) */}
+      <div className="hidden lg:block">
+        <Footer />
       </div>
     </div>
   );

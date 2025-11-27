@@ -41,14 +41,14 @@ const SwiggyStyleHero: React.FC<SwiggyStyleHeroProps> = ({
       'COOK HOUSE': '/cookhouse_card.png',
       'CHATKARA': '/chatkara_card.png',
       'FOOD COURT': '/foodcourt_card.jpg',
-      'STARDOM': '/stardom_card.webp',
+      'STARDOM': 'https://ik.imagekit.io/foodclub/Cafe/Stardom/img.avif?updatedAt=1764240326100',
       'HAVMOR': '/havmor_card.jpg',
       'MINI MEALS': '/minimeals_card.png',
       'MUNCH BOX': '/munchbox_card.png',
       'PUNJABI TADKA': '/punjabitadka_card.jpg',
       'CHINA TOWN': '/china_card.png',
       'BG The Food Cart': 'https://ik.imagekit.io/foodclub/Cafe/Food%20Cart/Food%20Cart.jpg?updatedAt=1763167203799',
-      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/Banna.jpg?updatedAt=1763167090456',
+      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/PHOTO-2025-11-23-19-46-23.jpg',
       'Koko\'ro': 'https://ik.imagekit.io/foodclub/Cafe/Koko\'ro/Koko\'ro.jpeg?updatedAt=1763167147690'
     };
 

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { Download, Loader2, QrCode } from 'lucide-react';
 import QRCodeLib from 'qrcode';
 import { getTableOptions } from '@/utils/tableMapping';
@@ -290,6 +291,11 @@ const TableQRGenerator = () => {
             </CardContent>
           </Card>
         )}
+      </div>
+      
+      {/* Footer - Desktop only (mobile has bottom nav) */}
+      <div className="hidden lg:block">
+        <Footer />
       </div>
     </div>
   );

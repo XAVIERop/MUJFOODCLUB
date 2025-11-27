@@ -7,6 +7,7 @@ interface ReceiptData {
   customer_phone: string;
   delivery_block: string;
   table_number?: string;
+  delivery_address?: string;
   items: {
     id: string;
     name: string;
@@ -479,6 +480,51 @@ MUJFOODCLUB!`;
                        cafe_name?.toLowerCase() === 'munch box' ||
                        cafe_name?.toLowerCase().includes('munch') ||
                        cafe_name?.toLowerCase().includes('box');
+    const isAmor = cafe_name?.toLowerCase().includes('amor') || 
+                  cafe_name === 'AMOR' ||
+                  cafe_name?.toLowerCase() === 'amor';
+    const isStardom = cafe_name?.toLowerCase().includes('stardom') || 
+                      cafe_name === 'STARDOM' ||
+                      cafe_name?.toLowerCase() === 'stardom' ||
+                      cafe_name?.toLowerCase().includes('stardom café');
+    const stardomIndent = '   ';
+    const stardomHeading = `${stardomIndent}\x1B\x21\x30${'Stardom'.padStart(10)}\x1B\x21\x00`;
+    
+    // Helper function to determine location/table display
+    const getLocationDisplay = (useShortFormat: boolean = false): string => {
+      // PRIORITY 1: If table_number exists and is not empty, always show it (for table orders)
+      // Check for table_number first, regardless of delivery_block value
+      const tableNum = data.table_number?.toString().trim();
+      if (tableNum && tableNum !== '') {
+        console.log('📍 Receipt: Using table_number:', tableNum);
+        return useShortFormat ? `T${tableNum}` : `Table ${tableNum}`;
+      }
+      // PRIORITY 2: For off-campus delivery, show delivery address
+      if (data.delivery_block === 'OFF_CAMPUS' && data.delivery_address && data.delivery_address.trim() !== '') {
+        // Truncate address if too long (max 30 chars for receipts, 20 for KOT)
+        const maxLength = useShortFormat ? 20 : 30;
+        const address = data.delivery_address.length > maxLength 
+          ? data.delivery_address.substring(0, maxLength - 3) + '...' 
+          : data.delivery_address;
+        console.log('📍 Receipt: Using delivery_address:', address);
+        return address;
+      }
+      // PRIORITY 3: For other cases, show delivery_block (B1, B2, etc.) or default
+      console.log('📍 Receipt: Using delivery_block:', data.delivery_block);
+      return data.delivery_block || 'N/A';
+    };
+    
+    const locationDisplay = getLocationDisplay();
+    const locationDisplayShort = getLocationDisplay(true);
+    
+    // Debug logging
+    console.log('🔍 Receipt Data Debug:', {
+      table_number: data.table_number,
+      delivery_block: data.delivery_block,
+      delivery_address: data.delivery_address,
+      locationDisplay: locationDisplay,
+      locationDisplayShort: locationDisplayShort
+    });
     
     // Calculate MUJ FOOD CLUB discount (different rates for different cafes and order types)
     // Note: Grabit does NOT get discount
@@ -508,33 +554,51 @@ MUJFOODCLUB!`;
     console.log('🔍 PrintNode Service - Is Mini Meals:', isMiniMeals);
     console.log('🔍 PrintNode Service - Is Food Court:', isFoodCourt);
     console.log('🔍 PrintNode Service - Is Punjabi Tadka:', isPunjabiTadka);
+    console.log('🔍 PrintNode Service - Is Stardom:', isStardom);
     console.log('🔍 PrintNode Service - Cafe name exact:', `"${cafe_name}"`);
     console.log('🔍 PrintNode Service - Cafe name length:', cafe_name?.length);
-    console.log('🔍 PrintNode Service - Using format:', isBannasChowki ? 'BANNA\'S CHOWKI (58mm)' : (isChatkara || isGrabit) ? 'CHATKARA' : isCookHouse ? 'COOK HOUSE' : isMiniMeals ? 'MINI MEALS' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : 'MUJ FOOD CLUB');
+    console.log('🔍 PrintNode Service - Using format:', isBannasChowki ? 'BANNA\'S CHOWKI (58mm)' : (isChatkara || isGrabit || isStardom || isAmor) ? 'CHATKARA' : isCookHouse ? 'COOK HOUSE' : isMiniMeals ? 'MINI MEALS' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : 'MUJ FOOD CLUB');
     
     let receipt;
     
     if (isBannasChowki) {
       // Banna's Chowki format (58mm/2 inch printer - narrower format)
-      receipt = `\x1B\x21\x30    ${cafe_name?.toUpperCase() || 'BANNA\'S CHOWKI'}\x1B\x21\x00
-    ---------------------------
-    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `T${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
-    \x1B\x21\x30Token: ${order_number}\x1B\x21\x00
-    \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
-    \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
-    \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
-    \x1B\x21\x08Bill: ${order_number}\x1B\x21\x00
-    ---------------------------
-    \x1B\x21\x08Item          Qty Price\x1B\x21\x00
-    ---------------------------`;
-    } else if (isChatkara || isGrabit) {
-      // Chatkara/Grabit format (80mm, thermal printer optimized with bold text)
-      receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || (isGrabit ? 'GRABIT' : 'CHATKARA')}\x1B\x21\x00
+      // ALL text is normal size (not bold/large) for Banna's Chowki to fit small paper
+      receipt = `\x1B\x21\x00  ${cafe_name?.toUpperCase() || 'BANNA\'S CHOWKI'}\x1B\x21\x00
+  ---------------------------
+  \x1B\x21\x00${customer_phone || '9999999999'} ${locationDisplayShort}\x1B\x21\x00
+  \x1B\x21\x00Token: ${order_number}\x1B\x21\x00
+  \x1B\x21\x00Name: ${customer_name || 'Customer'}\x1B\x21\x00
+  \x1B\x21\x00Date: ${dateStr} ${timeStr}\x1B\x21\x00
+  \x1B\x21\x00Delivery    Cashier: biller\x1B\x21\x00
+  \x1B\x21\x00Bill: ${order_number}\x1B\x21\x00
+  ---------------------------
+  \x1B\x21\x00Item          Qty Price\x1B\x21\x00
+  ---------------------------`;
+    } else if (isStardom) {
+      // Stardom format: 80mm paper with regular content but emphasized heading/contact/grand total
+      const stardomBold = '\x1B\x21\x30';
+      const stardomNormal = '\x1B\x21\x00';
+      receipt = `${stardomHeading}
+${stardomIndent}---------------------------------------
+${stardomIndent}${stardomBold}${customer_phone || '9999999999'} ${locationDisplay}${stardomNormal}
+${stardomIndent}${stardomNormal}Order No.: ${order_number}
+${stardomIndent}${stardomNormal}Name: ${customer_name || 'Customer'}
+${stardomIndent}${stardomNormal}Date: ${dateStr} ${timeStr}
+${stardomIndent}${stardomNormal}Delivery    Cashier: biller
+${stardomIndent}${stardomNormal}Bill No.: ${order_number}
+${stardomIndent}---------------------------------------
+${stardomIndent}${stardomNormal}S.No Item                 Qty Price
+${stardomIndent}---------------------------------------`;
+    } else if (isChatkara || isGrabit || isAmor) {
+      // Chatkara/Grabit/Amor format (80mm, thermal printer optimized with bold text)
+      const defaultCafeName = isGrabit ? 'GRABIT' : isAmor ? 'AMOR' : 'CHATKARA';
+      receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || defaultCafeName}\x1B\x21\x00
     ---------------------------------------
-    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30${customer_phone || '9999999999'} ${locationDisplay}\x1B\x21\x00
     \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
-    \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
+    \x1B\x21\x08Date: ${dateStr} \x1B\x21\x30${timeStr}\x1B\x21\x00
     \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
     \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
     ---------------------------------------
@@ -544,10 +608,10 @@ MUJFOODCLUB!`;
       // Mini Meals format (using Chatkara template with Mini Meals branding)
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'MINI MEALS'}\x1B\x21\x00
     ---------------------------------------
-    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30${customer_phone || '9999999999'} ${locationDisplay}\x1B\x21\x00
     \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
-    \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
+    \x1B\x21\x08Date: ${dateStr} \x1B\x21\x30${timeStr}\x1B\x21\x00
     \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
     \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
     ---------------------------------------
@@ -557,10 +621,10 @@ MUJFOODCLUB!`;
       // Food Court format (using Chatkara template with Food Court branding)
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'FOOD COURT'}\x1B\x21\x00
     ---------------------------------------
-    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30${customer_phone || '9999999999'} ${locationDisplay}\x1B\x21\x00
     \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
-    \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
+    \x1B\x21\x08Date: ${dateStr} \x1B\x21\x30${timeStr}\x1B\x21\x00
     \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
     \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
     ---------------------------------------
@@ -570,10 +634,10 @@ MUJFOODCLUB!`;
       // Cook House format (using Chatkara template with Cook House branding)
       receipt = `\x1B\x21\x30        ${cafe_name?.toUpperCase() || 'COOK HOUSE'}\x1B\x21\x00
     ---------------------------------------
-    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `Table ${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30${customer_phone || '9999999999'} ${locationDisplay}\x1B\x21\x00
     \x1B\x21\x30Token No.: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
-    \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
+    \x1B\x21\x08Date: ${dateStr} \x1B\x21\x30${timeStr}\x1B\x21\x00
     \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
     \x1B\x21\x08Bill No.: ${order_number}\x1B\x21\x00
     ---------------------------------------
@@ -584,10 +648,10 @@ MUJFOODCLUB!`;
       const cafeDisplayName = isMunchBox ? (cafe_name?.toUpperCase() || 'MUNCH BOX') : (cafe_name?.toUpperCase() || 'PUNJABI TADKA');
       receipt = `\x1B\x21\x30    ${cafeDisplayName}\x1B\x21\x00
     ------------------------------
-    \x1B\x21\x30${customer_phone || '9999999999'} ${data.delivery_block === 'DINE_IN' && data.table_number ? `T${data.table_number}` : data.delivery_block || 'N/A'}\x1B\x21\x00
+    \x1B\x21\x30${customer_phone || '9999999999'} ${locationDisplay}\x1B\x21\x00
     \x1B\x21\x30Token: ${order_number}\x1B\x21\x00
     \x1B\x21\x08Name: ${customer_name || 'Customer'}\x1B\x21\x00
-    \x1B\x21\x08Date: ${dateStr} ${timeStr}\x1B\x21\x00
+    \x1B\x21\x08Date: ${dateStr} \x1B\x21\x30${timeStr}\x1B\x21\x00
     \x1B\x21\x08Delivery    Cashier: biller\x1B\x21\x00
     \x1B\x21\x08Bill: ${order_number}\x1B\x21\x00
     ------------------------------
@@ -607,7 +671,7 @@ MUJFOODCLUB!`;
     }
 
     // Add items with proper center-aligned formatting
-    items.forEach(item => {
+    items.forEach((item, itemIndex) => {
       let itemName, qty, price, amount;
       
       if (isBannasChowki) {
@@ -634,13 +698,13 @@ MUJFOODCLUB!`;
         }
         if (currentLine) lines.push(currentLine);
         
-        // Add each line with proper spacing
+        // Add each line with proper spacing (normal size for Banna's Chowki)
         lines.forEach((line, index) => {
           const paddedLine = line.padEnd(itemNameWidth);
           const paddedQty = index === 0 ? item.quantity.toString().padStart(qtyWidth) : ' '.repeat(qtyWidth);
           const paddedPrice = index === 0 ? item.unit_price.toFixed(0).padStart(priceWidth) : ' '.repeat(priceWidth);
           const paddedAmount = index === 0 ? item.total_price.toFixed(0).padStart(amountWidth) : ' '.repeat(amountWidth);
-          receipt += `\n    \x1B\x21\x08${paddedLine}\x1B\x21\x00 ${paddedQty}  ${paddedPrice}  ${paddedAmount}`;
+          receipt += `\n  \x1B\x21\x00${paddedLine}\x1B\x21\x00 ${paddedQty}  ${paddedPrice}  ${paddedAmount}`;
         });
       } else if (isPunjabiTadka || isMunchBox) {
         // POS-60C formatting for Punjabi Tadka and Munch Box (narrower paper)
@@ -649,14 +713,18 @@ MUJFOODCLUB!`;
         price = item.unit_price.toFixed(0).padStart(4);
         amount = item.total_price.toFixed(0).padStart(5);
         receipt += `\n    \x1B\x21\x08${itemName}\x1B\x21\x00 ${qty}  ${price}  ${amount}`;
-      } else if (isChatkara || isGrabit || isMiniMeals || isCookHouse) {
-        // 80mm printer format for Chatkara, Grabit, Mini Meals, Cook House
+      } else if (isChatkara || isGrabit || isMiniMeals || isCookHouse || isAmor || isStardom) {
+        // 80mm printer format for Chatkara, Grabit, Mini Meals, Cook House, Amor
         // Allow full item names to wrap to multiple lines instead of truncating
         const fullItemName = item.name.toUpperCase();
-        const itemNameWidth = 20; // Width for item name column
         const qtyWidth = 2;
         const priceWidth = 4;
-        const amountWidth = 5;
+        const amountWidth = isStardom ? 7 : 5;
+        const linePrefix = isStardom ? stardomIndent : '    ';
+        const spacing = isStardom ? '  ' : '    ';
+        const fontCmd = isStardom ? '\x1B\x21\x00' : '\x1B\x21\x08';
+        const serialPrefix = isStardom ? `${(itemIndex + 1).toString().padStart(2)}. ` : '';
+        const itemNameWidth = isStardom ? 16 : 20;
         
         // Split long item names into multiple lines
         const words = fullItemName.split(' ');
@@ -674,12 +742,13 @@ MUJFOODCLUB!`;
         if (currentLine) lines.push(currentLine);
         
         // Add each line with proper spacing
-        lines.forEach((line, index) => {
+        lines.forEach((line, lineIndex) => {
           const paddedLine = line.padEnd(itemNameWidth);
-          const paddedQty = index === 0 ? item.quantity.toString().padStart(qtyWidth) : ' '.repeat(qtyWidth);
-          const paddedPrice = index === 0 ? item.unit_price.toFixed(0).padStart(priceWidth) : ' '.repeat(priceWidth);
-          const paddedAmount = index === 0 ? item.total_price.toFixed(0).padStart(amountWidth) : ' '.repeat(amountWidth);
-          receipt += `\n    \x1B\x21\x08${paddedLine}\x1B\x21\x00 ${paddedQty}    ${paddedPrice}    ${paddedAmount}`;
+          const paddedQty = lineIndex === 0 ? item.quantity.toString().padStart(qtyWidth) : ' '.repeat(qtyWidth);
+          const paddedPrice = lineIndex === 0 ? item.unit_price.toFixed(0).padStart(priceWidth) : ' '.repeat(priceWidth);
+          const paddedAmount = lineIndex === 0 ? item.total_price.toFixed(0).padStart(amountWidth) : ' '.repeat(amountWidth);
+          const itemLabel = lineIndex === 0 ? `${serialPrefix}${paddedLine}` : `   ${paddedLine}`;
+          receipt += `\n${linePrefix}${fontCmd}${itemLabel}\x1B\x21\x00 ${paddedQty}${spacing}${paddedPrice}${spacing}${paddedAmount}`;
         });
       } else {
         // 80mm printer format for other cafes
@@ -698,22 +767,42 @@ MUJFOODCLUB!`;
       const deliveryCharge = isDelivery ? 10 : 0;
       const finalTotal = final_amount; // Use actual final amount from database
       
-      receipt += `\n    ---------------------------
-    \x1B\x21\x08Total Qty: ${totalQty}\x1B\x21\x00
-    \x1B\x21\x08Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00`;
+      receipt += `\n  ---------------------------
+  \x1B\x21\x00Total Qty: ${totalQty}\x1B\x21\x00
+  \x1B\x21\x00Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00`;
       
       // Only show delivery charge if it's a delivery order
       if (deliveryCharge > 0) {
-        receipt += `\n    \x1B\x21\x08Delivery: +${deliveryCharge}\x1B\x21\x00`;
+        receipt += `\n  \x1B\x21\x00Delivery: +${deliveryCharge}\x1B\x21\x00`;
       }
       
-      receipt += `\n    \x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
-    ---------------------------
-    \x1B\x21\x08Thanks Order Again\x1B\x21\x00
-    \x1B\x21\x08mujfoodclub.in\x1B\x21\x00
-    ---------------------------
-    ---------------------------`;
-    } else if (isChatkara || isGrabit) {
+      receipt += `\n  \x1B\x21\x00Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
+  ---------------------------
+  \x1B\x21\x00Thanks Order Again\x1B\x21\x00
+  \x1B\x21\x00mujfoodclub.in\x1B\x21\x00
+  ---------------------------
+  ---------------------------`;
+    } else if (isStardom) {
+      const isDelivery = data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block);
+      const deliveryCharge = isDelivery ? 10 : 0;
+      const finalTotal = final_amount;
+      
+      receipt += `\n${stardomIndent}---------------------------------------
+${stardomIndent}\x1B\x21\x00Total Qty: ${totalQty}\x1B\x21\x00
+${stardomIndent}\x1B\x21\x00Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00`;
+      
+      if (deliveryCharge > 0) {
+        receipt += `\n${stardomIndent}\x1B\x21\x00Delivery Charge: +${deliveryCharge}\x1B\x21\x00`;
+      }
+      
+      receipt += `\n${stardomIndent}\x1B\x21\x30Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
+${stardomIndent}---------------------------------------
+${stardomIndent}\x1B\x21\x00Thanks Order Again\x1B\x21\x00
+${stardomIndent}\x1B\x21\x00mujfoodclub.in\x1B\x21\x00
+${stardomIndent}---------------------------------------
+${stardomIndent}---------------------------------------
+${stardomIndent}---------------------------------------`;
+    } else if (isChatkara || isGrabit || isAmor) {
       // Determine if it's a delivery order based on delivery_block
       const isDelivery = data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block);
       const deliveryCharge = isDelivery ? 10 : 0;
@@ -729,7 +818,7 @@ MUJFOODCLUB!`;
       }
       
       // Show MUJ FOOD CLUB discount if applicable (but NOT for Grabit)
-      if (mujFoodClubDiscount > 0 && !isGrabit) {
+      if (mujFoodClubDiscount > 0 && !isGrabit && !isAmor) {
         receipt += `\n    \x1B\x21\x08MUJ FOOD CLUB DISCOUNT (${(discountRate * 100).toFixed(0)}%): -${mujFoodClubDiscount.toFixed(0)}\x1B\x21\x00`;
       }
       
@@ -831,8 +920,8 @@ MUJFOODCLUB!`;
       const finalTotal = final_amount; // Use actual final amount from database
       
       receipt += `\n    ------------------------------
-      \x1B\x21\x08Total Qty: ${totalQty}\x1B\x21\x00
-      \x1B\x21\x08Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00`;
+    \x1B\x21\x08Total Qty: ${totalQty}\x1B\x21\x00
+    \x1B\x21\x08Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00`;
       
       // Only show delivery charge if it's a delivery order
       if (deliveryCharge > 0) {
@@ -903,7 +992,10 @@ MUJFOODCLUB!`;
                        cafe_name?.toLowerCase() === 'munch box' ||
                        cafe_name?.toLowerCase().includes('munch') ||
                        cafe_name?.toLowerCase().includes('box');
-    
+    const isAmor = cafe_name?.toLowerCase().includes('amor') || 
+                  cafe_name === 'AMOR' ||
+                  cafe_name?.toLowerCase() === 'amor';
+    const stardomIndent = '   ';
     console.log('🔍 PrintNode KOT - Cafe name:', cafe_name);
     console.log('🔍 PrintNode KOT - Is Chatkara:', isChatkara);
     console.log('🔍 PrintNode KOT - Is Banna\'s Chowki:', isBannasChowki);
@@ -912,33 +1004,74 @@ MUJFOODCLUB!`;
     console.log('🔍 PrintNode KOT - Is Food Court:', isFoodCourt);
     console.log('🔍 PrintNode KOT - Is Punjabi Tadka:', isPunjabiTadka);
     console.log('🔍 PrintNode KOT - Is Munch Box:', isMunchBox);
-    console.log('🔍 PrintNode KOT - Using format:', isChatkara ? 'CHATKARA' : isBannasChowki ? 'BANNA\'S CHOWKI (58mm)' : isMiniMeals ? 'MINI MEALS' : isCookHouse ? 'COOK HOUSE' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : isMunchBox ? 'MUNCH BOX' : 'MUJ FOOD CLUB');
+    console.log('🔍 PrintNode KOT - Is Stardom:', isStardom);
+    console.log('🔍 PrintNode KOT - Using format:', (isChatkara || isStardom) ? 'CHATKARA/STARDOM (80mm)' : isBannasChowki ? 'BANNA\'S CHOWKI (58mm)' : isMiniMeals ? 'MINI MEALS' : isCookHouse ? 'COOK HOUSE' : isFoodCourt ? 'FOOD COURT' : isPunjabiTadka ? 'PUNJABI TADKA' : isMunchBox ? 'MUNCH BOX' : 'MUJ FOOD CLUB');
     
-    // Determine location display for KOT
-    let locationDisplay = '';
-    if (data.delivery_block === 'DINE_IN' && data.table_number) {
-      locationDisplay = `Table ${data.table_number}`;
-    } else if (data.delivery_block === 'TAKEAWAY') {
-      locationDisplay = 'TAKEAWAY';
-    } else if (data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block)) {
-      locationDisplay = data.delivery_block; // B1, B2, etc.
-    } else {
-      locationDisplay = isChatkara || isCookHouse || isFoodCourt || isPunjabiTadka ? 'DELIVERY' : 'PICK UP';
-    }
+    // Determine location display for KOT using helper function
+    const getKOTLocationDisplay = (): string => {
+      // PRIORITY 1: If table_number exists and is not empty, always show it (for table orders)
+      // Check for table_number first, regardless of delivery_block value
+      const tableNum = data.table_number?.toString().trim();
+      if (tableNum && tableNum !== '') {
+        console.log('📍 KOT: Using table_number:', tableNum);
+        return `Table ${tableNum}`;
+      }
+      // PRIORITY 2: For off-campus delivery, show delivery address (truncated for KOT)
+      if (data.delivery_block === 'OFF_CAMPUS' && data.delivery_address && data.delivery_address.trim() !== '') {
+        // Truncate address if too long (max 25 chars for KOT)
+        const address = data.delivery_address.length > 25 
+          ? data.delivery_address.substring(0, 22) + '...' 
+          : data.delivery_address;
+        console.log('📍 KOT: Using delivery_address:', address);
+        return address;
+      }
+      // PRIORITY 3: For takeaway
+      if (data.delivery_block === 'TAKEAWAY') {
+        console.log('📍 KOT: Using TAKEAWAY');
+        return 'TAKEAWAY';
+      }
+      // PRIORITY 4: For GHS delivery blocks (B1, B2, etc.)
+      if (data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block)) {
+        console.log('📍 KOT: Using delivery_block:', data.delivery_block);
+        return data.delivery_block;
+      }
+      // PRIORITY 5: Default based on cafe type
+      const defaultDisplay = isChatkara || isCookHouse || isFoodCourt || isPunjabiTadka || isAmor || isStardom ? 'DELIVERY' : 'PICK UP';
+      console.log('📍 KOT: Using default:', defaultDisplay);
+      return defaultDisplay;
+    };
+    
+    const locationDisplay = getKOTLocationDisplay();
+    
+    // Debug logging
+    console.log('🔍 KOT Data Debug:', {
+      table_number: data.table_number,
+      delivery_block: data.delivery_block,
+      delivery_address: data.delivery_address,
+      locationDisplay: locationDisplay
+    });
 
     // Proper center-aligned KOT format with bold formatting
     let kot;
     if (isBannasChowki) {
       // 58mm KOT format for Banna's Chowki
-      kot = `${dateStr} ${timeStr}
-    \x1B\x21\x30KOT - ${order_number}\x1B\x21\x00
+      // Order number is smaller (bold but normal size) for Banna's Chowki
+      kot = `${dateStr} \x1B\x21\x30${timeStr}\x1B\x21\x00
+    \x1B\x21\x08KOT - ${order_number}\x1B\x21\x00
     \x1B\x21\x08${locationDisplay}\x1B\x21\x00
     ---------------------------
     \x1B\x21\x08ITEM          QTY\x1B\x21\x00
     ---------------------------`;
+    } else if (isStardom) {
+      kot = `${stardomIndent}${dateStr} ${timeStr}
+${stardomIndent}Order No.: ${order_number}
+${stardomIndent}${locationDisplay}
+${stardomIndent}---------------------------------------
+${stardomIndent}ITEM                              QTY
+${stardomIndent}---------------------------------------`;
     } else if (isPunjabiTadka || isMunchBox) {
       // POS-60C KOT format for Punjabi Tadka and Munch Box
-      kot = `${dateStr} ${timeStr}
+      kot = `${dateStr} \x1B\x21\x30${timeStr}\x1B\x21\x00
     \x1B\x21\x30KOT - ${order_number}\x1B\x21\x00
     \x1B\x21\x08${locationDisplay}\x1B\x21\x00
     ------------------------------
@@ -946,7 +1079,7 @@ MUJFOODCLUB!`;
     ------------------------------`;
     } else {
       // 80mm KOT format for other cafes
-      kot = `${dateStr} ${timeStr}
+      kot = `${dateStr} \x1B\x21\x30${timeStr}\x1B\x21\x00
     \x1B\x21\x30KOT - ${order_number}\x1B\x21\x00
     \x1B\x21\x08${locationDisplay}\x1B\x21\x00
     ---------------------------------------
@@ -987,6 +1120,76 @@ MUJFOODCLUB!`;
           const paddedQty = index === 0 ? qty.padStart(qtyWidth) : ' '.repeat(qtyWidth);
           kot += `\n    \x1B\x21\x08${paddedLine} ${paddedQty}\x1B\x21\x00`;
         });
+        
+        // Add special instructions if they exist (for table orders especially)
+        if (item.special_instructions && item.special_instructions.trim() !== '') {
+          const instructions = item.special_instructions.trim();
+          // Wrap long instructions to fit the width
+          const maxWidth = itemWidth;
+          const instructionWords = instructions.split(' ');
+          let currentLine = '';
+          let instructionLines = [];
+          
+          for (const word of instructionWords) {
+            if ((currentLine + ' ' + word).length <= maxWidth) {
+              currentLine = currentLine ? currentLine + ' ' + word : word;
+            } else {
+              if (currentLine) instructionLines.push(currentLine);
+              currentLine = word;
+            }
+          }
+          if (currentLine) instructionLines.push(currentLine);
+          
+          // Add instruction lines with indentation
+          instructionLines.forEach(instructionLine => {
+            kot += `\n    \x1B\x21\x00  Note: ${instructionLine}\x1B\x21\x00`;
+          });
+        }
+      } else if (isStardom) {
+        const totalWidth = 40;
+        const qtyWidth = 4;
+        const itemWidth = totalWidth - qtyWidth - 1;
+        const words = itemName.split(' ');
+        let currentLine = '';
+        let lines: string[] = [];
+        
+        for (const word of words) {
+          if ((currentLine + ' ' + word).length <= itemWidth) {
+            currentLine = currentLine ? currentLine + ' ' + word : word;
+          } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+        
+        lines.forEach((line, index) => {
+          const paddedLine = line.padEnd(itemWidth);
+          const paddedQty = index === 0 ? qty.padStart(qtyWidth) : ' '.repeat(qtyWidth);
+          kot += `\n${stardomIndent}${paddedLine} ${paddedQty}`;
+        });
+        
+        if (item.special_instructions && item.special_instructions.trim() !== '') {
+          const instructions = item.special_instructions.trim();
+          const maxWidth = itemWidth;
+          const instructionWords = instructions.split(' ');
+          let currentInstr = '';
+          let instructionLines: string[] = [];
+          
+          for (const word of instructionWords) {
+            if ((currentInstr + ' ' + word).length <= maxWidth) {
+              currentInstr = currentInstr ? currentInstr + ' ' + word : word;
+            } else {
+              if (currentInstr) instructionLines.push(currentInstr);
+              currentInstr = word;
+            }
+          }
+          if (currentInstr) instructionLines.push(currentInstr);
+          
+          instructionLines.forEach(line => {
+            kot += `\n${stardomIndent}Note: ${line}`;
+          });
+        }
       } else if (isPunjabiTadka || isMunchBox) {
         // POS-60C KOT formatting for Punjabi Tadka and Munch Box
         const totalWidth = 28; // Total width for 60mm paper
@@ -1017,7 +1220,32 @@ MUJFOODCLUB!`;
           const paddedQty = index === 0 ? qty.padStart(qtyWidth) : ' '.repeat(qtyWidth);
           kot += `\n    \x1B\x21\x08${paddedLine} ${paddedQty}\x1B\x21\x00`;
         });
-      } else if (isChatkara || isGrabit || isMiniMeals || isCookHouse || isFoodCourt) {
+        
+        // Add special instructions if they exist (for table orders especially)
+        if (item.special_instructions && item.special_instructions.trim() !== '') {
+          const instructions = item.special_instructions.trim();
+          // Wrap long instructions to fit the width (28mm for Punjabi Tadka/Munch Box)
+          const maxWidth = 28;
+          const instructionWords = instructions.split(' ');
+          let currentLine = '';
+          let instructionLines = [];
+          
+          for (const word of instructionWords) {
+            if ((currentLine + ' ' + word).length <= maxWidth) {
+              currentLine = currentLine ? currentLine + ' ' + word : word;
+            } else {
+              if (currentLine) instructionLines.push(currentLine);
+              currentLine = word;
+            }
+          }
+          if (currentLine) instructionLines.push(currentLine);
+          
+          // Add instruction lines with indentation
+          instructionLines.forEach(instructionLine => {
+            kot += `\n    \x1B\x21\x00  Note: ${instructionLine}\x1B\x21\x00`;
+          });
+        }
+      } else if (isChatkara || isGrabit || isMiniMeals || isCookHouse || isFoodCourt || isAmor || isStardom) {
         // Create proper two-column layout: item name (left) and quantity (right)
         const totalWidth = 40; // Total width of the line
         const qtyWidth = 4; // Width for quantity column
@@ -1052,6 +1280,31 @@ MUJFOODCLUB!`;
             kot += `\n    \x1B\x21\x30${paddedItemName}\x1B\x21\x00`;
           }
         });
+        
+        // Add special instructions if they exist (for table orders especially)
+        if (item.special_instructions && item.special_instructions.trim() !== '') {
+          const instructions = item.special_instructions.trim();
+          // Wrap long instructions to fit the width (40mm for 80mm format)
+          const maxWidth = itemWidth;
+          const instructionWords = instructions.split(' ');
+          let currentLine = '';
+          let instructionLines = [];
+          
+          for (const word of instructionWords) {
+            if ((currentLine + ' ' + word).length <= maxWidth) {
+              currentLine = currentLine ? currentLine + ' ' + word : word;
+            } else {
+              if (currentLine) instructionLines.push(currentLine);
+              currentLine = word;
+            }
+          }
+          if (currentLine) instructionLines.push(currentLine);
+          
+          // Add instruction lines with indentation
+          instructionLines.forEach(instructionLine => {
+            kot += `\n    \x1B\x21\x00  Note: ${instructionLine}\x1B\x21\x00`;
+          });
+        }
       } else {
         kot += `\n    ${itemName} ${qty}`;
       }
@@ -1070,7 +1323,11 @@ MUJFOODCLUB!`;
     ------------------------------
     ------------------------------
     ------------------------------`;
-    } else if (isChatkara) {
+    } else if (isStardom) {
+      kot += `\n${stardomIndent}---------------------------------------
+${stardomIndent}THANKS
+${stardomIndent}---------------------------------------`;
+    } else if (isChatkara || isAmor) {
       kot += `\n    ----------------------------------------
     \x1B\x21\x08Thanks\x1B\x21\x00
     ----------------------------------------

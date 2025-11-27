@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import ModernMenuLayout from '@/components/ModernMenuLayout';
 import ItemCustomizationModal from '@/components/ItemCustomizationModal';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { CafeSwitchDialog } from '@/components/CafeSwitchDialog';
 
 interface MenuItem {
@@ -268,6 +269,33 @@ const MenuModern = () => {
         baseName = item.name.replace(' (Large)', '');
         portionType = 'Large';
         hasVariant = true;
+      } else if (item.name.includes(' (X. Large)')) {
+        baseName = item.name.replace(' (X. Large)', '');
+        portionType = 'X. Large';
+        hasVariant = true;
+      } else if (item.name.includes(' (Reg)')) {
+        baseName = item.name.replace(' (Reg)', '');
+        portionType = 'Regular';
+        hasVariant = true;
+      } else if (item.name.includes(' (Med)')) {
+        baseName = item.name.replace(' (Med)', '');
+        portionType = 'Medium';
+        hasVariant = true;
+      } else if (item.name.match(/\s*\(R\)\s*$/)) {
+        // Match "(R)" at the end (for Regular size) - for beverages like "Coke (R)"
+        baseName = item.name.replace(/\s*\(R\)\s*$/, '');
+        portionType = 'Regular';
+        hasVariant = true;
+      } else if (item.name.match(/\s*\(M\)\s*$/)) {
+        // Match "(M)" at the end (for Medium size) - for beverages like "Coke (M)"
+        baseName = item.name.replace(/\s*\(M\)\s*$/, '');
+        portionType = 'Medium';
+        hasVariant = true;
+      } else if (item.name.match(/\s*\(L\)\s*$/)) {
+        // Match "(L)" at the end (for Large size) - for beverages like "Coke (L)"
+        baseName = item.name.replace(/\s*\(L\)\s*$/, '');
+        portionType = 'Large';
+        hasVariant = true;
       } else if (item.name.endsWith(' - Veg')) {
         baseName = item.name.replace(' - Veg', '');
         portionType = 'Veg';
@@ -362,13 +390,13 @@ const MenuModern = () => {
       return acc;
     }, {} as {[key: string]: GroupedMenuItem});
     
-    // Sort portions by price (Single Stuffing first, then Double Stuffing, then Half, Full, Veg, Non-veg, Chicken, Mutton, Regular, Medium, Large, Dry, Gravy)
+    // Sort portions by price (Single Stuffing first, then Double Stuffing, then Half, Full, Veg, Non-veg, Chicken, Mutton, Regular, Medium, Large, X. Large, Dry, Gravy)
     Object.values(grouped).forEach(item => {
       item.portions.sort((a, b) => {
         // First sort by type priority, then by price
-        const typeOrder = { 'Single Stuffing': 1, 'Double Stuffing': 2, 'Half': 3, 'Full': 4, 'Veg': 5, 'Non-veg': 6, 'Chicken': 7, 'Mutton': 8, 'Regular': 9, 'Medium': 10, 'Large': 11, 'Dry': 12, 'Gravy': 13, 'Plain': 14, 'Butter': 15, 'Roasted': 16, 'Fried': 17 };
-        const aOrder = typeOrder[a.name as keyof typeof typeOrder] || 15;
-        const bOrder = typeOrder[b.name as keyof typeof typeOrder] || 15;
+        const typeOrder = { 'Single Stuffing': 1, 'Double Stuffing': 2, 'Half': 3, 'Full': 4, 'Veg': 5, 'Non-veg': 6, 'Chicken': 7, 'Mutton': 8, 'Regular': 9, 'Medium': 10, 'Large': 11, 'X. Large': 12, 'Dry': 13, 'Gravy': 14, 'Plain': 15, 'Butter': 16, 'Roasted': 17, 'Fried': 18 };
+        const aOrder = typeOrder[a.name as keyof typeof typeOrder] || 20;
+        const bOrder = typeOrder[b.name as keyof typeof typeOrder] || 20;
         
         if (aOrder !== bOrder) {
           return aOrder - bOrder;
@@ -964,6 +992,11 @@ const MenuModern = () => {
         addOns={[]}
         onAddToCart={handlePastaAddToCart}
       />
+      
+      {/* Footer - Desktop only (mobile has bottom nav) */}
+      <div className="hidden lg:block">
+        <Footer />
+      </div>
     </div>
   );
 };

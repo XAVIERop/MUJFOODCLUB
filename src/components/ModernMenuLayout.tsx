@@ -178,7 +178,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
       'Taste of India': '/tasteofindia_card.jpg',
       'Havmor': '/havmor_card.jpg',
       'Pizza Bakers': '/pizz.png',
-      'Stardom': '/stardom_card.webp',
+      'Stardom': 'https://ik.imagekit.io/foodclub/Cafe/Stardom/img.avif?updatedAt=1764240326100',
       'Waffle Fit & Fresh': '/wafflefitnfresh_card.jpeg',
       'The Crazy Chef': '/crazychef_logo.png',
       'Zero Degree Cafe': '/zerodegreecafe_logo.jpg',
@@ -190,7 +190,7 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
       'China Town': '/china_card.png',
       'Let\'s Go Live': '/letsgolive_card.jpg',
       'BG The Food Cart': 'https://ik.imagekit.io/foodclub/Cafe/Food%20Cart/Food%20Cart.jpg?updatedAt=1763167203799',
-      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/Banna.jpg?updatedAt=1763167090456',
+      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/PHOTO-2025-11-23-19-46-23.jpg',
       'Koko\'ro': 'https://ik.imagekit.io/foodclub/Cafe/Koko\'ro/Koko\'ro.jpeg?updatedAt=1763167147690'
     };
 
@@ -207,7 +207,26 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
     }
 
     // Fallback to default cafe image
-    return '/chatkara_logo.jpg';
+    return '/menu_hero.png';
+  };
+
+  const [imageError, setImageError] = useState(false);
+  const [imageSrc, setImageSrc] = useState(() => getCafeHeaderImage());
+
+  // Update image source when cafe changes
+  useEffect(() => {
+    const newImageSrc = getCafeHeaderImage();
+    setImageSrc(newImageSrc);
+    setImageError(false);
+  }, [cafe?.image_url, cafe?.name]);
+
+  const handleImageError = () => {
+    if (!imageError) {
+      console.warn('⚠️ Image failed to load:', imageSrc);
+      setImageError(true);
+      // Fallback to menu_hero.png if image fails
+      setImageSrc('/menu_hero.png');
+    }
   };
 
   return (
@@ -215,13 +234,13 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
       {/* Image Header Section - Like Kichi Coffee Design */}
       <div className="relative h-64 md:h-80 overflow-hidden">
         {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url(${getCafeHeaderImage()})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
+        <img
+          src={imageSrc}
+          alt={cafe?.name || 'Cafe'}
+          className="absolute inset-0 w-full h-full object-cover"
+          onError={handleImageError}
+          onLoad={() => console.log('✅ Image loaded successfully:', imageSrc)}
+          style={{ minHeight: '100%', minWidth: '100%' }}
         />
         
         {/* Dark Overlay */}

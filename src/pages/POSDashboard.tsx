@@ -67,6 +67,7 @@ interface Order {
   status: 'received' | 'confirmed' | 'preparing' | 'on_the_way' | 'completed' | 'cancelled';
   total_amount: number;
   delivery_block: string;
+  delivery_address?: string;
   delivery_notes?: string;
   payment_method: string;
   points_earned: number;
@@ -762,10 +763,13 @@ const POSDashboard = () => {
       console.log('Auto-printing with Unified Print Service for order:', order.order_number);
       
       // Fetch complete order data with user relations to get proper customer name
+      // Explicitly include table_number and delivery_address to ensure they're included
       const { data: completeOrder, error: orderError } = await supabase
         .from('orders')
         .select(`
           *,
+          table_number,
+          delivery_address,
           user:profiles(full_name, phone, block),
           cafe:cafes(name, location)
         `)
@@ -776,6 +780,16 @@ const POSDashboard = () => {
         console.error('Error fetching complete order data:', orderError);
         return;
       }
+      
+      // Debug: Log the complete order data to see what we're getting
+      console.log('🔍 Complete Order Data:', {
+        id: completeOrder.id,
+        order_number: completeOrder.order_number,
+        table_number: completeOrder.table_number,
+        delivery_block: completeOrder.delivery_block,
+        order_type: completeOrder.order_type,
+        customer_name: completeOrder.customer_name
+      });
 
       // Get order items with vegetarian status for Banna's Chowki split printing
       const { data: items, error: itemsError } = await supabase
@@ -796,6 +810,9 @@ const POSDashboard = () => {
       }
 
       // Create receipt data with complete cafe and customer information
+      // IMPORTANT: Ensure table_number is passed correctly - it might be null, undefined, or empty string
+      const tableNumber = completeOrder.table_number?.toString().trim() || '';
+      
       const receiptData = {
         order_id: completeOrder.id,
         order_number: completeOrder.order_number,
@@ -803,7 +820,8 @@ const POSDashboard = () => {
         customer_name: completeOrder.user?.full_name || completeOrder.customer_name || 'Customer',
         customer_phone: completeOrder.user?.phone || completeOrder.phone_number || 'N/A',
         delivery_block: completeOrder.delivery_block || completeOrder.user?.block || 'N/A',
-        table_number: completeOrder.table_number || '',
+        table_number: tableNumber, // Explicitly pass table_number (even if empty)
+        delivery_address: completeOrder.delivery_address || '',
         items: (items || []).map(item => ({
           id: item.id,
           name: item.menu_item?.name || 'Item',
@@ -823,6 +841,15 @@ const POSDashboard = () => {
         points_earned: completeOrder.points_earned || 0,
         points_redeemed: 0
       };
+      
+      // Debug logging for table orders
+      console.log('🔍 POSDashboard ReceiptData:', {
+        order_number: receiptData.order_number,
+        table_number: receiptData.table_number,
+        delivery_block: receiptData.delivery_block,
+        delivery_address: receiptData.delivery_address,
+        order_type: completeOrder.order_type
+      });
 
       console.log('🚀 UNIFIED PRINT: Cafe ID:', cafeId);
       console.log('🚀 UNIFIED PRINT: Cafe name:', receiptData.cafe_name);
@@ -906,6 +933,8 @@ const POSDashboard = () => {
         customer_name: order.user?.full_name || 'Customer',
         customer_phone: order.user?.phone || order.phone_number || 'N/A',
         delivery_block: order.delivery_block || order.user?.block || 'N/A',
+        table_number: order.table_number || '',
+        delivery_address: order.delivery_address || '',
         items: (items || []).map(item => ({
           id: item.id,
           name: item.menu_item?.name || 'Item',

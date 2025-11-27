@@ -66,8 +66,8 @@ export const HorizontalCafeCard: React.FC<HorizontalCafeCardProps> = memo(({ caf
       'The Kitchen & Curry': '/thekitchencurry_logo.png',
       'Pizza Bakers': '/pizz.png',
       'Havmor': '/havmor_card.jpg',
-      'Stardom': '/stardom_card.webp',
-      'STARDOM Café & Lounge': '/stardom_card.webp',
+      'Stardom': 'https://ik.imagekit.io/foodclub/Cafe/Stardom/img.avif?updatedAt=1764240326100',
+      'STARDOM Café & Lounge': 'https://ik.imagekit.io/foodclub/Cafe/Stardom/img.avif?updatedAt=1764240326100',
       'Waffle Fit & Fresh': '/wafflefitnfresh_card.jpeg',
       'Waffle Fit N Fresh': '/wafflefitnfresh_card.jpeg',
       'The Crazy Chef': '/crazychef_logo.png',
@@ -85,7 +85,7 @@ export const HorizontalCafeCard: React.FC<HorizontalCafeCardProps> = memo(({ caf
       'Let\'s Go Live': '/letsgolive_card.jpg',
       'LETS GO LIVE': '/letsgolive_card.jpg',
       'BG The Food Cart': 'https://ik.imagekit.io/foodclub/Cafe/Food%20Cart/Food%20Cart.jpg?updatedAt=1763167203799',
-      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/Banna.jpg?updatedAt=1763167090456',
+      'Banna\'s Chowki': 'https://ik.imagekit.io/foodclub/Cafe/Banna\'s%20Chowki/PHOTO-2025-11-23-19-46-23.jpg',
       'Koko\'ro': 'https://ik.imagekit.io/foodclub/Cafe/Koko\'ro/Koko\'ro.jpeg?updatedAt=1763167147690'
     };
 
