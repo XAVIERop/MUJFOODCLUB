@@ -1060,7 +1060,8 @@ ${stardomIndent}---------------------------------------`;
     if (isBannasChowki) {
       // 58mm KOT format for Banna's Chowki
       // Order number is smaller (bold but normal size) for Banna's Chowki
-      kot = `${dateStr} \x1B\x21\x30${timeStr}\x1B\x21\x00
+      // Time is normal size (not large) for Banna's Chowki
+      kot = `${dateStr} \x1B\x21\x00${timeStr}\x1B\x21\x00
     \x1B\x21\x08KOT - ${order_number}\x1B\x21\x00
     \x1B\x21\x08${locationDisplay}\x1B\x21\x00
     ---------------------------
@@ -1131,36 +1132,6 @@ ${stardomIndent}---------------------------------------`;
           const paddedQty = index === 0 ? qty.padStart(qtyWidth) : ' '.repeat(qtyWidth);
           kot += `\n    \x1B\x21\x08${paddedLine} ${paddedQty}\x1B\x21\x00`;
         });
-        
-        // Add special instructions if they exist (for table orders especially)
-        if (item.special_instructions && item.special_instructions.trim() !== '') {
-          const instructions = item.special_instructions.trim();
-          console.log(`✅ Adding special instructions to KOT: "${instructions}"`);
-          
-          // Wrap long instructions to fit the width (use full width for instructions)
-          const maxWidth = totalWidth - 2; // Use almost full width for instructions
-          const instructionWords = instructions.split(' ');
-          let currentLine = '';
-          let instructionLines = [];
-          
-          for (const word of instructionWords) {
-            if ((currentLine + ' ' + word).length <= maxWidth) {
-              currentLine = currentLine ? currentLine + ' ' + word : word;
-            } else {
-              if (currentLine) instructionLines.push(currentLine);
-              currentLine = word;
-            }
-          }
-          if (currentLine) instructionLines.push(currentLine);
-          
-          // Add instruction lines with clear formatting (bold "NOTE:" prefix)
-          instructionLines.forEach((instructionLine, lineIndex) => {
-            const prefix = lineIndex === 0 ? '\x1B\x21\x30NOTE:\x1B\x21\x00 ' : '      '; // Bold "NOTE:" on first line
-            kot += `\n    ${prefix}${instructionLine}`;
-          });
-        } else {
-          console.log(`⚠️ Banna's Chowki KOT - Item ${itemIndex + 1}: No special instructions to add`);
-        }
       } else if (isStardom) {
         const totalWidth = 40;
         const qtyWidth = 4;
@@ -1184,28 +1155,6 @@ ${stardomIndent}---------------------------------------`;
           const paddedQty = index === 0 ? qty.padStart(qtyWidth) : ' '.repeat(qtyWidth);
           kot += `\n${stardomIndent}${paddedLine} ${paddedQty}`;
         });
-        
-        if (item.special_instructions && item.special_instructions.trim() !== '') {
-          const instructions = item.special_instructions.trim();
-          const maxWidth = itemWidth;
-          const instructionWords = instructions.split(' ');
-          let currentInstr = '';
-          let instructionLines: string[] = [];
-          
-          for (const word of instructionWords) {
-            if ((currentInstr + ' ' + word).length <= maxWidth) {
-              currentInstr = currentInstr ? currentInstr + ' ' + word : word;
-            } else {
-              if (currentInstr) instructionLines.push(currentInstr);
-              currentInstr = word;
-            }
-          }
-          if (currentInstr) instructionLines.push(currentInstr);
-          
-          instructionLines.forEach(line => {
-            kot += `\n${stardomIndent}Note: ${line}`;
-          });
-        }
       } else if (isPunjabiTadka || isMunchBox) {
         // POS-60C KOT formatting for Punjabi Tadka and Munch Box
         const totalWidth = 28; // Total width for 60mm paper
@@ -1236,31 +1185,6 @@ ${stardomIndent}---------------------------------------`;
           const paddedQty = index === 0 ? qty.padStart(qtyWidth) : ' '.repeat(qtyWidth);
           kot += `\n    \x1B\x21\x08${paddedLine} ${paddedQty}\x1B\x21\x00`;
         });
-        
-        // Add special instructions if they exist (for table orders especially)
-        if (item.special_instructions && item.special_instructions.trim() !== '') {
-          const instructions = item.special_instructions.trim();
-          // Wrap long instructions to fit the width (28mm for Punjabi Tadka/Munch Box)
-          const maxWidth = 28;
-          const instructionWords = instructions.split(' ');
-          let currentLine = '';
-          let instructionLines = [];
-          
-          for (const word of instructionWords) {
-            if ((currentLine + ' ' + word).length <= maxWidth) {
-              currentLine = currentLine ? currentLine + ' ' + word : word;
-            } else {
-              if (currentLine) instructionLines.push(currentLine);
-              currentLine = word;
-            }
-          }
-          if (currentLine) instructionLines.push(currentLine);
-          
-          // Add instruction lines with indentation
-          instructionLines.forEach(instructionLine => {
-            kot += `\n    \x1B\x21\x00  Note: ${instructionLine}\x1B\x21\x00`;
-          });
-        }
       } else if (isChatkara || isGrabit || isMiniMeals || isCookHouse || isFoodCourt || isAmor || isStardom) {
         // Create proper two-column layout: item name (left) and quantity (right)
         const totalWidth = 40; // Total width of the line
@@ -1296,35 +1220,103 @@ ${stardomIndent}---------------------------------------`;
             kot += `\n    \x1B\x21\x30${paddedItemName}\x1B\x21\x00`;
           }
         });
-        
-        // Add special instructions if they exist (for table orders especially)
-        if (item.special_instructions && item.special_instructions.trim() !== '') {
-          const instructions = item.special_instructions.trim();
-          // Wrap long instructions to fit the width (40mm for 80mm format)
-          const maxWidth = itemWidth;
-          const instructionWords = instructions.split(' ');
-          let currentLine = '';
-          let instructionLines = [];
-          
-          for (const word of instructionWords) {
-            if ((currentLine + ' ' + word).length <= maxWidth) {
-              currentLine = currentLine ? currentLine + ' ' + word : word;
-            } else {
-              if (currentLine) instructionLines.push(currentLine);
-              currentLine = word;
-            }
-          }
-          if (currentLine) instructionLines.push(currentLine);
-          
-          // Add instruction lines with indentation
-          instructionLines.forEach(instructionLine => {
-            kot += `\n    \x1B\x21\x00  Note: ${instructionLine}\x1B\x21\x00`;
-          });
-        }
       } else {
         kot += `\n    ${itemName} ${qty}`;
       }
     });
+
+    // Add special instructions once at the end (after all items, before footer)
+    // Get special instructions from first item (they should all be the same if from delivery_notes)
+    const specialInstructions = items.length > 0 && items[0].special_instructions && items[0].special_instructions.trim() 
+      ? items[0].special_instructions.trim() 
+      : null;
+
+    if (specialInstructions) {
+      console.log(`✅ Adding special instructions to KOT (once at end): "${specialInstructions}"`);
+      
+      if (isBannasChowki) {
+        // 58mm KOT formatting for Banna's Chowki - use normal size for NOTE
+        const totalWidth = 26;
+        const maxWidth = totalWidth - 2;
+        const instructionWords = specialInstructions.split(' ');
+        let currentLine = '';
+        let instructionLines = [];
+        
+        for (const word of instructionWords) {
+          if ((currentLine + ' ' + word).length <= maxWidth) {
+            currentLine = currentLine ? currentLine + ' ' + word : word;
+          } else {
+            if (currentLine) instructionLines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine) instructionLines.push(currentLine);
+        
+        // Add instruction lines with normal size "NOTE:" prefix (not bold/large)
+        instructionLines.forEach((instructionLine, lineIndex) => {
+          const prefix = lineIndex === 0 ? '\x1B\x21\x00NOTE:\x1B\x21\x00 ' : '      '; // Normal size "NOTE:" on first line
+          kot += `\n    ${prefix}${instructionLine}`;
+        });
+      } else if (isStardom) {
+        const maxWidth = 36; // Use available width
+        const instructionWords = specialInstructions.split(' ');
+        let currentInstr = '';
+        let instructionLines: string[] = [];
+        
+        for (const word of instructionWords) {
+          if ((currentInstr + ' ' + word).length <= maxWidth) {
+            currentInstr = currentInstr ? currentInstr + ' ' + word : word;
+          } else {
+            if (currentInstr) instructionLines.push(currentInstr);
+            currentInstr = word;
+          }
+        }
+        if (currentInstr) instructionLines.push(currentInstr);
+        
+        instructionLines.forEach(line => {
+          kot += `\n${stardomIndent}Note: ${line}`;
+        });
+      } else if (isPunjabiTadka || isMunchBox) {
+        const maxWidth = 28;
+        const instructionWords = specialInstructions.split(' ');
+        let currentLine = '';
+        let instructionLines = [];
+        
+        for (const word of instructionWords) {
+          if ((currentLine + ' ' + word).length <= maxWidth) {
+            currentLine = currentLine ? currentLine + ' ' + word : word;
+          } else {
+            if (currentLine) instructionLines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine) instructionLines.push(currentLine);
+        
+        instructionLines.forEach(instructionLine => {
+          kot += `\n    \x1B\x21\x00  Note: ${instructionLine}\x1B\x21\x00`;
+        });
+      } else {
+        // For other cafes (80mm format)
+        const maxWidth = 36;
+        const instructionWords = specialInstructions.split(' ');
+        let currentLine = '';
+        let instructionLines = [];
+        
+        for (const word of instructionWords) {
+          if ((currentLine + ' ' + word).length <= maxWidth) {
+            currentLine = currentLine ? currentLine + ' ' + word : word;
+          } else {
+            if (currentLine) instructionLines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine) instructionLines.push(currentLine);
+        
+        instructionLines.forEach(instructionLine => {
+          kot += `\n    \x1B\x21\x00  Note: ${instructionLine}\x1B\x21\x00`;
+        });
+      }
+    }
 
     // Add cafe-specific footer
     if (isBannasChowki) {

@@ -373,7 +373,7 @@ class UnifiedPrintService {
         let allSuccess = true;
         const errors: string[] = [];
         
-        // Print Veg KOT to VEG PRINTER (74916694)
+        // Print Veg KOT to printer 74916599
         if (vegItems.length > 0) {
           const vegReceiptData: ReceiptData = {
             ...receiptData,
@@ -383,8 +383,8 @@ class UnifiedPrintService {
             final_amount: vegItems.reduce((sum, item) => sum + item.total_price, 0)
           };
           
-          console.log('🥬 Printing Veg KOT to printer 74916694 (VEG PRINTER)');
-          const vegResult = await this.printNodeService.printKOT(vegReceiptData, 74916694);
+          console.log('🥬 Printing Veg KOT to printer 74916599');
+          const vegResult = await this.printNodeService.printKOT(vegReceiptData, 74916599);
           results.push(vegResult);
           
           if (!vegResult.success) {
@@ -397,7 +397,7 @@ class UnifiedPrintService {
           console.log('⚠️ No veg items to print');
         }
         
-        // Print Non-Veg KOT to CASH NONVEGE (74916599)
+        // Print Non-Veg KOT to printer 74916694
         if (nonVegItems.length > 0) {
           const nonVegReceiptData: ReceiptData = {
             ...receiptData,
@@ -407,8 +407,8 @@ class UnifiedPrintService {
             final_amount: nonVegItems.reduce((sum, item) => sum + item.total_price, 0)
           };
           
-          console.log('🍗 Printing Non-Veg KOT to printer 74916599 (CASH NONVEGE)');
-          const nonVegResult = await this.printNodeService.printKOT(nonVegReceiptData, 74916599);
+          console.log('🍗 Printing Non-Veg KOT to printer 74916694');
+          const nonVegResult = await this.printNodeService.printKOT(nonVegReceiptData, 74916694);
           results.push(nonVegResult);
           
           if (!nonVegResult.success) {
