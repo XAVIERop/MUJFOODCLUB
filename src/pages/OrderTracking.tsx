@@ -173,7 +173,7 @@ const OrderTracking = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background pt-16">
+      <div className="min-h-screen bg-background pt-16 pb-24 lg:pb-8">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-16">
@@ -190,7 +190,7 @@ const OrderTracking = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pt-16">
+      <div className="min-h-screen bg-background pt-16 pb-24 lg:pb-8">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center py-16">

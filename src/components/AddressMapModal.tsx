@@ -424,26 +424,28 @@ export const AddressMapModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-        <DialogHeader className="p-4 pb-0">
+      <DialogContent className="max-w-2xl max-h-[85vh] w-[95vw] p-0 !grid !grid-rows-[auto_1fr] sm:max-h-[90vh] sm:w-full">
+        <DialogHeader className="p-4 pb-2">
           <DialogTitle className="text-lg font-semibold">Select Delivery Location</DialogTitle>
         </DialogHeader>
 
-        {/* Map Section */}
-        <div className="relative">
-          {!isGoogleMapsLoaded ? (
-            <div className="w-full h-[400px] bg-gray-100 flex items-center justify-center">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-2"></div>
-                <p className="text-sm text-gray-600">Loading map...</p>
+        {/* Scrollable Content Area */}
+        <div className="overflow-y-auto min-h-0">
+          {/* Map Section */}
+          <div className="relative flex-shrink-0">
+            {!isGoogleMapsLoaded ? (
+              <div className="w-full h-[250px] lg:h-[400px] bg-gray-100 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-2"></div>
+                  <p className="text-sm text-gray-600">Loading map...</p>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div 
-              ref={mapRef}
-              className="w-full h-[400px] bg-gray-100"
-            />
-          )}
+            ) : (
+              <div 
+                ref={mapRef}
+                className="w-full h-[250px] lg:h-[400px] bg-gray-100"
+              />
+            )}
           
           {/* Fixed Pin in Center */}
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-full pointer-events-none z-10">
@@ -455,32 +457,32 @@ export const AddressMapModal = ({
             <p className="text-sm font-medium text-gray-700">📍 Drag map to adjust pin</p>
           </div>
 
-          {/* GPS Button */}
-          <Button
-            onClick={getCurrentLocation}
-            className="absolute bottom-4 right-4 bg-white text-gray-700 hover:bg-gray-50 border shadow-lg"
-            size="sm"
-          >
-            <Navigation className="h-4 w-4 mr-1" />
-            My Location
-          </Button>
-        </div>
+            {/* GPS Button */}
+            <Button
+              onClick={getCurrentLocation}
+              className="absolute bottom-4 right-4 bg-white text-gray-700 hover:bg-gray-50 border shadow-lg"
+              size="sm"
+            >
+              <Navigation className="h-4 w-4 mr-1" />
+              My Location
+            </Button>
+          </div>
 
-        {/* Address Display */}
-        <div className="px-4 py-3 bg-gray-50 border-y">
-          <div className="flex items-start gap-2">
-            <MapPin className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-xs text-gray-500 mb-1">Address</p>
-              <p className="text-sm font-medium text-gray-900">
-                {isLoadingAddress ? 'Detecting address...' : address}
-              </p>
+          {/* Address Display */}
+          <div className="px-4 py-3 bg-gray-50 border-y flex-shrink-0">
+            <div className="flex items-start gap-2">
+              <MapPin className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-xs text-gray-500 mb-1">Address</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {isLoadingAddress ? 'Detecting address...' : address}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Input Fields */}
-        <div className="px-4 pb-4 space-y-4">
+          {/* Input Fields */}
+          <div className="px-4 pb-4 space-y-4">
           <div>
             <Label htmlFor="flat-number" className="text-sm">Door / Flat No.</Label>
             <Input
@@ -562,13 +564,14 @@ export const AddressMapModal = ({
             </div>
           )}
 
-          {/* Save Button */}
-          <Button
-            onClick={handleSave}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-6 text-base"
-          >
-            SAVE ADDRESS & PROCEED
-          </Button>
+            {/* Save Button */}
+            <Button
+              onClick={handleSave}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 lg:py-6 text-base mb-4 lg:mb-0"
+            >
+              SAVE ADDRESS & PROCEED
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

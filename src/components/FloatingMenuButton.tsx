@@ -69,9 +69,16 @@ const FloatingMenuButton: React.FC<FloatingMenuButtonProps> = ({
 
   if (!isVisible) return null;
 
+  // Calculate bottom position: move up when cart has items (green bar is visible)
+  // Green bar is at bottom-20 (80px), menu button should be above it
+  // When cart has items: bottom-36 (144px) to clear the green bar
+  // When no cart: bottom-24 (96px) - above bottom nav bar
+  const bottomPosition = hasCartItems ? 'bottom-36' : 'bottom-24';
+
   return (
     <div className={cn(
-      "floating-menu-container fixed right-6 bottom-24 lg:bottom-6 z-[10000] transition-all duration-300"
+      "floating-menu-container fixed right-6 lg:bottom-6 z-[10000] transition-all duration-300",
+      bottomPosition
     )}>
       {/* Floating Menu Button */}
       <Button

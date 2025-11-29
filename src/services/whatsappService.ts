@@ -160,8 +160,8 @@ ${itemsText}${notesText}
   }
 
   /**
-   * Send WhatsApp message using real APIs
-   * Supports both Twilio and Meta WhatsApp Business API
+   * Send WhatsApp message using Aisensy WhatsApp Business API
+   * Falls back to Meta API if Aisensy is not configured
    */
   private async sendMessage(phoneNumber: string, message: string): Promise<boolean> {
     try {
@@ -169,26 +169,21 @@ ${itemsText}${notesText}
       console.log('📱 WhatsApp Service: Message:', message);
       
       // Debug: Check environment variables
-      console.log('🔍 Environment Variables Debug:');
-      console.log('TWILIO_ACCOUNT_SID:', WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID ? '✅ Set' : '❌ Missing');
-      console.log('TWILIO_AUTH_TOKEN:', WHATSAPP_CONFIG.TWILIO_AUTH_TOKEN ? '✅ Set' : '❌ Missing');
-      console.log('TWILIO_WHATSAPP_FROM:', WHATSAPP_CONFIG.TWILIO_WHATSAPP_FROM || '❌ Missing');
-      console.log('Raw values:', {
-        TWILIO_ACCOUNT_SID: WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID,
-        TWILIO_AUTH_TOKEN: WHATSAPP_CONFIG.TWILIO_AUTH_TOKEN,
-        TWILIO_WHATSAPP_FROM: WHATSAPP_CONFIG.TWILIO_WHATSAPP_FROM
-      });
+      console.log('🔍 Environment Variables Debug (Aisensy):');
+      console.log('AISENSY_API_KEY:', WHATSAPP_CONFIG.AISENSY_API_KEY ? '✅ Set' : '❌ Missing');
+      console.log('AISENSY_PHONE_NUMBER:', WHATSAPP_CONFIG.AISENSY_PHONE_NUMBER || '❌ Missing');
+      console.log('AISENSY_API_BASE_URL:', WHATSAPP_CONFIG.AISENSY_API_BASE_URL || '❌ Missing');
       
-      // Try Twilio first, then fallback to WhatsApp Web
-      if (WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID && WHATSAPP_CONFIG.TWILIO_AUTH_TOKEN) {
-        console.log('✅ Using Twilio API');
-        return await this.sendViaTwilio(phoneNumber, message);
+      // Use Aisensy API
+      if (WHATSAPP_CONFIG.AISENSY_API_KEY) {
+        console.log('✅ Using Aisensy API');
+        return await this.sendViaAisensy(phoneNumber, message);
       } else if (META_WHATSAPP_CONFIG.ACCESS_TOKEN && META_WHATSAPP_CONFIG.PHONE_NUMBER_ID) {
-        console.log('✅ Using Meta API');
+        console.log('✅ Using Meta API (fallback)');
         return await this.sendViaMeta(phoneNumber, message);
       } else {
-        console.warn('⚠️ No WhatsApp API credentials configured. Falling back to WhatsApp Web.');
-        return await this.sendViaWhatsAppWeb(phoneNumber, message);
+        console.warn('⚠️ No WhatsApp API credentials configured. Notification not sent.');
+        return false;
       }
       
     } catch (error) {
@@ -198,60 +193,104 @@ ${itemsText}${notesText}
   }
 
   /**
-   * Send message via Twilio WhatsApp API
+   * Send message via Aisensy WhatsApp Business API
+   * Uses Supabase Edge Function to avoid CORS issues
    */
-  private async sendViaTwilio(phoneNumber: string, message: string): Promise<boolean> {
+  private async sendViaAisensy(phoneNumber: string, message: string): Promise<boolean> {
     try {
-      // Format phone number for Twilio (remove + and spaces)
-      const cleanNumber = phoneNumber.replace(/[^0-9]/g, '');
-      const toNumber = `whatsapp:${cleanNumber}`;
+      // Format phone number for Aisensy (remove + and spaces, keep only digits)
+      let cleanNumber = phoneNumber.replace(/[^0-9]/g, '');
       
-      console.log('📱 Sending via Twilio to:', toNumber);
-      console.log('📱 From:', WHATSAPP_CONFIG.TWILIO_WHATSAPP_FROM);
-      console.log('📱 Sandbox Mode:', WHATSAPP_CONFIG.SANDBOX_MODE);
-      
-      // For sandbox mode, we need to use a template or simple text
-      // The sandbox requires the recipient to first send "join <sandbox-code>" to start the conversation
-      const finalMessage = message;
-      
-      // For now, we'll use a direct approach since we're in development
-      // In production, you should use a backend API
-      
-      if (!WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID || !WHATSAPP_CONFIG.TWILIO_AUTH_TOKEN) {
-        console.error('❌ Twilio credentials not configured');
-        return false;
+      // If number doesn't start with country code and is 10 digits, assume it's Indian (+91)
+      if (cleanNumber.length === 10 && !cleanNumber.startsWith('91')) {
+        console.log('📱 Phone number missing country code, adding +91 prefix');
+        cleanNumber = '91' + cleanNumber;
       }
       
-      // Create the Twilio API URL
-      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID}/Messages.json`;
+      console.log('📱 Sending via Aisensy to:', cleanNumber);
+      console.log('📱 Original phone number:', phoneNumber);
+      console.log('📱 From:', WHATSAPP_CONFIG.AISENSY_PHONE_NUMBER);
       
-      // Create form data for Twilio API
-      const formData = new FormData();
-      formData.append('To', toNumber);
-      formData.append('From', WHATSAPP_CONFIG.TWILIO_WHATSAPP_FROM);
-      formData.append('Body', finalMessage);
+      if (!WHATSAPP_CONFIG.AISENSY_API_KEY) {
+        console.error('❌ Aisensy API key not configured');
+        return false;
+      }
+
+      // Get Supabase URL and anon key for Edge Function call
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseAnonKey) {
+        console.error('❌ Supabase URL or Anon Key not configured');
+        console.error('   Supabase URL:', supabaseUrl ? '✅ Set' : '❌ Missing');
+        console.error('   Supabase Anon Key:', supabaseAnonKey ? '✅ Set' : '❌ Missing');
+        return false;
+      }
+
+      // Call Supabase Edge Function to send WhatsApp message
+      // This avoids CORS issues by making the API call server-side
+      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/send-whatsapp`;
       
-      // Make the API call
-      const response = await fetch(twilioUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${btoa(`${WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID}:${WHATSAPP_CONFIG.TWILIO_AUTH_TOKEN}`)}`
-        },
-        body: formData
+      console.log('📱 Calling Supabase Edge Function:', edgeFunctionUrl);
+      console.log('📱 Request payload:', {
+        phoneNumber: cleanNumber,
+        messageLength: message.length,
+        messagePreview: message.substring(0, 100) + '...'
       });
       
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Message sent via Twilio successfully:', result.sid);
+      const response = await fetch(edgeFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'apikey': supabaseAnonKey,
+        },
+        body: JSON.stringify({
+          phoneNumber: cleanNumber,
+          message: message
+        })
+      });
+
+      // Handle non-JSON responses (like 404 HTML pages)
+      let responseData;
+      const responseText = await response.text();
+      
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('❌ Edge Function returned non-JSON response:', responseText.substring(0, 200));
+        if (response.status === 404) {
+          console.error('❌ Edge Function not found (404). Deploy it first!');
+          console.error('   Run: supabase functions deploy send-whatsapp');
+        }
+        return false;
+      }
+
+      console.log('📱 Edge Function Response Status:', response.status);
+      console.log('📱 Edge Function Response:', JSON.stringify(responseData, null, 2));
+
+      if (response.ok && responseData.success) {
+        console.log('✅ Message sent via Aisensy successfully');
+        if (responseData.endpoint) {
+          console.log('📡 Working endpoint:', responseData.endpoint);
+        }
         return true;
       } else {
-        const error = await response.text();
-        console.error('❌ Twilio API error:', error);
+        console.error('❌ Aisensy API error:', responseData.error || 'Unknown error');
+        if (response.status === 404) {
+          console.error('💡 Edge Function not deployed. Deploy it using:');
+          console.error('   supabase functions deploy send-whatsapp');
+        } else if (response.status === 500) {
+          console.error('💡 Edge Function error. Check Supabase logs for details.');
+        }
         return false;
       }
       
     } catch (error) {
-      console.error('Error sending via Twilio:', error);
+      console.error('❌ Error sending via Aisensy:', error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        console.error('💡 Network error. Check if Edge Function is deployed.');
+      }
       return false;
     }
   }
@@ -310,7 +349,7 @@ ${itemsText}${notesText}
       console.log('📱 WhatsApp Web fallback (disabled for customer experience):', whatsappUrl);
       console.log('📱 Phone Number:', cleanNumber);
       console.log('📱 Message Preview:', message.substring(0, 100) + '...');
-      console.warn('⚠️ WhatsApp API credentials not configured. Notification not sent. Please configure Twilio or Meta WhatsApp API.');
+      console.warn('⚠️ WhatsApp API credentials not configured. Notification not sent. Please configure Aisensy or Meta WhatsApp API.');
       
       // DO NOT open WhatsApp Web for customers - this creates a poor UX
       // Instead, just log that the notification would have been sent

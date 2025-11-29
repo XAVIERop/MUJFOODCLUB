@@ -40,6 +40,9 @@ interface ModernMenuLayoutProps {
   // Favorites
   onToggleFavorite?: (itemId: string) => void;
   isFavorite?: (itemId: string) => boolean;
+  
+  // Modal/Popup state
+  hideFloatingMenu?: boolean;
 }
 
 const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
@@ -60,7 +63,8 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
   onCheckout,
   cafe,
   onToggleFavorite,
-  isFavorite
+  isFavorite,
+  hideFloatingMenu = false
 }) => {
   // Add favorites functionality
   const { toggleFavorite, isFavorite: isCafeFavorite } = useFavorites();
@@ -466,8 +470,8 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
 
       {/* Mobile Cart Button - Removed, replaced with floating cart in App.tsx */}
 
-      {/* Floating Menu Button - Hidden for Dev Sweets */}
-      {cafe?.name && !(cafe.name.toLowerCase().includes('dev') && cafe.name.toLowerCase().includes('sweet')) && (
+      {/* Floating Menu Button - Hidden for Dev Sweets and when modal is open */}
+      {cafe?.name && !(cafe.name.toLowerCase().includes('dev') && cafe.name.toLowerCase().includes('sweet')) && !hideFloatingMenu && (
         <FloatingMenuButton
           categories={getCategoryCounts()}
           selectedCategory={selectedCategory}

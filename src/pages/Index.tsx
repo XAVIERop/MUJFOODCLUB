@@ -227,12 +227,12 @@ const Index = () => {
         />
       }
     >
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-16 pb-24 lg:pb-8">
         {/* Header with Location and Profile */}
         <Header selectedBlock={selectedBlock} onBlockChange={setSelectedBlock} />
         
-        {/* Search Bar - Add top padding for fixed header */}
-        <div className="pt-16">
+        {/* Search Bar */}
+        <div>
           <SearchBar />
         </div>
         

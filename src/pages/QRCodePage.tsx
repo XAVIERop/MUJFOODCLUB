@@ -26,7 +26,7 @@ const QRCodePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+    <div className="min-h-screen bg-background pt-16 pb-24 lg:pb-8">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-border">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">

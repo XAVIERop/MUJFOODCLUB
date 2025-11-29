@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 
+export type SoundOption = 'A' | 'B' | 'C';
+
 interface SoundNotificationSettings {
   isEnabled: boolean;
   volume: number;
+  soundOption: SoundOption;
 }
 
 const DEFAULT_SETTINGS: SoundNotificationSettings = {
   isEnabled: true,
   volume: 70,
+  soundOption: 'B', // Default: Classic Notification
 };
 
 const STORAGE_KEY = 'muj-foodie-sound-settings';
@@ -50,6 +54,10 @@ export const useSoundNotifications = () => {
     setSettings(prev => ({ ...prev, volume }));
   };
 
+  const setSoundOption = (option: SoundOption) => {
+    setSettings(prev => ({ ...prev, soundOption: option }));
+  };
+
   const resetSettings = () => {
     setSettings(DEFAULT_SETTINGS);
   };
@@ -58,8 +66,10 @@ export const useSoundNotifications = () => {
     settings,
     isEnabled: settings.isEnabled,
     volume: settings.volume,
+    soundOption: settings.soundOption,
     toggleSound,
     setVolume,
+    setSoundOption,
     resetSettings,
     isLoaded,
   };

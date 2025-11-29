@@ -186,6 +186,8 @@ const POSDashboard = () => {
   const {
     isEnabled: soundEnabled,
     volume: soundVolume,
+    soundOption,
+    setSoundOption,
     toggleSound,
     setVolume,
   } = useSoundNotifications();
@@ -739,7 +741,10 @@ const POSDashboard = () => {
     } else {
       // For other cafes, apply normal checks
       // Check if this order has already been auto-printed to prevent duplicates
-      if (printedOrders.has(order.id)) {
+      // Also check localStorage for persistence across page refreshes
+      const storedPrinted = localStorage.getItem('printedOrders');
+      const printedOrdersArray = storedPrinted ? JSON.parse(storedPrinted) : [];
+      if (printedOrders.has(order.id) || printedOrdersArray.includes(order.id)) {
         console.log('🚫 AUTO-PRINT: Order already printed, skipping duplicate:', order.order_number);
         return;
       }
@@ -809,6 +814,12 @@ const POSDashboard = () => {
         return;
       }
 
+      // Debug: Log all items and their special instructions
+      console.log('🔍 AUTO-PRINT: Order items fetched:', items?.length || 0);
+      items?.forEach((item, index) => {
+        console.log(`  Item ${index + 1}: ${item.menu_item?.name || 'Unknown'}, Special Instructions: "${item.special_instructions || 'NONE'}" (type: ${typeof item.special_instructions})`);
+      });
+
       // Create receipt data with complete cafe and customer information
       // IMPORTANT: Ensure table_number is passed correctly - it might be null, undefined, or empty string
       const tableNumber = completeOrder.table_number?.toString().trim() || '';
@@ -822,15 +833,32 @@ const POSDashboard = () => {
         delivery_block: completeOrder.delivery_block || completeOrder.user?.block || 'N/A',
         table_number: tableNumber, // Explicitly pass table_number (even if empty)
         delivery_address: completeOrder.delivery_address || '',
-        items: (items || []).map(item => ({
-          id: item.id,
-          name: item.menu_item?.name || 'Item',
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          total_price: item.total_price,
-          special_instructions: item.special_instructions,
-          is_vegetarian: item.menu_item?.is_vegetarian ?? true // Default to true if not specified
-        })),
+        items: (items || []).map(item => {
+          // For table orders, use delivery_notes from order if item doesn't have special_instructions
+          // This ensures table order special instructions are printed in KOT
+          let specialInstructions = item.special_instructions?.trim() || null;
+          
+          // If no item-level instructions and this is a table order, use order-level delivery_notes
+          if (!specialInstructions && completeOrder.order_type === 'table_order' && completeOrder.delivery_notes) {
+            specialInstructions = completeOrder.delivery_notes.trim() || null;
+            console.log(`📝 Table Order: Using delivery_notes as special_instructions: "${specialInstructions}"`);
+          }
+          
+          // Debug log for each item
+          if (specialInstructions) {
+            console.log(`✅ AUTO-PRINT: Item "${item.menu_item?.name}" has special instructions: "${specialInstructions}"`);
+          }
+          
+          return {
+            id: item.id,
+            name: item.menu_item?.name || 'Item',
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            total_price: item.total_price,
+            special_instructions: specialInstructions, // Explicitly set to null if empty
+            is_vegetarian: item.menu_item?.is_vegetarian ?? true // Default to true if not specified
+          };
+        }),
         subtotal: completeOrder.subtotal || 0,
         tax_amount: completeOrder.tax_amount || 0,
         discount_amount: 0,
@@ -1583,7 +1611,7 @@ const POSDashboard = () => {
     
     // Play sound notification for status updates
     if (soundEnabled) {
-      soundNotificationService.updateSettings(soundEnabled, soundVolume);
+      soundNotificationService.updateSettings(soundEnabled, soundVolume, soundOption);
       await soundNotificationService.playOrderReceivedSound();
     }
   };
@@ -1948,11 +1976,19 @@ const POSDashboard = () => {
       
       // Play sound notification for new orders
       if (soundEnabled) {
-        soundNotificationService.updateSettings(soundEnabled, soundVolume);
+        soundNotificationService.updateSettings(soundEnabled, soundVolume, soundOption);
         await soundNotificationService.playOrderReceivedSound();
       }
 
       // Auto-generate and print receipt for new orders using cafe-specific print service
+      // Add deduplication check before printing
+      const storedPrinted = localStorage.getItem('printedOrders');
+      const printedOrdersArray = storedPrinted ? JSON.parse(storedPrinted) : [];
+      if (printedOrdersArray.includes(newOrder.id)) {
+        console.log('🚫 AUTO-PRINT: Order already in localStorage, skipping:', newOrder.order_number);
+        return;
+      }
+      
       setTimeout(() => {
         autoPrintReceiptWithCafeService(newOrder as Order);
       }, 2000); // Wait 2 seconds for order data to be fetched
@@ -2051,7 +2087,7 @@ const POSDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 lg:pb-6">
+    <div className="min-h-screen bg-gray-50 pt-16 pb-24 lg:pb-6">
       <Header />
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Enhanced Header */}
@@ -2623,6 +2659,13 @@ const POSDashboard = () => {
                                       <span className="ml-2">• 📞 {order.phone_number}</span>
                                     )}
                                   </p>
+                                  {/* Special Instructions / Delivery Notes */}
+                                  {(order.delivery_notes && order.delivery_notes.trim()) && (
+                                    <p className="text-sm text-orange-600 font-medium mt-1 flex items-start">
+                                      <span className="mr-1">📝</span>
+                                      <span>{order.delivery_notes.trim()}</span>
+                                    </p>
+                                  )}
                                 </div>
                                 <div className="text-right">
                                   <p className="font-semibold">₹{order.total_amount}</p>
@@ -2957,6 +3000,8 @@ const POSDashboard = () => {
                     onToggle={toggleSound}
                     volume={soundVolume}
                     onVolumeChange={setVolume}
+                    soundOption={soundOption}
+                    onSoundOptionChange={setSoundOption}
                   />
                 </div>
 

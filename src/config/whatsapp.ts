@@ -1,29 +1,21 @@
-// WhatsApp API Configuration
+// WhatsApp API Configuration - Aisensy
 export const WHATSAPP_CONFIG = {
-  // Twilio WhatsApp API Configuration
-  TWILIO_ACCOUNT_SID: import.meta.env.VITE_TWILIO_ACCOUNT_SID || '',
-  TWILIO_AUTH_TOKEN: import.meta.env.VITE_TWILIO_AUTH_TOKEN || '',
-  TWILIO_WHATSAPP_FROM: import.meta.env.VITE_TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886',
-  
-  // For testing, use Twilio's sandbox number
-  // For production, use your actual WhatsApp Business number
-  SANDBOX_MODE: import.meta.env.VITE_WHATSAPP_SANDBOX_MODE === 'true',
+  // Aisensy WhatsApp Business API Configuration
+  AISENSY_API_KEY: import.meta.env.VITE_AISENSY_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZjlmYjkxNTZhZTgwMGQ1MzFhNWEzZSIsIm5hbWUiOiJGb29kIENsdWIgNzUwNSIsImFwcE5hbWUiOiJBaVNlbnN5IiwiY2xpZW50SWQiOiI2OGY5ZmI5MTU2YWU4MDBkNTMxYTVhMzkiLCJhY3RpdmVQbGFuIjoiRlJFRV9GT1JFVkVSIiwiaWF0IjoxNzYxMjEzMzI5fQ.vuy89L_rMu5jqcQpwQCcp-hlNWTh8M1psPXr5qUwu1s',
+  AISENSY_PHONE_NUMBER: import.meta.env.VITE_AISENSY_PHONE_NUMBER || '+919625851220',
+  AISENSY_API_BASE_URL: import.meta.env.VITE_AISENSY_API_BASE_URL || 'https://backend.aisensy.com',
 };
 
 // Validate WhatsApp configuration
 export const validateWhatsAppConfig = () => {
   const errors: string[] = [];
   
-  if (!WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID) {
-    errors.push('VITE_TWILIO_ACCOUNT_SID environment variable is not set');
+  if (!WHATSAPP_CONFIG.AISENSY_API_KEY) {
+    errors.push('VITE_AISENSY_API_KEY environment variable is not set');
   }
   
-  if (!WHATSAPP_CONFIG.TWILIO_AUTH_TOKEN) {
-    errors.push('VITE_TWILIO_AUTH_TOKEN environment variable is not set');
-  }
-  
-  if (!WHATSAPP_CONFIG.TWILIO_WHATSAPP_FROM) {
-    errors.push('VITE_TWILIO_WHATSAPP_FROM environment variable is not set');
+  if (!WHATSAPP_CONFIG.AISENSY_PHONE_NUMBER) {
+    errors.push('VITE_AISENSY_PHONE_NUMBER environment variable is not set');
   }
   
   if (errors.length > 0) {
@@ -35,15 +27,10 @@ export const validateWhatsAppConfig = () => {
 };
 
 // Debug: Log environment variables on load
-console.log('🔍 WhatsApp Config Debug:');
-console.log('TWILIO_ACCOUNT_SID:', WHATSAPP_CONFIG.TWILIO_ACCOUNT_SID ? '✅ Set' : '❌ Missing');
-console.log('TWILIO_AUTH_TOKEN:', WHATSAPP_CONFIG.TWILIO_AUTH_TOKEN ? '✅ Set' : '❌ Missing');
-console.log('TWILIO_WHATSAPP_FROM:', WHATSAPP_CONFIG.TWILIO_WHATSAPP_FROM || '❌ Missing');
-console.log('Raw env vars:', {
-  VITE_TWILIO_ACCOUNT_SID: import.meta.env.VITE_TWILIO_ACCOUNT_SID,
-  VITE_TWILIO_AUTH_TOKEN: import.meta.env.VITE_TWILIO_AUTH_TOKEN,
-  VITE_TWILIO_WHATSAPP_FROM: import.meta.env.VITE_TWILIO_WHATSAPP_FROM
-});
+console.log('🔍 WhatsApp Config Debug (Aisensy):');
+console.log('AISENSY_API_KEY:', WHATSAPP_CONFIG.AISENSY_API_KEY ? '✅ Set' : '❌ Missing');
+console.log('AISENSY_PHONE_NUMBER:', WHATSAPP_CONFIG.AISENSY_PHONE_NUMBER || '❌ Missing');
+console.log('AISENSY_API_BASE_URL:', WHATSAPP_CONFIG.AISENSY_API_BASE_URL || '❌ Missing');
 
 // WhatsApp Business API (Meta) Configuration
 export const META_WHATSAPP_CONFIG = {

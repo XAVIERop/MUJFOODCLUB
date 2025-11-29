@@ -21,6 +21,30 @@ interface PromotionalBanner {
 
 const PROMOTIONAL_BANNERS: PromotionalBanner[] = [
   {
+    id: 'new-york-pizzeria',
+    title: '',
+    subtitle: '',
+    buttonText: '',
+    backgroundColor: 'bg-red-600',
+    textColor: 'text-white',
+    badge: '',
+    badgeIcon: '',
+    cafeId: 'New York Pizzeria',
+    backgroundImage: 'https://ik.imagekit.io/foodclub/Banners/Mobile/S.B.png',
+  },
+  {
+    id: 'amor',
+    title: '',
+    subtitle: '',
+    buttonText: '',
+    backgroundColor: 'bg-red-600',
+    textColor: 'text-white',
+    badge: '',
+    badgeIcon: '',
+    cafeId: 'Amor',
+    backgroundImage: 'https://ik.imagekit.io/foodclub/Banners/Mobile/Amor.png',
+  },
+  {
     id: 'chatkara',
     title: '',
     subtitle: '',
@@ -31,18 +55,6 @@ const PROMOTIONAL_BANNERS: PromotionalBanner[] = [
     badgeIcon: '',
     cafeId: 'CHATKARA',
     backgroundImage: '/chatkara_offer.jpeg',
-  },
-  {
-    id: 'food-court',
-    title: '',
-    subtitle: '',
-    buttonText: '',
-    backgroundColor: 'bg-blue-600',
-    textColor: 'text-white',
-    badge: '',
-    badgeIcon: '',
-    cafeId: 'FOOD COURT',
-    backgroundImage: '/foodcourt.png',
   },
   {
     id: 'cook-house',
@@ -201,7 +213,7 @@ const MobilePromotionalBanners: React.FC = () => {
             onClick={() => handleBannerClick(banner.cafeId)}
           >
             {/* Dark overlay for background images - Removed for offer banners */}
-            {banner.backgroundImage && banner.id !== 'chatkara' && banner.id !== 'cook-house' && banner.id !== 'food-court' && banner.id !== 'pizza-bakers' && banner.id !== 'punjabi-tadka' && (
+            {banner.backgroundImage && banner.id !== 'chatkara' && banner.id !== 'cook-house' && banner.id !== 'pizza-bakers' && banner.id !== 'punjabi-tadka' && banner.id !== 'new-york-pizzeria' && banner.id !== 'amor' && (
               <div className="absolute inset-0 bg-black/40" />
             )}
             

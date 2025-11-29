@@ -322,15 +322,23 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
       customer_name: order.user?.full_name || order.customer_name || 'Walk-in Customer',
       customer_phone: order.user?.phone || order.phone_number || 'N/A',
       delivery_block: order.delivery_block || order.user?.block || 'N/A',
-      items: items.map(item => ({
-        id: item.id,
-        name: item.menu_item?.name || 'Unknown Item',
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        total_price: item.total_price,
-        special_instructions: item.special_instructions,
-        is_vegetarian: item.menu_item?.is_vegetarian ?? true // Default to true if not specified
-      })),
+      items: items.map(item => {
+        // For table orders, use delivery_notes from order if item doesn't have special_instructions
+        let specialInstructions = item.special_instructions?.trim() || null;
+        if (!specialInstructions && order.order_type === 'table_order' && order.delivery_notes) {
+          specialInstructions = order.delivery_notes.trim() || null;
+        }
+        
+        return {
+          id: item.id,
+          name: item.menu_item?.name || 'Unknown Item',
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+          special_instructions: specialInstructions,
+          is_vegetarian: item.menu_item?.is_vegetarian ?? true // Default to true if not specified
+        };
+      }),
       subtotal: order.total_amount || 0,
       tax_amount: 0,
       discount_amount: 0,
@@ -832,6 +840,21 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                   <span>{formatDate(hoveredOrder.created_at)}</span>
                 </div>
               </div>
+              
+              {/* Special Instructions / Delivery Notes */}
+              {hoveredOrder.delivery_notes && hoveredOrder.delivery_notes.trim() && (
+                <div className="mt-2 pt-2 border-t">
+                  <div className="flex items-start gap-2">
+                    <span className="text-orange-600">📝</span>
+                    <div>
+                      <span className="text-xs text-muted-foreground">Special Instructions:</span>
+                      <p className="text-sm text-orange-600 font-medium mt-1">
+                        {hoveredOrder.delivery_notes.trim()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Items */}

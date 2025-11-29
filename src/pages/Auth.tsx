@@ -510,7 +510,10 @@ const Auth = () => {
   const outsideResidencyBlock = 'OFF_CAMPUS';
 
   return (
-    <div className="min-h-screen bg-gray-50 relative overflow-hidden pb-24 lg:pb-0">
+    <div className="min-h-screen bg-gray-50 relative overflow-hidden pt-16 pb-24 lg:pb-8">
+      {/* Header - Same as other pages */}
+      <Header />
+      
       {/* Mobile: Hero Image Section - Top 35% */}
       <div className="relative h-[35vh] lg:hidden bg-gradient-to-br from-orange-500 via-red-500 to-orange-600 overflow-hidden">
         {/* Food Image Background */}

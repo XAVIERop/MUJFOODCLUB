@@ -340,11 +340,34 @@ class UnifiedPrintService {
       if (isBannasChowki && this.printNodeService) {
         console.log('🥬 Banna\'s Chowki detected - splitting KOT by vegetarian status');
         
+        // Debug: Log all items and their special instructions before splitting
+        console.log('📝 All items before splitting:');
+        receiptData.items.forEach((item, index) => {
+          console.log(`  Item ${index + 1}: ${item.name}, Special Instructions: "${item.special_instructions || 'NONE'}"`);
+        });
+        
         // Split items into veg and non-veg
-        const vegItems = receiptData.items.filter(item => item.is_vegetarian !== false);
-        const nonVegItems = receiptData.items.filter(item => item.is_vegetarian === false);
+        // IMPORTANT: Use spread operator to ensure all properties (including special_instructions) are preserved
+        const vegItems = receiptData.items
+          .filter(item => item.is_vegetarian !== false)
+          .map(item => ({ ...item })); // Explicitly preserve all properties
+        const nonVegItems = receiptData.items
+          .filter(item => item.is_vegetarian === false)
+          .map(item => ({ ...item })); // Explicitly preserve all properties
         
         console.log(`🥬 Veg items: ${vegItems.length}, Non-Veg items: ${nonVegItems.length}`);
+        
+        // Debug: Verify special instructions are preserved after filtering
+        console.log('📝 Veg items after filtering:');
+        vegItems.forEach((item, index) => {
+          const hasInstructions = item.special_instructions && item.special_instructions.trim() !== '';
+          console.log(`  Veg Item ${index + 1}: ${item.name}, Special Instructions: "${item.special_instructions || 'NONE'}" (has: ${hasInstructions})`);
+        });
+        console.log('📝 Non-Veg items after filtering:');
+        nonVegItems.forEach((item, index) => {
+          const hasInstructions = item.special_instructions && item.special_instructions.trim() !== '';
+          console.log(`  Non-Veg Item ${index + 1}: ${item.name}, Special Instructions: "${item.special_instructions || 'NONE'}" (has: ${hasInstructions})`);
+        });
         
         const results: PrintResult[] = [];
         let allSuccess = true;

@@ -4,9 +4,9 @@ import Footer from "@/components/Footer";
 
 const TermsOfService = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-16 pb-24 lg:pb-8">
       <Header />
-      <div className="container mx-auto px-4 py-8 max-w-4xl pt-24 pb-16">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Card>
           <CardHeader>
             <CardTitle className="text-3xl font-bold">Terms of Service</CardTitle>

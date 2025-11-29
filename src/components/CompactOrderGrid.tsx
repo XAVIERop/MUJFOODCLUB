@@ -720,14 +720,22 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
         customer_name: order.user?.full_name || 'Walk-in Customer',
         customer_phone: order.user?.phone || order.phone_number || 'N/A',
         delivery_block: order.delivery_block || order.user?.block || 'N/A',
-        items: items.map(item => ({
-          id: item.id,
-          name: item.menu_item?.name || 'Unknown Item',
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          total_price: item.total_price,
-          special_instructions: item.special_instructions
-        })),
+        items: items.map(item => {
+          // For table orders, use delivery_notes from order if item doesn't have special_instructions
+          let specialInstructions = item.special_instructions?.trim() || null;
+          if (!specialInstructions && order.order_type === 'table_order' && order.delivery_notes) {
+            specialInstructions = order.delivery_notes.trim() || null;
+          }
+          
+          return {
+            id: item.id,
+            name: item.menu_item?.name || 'Unknown Item',
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            total_price: item.total_price,
+            special_instructions: specialInstructions
+          };
+        }),
         subtotal: order.subtotal || 0,
         tax_amount: order.tax_amount || 0,
         discount_amount: order.discount_amount || 0,
@@ -1255,6 +1263,18 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
                 </p>
               </div>
             </div>
+            
+            {/* Special Instructions / Delivery Notes */}
+            {selectedOrder.delivery_notes && selectedOrder.delivery_notes.trim() && (
+              <div className="mt-3 pt-3 border-t">
+                <div className="flex items-start gap-2">
+                  <span className="text-muted-foreground text-sm">📝 Special Instructions:</span>
+                  <p className="text-sm text-orange-600 font-medium flex-1">
+                    {selectedOrder.delivery_notes.trim()}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Order Items */}
             <div className="mt-4 border-t pt-4">

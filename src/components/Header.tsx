@@ -176,11 +176,24 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
           {/* Left Section - Logo (Desktop) or Location Dropdown (Mobile) */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             {isMobile ? (
-              /* Mobile Location Selector */
-              <LocationSelector 
-                selectedBlock={selectedBlock} 
-                onBlockChange={setSelectedBlock}
-              />
+              /* Mobile: Show Logo when not signed in, Location Selector when signed in */
+              !user ? (
+                <Link 
+                  to="/" 
+                  className="flex items-center space-x-1 hover:scale-105 transition-transform cursor-pointer"
+                >
+                  <img 
+                    src="https://ik.imagekit.io/foodclub/LOGO/FC%20Logomark%20Print.png" 
+                    alt="Food Club Logo" 
+                    className="h-8 w-auto object-contain"
+                  />
+                </Link>
+              ) : (
+                <LocationSelector 
+                  selectedBlock={selectedBlock} 
+                  onBlockChange={setSelectedBlock}
+                />
+              )
             ) : (
               /* Desktop Logo */
               <Link 

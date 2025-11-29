@@ -414,7 +414,7 @@ useEffect(() => {
   }
 
   return (
-    <div className="min-h-screen bg-white grocery-font pt-16 pb-20 lg:pb-24">
+    <div className="min-h-screen bg-white grocery-font pt-16 pb-24 lg:pb-8">
       <Header />
 
       {/* Cafe Closed Banner */}

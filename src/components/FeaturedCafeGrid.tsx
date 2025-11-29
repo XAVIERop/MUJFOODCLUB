@@ -29,7 +29,7 @@ interface FeaturedCafeGridProps {
   loading?: boolean; // Add loading prop
 }
 
-export const FeaturedCafeGrid: React.FC<FeaturedCafeGridProps> = ({ showAll = false, maxCafes = 3, cafes, loading = false }) => {
+export const FeaturedCafeGrid: React.FC<FeaturedCafeGridProps> = ({ showAll = false, maxCafes = 10, cafes, loading = false }) => {
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
 
@@ -52,9 +52,19 @@ export const FeaturedCafeGrid: React.FC<FeaturedCafeGridProps> = ({ showAll = fa
     );
   }
 
+  // Ensure cafes are sorted: open cafes first, then closed cafes (maintain priority within each group)
+  const sortedCafes = [...cafes].sort((a, b) => {
+    // First, sort by accepting_orders (open first)
+    if (a.accepting_orders !== b.accepting_orders) {
+      return a.accepting_orders ? -1 : 1;
+    }
+    // Then by priority (lower number = higher priority)
+    return (a.priority || 99) - (b.priority || 99);
+  });
+
   // Limit cafes if not showing all
-  const limitedCafes = showAll ? cafes : cafes.slice(0, maxCafes);
-  console.log('🎯 FeaturedCafeGrid: Limited cafes for display:', limitedCafes.map(c => `${c.name} (Priority: ${c.priority})`));
+  const limitedCafes = showAll ? sortedCafes : sortedCafes.slice(0, maxCafes);
+  console.log('🎯 FeaturedCafeGrid: Limited cafes for display:', limitedCafes.map(c => `${c.name} (${c.accepting_orders ? 'OPEN' : 'CLOSED'}, Priority: ${c.priority})`));
 
   if (cafes.length === 0) {
     return (

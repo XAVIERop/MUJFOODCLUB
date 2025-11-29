@@ -213,21 +213,6 @@ const HeroBannerSection: React.FC = () => {
         features: ['Fresh Food', 'Fast Service', 'Great Prices'],
         imageUrl: getImageUrl('/optimized_images/cookhouse_bb.webp'),
         cafeId: '48cabbce-6b24-4be6-8be6-f2f01f21752b'
-      },
-      {
-        id: 'food-court-banner',
-        title: 'Discover Food Court',
-        subtitle: 'Delicious Food',
-        description: 'Fresh ingredients, authentic flavors, student-friendly prices.',
-        ctaText: 'Order Now',
-        ctaAction: 'menu_food-court',
-        backgroundColor: 'bg-gradient-to-r from-blue-600 to-purple-700',
-        textColor: 'text-white',
-        rating: 4.5,
-        ratingCount: 100,
-        features: ['Fresh Food', 'Fast Service', 'Great Prices'],
-        imageUrl: getImageUrl('/optimized_images/fodcourt_bb.webp'),
-        cafeId: '3e5955ba-9b90-48ce-9d07-cc686678a10e'
       }
     ];
 

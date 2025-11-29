@@ -365,9 +365,19 @@ const TableOrder = () => {
       });
     } catch (error: any) {
       console.error('Order placement error:', error);
+      
+      // Check if error is related to emoji/unicode encoding
+      const errorMessage = error.message || '';
+      const isEmojiError = errorMessage.toLowerCase().includes('emoji') || 
+                          errorMessage.toLowerCase().includes('unicode') ||
+                          errorMessage.toLowerCase().includes('encoding') ||
+                          errorMessage.toLowerCase().includes('invalid byte sequence');
+      
       toast({
         title: 'Order Failed',
-        description: error.message || 'Failed to place order. Please try again.',
+        description: isEmojiError 
+          ? 'Emojis are not allowed in special instructions. Please use text only.'
+          : (errorMessage || 'Failed to place order. Please try again.'),
         variant: 'destructive'
       });
     } finally {
@@ -387,7 +397,7 @@ const TableOrder = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="container mx-auto px-4 py-8 max-w-md">
+        <div className="container mx-auto px-4 pt-16 pb-24 lg:pb-8 max-w-md">
           <Card className="text-center">
             <CardHeader>
               <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
@@ -421,6 +431,7 @@ const TableOrder = () => {
       
       {/* Main Menu Display */}
       <ModernMenuLayout
+        hideFloatingMenu={showGuestForm}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         categories={categories}
@@ -480,7 +491,7 @@ const TableOrder = () => {
                   id="notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Any special requests?"
+                  placeholder="Any special requests? (Emojis may not be supported)"
                   rows={3}
                 />
               </div>

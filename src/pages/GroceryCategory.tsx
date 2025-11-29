@@ -451,7 +451,7 @@ const GroceryCategory: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16 pb-20 lg:pb-24">
+    <div className="min-h-screen bg-gray-50 pt-16 pb-24 lg:pb-8">
       {/* Header - Normal scroll, not fixed */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

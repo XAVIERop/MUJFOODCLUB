@@ -565,16 +565,16 @@ MUJFOODCLUB!`;
       // Banna's Chowki format (58mm/2 inch printer - narrower format)
       // ALL text is normal size (not bold/large) for Banna's Chowki to fit small paper
       receipt = `\x1B\x21\x00  ${cafe_name?.toUpperCase() || 'BANNA\'S CHOWKI'}\x1B\x21\x00
-  ---------------------------
+    ---------------------------
   \x1B\x21\x00${customer_phone || '9999999999'} ${locationDisplayShort}\x1B\x21\x00
   \x1B\x21\x00Token: ${order_number}\x1B\x21\x00
   \x1B\x21\x00Name: ${customer_name || 'Customer'}\x1B\x21\x00
   \x1B\x21\x00Date: ${dateStr} ${timeStr}\x1B\x21\x00
   \x1B\x21\x00Delivery    Cashier: biller\x1B\x21\x00
   \x1B\x21\x00Bill: ${order_number}\x1B\x21\x00
-  ---------------------------
+    ---------------------------
   \x1B\x21\x00Item          Qty Price\x1B\x21\x00
-  ---------------------------`;
+    ---------------------------`;
     } else if (isStardom) {
       // Stardom format: 80mm paper with regular content but emphasized heading/contact/grand total
       const stardomBold = '\x1B\x21\x30';
@@ -777,11 +777,11 @@ ${stardomIndent}---------------------------------------`;
       }
       
       receipt += `\n  \x1B\x21\x00Grand Total: ${finalTotal.toFixed(0)}rs\x1B\x21\x00
-  ---------------------------
+    ---------------------------
   \x1B\x21\x00Thanks Order Again\x1B\x21\x00
   \x1B\x21\x00mujfoodclub.in\x1B\x21\x00
-  ---------------------------
-  ---------------------------`;
+    ---------------------------
+    ---------------------------`;
     } else if (isStardom) {
       const isDelivery = data.delivery_block && !['DINE_IN', 'TAKEAWAY'].includes(data.delivery_block);
       const deliveryCharge = isDelivery ? 10 : 0;
@@ -920,8 +920,8 @@ ${stardomIndent}---------------------------------------`;
       const finalTotal = final_amount; // Use actual final amount from database
       
       receipt += `\n    ------------------------------
-    \x1B\x21\x08Total Qty: ${totalQty}\x1B\x21\x00
-    \x1B\x21\x08Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00`;
+      \x1B\x21\x08Total Qty: ${totalQty}\x1B\x21\x00
+      \x1B\x21\x08Sub Total: ${subtotal.toFixed(0)}\x1B\x21\x00`;
       
       // Only show delivery charge if it's a delivery order
       if (deliveryCharge > 0) {
@@ -995,6 +995,10 @@ ${stardomIndent}---------------------------------------`;
     const isAmor = cafe_name?.toLowerCase().includes('amor') || 
                   cafe_name === 'AMOR' ||
                   cafe_name?.toLowerCase() === 'amor';
+    const isStardom = cafe_name?.toLowerCase().includes('stardom') || 
+                      cafe_name === 'STARDOM' ||
+                      cafe_name?.toLowerCase() === 'stardom' ||
+                      cafe_name?.toLowerCase().includes('stardom café');
     const stardomIndent = '   ';
     console.log('🔍 PrintNode KOT - Cafe name:', cafe_name);
     console.log('🔍 PrintNode KOT - Is Chatkara:', isChatkara);
@@ -1088,7 +1092,7 @@ ${stardomIndent}---------------------------------------`;
     }
 
     // Add items with proper two-column layout
-    items.forEach(item => {
+    items.forEach((item, itemIndex) => {
       const itemName = item.name.toUpperCase();
       const qty = item.quantity.toString();
       
@@ -1097,6 +1101,13 @@ ${stardomIndent}---------------------------------------`;
         const totalWidth = 26; // Total width for 58mm paper (slightly narrower than 60mm)
         const qtyWidth = 4; // Width for quantity column
         const itemWidth = totalWidth - qtyWidth - 1; // Width for item name column (minus 1 for space)
+        
+        // Debug: Log special instructions for Banna's Chowki
+        if (item.special_instructions) {
+          console.log(`📝 Banna's Chowki KOT - Item ${itemIndex + 1} (${itemName}): Special instructions found: "${item.special_instructions}"`);
+        } else {
+          console.log(`📝 Banna's Chowki KOT - Item ${itemIndex + 1} (${itemName}): No special instructions`);
+        }
         
         // Don't truncate - allow full item names to wrap to multiple lines
         // Split long item names into multiple lines
@@ -1124,8 +1135,10 @@ ${stardomIndent}---------------------------------------`;
         // Add special instructions if they exist (for table orders especially)
         if (item.special_instructions && item.special_instructions.trim() !== '') {
           const instructions = item.special_instructions.trim();
-          // Wrap long instructions to fit the width
-          const maxWidth = itemWidth;
+          console.log(`✅ Adding special instructions to KOT: "${instructions}"`);
+          
+          // Wrap long instructions to fit the width (use full width for instructions)
+          const maxWidth = totalWidth - 2; // Use almost full width for instructions
           const instructionWords = instructions.split(' ');
           let currentLine = '';
           let instructionLines = [];
@@ -1140,10 +1153,13 @@ ${stardomIndent}---------------------------------------`;
           }
           if (currentLine) instructionLines.push(currentLine);
           
-          // Add instruction lines with indentation
-          instructionLines.forEach(instructionLine => {
-            kot += `\n    \x1B\x21\x00  Note: ${instructionLine}\x1B\x21\x00`;
+          // Add instruction lines with clear formatting (bold "NOTE:" prefix)
+          instructionLines.forEach((instructionLine, lineIndex) => {
+            const prefix = lineIndex === 0 ? '\x1B\x21\x30NOTE:\x1B\x21\x00 ' : '      '; // Bold "NOTE:" on first line
+            kot += `\n    ${prefix}${instructionLine}`;
           });
+        } else {
+          console.log(`⚠️ Banna's Chowki KOT - Item ${itemIndex + 1}: No special instructions to add`);
         }
       } else if (isStardom) {
         const totalWidth = 40;

@@ -444,6 +444,13 @@ const CafeDashboard = ({ cafeId }: CafeDashboardProps) => {
                               <span className="ml-2">• 📞 {order.phone_number}</span>
                             )}
                           </p>
+                          {/* Special Instructions / Delivery Notes */}
+                          {(order.delivery_notes && order.delivery_notes.trim()) && (
+                            <p className="text-sm text-orange-600 font-medium mt-1 flex items-start">
+                              <span className="mr-1">📝</span>
+                              <span>{order.delivery_notes.trim()}</span>
+                            </p>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="font-semibold">₹{order.total_amount}</p>

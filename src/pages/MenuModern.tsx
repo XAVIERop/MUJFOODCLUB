@@ -914,7 +914,7 @@ const MenuModern = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 pt-16 pb-20 lg:pb-0">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 pt-16 pb-24 lg:pb-8">
         <Header />
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
@@ -929,7 +929,7 @@ const MenuModern = () => {
   // Error states
   if (!actualIdentifier) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 pt-16 pb-20 lg:pb-0">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 pt-16 pb-24 lg:pb-8">
         <Header />
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
@@ -942,7 +942,7 @@ const MenuModern = () => {
 
   if (!cafe) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 pt-16 pb-20 lg:pb-0">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 pt-16 pb-24 lg:pb-8">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <p className="text-center text-gray-600">Cafe not found</p>
