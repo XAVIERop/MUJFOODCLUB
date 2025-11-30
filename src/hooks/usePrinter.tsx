@@ -17,26 +17,21 @@ export const usePrinter = () => {
         console.log('Printer initialization result:', connected);
         setIsConnected(connected);
         
-        if (connected) {
+        // Don't show toast on initial load - only show when user explicitly tests connection
+        // For USB connections, we can't verify physical printer connection automatically
+        if (connected && connectionType === 'network') {
           toast({
             title: "Printer Connected",
             description: `Connected via ${connectionType.toUpperCase()}`,
             variant: "default",
           });
-        } else {
-          toast({
-            title: "Printer Connection Failed",
-            description: "Could not connect to printer. Using browser printing as fallback.",
-            variant: "destructive",
-          });
         }
+        // For USB, we silently initialize (browser printing is always available)
+        // User must click "Test Connection" to verify their printer works
       } catch (error) {
         console.error('Printer initialization error:', error);
-        toast({
-          title: "Printer Error",
-          description: "Error initializing printer. Using browser printing as fallback.",
-          variant: "destructive",
-        });
+        // Don't show error toast on initial load for USB connections
+        // since browser printing is always available as fallback
       }
     };
 

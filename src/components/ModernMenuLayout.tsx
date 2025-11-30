@@ -711,13 +711,52 @@ const ModernFoodCard: React.FC<{
         {/* Food Details Header */}
         <div className="flex items-start justify-between mb-3">
           <div className={`flex-1 ${item.category === 'Thali' ? 'min-h-[120px]' : ''}`}>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <h3 className="font-semibold text-gray-900 text-lg">
                 {item.baseName || item.name}
               </h3>
               {isOutOfStock && (
                 <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
                   Out of Stock
+                </span>
+              )}
+              {/* Stock Display - Only show if cafe has daily stock enabled and item has stock tracking */}
+              {(() => {
+                const shouldShowStock = cafe?.enable_daily_stock && 
+                  item.daily_stock_quantity !== null &&
+                  item.daily_stock_quantity !== undefined &&
+                  item.current_stock_quantity !== null && 
+                  item.current_stock_quantity !== undefined;
+                
+                // Debug logging (remove in production if needed)
+                if (item.daily_stock_quantity !== null && !shouldShowStock) {
+                  console.log('🔍 Stock indicator debug:', {
+                    itemName: item.baseName || item.name,
+                    enable_daily_stock: cafe?.enable_daily_stock,
+                    daily_stock_quantity: item.daily_stock_quantity,
+                    current_stock_quantity: item.current_stock_quantity,
+                    shouldShow: shouldShowStock
+                  });
+                }
+                
+                return shouldShowStock;
+              })() && (
+                <span className={`text-xs sm:text-sm px-2.5 py-1.5 rounded-full font-semibold ${
+                  item.current_stock_quantity <= 0 
+                    ? 'bg-red-100 text-red-800 border border-red-300' 
+                    : item.current_stock_quantity <= 5 
+                    ? 'bg-orange-100 text-orange-800 border border-orange-300'
+                    : 'bg-green-100 text-green-800 border border-green-300'
+                }`}>
+                  {item.current_stock_quantity <= 0 
+                    ? item.current_stock_quantity < -10
+                      ? '⚠️ Critical Stock'
+                      : item.current_stock_quantity < 0
+                      ? `⚠️ Oversold by ${Math.abs(item.current_stock_quantity)}`
+                      : '❌ Out of Stock'
+                    : item.current_stock_quantity <= 5
+                    ? `⚠️ Only ${item.current_stock_quantity} left!`
+                    : `✅ ${item.current_stock_quantity} available`}
                 </span>
               )}
             </div>

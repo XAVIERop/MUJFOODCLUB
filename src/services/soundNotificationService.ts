@@ -33,15 +33,15 @@ class SoundNotificationService {
   }
 
   private async ensureAudioContext(): Promise<AudioContext> {
-    if (!this.audioContext) {
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
+      if (!this.audioContext) {
+        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
 
-    // Resume audio context if suspended (required for user interaction)
-    if (this.audioContext.state === 'suspended') {
-      await this.audioContext.resume();
-      console.log('🔊 Audio context resumed');
-    }
+      // Resume audio context if suspended (required for user interaction)
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+        console.log('🔊 Audio context resumed');
+      }
 
     return this.audioContext;
   }

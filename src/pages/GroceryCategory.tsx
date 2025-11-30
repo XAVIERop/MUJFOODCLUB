@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getImageUrl } from '@/utils/imageSource';
 import { getGroceryProductImage } from '@/utils/groceryImageMatcher';
 import { CafeSwitchDialog } from '@/components/CafeSwitchDialog';
+import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { isOffCampusUser, isOffCampusCafe } from '@/utils/residencyUtils';
 
@@ -25,6 +26,8 @@ interface GroceryItem {
   out_of_stock: boolean;
   image_url: string;
   brand?: string;
+  daily_stock_quantity?: number | null;
+  current_stock_quantity?: number | null;
 }
 
 const GroceryCategory: React.FC = () => {
@@ -307,6 +310,16 @@ const GroceryCategory: React.FC = () => {
   };
 
   const handleAddToCart = (item: GroceryItem) => {
+    // Check if cafe is closed
+    if (grabitCafe?.accepting_orders === false) {
+      toast({
+        title: 'Cafe Closed',
+        description: 'Grabit is currently not accepting orders. Items cannot be added to cart.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     // Check if item is out of stock
     const isOutOfStock = item.out_of_stock || !item.is_available;
     if (isOutOfStock) {
@@ -452,6 +465,22 @@ const GroceryCategory: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16 pb-24 lg:pb-8">
+      <Header />
+      
+      {/* Cafe Closed Banner */}
+      {grabitCafe?.accepting_orders === false && (
+        <div className="bg-red-50 border-b-2 border-red-300 px-4 py-3 relative z-20">
+          <div className="flex items-center gap-3 text-center justify-center">
+            <div className="w-5 h-5 rounded-full bg-red-500 flex-shrink-0 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">!</span>
+            </div>
+            <p className="text-sm font-semibold text-red-800">
+              Grabit is currently not accepting orders. Browse items but they cannot be added to cart.
+            </p>
+          </div>
+        </div>
+      )}
+      
       {/* Header - Normal scroll, not fixed */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -599,9 +628,35 @@ const GroceryCategory: React.FC = () => {
                       {/* Product Info */}
                       <div className={`px-3 pb-3 flex flex-col flex-grow ${productImage ? '' : 'pt-4'}`}>
                         {/* Product Name */}
-                        <h3 className="text-sm font-medium text-gray-900 line-clamp-3 leading-tight mb-1 min-h-[3.75rem]">
-                          {item.name}
-                        </h3>
+                        <div className="mb-1">
+                          <h3 className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight">
+                            {item.name}
+                          </h3>
+                          {/* Stock Display - Only show if cafe has daily stock enabled and item has stock tracking */}
+                          {grabitCafe?.enable_daily_stock && 
+                           item.daily_stock_quantity !== null &&
+                           item.daily_stock_quantity !== undefined &&
+                           item.current_stock_quantity !== null && 
+                           item.current_stock_quantity !== undefined && (
+                            <span className={`inline-block text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-semibold mt-1 ${
+                              item.current_stock_quantity <= 0 
+                                ? 'bg-red-100 text-red-800 border border-red-300' 
+                                : item.current_stock_quantity <= 5 
+                                ? 'bg-orange-100 text-orange-800 border border-orange-300'
+                                : 'bg-green-100 text-green-800 border border-green-300'
+                            }`}>
+                              {item.current_stock_quantity <= 0 
+                                ? item.current_stock_quantity < -10
+                                  ? '⚠️ Critical'
+                                  : item.current_stock_quantity < 0
+                                  ? `⚠️ -${Math.abs(item.current_stock_quantity)}`
+                                  : '❌ Out'
+                                : item.current_stock_quantity <= 5
+                                ? `⚠️ ${item.current_stock_quantity} left`
+                                : `✅ ${item.current_stock_quantity}`}
+                            </span>
+                          )}
+                        </div>
                         
                         {/* Price and Add Button */}
                         <div className="flex items-center justify-between mt-auto pt-2">
@@ -612,6 +667,10 @@ const GroceryCategory: React.FC = () => {
                             <span className="text-xs text-red-600 font-medium px-2 py-1">
                               Out of Stock
                             </span>
+                          ) : grabitCafe?.accepting_orders === false ? (
+                            <Badge className="bg-gray-100 text-gray-600 px-3 py-1 rounded-md text-xs font-medium border border-gray-300">
+                              Closed
+                            </Badge>
                           ) : cartCount > 0 ? (
                             <div className="flex items-center gap-2">
                         <Button
@@ -627,7 +686,8 @@ const GroceryCategory: React.FC = () => {
                                 variant="outline"
                             size="sm"
                                 onClick={() => handleAddToCart(item)}
-                                className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400 rounded-full"
+                                disabled={grabitCafe?.accepting_orders === false}
+                                className="h-8 w-8 p-0 border-gray-300 hover:border-gray-400 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                                 <Plus className="h-4 w-4" />
                           </Button>
@@ -638,6 +698,7 @@ const GroceryCategory: React.FC = () => {
                             size="sm"
                               className="bg-green-500 hover:bg-green-600 text-white font-medium rounded-md px-4 py-1.5 h-8 text-xs"
                               onClick={() => handleAddToCart(item)}
+                              disabled={grabitCafe?.accepting_orders === false}
                           >
                               ADD
                           </Button>

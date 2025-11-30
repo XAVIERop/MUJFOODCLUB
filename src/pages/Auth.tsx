@@ -107,6 +107,7 @@ const Auth = () => {
   // Password strength states
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({
     score: 0,
     feedback: '',
@@ -735,13 +736,21 @@ const Auth = () => {
                         <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <Input
                       id="signin-password"
-                      type="password"
+                      type={showSignInPassword ? "text" : "password"}
                           placeholder="Enter your password"
                           value={signinForm.password}
                           onChange={(e) => setSigninForm({ ...signinForm, password: e.target.value })}
-                          className="pl-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
+                          className="pl-12 pr-12 h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-colors"
                       required
                     />
+                        <button
+                          type="button"
+                          onClick={() => setShowSignInPassword(!showSignInPassword)}
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                          aria-label={showSignInPassword ? "Hide password" : "Show password"}
+                        >
+                          {showSignInPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
                       </div>
                     </div>
 

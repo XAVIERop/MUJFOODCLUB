@@ -424,17 +424,17 @@ export const AddressMapModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] w-[95vw] p-0 !grid !grid-rows-[auto_1fr] sm:max-h-[90vh] sm:w-full">
-        <DialogHeader className="p-4 pb-2">
+      <DialogContent className="max-w-2xl max-h-[calc(100vh-8.5rem)] w-[95vw] p-0 flex flex-col sm:max-h-[90vh] sm:w-full sm:!top-[50%] sm:!translate-y-[-50%] !top-[4rem] !bottom-[4.5rem] !translate-y-0 !left-[50%] !translate-x-[-50%] z-[10000]">
+        <DialogHeader className="p-4 pb-2 flex-shrink-0">
           <DialogTitle className="text-lg font-semibold">Select Delivery Location</DialogTitle>
         </DialogHeader>
 
         {/* Scrollable Content Area */}
-        <div className="overflow-y-auto min-h-0">
+        <div className="flex-1 overflow-y-auto min-h-0 px-4">
           {/* Map Section */}
-          <div className="relative flex-shrink-0">
+          <div className="relative flex-shrink-0 -mx-4 overflow-hidden">
             {!isGoogleMapsLoaded ? (
-              <div className="w-full h-[250px] lg:h-[400px] bg-gray-100 flex items-center justify-center">
+              <div className="w-full h-[200px] lg:h-[300px] bg-gray-100 flex items-center justify-center relative">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-2"></div>
                   <p className="text-sm text-gray-600">Loading map...</p>
@@ -443,24 +443,24 @@ export const AddressMapModal = ({
             ) : (
               <div 
                 ref={mapRef}
-                className="w-full h-[250px] lg:h-[400px] bg-gray-100"
+                className="w-full h-[200px] lg:h-[300px] bg-gray-100 relative"
               />
             )}
           
-          {/* Fixed Pin in Center */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-full pointer-events-none z-10">
-            <MapPin className="h-12 w-12 text-red-500 drop-shadow-lg" fill="currentColor" />
+          {/* Fixed Pin in Center - Must be above map with high z-index */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-full pointer-events-none z-[100]">
+            <MapPin className="h-12 w-12 text-red-500 drop-shadow-lg" fill="currentColor" stroke="white" strokeWidth={2} />
           </div>
 
           {/* Drag Map Instruction */}
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-full shadow-lg border border-gray-200 z-10">
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-full shadow-lg border border-gray-200 z-[100]">
             <p className="text-sm font-medium text-gray-700">📍 Drag map to adjust pin</p>
           </div>
 
             {/* GPS Button */}
             <Button
               onClick={getCurrentLocation}
-              className="absolute bottom-4 right-4 bg-white text-gray-700 hover:bg-gray-50 border shadow-lg"
+              className="absolute bottom-4 right-4 bg-white text-gray-700 hover:bg-gray-50 border shadow-lg z-[100]"
               size="sm"
             >
               <Navigation className="h-4 w-4 mr-1" />
@@ -469,7 +469,7 @@ export const AddressMapModal = ({
           </div>
 
           {/* Address Display */}
-          <div className="px-4 py-3 bg-gray-50 border-y flex-shrink-0">
+          <div className="py-3 bg-gray-50 border-y flex-shrink-0 -mx-4 px-4">
             <div className="flex items-start gap-2">
               <MapPin className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
@@ -482,7 +482,7 @@ export const AddressMapModal = ({
           </div>
 
           {/* Input Fields */}
-          <div className="px-4 pb-4 space-y-4">
+          <div className="space-y-4 pt-4 pb-24">
           <div>
             <Label htmlFor="flat-number" className="text-sm">Door / Flat No.</Label>
             <Input
@@ -563,15 +563,17 @@ export const AddressMapModal = ({
               />
             </div>
           )}
-
-            {/* Save Button */}
-            <Button
-              onClick={handleSave}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 lg:py-6 text-base mb-4 lg:mb-0"
-            >
-              SAVE ADDRESS & PROCEED
-            </Button>
           </div>
+        </div>
+
+        {/* Fixed Save Button at Bottom */}
+        <div className="p-4 pt-2 pb-6 border-t bg-white flex-shrink-0 safe-area-inset-bottom">
+          <Button
+            onClick={handleSave}
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 lg:py-6 text-base"
+          >
+            SAVE ADDRESS & PROCEED
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

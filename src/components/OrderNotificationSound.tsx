@@ -168,9 +168,9 @@ const OrderNotificationSound = ({
           <div className="space-y-3">
             <Label className="text-sm font-medium">Test Sound Options</Label>
             <div className="grid grid-cols-1 gap-2">
-              <Button
+            <Button
                 variant={playingOption === 'A' ? "default" : "outline"}
-                size="sm"
+              size="sm"
                 onClick={async () => {
                   if (!isAudioSupported) return;
                   try {
@@ -191,19 +191,19 @@ const OrderNotificationSound = ({
                 }}
                 disabled={isPlaying && playingOption !== 'A'}
                 className="w-full justify-start"
-              >
+            >
                 {playingOption === 'A' ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
+                <>
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
                     Playing Option A...
-                  </>
-                ) : (
-                  <>
-                    <Volume2 className="w-4 h-4 mr-2" />
+                </>
+              ) : (
+                <>
+                  <Volume2 className="w-4 h-4 mr-2" />
                     Option A: Multi-tone Chime (~1.5s)
-                  </>
-                )}
-              </Button>
+                </>
+              )}
+            </Button>
 
               <Button
                 variant={playingOption === 'B' ? "default" : "outline"}

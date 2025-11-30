@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SearchBar from "@/components/SearchBar";
@@ -54,6 +54,7 @@ const Index = () => {
   const [selectedBlock, setSelectedBlock] = useState<string>(getInitialBlock());
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
   const [cafeFilter, setCafeFilter] = useState<'all' | 'ghs' | 'outside'>('all');
+  const previousProfileIdRef = useRef<string | null>(null);
   
   // Update block when profile changes
   useEffect(() => {
@@ -66,9 +67,23 @@ const Index = () => {
   // Active order status
   const { activeOrders } = useActiveOrder();
 
+  // Track profile changes to force re-fetch when signing in/out
   useEffect(() => {
+    const currentProfileId = profile?.id || null;
+    
+    // If profile changed (signed in/out), clear cache and force re-fetch
+    if (currentProfileId !== previousProfileIdRef.current) {
+      console.log('🔄 Profile changed - clearing cache and re-fetching cafes', {
+        from: previousProfileIdRef.current,
+        to: currentProfileId
+      });
+      setLastFetchTime(0); // Clear cache
+      setCafes([]); // Clear existing cafes to prevent showing wrong cafes
+      previousProfileIdRef.current = currentProfileId;
+    }
+    
     fetchCafes();
-}, [profile]);
+  }, [profile]);
 
   // Real-time subscription for cafe updates (ratings, etc.)
   useEffect(() => {
@@ -101,10 +116,18 @@ const Index = () => {
   const fetchCafes = async () => {
     try {
       // Cache for 5 minutes to prevent unnecessary re-fetching
+      // BUT: Always re-fetch if profile changed (sign in/out) or if cafes array is empty
       const now = Date.now();
       const cacheTime = 5 * 60 * 1000; // 5 minutes
+      const currentProfileId = profile?.id || null;
       
-      if (cafes.length > 0 && (now - lastFetchTime) < cacheTime) {
+      // Skip cache if:
+      // 1. Cafes array is empty (initial load or after profile change)
+      // 2. Profile changed (detected by previousProfileIdRef check above)
+      // 3. Cache expired
+      if (cafes.length > 0 && (now - lastFetchTime) < cacheTime && currentProfileId === previousProfileIdRef.current) {
+        // Only skip if we have cafes, cache is valid, AND profile hasn't changed
+        console.log('⏭️ Skipping fetch - using cached cafes');
         setLoading(false);
         return;
       }
@@ -224,6 +247,7 @@ const Index = () => {
           onBlockChange={setSelectedBlock}
           cafeFilter={cafeFilter}
           onCafeFilterChange={setCafeFilter}
+          profile={profile}
         />
       }
     >

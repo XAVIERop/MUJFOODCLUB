@@ -180,7 +180,7 @@ const Header = ({ selectedBlock: propSelectedBlock, onBlockChange: propOnBlockCh
               !user ? (
                 <Link 
                   to="/" 
-                  className="flex items-center space-x-1 hover:scale-105 transition-transform cursor-pointer"
+                  className="flex items-center space-x-1 hover:scale-105 transition-transform cursor-pointer ml-2"
                 >
                   <img 
                     src="https://ik.imagekit.io/foodclub/LOGO/FC%20Logomark%20Print.png" 

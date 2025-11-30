@@ -43,10 +43,18 @@ class PrinterService {
       // For USB connections, we'll use browser printing as the primary method
       // since Web Serial API requires user permission and may not be available
       console.log('Initializing USB connection - using browser printing method');
-      this.isConnected = true;
-      return true;
+      
+      // IMPORTANT: We cannot actually verify if a physical USB printer is connected
+      // because we're using browser printing as a fallback. Browser printing doesn't
+      // require a physical printer to be connected - it just opens the print dialog.
+      // Therefore, we should NOT show "Connected" status automatically.
+      // The user must explicitly test the connection to verify their printer works.
+      this.isConnected = false;
+      console.log('USB printer status: Cannot verify physical connection (browser printing available)');
+      return false; // Return false - we cannot verify actual printer connection
     } catch (error) {
       console.error('USB connection failed:', error);
+      this.isConnected = false;
       return false;
     }
   }

@@ -16,6 +16,7 @@ interface CafeCancellationDialogProps {
   onCancel: () => void;
   trigger: React.ReactNode;
   onTriggerClick?: () => void;
+  onClose?: () => void; // Called when dialog is closed/dismissed without canceling
 }
 
 const CafeCancellationDialog: React.FC<CafeCancellationDialogProps> = ({
@@ -23,7 +24,8 @@ const CafeCancellationDialog: React.FC<CafeCancellationDialogProps> = ({
   orderNumber,
   onCancel,
   trigger,
-  onTriggerClick
+  onTriggerClick,
+  onClose
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   
@@ -122,6 +124,10 @@ const CafeCancellationDialog: React.FC<CafeCancellationDialogProps> = ({
         // Reset form when closing
         setPassword('');
         setReason('');
+        // Notify parent that dialog was closed/dismissed
+        if (onClose) {
+          onClose();
+        }
       }
     }
   };

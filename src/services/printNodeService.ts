@@ -90,6 +90,17 @@ export class PrintNodeService {
   async isAvailable(): Promise<boolean> {
     try {
       const response = await this.makeRequest('/whoami');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ PrintNode API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+          apiKeyPrefix: this.apiKey.substring(0, 10) + '...',
+          apiKeyLength: this.apiKey.length,
+          hint: response.status === 401 ? 'API key is invalid or not set correctly' : 'Unknown error'
+        });
+      }
       return response.ok;
     } catch (error) {
       console.error('PrintNode service unavailable:', error);
@@ -982,6 +993,9 @@ ${stardomIndent}---------------------------------------`;
     const isFoodCourt = cafe_name?.toLowerCase().includes('food court') || 
                         cafe_name === 'FOOD COURT' ||
                         cafe_name?.toLowerCase() === 'food court';
+    const isGrabit = cafe_name?.toLowerCase().includes('grabit') || 
+                     cafe_name === 'GRABIT' ||
+                     cafe_name?.toLowerCase() === 'grabit';
     const isPunjabiTadka = cafe_name?.toLowerCase().includes('punjabi tadka') || 
                            cafe_name === 'PUNJABI TADKA' ||
                            cafe_name?.toLowerCase() === 'punjabi tadka' ||
@@ -1006,6 +1020,7 @@ ${stardomIndent}---------------------------------------`;
     console.log('🔍 PrintNode KOT - Is Mini Meals:', isMiniMeals);
     console.log('🔍 PrintNode KOT - Is Cook House:', isCookHouse);
     console.log('🔍 PrintNode KOT - Is Food Court:', isFoodCourt);
+    console.log('🔍 PrintNode KOT - Is Grabit:', isGrabit);
     console.log('🔍 PrintNode KOT - Is Punjabi Tadka:', isPunjabiTadka);
     console.log('🔍 PrintNode KOT - Is Munch Box:', isMunchBox);
     console.log('🔍 PrintNode KOT - Is Stardom:', isStardom);
@@ -1408,12 +1423,24 @@ ${stardomIndent}---------------------------------------`;
     try {
       const response = await this.makeRequest('/whoami');
       if (!response.ok) {
+        const errorText = await response.text();
+        const errorDetails = {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+          apiKeyPrefix: this.apiKey.substring(0, 10) + '...',
+          apiKeyLength: this.apiKey.length
+        };
+        console.error('❌ PrintNode getAccountInfo Error:', errorDetails);
+        if (response.status === 401) {
+          throw new Error(`PrintNode API authentication failed (401). API key may be invalid or not set. Key prefix: ${this.apiKey.substring(0, 10)}...`);
+        }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       return await response.json();
     } catch (error) {
       console.error('Error getting account info:', error);
-      return null;
+      throw error;
     }
   }
 }

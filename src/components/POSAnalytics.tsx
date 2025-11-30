@@ -22,7 +22,9 @@ import {
   Award,
   Clock3,
   Package,
-  Star
+  Star,
+  Layers,
+  Truck
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -36,6 +38,7 @@ interface OrderItem {
   menu_item: {
     name: string;
     description: string;
+    category?: string;
   };
 }
 
@@ -46,8 +49,15 @@ interface Order {
   total_amount: number;
   created_at: string;
   delivery_block: string;
+  order_type?: string; // 'delivery' | 'dine_in' | 'takeaway' | 'table_order'
+  accepted_at?: string;
+  preparing_at?: string;
+  out_for_delivery_at?: string;
+  completed_at?: string;
+  status_updated_at?: string;
   customer_name?: string;
   phone_number?: string;
+  payment_method?: string;
   user?: {
     full_name: string;
     phone: string | null;
@@ -239,6 +249,145 @@ const POSAnalytics: React.FC<POSAnalyticsProps> = ({
     };
   }, [filteredOrders]);
 
+  // Calculate operational time metrics
+  const operationalMetrics = useMemo(() => {
+    const completedOrders = filteredOrders.filter(order => order.status === 'completed');
+    
+    // Calculate average preparation time (preparing_at - accepted_at)
+    const preparationTimes: number[] = [];
+    completedOrders.forEach(order => {
+      if (order.accepted_at && order.preparing_at) {
+        const prepTime = new Date(order.preparing_at).getTime() - new Date(order.accepted_at).getTime();
+        if (prepTime > 0) {
+          preparationTimes.push(prepTime / 1000 / 60); // Convert to minutes
+        }
+      }
+    });
+    
+    // Calculate average delivery time (completed_at - out_for_delivery_at)
+    const deliveryTimes: number[] = [];
+    completedOrders.forEach(order => {
+      if (order.out_for_delivery_at && order.completed_at) {
+        const delTime = new Date(order.completed_at).getTime() - new Date(order.out_for_delivery_at).getTime();
+        if (delTime > 0) {
+          deliveryTimes.push(delTime / 1000 / 60); // Convert to minutes
+        }
+      }
+    });
+    
+    // Calculate total fulfillment time (completed_at - created_at)
+    const fulfillmentTimes: number[] = [];
+    completedOrders.forEach(order => {
+      if (order.created_at && order.completed_at) {
+        const fulfillTime = new Date(order.completed_at).getTime() - new Date(order.created_at).getTime();
+        if (fulfillTime > 0) {
+          fulfillmentTimes.push(fulfillTime / 1000 / 60); // Convert to minutes
+        }
+      }
+    });
+    
+    return {
+      avgPreparationTime: preparationTimes.length > 0 
+        ? preparationTimes.reduce((a, b) => a + b, 0) / preparationTimes.length 
+        : 0,
+      avgDeliveryTime: deliveryTimes.length > 0 
+        ? deliveryTimes.reduce((a, b) => a + b, 0) / deliveryTimes.length 
+        : 0,
+      avgFulfillmentTime: fulfillmentTimes.length > 0 
+        ? fulfillmentTimes.reduce((a, b) => a + b, 0) / fulfillmentTimes.length 
+        : 0,
+      ordersWithPrepTime: preparationTimes.length,
+      ordersWithDeliveryTime: deliveryTimes.length,
+      totalCompletedOrders: completedOrders.length
+    };
+  }, [filteredOrders]);
+
+  // Calculate revenue trends and comparisons
+  const revenueTrends = useMemo(() => {
+    const completedOrders = filteredOrders.filter(order => order.status === 'completed');
+    const currentRevenue = completedOrders.reduce((sum, order) => sum + order.total_amount, 0);
+    const currentOrderCount = completedOrders.length;
+    
+    // Get date range for current period
+    const currentDateRange = getDateRangeFilter();
+    if (!currentDateRange) {
+      return { 
+        currentRevenue: 0, 
+        currentOrders: 0, 
+        previousRevenue: 0, 
+        previousOrders: 0, 
+        revenueGrowth: 0, 
+        orderGrowth: 0 
+      };
+    }
+    
+    const startDate = new Date(currentDateRange.startDate);
+    const endDate = new Date(currentDateRange.endDate);
+    const periodDuration = endDate.getTime() - startDate.getTime();
+    
+    // Calculate previous period (same duration, before current period)
+    const previousStartDate = new Date(startDate.getTime() - periodDuration);
+    const previousEndDate = new Date(startDate.getTime());
+    
+    // Filter orders for previous period
+    const previousPeriodOrders = orders.filter(order => {
+      const orderDate = new Date(order.created_at);
+      return orderDate >= previousStartDate && orderDate < previousEndDate && order.status === 'completed';
+    });
+    
+    const previousRevenue = previousPeriodOrders.reduce((sum, order) => sum + order.total_amount, 0);
+    const previousOrderCount = previousPeriodOrders.length;
+    
+    // Calculate growth percentages
+    const revenueGrowth = previousRevenue > 0 
+      ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 
+      : currentRevenue > 0 ? 100 : 0;
+    
+    const orderGrowth = previousOrderCount > 0 
+      ? ((currentOrderCount - previousOrderCount) / previousOrderCount) * 100 
+      : currentOrderCount > 0 ? 100 : 0;
+    
+    return {
+      currentRevenue: currentRevenue || 0,
+      currentOrders: currentOrderCount || 0,
+      previousRevenue: previousRevenue || 0,
+      previousOrders: previousOrderCount || 0,
+      revenueGrowth: isNaN(revenueGrowth) ? 0 : revenueGrowth,
+      orderGrowth: isNaN(orderGrowth) ? 0 : orderGrowth
+    };
+  }, [filteredOrders, orders, dateRange, customDateRange]);
+
+  // Calculate order type performance
+  const orderTypeMetrics = useMemo(() => {
+    const typeStats: {[key: string]: { count: number; revenue: number; avgValue: number }} = {};
+    
+    filteredOrders.forEach(order => {
+      const orderType = order.order_type || 'unknown';
+      
+      if (!typeStats[orderType]) {
+        typeStats[orderType] = { count: 0, revenue: 0, avgValue: 0 };
+      }
+      
+      typeStats[orderType].count += 1;
+      
+      if (order.status === 'completed') {
+        typeStats[orderType].revenue += order.total_amount;
+      }
+    });
+    
+    // Calculate average order value per type
+    Object.keys(typeStats).forEach(type => {
+      const completedCount = filteredOrders.filter(
+        o => (o.order_type || 'unknown') === type && o.status === 'completed'
+      ).length;
+      typeStats[type].avgValue = completedCount > 0 
+        ? typeStats[type].revenue / completedCount 
+        : 0;
+    });
+    
+    return typeStats;
+  }, [filteredOrders]);
+
   // Calculate hourly order distribution
   const hourlyData = useMemo(() => {
     const hourly = new Array(24).fill(0);
@@ -318,6 +467,387 @@ const POSAnalytics: React.FC<POSAnalyticsProps> = ({
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
   }, [filteredOrders, orderItems]);
+
+  // Calculate category performance analytics
+  const categoryPerformance = useMemo(() => {
+    const categoryStats: {[key: string]: { 
+      category: string; 
+      revenue: number; 
+      orderIds: Set<string>;
+      itemsSold: number;
+    }} = {};
+
+    filteredOrders.forEach(order => {
+      if (order.status === 'completed') {
+        const items = orderItems[order.id] || [];
+        const categoriesInOrder = new Set<string>();
+        
+        items.forEach(item => {
+          const category = item.menu_item?.category || 'Uncategorized';
+          categoriesInOrder.add(category);
+          
+          if (!categoryStats[category]) {
+            categoryStats[category] = {
+              category,
+              revenue: 0,
+              orderIds: new Set<string>(),
+              itemsSold: 0
+            };
+          }
+          categoryStats[category].revenue += item.total_price;
+          categoryStats[category].itemsSold += item.quantity;
+        });
+        
+        // Track unique orders per category
+        categoriesInOrder.forEach(category => {
+          categoryStats[category].orderIds.add(order.id);
+        });
+      }
+    });
+
+    // Convert to final format with order counts and averages
+    return Object.values(categoryStats)
+      .map(stats => ({
+        category: stats.category,
+        revenue: stats.revenue,
+        orders: stats.orderIds.size,
+        itemsSold: stats.itemsSold,
+        avgOrderValue: stats.orderIds.size > 0 ? stats.revenue / stats.orderIds.size : 0
+      }))
+      .sort((a, b) => b.revenue - a.revenue);
+  }, [filteredOrders, orderItems]);
+
+  // Calculate location/block analytics
+  const locationAnalytics = useMemo(() => {
+    const locationStats: {[key: string]: { 
+      location: string; 
+      revenue: number; 
+      orders: number;
+      avgOrderValue: number;
+    }} = {};
+
+    filteredOrders.forEach(order => {
+      if (order.status === 'completed') {
+        // Use delivery_block or fallback to order_type for dine-in/takeaway
+        let location = order.delivery_block || order.order_type || 'Unknown';
+        
+        // Format location name for better display
+        if (location === 'DINE_IN') {
+          location = 'Dine-In';
+        } else if (location === 'TAKEAWAY') {
+          location = 'Takeaway';
+        } else if (location === 'OFF_CAMPUS') {
+          location = 'Off-Campus';
+        } else if (location === 'table_order') {
+          location = 'Table Order';
+        }
+        
+        if (!locationStats[location]) {
+          locationStats[location] = {
+            location,
+            revenue: 0,
+            orders: 0,
+            avgOrderValue: 0
+          };
+        }
+        
+        locationStats[location].revenue += order.total_amount;
+        locationStats[location].orders += 1;
+      }
+    });
+
+    // Calculate average order value per location
+    Object.keys(locationStats).forEach(location => {
+      const stats = locationStats[location];
+      stats.avgOrderValue = stats.orders > 0 ? stats.revenue / stats.orders : 0;
+    });
+
+    return Object.values(locationStats)
+      .sort((a, b) => b.revenue - a.revenue);
+  }, [filteredOrders]);
+
+  // Calculate payment method analytics
+  const paymentMethodAnalytics = useMemo(() => {
+    const paymentStats: {[key: string]: { 
+      method: string; 
+      revenue: number; 
+      orders: number;
+      avgOrderValue: number;
+      percentage: number;
+    }} = {};
+
+    const completedOrders = filteredOrders.filter(order => order.status === 'completed');
+    const totalRevenue = completedOrders.reduce((sum, order) => sum + order.total_amount, 0);
+
+    completedOrders.forEach(order => {
+      const method = order.payment_method || 'Unknown';
+      
+      if (!paymentStats[method]) {
+        paymentStats[method] = {
+          method,
+          revenue: 0,
+          orders: 0,
+          avgOrderValue: 0,
+          percentage: 0
+        };
+      }
+      
+      paymentStats[method].revenue += order.total_amount;
+      paymentStats[method].orders += 1;
+    });
+
+    // Calculate averages and percentages
+    Object.keys(paymentStats).forEach(method => {
+      const stats = paymentStats[method];
+      stats.avgOrderValue = stats.orders > 0 ? stats.revenue / stats.orders : 0;
+      stats.percentage = totalRevenue > 0 ? (stats.revenue / totalRevenue) * 100 : 0;
+    });
+
+    // Format method names for display
+    const formattedStats = Object.values(paymentStats).map(stats => ({
+      ...stats,
+      method: stats.method === 'cod' ? 'Cash on Delivery' 
+        : stats.method === 'online' ? 'Online Payment'
+        : stats.method === 'upi' ? 'UPI'
+        : stats.method === 'card' ? 'Card Payment'
+        : stats.method.charAt(0).toUpperCase() + stats.method.slice(1)
+    }));
+
+    return formattedStats.sort((a, b) => b.revenue - a.revenue);
+  }, [filteredOrders]);
+
+  // Calculate new vs returning customers analytics
+  const customerRetentionAnalytics = useMemo(() => {
+    // Track first order per customer (by phone or user_id) at this cafe
+    const customerFirstOrders: {[key: string]: string} = {}; // customer_key -> first order id
+    const customerOrderCounts: {[key: string]: number} = {}; // customer_key -> order count
+    const customerRevenue: {[key: string]: number} = {}; // customer_key -> total revenue
+    
+    let newCustomers = 0;
+    let returningCustomers = 0;
+    let newCustomerRevenue = 0;
+    let returningCustomerRevenue = 0;
+
+    // Sort orders by date to identify first orders correctly
+    const sortedOrders = [...filteredOrders].sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    sortedOrders.forEach(order => {
+      if (order.status === 'completed') {
+        // Use phone number or user_id as customer identifier
+        const customerKey = order.phone_number || order.user?.phone || order.user?.email || order.customer_name || 'unknown';
+        
+        // Check if this is the first order from this customer
+        if (!customerFirstOrders[customerKey]) {
+          customerFirstOrders[customerKey] = order.id;
+          newCustomers++;
+          newCustomerRevenue += order.total_amount;
+        } else {
+          returningCustomers++;
+          returningCustomerRevenue += order.total_amount;
+        }
+        
+        // Track order counts and revenue
+        if (!customerOrderCounts[customerKey]) {
+          customerOrderCounts[customerKey] = 0;
+          customerRevenue[customerKey] = 0;
+        }
+        customerOrderCounts[customerKey]++;
+        customerRevenue[customerKey] += order.total_amount;
+      }
+    });
+
+    const totalCustomers = newCustomers + returningCustomers;
+    const totalRevenue = newCustomerRevenue + returningCustomerRevenue;
+    const newCustomerPercentage = totalCustomers > 0 ? (newCustomers / totalCustomers) * 100 : 0;
+    const returningCustomerPercentage = totalCustomers > 0 ? (returningCustomers / totalCustomers) * 100 : 0;
+    
+    // Calculate average order value
+    const newCustomerAvgOrder = newCustomers > 0 ? newCustomerRevenue / newCustomers : 0;
+    const returningCustomerAvgOrder = returningCustomers > 0 ? returningCustomerRevenue / returningCustomers : 0;
+    
+    // Calculate repeat rate
+    const repeatRate = totalCustomers > 0 ? (returningCustomers / totalCustomers) * 100 : 0;
+
+    return {
+      newCustomers,
+      returningCustomers,
+      totalCustomers,
+      newCustomerRevenue,
+      returningCustomerRevenue,
+      totalRevenue,
+      newCustomerPercentage,
+      returningCustomerPercentage,
+      newCustomerAvgOrder,
+      returningCustomerAvgOrder,
+      repeatRate
+    };
+  }, [filteredOrders]);
+
+  // Calculate slow-moving items analytics
+  const slowMovingItems = useMemo(() => {
+    const itemStats: {[key: string]: { 
+      name: string; 
+      quantity: number; 
+      revenue: number; 
+      orders: number;
+      lastOrdered?: string;
+    }} = {};
+
+    // Collect all items with their sales data
+    filteredOrders.forEach(order => {
+      if (order.status === 'completed') {
+        const items = orderItems[order.id] || [];
+        items.forEach(item => {
+          const key = item.menu_item.name;
+          if (!itemStats[key]) {
+            itemStats[key] = { 
+              name: key, 
+              quantity: 0, 
+              revenue: 0, 
+              orders: 0 
+            };
+          }
+          itemStats[key].quantity += item.quantity;
+          itemStats[key].revenue += item.total_price;
+          itemStats[key].orders += 1;
+          // Track last order date
+          if (!itemStats[key].lastOrdered || new Date(order.created_at) > new Date(itemStats[key].lastOrdered!)) {
+            itemStats[key].lastOrdered = order.created_at;
+          }
+        });
+      }
+    });
+
+    // Filter for slow-moving items: items with 0-2 orders or low revenue
+    const slowItems = Object.values(itemStats)
+      .filter(item => item.orders <= 2 || item.revenue < 100) // Items with ≤2 orders or <₹100 revenue
+      .sort((a, b) => a.orders - b.orders || a.revenue - b.revenue);
+
+    return slowItems;
+  }, [filteredOrders, orderItems]);
+
+  // Calculate cancellation rate analytics
+  const cancellationAnalytics = useMemo(() => {
+    const totalOrders = filteredOrders.length;
+    const cancelledOrders = filteredOrders.filter(order => order.status === 'cancelled');
+    const cancelledCount = cancelledOrders.length;
+    const cancelledRevenue = cancelledOrders.reduce((sum, order) => sum + order.total_amount, 0);
+    
+    const cancellationRate = totalOrders > 0 ? (cancelledCount / totalOrders) * 100 : 0;
+    const totalRevenue = filteredOrders
+      .filter(order => order.status === 'completed')
+      .reduce((sum, order) => sum + order.total_amount, 0);
+    const revenueLostPercentage = totalRevenue > 0 ? (cancelledRevenue / (totalRevenue + cancelledRevenue)) * 100 : 0;
+
+    return {
+      totalOrders,
+      cancelledCount,
+      cancellationRate,
+      cancelledRevenue,
+      revenueLostPercentage,
+      completedOrders: filteredOrders.filter(order => order.status === 'completed').length
+    };
+  }, [filteredOrders]);
+
+  // Calculate average items per order
+  const itemsPerOrderAnalytics = useMemo(() => {
+    let totalItems = 0;
+    let totalOrders = 0;
+    const itemsByOrderType: {[key: string]: { items: number; orders: number }} = {};
+
+    filteredOrders.forEach(order => {
+      if (order.status === 'completed') {
+        const items = orderItems[order.id] || [];
+        const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+        totalItems += itemCount;
+        totalOrders += 1;
+
+        const orderType = order.order_type || 'unknown';
+        if (!itemsByOrderType[orderType]) {
+          itemsByOrderType[orderType] = { items: 0, orders: 0 };
+        }
+        itemsByOrderType[orderType].items += itemCount;
+        itemsByOrderType[orderType].orders += 1;
+      }
+    });
+
+    const avgItemsPerOrder = totalOrders > 0 ? totalItems / totalOrders : 0;
+    
+    // Calculate average per order type
+    const avgByOrderType = Object.keys(itemsByOrderType).map(type => ({
+      type: type === 'dine_in' ? 'Dine-In' 
+        : type === 'delivery' ? 'Delivery'
+        : type === 'takeaway' ? 'Takeaway'
+        : type === 'table_order' ? 'Table Order'
+        : type.charAt(0).toUpperCase() + type.slice(1),
+      avgItems: itemsByOrderType[type].orders > 0 
+        ? itemsByOrderType[type].items / itemsByOrderType[type].orders 
+        : 0,
+      orders: itemsByOrderType[type].orders
+    }));
+
+    return {
+      avgItemsPerOrder,
+      totalItems,
+      totalOrders,
+      avgByOrderType
+    };
+  }, [filteredOrders, orderItems]);
+
+  // Calculate best/worst performing days
+  const dayPerformanceAnalytics = useMemo(() => {
+    const dayStats: {[key: number]: { 
+      dayName: string; 
+      orders: number; 
+      revenue: number;
+      avgOrderValue: number;
+    }} = {
+      0: { dayName: 'Sunday', orders: 0, revenue: 0, avgOrderValue: 0 },
+      1: { dayName: 'Monday', orders: 0, revenue: 0, avgOrderValue: 0 },
+      2: { dayName: 'Tuesday', orders: 0, revenue: 0, avgOrderValue: 0 },
+      3: { dayName: 'Wednesday', orders: 0, revenue: 0, avgOrderValue: 0 },
+      4: { dayName: 'Thursday', orders: 0, revenue: 0, avgOrderValue: 0 },
+      5: { dayName: 'Friday', orders: 0, revenue: 0, avgOrderValue: 0 },
+      6: { dayName: 'Saturday', orders: 0, revenue: 0, avgOrderValue: 0 }
+    };
+
+    filteredOrders.forEach(order => {
+      if (order.status === 'completed') {
+        const day = new Date(order.created_at).getDay();
+        dayStats[day].orders += 1;
+        dayStats[day].revenue += order.total_amount;
+      }
+    });
+
+    // Calculate average order value per day
+    Object.keys(dayStats).forEach(dayKey => {
+      const day = parseInt(dayKey);
+      dayStats[day].avgOrderValue = dayStats[day].orders > 0 
+        ? dayStats[day].revenue / dayStats[day].orders 
+        : 0;
+    });
+
+    const dayArray = Object.values(dayStats);
+    const bestDay = dayArray.reduce((best, current) => 
+      current.revenue > best.revenue ? current : best
+    );
+    const worstDay = dayArray
+      .filter(day => day.orders > 0)
+      .reduce((worst, current) => 
+        current.revenue < worst.revenue ? current : worst,
+        dayArray[0]
+      );
+
+    return {
+      dayStats: dayArray,
+      bestDay,
+      worstDay,
+      totalRevenue: dayArray.reduce((sum, day) => sum + day.revenue, 0),
+      totalOrders: dayArray.reduce((sum, day) => sum + day.orders, 0)
+    };
+  }, [filteredOrders]);
 
   // Calculate customer analytics
   const customerAnalytics = useMemo(() => {
@@ -543,7 +1073,7 @@ const POSAnalytics: React.FC<POSAnalyticsProps> = ({
       </div>
 
       {/* Enhanced Key Metrics - Single Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -592,6 +1122,23 @@ const POSAnalytics: React.FC<POSAnalyticsProps> = ({
                 <p className="text-xs text-muted-foreground">Orders completed successfully</p>
               </div>
               <Award className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Cancellation Rate</p>
+                <p className={`text-2xl font-bold ${cancellationAnalytics.cancellationRate > 10 ? 'text-red-600' : cancellationAnalytics.cancellationRate > 5 ? 'text-orange-600' : 'text-green-600'}`}>
+                  {cancellationAnalytics.cancellationRate.toFixed(1)}%
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {cancellationAnalytics.cancelledCount} of {cancellationAnalytics.totalOrders} orders
+                </p>
+              </div>
+              <TrendingDown className={`h-8 w-8 ${cancellationAnalytics.cancellationRate > 10 ? 'text-red-600' : cancellationAnalytics.cancellationRate > 5 ? 'text-orange-600' : 'text-muted-foreground'}`} />
             </div>
           </CardContent>
         </Card>
@@ -673,6 +1220,73 @@ const POSAnalytics: React.FC<POSAnalyticsProps> = ({
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
+          {/* Revenue Trends Comparison */}
+          {revenueTrends && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Revenue Trends
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Current Period</p>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Revenue:</span>
+                        <span className="text-lg font-bold">{formatCurrency(revenueTrends.currentRevenue || 0)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Orders:</span>
+                        <span className="text-lg font-bold">{revenueTrends.currentOrders || 0}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">{formatDateRangeDisplay()}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Previous Period</p>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Revenue:</span>
+                        <span className="text-lg font-bold">{formatCurrency(revenueTrends.previousRevenue || 0)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Orders:</span>
+                        <span className="text-lg font-bold">{revenueTrends.previousOrders || 0}</span>
+                      </div>
+                      <div className="mt-2 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Revenue Growth:</span>
+                          <Badge 
+                            variant={(revenueTrends.revenueGrowth || 0) >= 0 ? "default" : "destructive"}
+                            className={(revenueTrends.revenueGrowth || 0) >= 0 ? "bg-green-500" : ""}
+                          >
+                            {revenueTrends.revenueGrowth !== undefined && revenueTrends.revenueGrowth !== null && !isNaN(revenueTrends.revenueGrowth)
+                              ? `${(revenueTrends.revenueGrowth || 0) >= 0 ? '+' : ''}${(revenueTrends.revenueGrowth || 0).toFixed(1)}%`
+                              : 'N/A'}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Order Growth:</span>
+                          <Badge 
+                            variant={(revenueTrends.orderGrowth || 0) >= 0 ? "default" : "destructive"}
+                            className={(revenueTrends.orderGrowth || 0) >= 0 ? "bg-green-500" : ""}
+                          >
+                            {revenueTrends.orderGrowth !== undefined && revenueTrends.orderGrowth !== null && !isNaN(revenueTrends.orderGrowth)
+                              ? `${(revenueTrends.orderGrowth || 0) >= 0 ? '+' : ''}${(revenueTrends.orderGrowth || 0).toFixed(1)}%`
+                              : 'N/A'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Order Status Distribution */}
             <Card>
@@ -750,23 +1364,53 @@ const POSAnalytics: React.FC<POSAnalyticsProps> = ({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="w-5 h-5" />
-                  Hourly Order Distribution
+                  Hourly Performance
                 </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Orders and revenue by hour
+                </p>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {hourlyData.hourly.map((count, hour) => (
-                    <div key={hour} className="flex items-center gap-2">
-                      <span className="text-xs w-8">{hour}:00</span>
+                <div className="space-y-3">
+                  {hourlyData.hourly.map((count, hour) => {
+                    const maxCount = Math.max(...hourlyData.hourly.filter(c => c > 0), 1);
+                    const maxRevenue = Math.max(...hourlyData.hourlyRevenue.filter(r => r > 0), 1);
+                    const revenue = hourlyData.hourlyRevenue[hour];
+                    
+                    return (
+                      <div key={hour} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                          <span className="font-medium">{hour}:00</span>
+                          <div className="flex gap-3">
+                            <span>{count} orders</span>
+                            {revenue > 0 && <span>{formatCurrency(revenue)}</span>}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs w-12 text-muted-foreground">Orders:</span>
                       <div className="flex-1 bg-gray-200 rounded-full h-2">
                         <div 
-                          className="bg-blue-500 h-2 rounded-full" 
-                          style={{ width: `${count > 0 ? Math.max((count / Math.max(...hourlyData.hourly)) * 100, 5) : 0}%` }}
+                                className="bg-blue-500 h-2 rounded-full transition-all" 
+                                style={{ width: `${count > 0 ? Math.max((count / maxCount) * 100, 5) : 0}%` }}
                         ></div>
                       </div>
-                      <span className="text-xs w-8 text-right">{count}</span>
                     </div>
-                  ))}
+                          {revenue > 0 && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs w-12 text-muted-foreground">Revenue:</span>
+                              <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-green-500 h-2 rounded-full transition-all" 
+                                  style={{ width: `${Math.max((revenue / maxRevenue) * 100, 5)}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -797,9 +1441,450 @@ const POSAnalytics: React.FC<POSAnalyticsProps> = ({
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
 
-        {/* Top Items Tab */}
+          {/* Operational Time Metrics */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Clock3 className="w-5 h-5" />
+                  Avg Preparation Time
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center">
+                  <p className="text-2xl font-bold">
+                    {operationalMetrics.avgPreparationTime > 0 
+                      ? `${operationalMetrics.avgPreparationTime.toFixed(1)} min`
+                      : 'N/A'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {operationalMetrics.ordersWithPrepTime} orders tracked
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Truck className="w-5 h-5" />
+                  Avg Delivery Time
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center">
+                  <p className="text-2xl font-bold">
+                    {operationalMetrics.avgDeliveryTime > 0 
+                      ? `${operationalMetrics.avgDeliveryTime.toFixed(1)} min`
+                      : 'N/A'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {operationalMetrics.ordersWithDeliveryTime} orders tracked
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Activity className="w-5 h-5" />
+                  Avg Fulfillment Time
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center">
+                  <p className="text-2xl font-bold">
+                    {operationalMetrics.avgFulfillmentTime > 0 
+                      ? `${operationalMetrics.avgFulfillmentTime.toFixed(1)} min`
+                      : 'N/A'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Total order to completion
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Cancellation Analysis */}
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingDown className="w-5 h-5" />
+                Cancellation Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 bg-red-50 rounded-lg">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Cancellation Rate</p>
+                  <p className={`text-2xl font-bold ${cancellationAnalytics.cancellationRate > 10 ? 'text-red-700' : cancellationAnalytics.cancellationRate > 5 ? 'text-orange-700' : 'text-green-700'}`}>
+                    {cancellationAnalytics.cancellationRate.toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {cancellationAnalytics.cancelledCount} cancelled orders
+                  </p>
+                </div>
+                <div className="p-4 bg-orange-50 rounded-lg">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Revenue Lost</p>
+                  <p className="text-2xl font-bold text-orange-700">
+                    {formatCurrency(cancellationAnalytics.cancelledRevenue)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {cancellationAnalytics.revenueLostPercentage.toFixed(1)}% of potential revenue
+                  </p>
+                </div>
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Completion Rate</p>
+                  <p className="text-2xl font-bold text-green-700">
+                    {(100 - cancellationAnalytics.cancellationRate).toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {cancellationAnalytics.completedOrders} completed orders
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Average Items per Order */}
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5" />
+                Average Items per Order
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Overall Average</p>
+                  <p className="text-4xl font-bold text-blue-700">
+                    {itemsPerOrderAnalytics.avgItemsPerOrder.toFixed(1)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {itemsPerOrderAnalytics.totalItems} items across {itemsPerOrderAnalytics.totalOrders} orders
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">By Order Type</p>
+                  {itemsPerOrderAnalytics.avgByOrderType.length > 0 ? (
+                    itemsPerOrderAnalytics.avgByOrderType.map((type) => (
+                      <div key={type.type} className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                        <span className="text-sm font-medium">{type.type}</span>
+                        <div className="text-right">
+                          <span className="text-sm font-bold">{type.avgItems.toFixed(1)} items</span>
+                          <span className="text-xs text-muted-foreground ml-2">({type.orders} orders)</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No data available</p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Best/Worst Performing Days */}
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Day Performance Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {/* Best Day */}
+                <div className="p-4 bg-green-50 rounded-lg border-2 border-green-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-green-900">Best Performing Day</h4>
+                    <Badge className="bg-green-600">Top</Badge>
+                  </div>
+                  <p className="text-2xl font-bold text-green-700 mb-1">{dayPerformanceAnalytics.bestDay.dayName}</p>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Revenue:</span>
+                      <span className="font-medium">{formatCurrency(dayPerformanceAnalytics.bestDay.revenue)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Orders:</span>
+                      <span className="font-medium">{dayPerformanceAnalytics.bestDay.orders}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Avg Order:</span>
+                      <span className="font-medium">{formatCurrency(dayPerformanceAnalytics.bestDay.avgOrderValue)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Worst Day */}
+                {dayPerformanceAnalytics.worstDay.orders > 0 && (
+                  <div className="p-4 bg-orange-50 rounded-lg border-2 border-orange-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-orange-900">Lowest Performing Day</h4>
+                      <Badge variant="outline" className="border-orange-300 text-orange-700">Needs Attention</Badge>
+                    </div>
+                    <p className="text-2xl font-bold text-orange-700 mb-1">{dayPerformanceAnalytics.worstDay.dayName}</p>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Revenue:</span>
+                        <span className="font-medium">{formatCurrency(dayPerformanceAnalytics.worstDay.revenue)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Orders:</span>
+                        <span className="font-medium">{dayPerformanceAnalytics.worstDay.orders}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Avg Order:</span>
+                        <span className="font-medium">{formatCurrency(dayPerformanceAnalytics.worstDay.avgOrderValue)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* All Days Breakdown */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Weekly Breakdown</p>
+                {dayPerformanceAnalytics.dayStats.map((day) => (
+                  <div key={day.dayName} className="flex items-center gap-3 p-2 bg-muted/30 rounded">
+                    <span className="text-sm font-medium w-20">{day.dayName}</span>
+                    <div className="flex-1 flex items-center gap-2">
+                      <div className="flex-1 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full ${day.revenue === dayPerformanceAnalytics.bestDay.revenue ? 'bg-green-500' : day.revenue === dayPerformanceAnalytics.worstDay.revenue && day.orders > 0 ? 'bg-orange-500' : 'bg-blue-500'}`}
+                          style={{ 
+                            width: `${dayPerformanceAnalytics.totalRevenue > 0 ? (day.revenue / dayPerformanceAnalytics.totalRevenue) * 100 : 0}%` 
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                    <div className="text-right text-sm">
+                      <span className="font-medium">{formatCurrency(day.revenue)}</span>
+                      <span className="text-muted-foreground ml-2">({day.orders} orders)</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Order Type Performance */}
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="w-5 h-5" />
+                Order Type Performance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {Object.entries(orderTypeMetrics).map(([type, stats]) => (
+                  <div key={type} className="p-4 bg-muted/30 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium capitalize">{type.replace('_', ' ')}</h4>
+                      <Badge variant="secondary">{stats.count}</Badge>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Revenue:</span>
+                        <span className="font-medium">{formatCurrency(stats.revenue)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Avg Order:</span>
+                        <span className="font-medium">{formatCurrency(stats.avgValue)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Orders:</span>
+                        <span className="font-medium">{stats.count}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {Object.keys(orderTypeMetrics).length === 0 && (
+                <p className="text-center text-muted-foreground py-4">No order type data available</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Category Performance */}
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="w-5 h-5" />
+                Category Performance
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Revenue and performance breakdown by menu category
+              </p>
+            </CardHeader>
+            <CardContent>
+              {categoryPerformance.length > 0 ? (
+                <div className="space-y-4">
+                  {categoryPerformance.map((category, index) => {
+                    const totalRevenue = categoryPerformance.reduce((sum, c) => sum + c.revenue, 0);
+                    const percentage = totalRevenue > 0 ? (category.revenue / totalRevenue) * 100 : 0;
+                    
+                    return (
+                      <div key={category.category} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="w-6 h-6 p-0 flex items-center justify-center text-xs">
+                              {index + 1}
+                            </Badge>
+                            <h4 className="font-medium">{category.category}</h4>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold">{formatCurrency(category.revenue)}</p>
+                            <p className="text-xs text-muted-foreground">{percentage.toFixed(1)}%</p>
+                          </div>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-500 h-2 rounded-full transition-all" 
+                            style={{ width: `${percentage}%` }}
+                          ></div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Orders:</span>
+                            <span className="ml-1 font-medium">{category.orders}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Items Sold:</span>
+                            <span className="ml-1 font-medium">{category.itemsSold}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Avg Order:</span>
+                            <span className="ml-1 font-medium">{formatCurrency(category.avgOrderValue)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-4">No category data available</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Location/Block Analytics */}
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="w-5 h-5" />
+                Location/Block Performance
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Revenue breakdown by delivery blocks and order types
+              </p>
+            </CardHeader>
+            <CardContent>
+              {locationAnalytics.length > 0 ? (
+                <div className="space-y-4">
+                  {locationAnalytics.map((location, index) => {
+                    const totalRevenue = locationAnalytics.reduce((sum, l) => sum + l.revenue, 0);
+                    const percentage = totalRevenue > 0 ? (location.revenue / totalRevenue) * 100 : 0;
+                    
+                    return (
+                      <div key={location.location} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="w-6 h-6 p-0 flex items-center justify-center text-xs">
+                              {index + 1}
+                            </Badge>
+                            <h4 className="font-medium">{location.location}</h4>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold">{formatCurrency(location.revenue)}</p>
+                            <p className="text-xs text-muted-foreground">{percentage.toFixed(1)}%</p>
+                          </div>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-purple-500 h-2 rounded-full transition-all" 
+                            style={{ width: `${percentage}%` }}
+                          ></div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Orders:</span>
+                            <span className="ml-1 font-medium">{location.orders}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Avg Order:</span>
+                            <span className="ml-1 font-medium">{formatCurrency(location.avgOrderValue)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-4">No location data available</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Payment Method Breakdown */}
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5" />
+                Payment Method Breakdown
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Revenue and orders by payment type
+              </p>
+            </CardHeader>
+            <CardContent>
+              {paymentMethodAnalytics.length > 0 ? (
+                <div className="space-y-4">
+                  {paymentMethodAnalytics.map((payment, index) => (
+                    <div key={payment.method} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="w-6 h-6 p-0 flex items-center justify-center text-xs">
+                            {index + 1}
+                          </Badge>
+                          <h4 className="font-medium">{payment.method}</h4>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">{formatCurrency(payment.revenue)}</p>
+                          <p className="text-xs text-muted-foreground">{payment.percentage.toFixed(1)}%</p>
+                        </div>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-indigo-500 h-2 rounded-full transition-all" 
+                          style={{ width: `${payment.percentage}%` }}
+                        ></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Orders:</span>
+                          <span className="ml-1 font-medium">{payment.orders}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Avg Order:</span>
+                          <span className="ml-1 font-medium">{formatCurrency(payment.avgOrderValue)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-4">No payment method data available</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
         <TabsContent value="items" className="space-y-4">
           <Card>
             <CardHeader>
@@ -834,10 +1919,144 @@ const POSAnalytics: React.FC<POSAnalyticsProps> = ({
               </div>
             </CardContent>
           </Card>
+
+          {/* Slow-Moving Items */}
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5" />
+                Slow-Moving Items
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Items with low sales - consider promoting or removing
+              </p>
+            </CardHeader>
+            <CardContent>
+              {slowMovingItems.length > 0 ? (
+                <div className="space-y-3">
+                  {slowMovingItems.map((item, index) => (
+                    <div key={item.name} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="text-orange-700 border-orange-300">
+                          {item.orders} {item.orders === 1 ? 'order' : 'orders'}
+                        </Badge>
+                        <div>
+                          <p className="font-medium">{item.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.quantity} sold • {formatCurrency(item.revenue)} revenue
+                            {item.lastOrdered && (
+                              <span> • Last: {new Date(item.lastOrdered).toLocaleDateString()}</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-orange-700">{formatCurrency(item.revenue)}</p>
+                        <p className="text-xs text-muted-foreground">Low sales</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-2">🎉 Great news!</p>
+                  <p className="text-sm text-muted-foreground">
+                    No slow-moving items found. All items are performing well in the selected period.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Customers Tab */}
         <TabsContent value="customers" className="space-y-4">
+          {/* New vs Returning Customers */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Customer Retention
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                New vs returning customer breakdown
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* New Customers */}
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-blue-900">New Customers</h4>
+                    <Badge variant="secondary">{customerRetentionAnalytics.newCustomers}</Badge>
+                  </div>
+                  <p className="text-2xl font-bold text-blue-700">
+                    {formatCurrency(customerRetentionAnalytics.newCustomerRevenue)}
+                  </p>
+                  <div className="mt-2 space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Percentage:</span>
+                      <span className="font-medium">{customerRetentionAnalytics.newCustomerPercentage.toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Avg Order:</span>
+                      <span className="font-medium">{formatCurrency(customerRetentionAnalytics.newCustomerAvgOrder)}</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 w-full bg-blue-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full" 
+                      style={{ width: `${customerRetentionAnalytics.newCustomerPercentage}%` }}
+                    ></div>
+                  </div>
+                </div>
+
+                {/* Returning Customers */}
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-green-900">Returning Customers</h4>
+                    <Badge variant="secondary">{customerRetentionAnalytics.returningCustomers}</Badge>
+                  </div>
+                  <p className="text-2xl font-bold text-green-700">
+                    {formatCurrency(customerRetentionAnalytics.returningCustomerRevenue)}
+                  </p>
+                  <div className="mt-2 space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Percentage:</span>
+                      <span className="font-medium">{customerRetentionAnalytics.returningCustomerPercentage.toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Avg Order:</span>
+                      <span className="font-medium">{formatCurrency(customerRetentionAnalytics.returningCustomerAvgOrder)}</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 w-full bg-green-200 rounded-full h-2">
+                    <div 
+                      className="bg-green-600 h-2 rounded-full" 
+                      style={{ width: `${customerRetentionAnalytics.returningCustomerPercentage}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Summary Stats */}
+              <div className="mt-6 pt-6 border-t grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Customers</p>
+                  <p className="text-xl font-bold">{customerRetentionAnalytics.totalCustomers}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Repeat Rate</p>
+                  <p className="text-xl font-bold text-green-600">{customerRetentionAnalytics.repeatRate.toFixed(1)}%</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Revenue</p>
+                  <p className="text-xl font-bold">{formatCurrency(customerRetentionAnalytics.totalRevenue)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

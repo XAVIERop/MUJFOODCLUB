@@ -29,7 +29,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 // import { useLocalPrint } from '@/hooks/useLocalPrint'; // Disabled - using cafe-specific PrintNode service
 import { usePrintNode } from '@/hooks/usePrintNode';
-import { isDineInTakeawayAllowed, isDeliveryAllowed, getDineInTakeawayMessage, getDeliveryMessage } from '@/utils/timeRestrictions';
+// Time restrictions removed for manual orders - staff can create orders at any time
 import { getCafeTableOptions } from '@/utils/tableMapping';
 
 interface MenuItem {
@@ -81,42 +81,59 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
     name: '',
     phone: '',
     block: '',
+    deliveryAddress: '',
     specialInstructions: '',
     orderType: 'delivery' // Default to delivery
   });
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponCode, setCouponCode] = useState('');
+  const [manualDiscount, setManualDiscount] = useState<number>(0);
+  const [manualDiscountType, setManualDiscountType] = useState<'fixed' | 'percentage'>('fixed');
   const [isLoading, setIsLoading] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [cafeName, setCafeName] = useState<string>('');
+  const [cafeLocationScope, setCafeLocationScope] = useState<string | null>(null); // 'off_campus' or 'ghs'
   const [searchTerm, setSearchTerm] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Load cafe name
+  // Detect mobile screen size
   useEffect(() => {
-    const fetchCafeName = async () => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Load cafe name and location scope
+  useEffect(() => {
+    const fetchCafeInfo = async () => {
       if (!cafeId) return;
       
       try {
         const { data: cafe, error } = await supabase
           .from('cafes')
-          .select('name')
+          .select('name, location_scope')
           .eq('id', cafeId)
           .single();
         
         if (error) {
-          console.error('Error fetching cafe name:', error);
+          console.error('Error fetching cafe info:', error);
           return;
         }
         
         if (cafe) {
           setCafeName(cafe.name);
+          setCafeLocationScope(cafe.location_scope);
         }
       } catch (error) {
-        console.error('Error fetching cafe name:', error);
+        console.error('Error fetching cafe info:', error);
       }
     };
 
-    fetchCafeName();
+    fetchCafeInfo();
   }, [cafeId]);
 
   // Load menu items
@@ -145,11 +162,11 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
         setMenuItems(data || []);
         
         // Extract unique categories
-        const uniqueCategories = [...new Set(data?.map(item => item.category) || [])];
+        const uniqueCategories = [...new Set((data?.map(item => item.category) || []) as string[])];
         setCategories(uniqueCategories);
         
         if (uniqueCategories.length > 0) {
-          setSelectedCategory(uniqueCategories[0]);
+          setSelectedCategory(uniqueCategories[0] as string);
         }
       } catch (error) {
         console.error('Error:', error);
@@ -333,12 +350,19 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
 
   // Calculate totals
   const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
-  const discountAmount = appliedCoupon ? 
+  const couponDiscount = appliedCoupon ? 
     (appliedCoupon.discount_type === 'percentage' 
       ? Math.min(subtotal * (appliedCoupon.discount_value / 100), appliedCoupon.max_discount || subtotal)
       : appliedCoupon.discount_value
     ) : 0;
-  const total = subtotal - discountAmount;
+  
+  // Manual discount can be fixed amount (₹) or percentage (%)
+  const manualDiscountAmount = manualDiscountType === 'percentage'
+    ? Math.min(subtotal * (manualDiscount / 100), subtotal) // Percentage discount, capped at subtotal
+    : Math.min(manualDiscount, subtotal); // Fixed amount discount, capped at subtotal
+  
+  const discountAmount = couponDiscount + manualDiscountAmount;
+  const total = Math.max(0, subtotal - discountAmount);
 
   // Apply coupon (simplified version for now)
   const applyCoupon = async () => {
@@ -431,7 +455,12 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
           order_type: customerInfo.orderType,
           delivery_block: customerInfo.orderType === 'dine_in' ? 'DINE_IN' : 
                           customerInfo.orderType === 'takeaway' ? 'TAKEAWAY' : 
-                          customerInfo.block || 'Counter',
+                          customerInfo.orderType === 'delivery' && cafeLocationScope === 'off_campus' 
+                            ? 'OFF_CAMPUS'
+                            : customerInfo.block || null,
+          delivery_address: customerInfo.orderType === 'delivery' && cafeLocationScope === 'off_campus' 
+                            ? customerInfo.deliveryAddress || null 
+                            : null,
           table_number: customerInfo.orderType === 'dine_in' ? customerInfo.block : null,
           payment_method: 'cod',
           points_earned: Math.floor(total / 10),
@@ -500,7 +529,7 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
 
       // Reset form
       setCart([]);
-      setCustomerInfo({ name: '', phone: '', block: '', specialInstructions: '' });
+      setCustomerInfo({ name: '', phone: '', block: '', deliveryAddress: '', specialInstructions: '', orderType: 'delivery' });
       setAppliedCoupon(null);
       setCouponCode('');
 
@@ -525,7 +554,7 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
         cafe_name: profile?.cafe_name || 'Cafe',
         customer_name: order.customer_name || 'Walk-in Customer',
         customer_phone: order.phone_number || 'N/A',
-        delivery_block: order.delivery_block || 'Counter',
+        delivery_block: order.delivery_block || 'N/A',
         items: cart.map(item => ({
           id: item.id,
           name: item.name,
@@ -597,17 +626,17 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
   return (
     <div className="h-full flex flex-col bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b p-4">
+      <div className="bg-white border-b p-3 lg:p-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Manual Order Entry</h2>
-            <p className="text-sm text-gray-600">Create orders for walk-in customers</p>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg lg:text-2xl font-bold text-gray-900 truncate">Manual Order Entry</h2>
+            <p className="text-xs lg:text-sm text-gray-600">Create orders for walk-in customers</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-sm">
+          <div className="flex items-center gap-1.5 lg:gap-2 flex-shrink-0 ml-2">
+            <Badge variant="secondary" className="text-xs lg:text-sm px-2 py-0.5">
               {cart.length} items
             </Badge>
-            <Badge variant="outline" className="text-sm">
+            <Badge variant="outline" className="text-xs lg:text-sm px-2 py-0.5">
               {formatCurrency(total)}
             </Badge>
           </div>
@@ -615,10 +644,27 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel - Categories */}
-        <div className="w-64 bg-white border-r overflow-y-auto">
-          <div className="p-4">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        {/* Mobile: Horizontal Scrollable Categories | Desktop: Vertical Sidebar */}
+        <div className="lg:w-64 bg-white border-b lg:border-b-0 lg:border-r overflow-y-auto">
+          {/* Mobile: Horizontal Scroll */}
+          <div className="lg:hidden p-3">
+            <h3 className="font-semibold text-gray-900 mb-2 text-sm">Categories</h3>
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+              {categories.map((category) => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? "default" : "outline"}
+                  className="flex-shrink-0 whitespace-nowrap text-xs px-3 py-1.5 h-auto"
+                  onClick={() => setSelectedCategory(category)}
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+          </div>
+          {/* Desktop: Vertical List */}
+          <div className="hidden lg:block p-4">
             <h3 className="font-semibold text-gray-900 mb-3">Categories</h3>
             <div className="space-y-1">
               {categories.map((category) => (
@@ -637,9 +683,9 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
 
         {/* Center Panel - Menu Items */}
         <div className="flex-1 bg-white overflow-y-auto">
-          <div className="p-4">
+          <div className="p-3 lg:p-4">
             {/* Search Bar */}
-            <div className="mb-4">
+            <div className="mb-3 lg:mb-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
@@ -647,7 +693,7 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
                   placeholder="Search menu items..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-10 py-2 w-full"
+                  className="pl-10 pr-10 py-2.5 lg:py-2 w-full text-sm lg:text-base h-10 lg:h-auto"
                 />
                 {searchTerm && (
                   <button
@@ -660,14 +706,14 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
               </div>
             </div>
             
-            <h3 className="font-semibold text-gray-900 mb-4">
+            <h3 className="font-semibold text-gray-900 mb-3 lg:mb-4 text-sm lg:text-base">
               {searchTerm ? `Search results for "${searchTerm}"` : selectedCategory} ({filteredMenuItems.length} items)
             </h3>
             
             {filteredMenuItems.length === 0 ? (
-              <div className="text-center py-8">
-                <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg font-medium">
+              <div className="text-center py-6 lg:py-8">
+                <Search className="w-10 h-10 lg:w-12 lg:h-12 text-gray-300 mx-auto mb-3 lg:mb-4" />
+                <p className="text-gray-500 text-base lg:text-lg font-medium">
                   {searchTerm ? 'No items found matching your search' : 'No items available in this category'}
                 </p>
                 {searchTerm && (
@@ -680,38 +726,46 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2 lg:gap-4">
                 {filteredMenuItems.map((item) => (
                 <Card key={item.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="space-y-2">
-                      <h4 className="font-medium text-gray-900">{item.name}</h4>
-                      <p className="text-sm text-gray-600 line-clamp-2">{item.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-lg text-green-600">
+                  <CardContent className="p-2 lg:p-4 flex flex-col h-full">
+                    {/* Mobile: Compact Square Cards | Desktop: Full Cards with Description */}
+                    <div className="flex flex-col flex-1 space-y-1 lg:space-y-2">
+                      {/* Item Name - Mobile: Smaller, Desktop: Normal */}
+                      <h4 className="font-medium text-gray-900 text-[10px] sm:text-xs lg:text-base line-clamp-2 lg:line-clamp-none leading-tight">{item.name}</h4>
+                      
+                      {/* Description - Completely Removed on Mobile, Shown on Desktop Only */}
+                      {!isMobile && item.description && (
+                        <p className="text-sm text-gray-600 line-clamp-2">{item.description}</p>
+                      )}
+                      
+                      {/* Price and Action Button */}
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-1 lg:gap-0 mt-auto">
+                        <span className="font-bold text-xs sm:text-sm lg:text-lg text-green-600">
                           {formatCurrency(item.price)}
                         </span>
                         {getCartQuantity(item.id) > 0 ? (
                           // Show quantity selector when item is in cart
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center justify-center lg:justify-start space-x-1 lg:space-x-2">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleMenuQuantityChange(item, getCartQuantity(item.id) - 1)}
-                              className="h-8 w-8 p-0"
+                              className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 p-0"
                             >
-                              <Minus className="h-4 w-4" />
+                              <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3 lg:h-4 lg:w-4" />
                             </Button>
-                            <span className="text-sm font-medium min-w-[20px] text-center">
+                            <span className="text-[10px] sm:text-xs lg:text-sm font-medium min-w-[14px] sm:min-w-[18px] lg:min-w-[20px] text-center">
                               {getCartQuantity(item.id)}
                             </span>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleMenuQuantityChange(item, getCartQuantity(item.id) + 1)}
-                              className="h-8 w-8 p-0"
+                              className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 p-0"
                             >
-                              <Plus className="h-4 w-4" />
+                              <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3 lg:h-4 lg:w-4" />
                             </Button>
                           </div>
                         ) : (
@@ -719,9 +773,10 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
                           <Button
                             size="sm"
                             onClick={() => addToCart(item)}
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-green-600 hover:bg-green-700 h-6 w-6 sm:h-7 sm:w-7 lg:h-auto lg:w-auto p-0 lg:px-3 lg:py-1"
                           >
-                            <Plus className="h-4 w-4" />
+                            <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3 lg:h-4 lg:w-4 lg:mr-1" />
+                            <span className="hidden lg:inline">Add</span>
                           </Button>
                         )}
                       </div>
@@ -735,214 +790,293 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
         </div>
 
         {/* Right Panel - Compact Order Form */}
-        <div className="w-80 bg-white border-l overflow-y-auto">
-          <div className="p-4">
+        {/* Mobile: Sticky Bottom or Collapsible | Desktop: Fixed Sidebar */}
+        <div className="lg:w-80 w-full bg-white border-t lg:border-t-0 lg:border-l overflow-y-auto 
+                        lg:max-h-none max-h-[60vh] lg:sticky lg:top-0">
+          <div className="p-3 lg:p-4">
             {/* Compact Order Form */}
-            <div className="space-y-4">
+            <div className="space-y-3 lg:space-y-4">
               {/* Order Type - Compact */}
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="bg-gray-50 p-2.5 lg:p-3 rounded-lg">
                 <div className="flex items-center gap-2 mb-3">
                   <Clock className="h-4 w-4 text-gray-600" />
                   <span className="font-medium text-sm">Order Type</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-1.5 lg:gap-2">
                   <button
-                    onClick={() => setCustomerInfo(prev => ({ ...prev, orderType: 'delivery', block: '' }))}
-                    disabled={!isDeliveryAllowed()}
-                    className={`p-2 text-xs rounded border ${
+                    onClick={() => setCustomerInfo(prev => ({ ...prev, orderType: 'delivery', block: '', deliveryAddress: '' }))}
+                    className={`p-2 lg:p-2 text-xs rounded border ${
                       customerInfo.orderType === 'delivery' 
                         ? 'bg-blue-500 text-white border-blue-500' 
                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                    } ${!isDeliveryAllowed() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    }`}
                   >
-                    <MapPin className="w-3 h-3 mx-auto mb-1" />
-                    Delivery
+                    <MapPin className="w-3 h-3 mx-auto mb-0.5 lg:mb-1" />
+                    <span className="text-[10px] lg:text-xs">Delivery</span>
                   </button>
                   <button
-                    onClick={() => setCustomerInfo(prev => ({ ...prev, orderType: 'takeaway', block: '' }))}
-                    disabled={!isDineInTakeawayAllowed()}
-                    className={`p-2 text-xs rounded border ${
+                    onClick={() => setCustomerInfo(prev => ({ ...prev, orderType: 'takeaway', block: '', deliveryAddress: '' }))}
+                    className={`p-2 lg:p-2 text-xs rounded border ${
                       customerInfo.orderType === 'takeaway' 
                         ? 'bg-blue-500 text-white border-blue-500' 
                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                    } ${!isDineInTakeawayAllowed() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    }`}
                   >
-                    <QrCode className="w-3 h-3 mx-auto mb-1" />
-                    Takeaway
+                    <QrCode className="w-3 h-3 mx-auto mb-0.5 lg:mb-1" />
+                    <span className="text-[10px] lg:text-xs">Takeaway</span>
                   </button>
                   <button
-                    onClick={() => setCustomerInfo(prev => ({ ...prev, orderType: 'dine_in', block: '' }))}
-                    disabled={!isDineInTakeawayAllowed()}
-                    className={`p-2 text-xs rounded border ${
+                    onClick={() => setCustomerInfo(prev => ({ ...prev, orderType: 'dine_in', block: '', deliveryAddress: '' }))}
+                    className={`p-2 lg:p-2 text-xs rounded border ${
                       customerInfo.orderType === 'dine_in' 
                         ? 'bg-blue-500 text-white border-blue-500' 
                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                    } ${!isDineInTakeawayAllowed() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    }`}
                   >
-                    <CreditCard className="w-3 h-3 mx-auto mb-1" />
-                    Dine In
+                    <CreditCard className="w-3 h-3 mx-auto mb-0.5 lg:mb-1" />
+                    <span className="text-[10px] lg:text-xs">Dine In</span>
                   </button>
                 </div>
-                {(!isDineInTakeawayAllowed() || !isDeliveryAllowed()) && (
-                  <div className="mt-2 text-xs text-orange-600">
-                    {!isDineInTakeawayAllowed() && getDineInTakeawayMessage()}
-                    {!isDeliveryAllowed() && getDeliveryMessage()}
-                  </div>
-                )}
               </div>
 
-              {/* Location/Table - Compact */}
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="h-4 w-4 text-gray-600" />
-                  <span className="font-medium text-sm">
-                    {customerInfo.orderType === 'delivery' ? 'Block' : 
-                     customerInfo.orderType === 'dine_in' ? 'Table' : 
-                     'Location'}
-                  </span>
+              {/* Location/Table/Delivery Address - Compact - Hidden for takeaway orders */}
+              {customerInfo.orderType !== 'takeaway' && (
+                <div className="bg-gray-50 p-2.5 lg:p-3 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="h-3 w-3 lg:h-4 lg:w-4 text-gray-600" />
+                    <span className="font-medium text-xs lg:text-sm">
+                      {customerInfo.orderType === 'delivery' && cafeLocationScope === 'off_campus' ? 'Delivery Address' :
+                       customerInfo.orderType === 'delivery' ? 'Block' : 
+                       customerInfo.orderType === 'dine_in' ? 'Table' : 
+                       'Location'}
+                    </span>
+                  </div>
+                  
+                  {/* For outside cafes with delivery orders, show address input */}
+                  {customerInfo.orderType === 'delivery' && cafeLocationScope === 'off_campus' ? (
+                    <Input
+                      placeholder="Enter delivery address (Optional)"
+                      value={customerInfo.deliveryAddress}
+                      onChange={(e) => setCustomerInfo(prev => ({ ...prev, deliveryAddress: e.target.value }))}
+                      className="h-9 lg:h-8 text-xs lg:text-sm"
+                    />
+                  ) : (
+                    /* For GHS cafes or dine-in, show block/table dropdown */
+                    <Select 
+                      value={customerInfo.block} 
+                      onValueChange={(value) => setCustomerInfo(prev => ({ ...prev, block: value }))}
+                    >
+                      <SelectTrigger className="h-9 lg:h-8 text-xs lg:text-sm">
+                        <SelectValue placeholder={
+                          customerInfo.orderType === 'delivery' ? 'Select block (Optional)' :
+                          customerInfo.orderType === 'dine_in' ? 'Select table (Optional)' :
+                          'Select location (Optional)'
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getLocationOptions(customerInfo.orderType, cafeName).map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
-                <Select 
-                  value={customerInfo.block} 
-                  onValueChange={(value) => setCustomerInfo(prev => ({ ...prev, block: value }))}
-                >
-                  <SelectTrigger className="h-8 text-sm">
-                    <SelectValue placeholder={
-                      customerInfo.orderType === 'delivery' ? 'Select block (Optional)' :
-                      customerInfo.orderType === 'dine_in' ? 'Select table (Optional)' :
-                      'Select location (Optional)'
-                    } />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getLocationOptions(customerInfo.orderType, cafeName).map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              )}
 
               {/* Customer Info - Compact */}
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <div className="flex items-center gap-2 mb-3">
-                  <User className="h-4 w-4 text-gray-600" />
-                  <span className="font-medium text-sm">Customer Info</span>
+              <div className="bg-gray-50 p-2.5 lg:p-3 rounded-lg">
+                <div className="flex items-center gap-2 mb-2 lg:mb-3">
+                  <User className="h-3 w-3 lg:h-4 lg:w-4 text-gray-600" />
+                  <span className="font-medium text-xs lg:text-sm">Customer Info</span>
                 </div>
                 <div className="space-y-2">
                   <Input
                     placeholder="Customer Name (Optional)"
                     value={customerInfo.name}
                     onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
-                    className="h-8 text-sm"
+                    className="h-9 lg:h-8 text-xs lg:text-sm"
                   />
                   <Input
                     placeholder="Phone Number (Optional)"
                     value={customerInfo.phone}
                     onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
-                    className="h-8 text-sm"
+                    className="h-9 lg:h-8 text-xs lg:text-sm"
                   />
                   <Input
                     placeholder="Special Instructions (Optional)"
                     value={customerInfo.specialInstructions}
                     onChange={(e) => setCustomerInfo({...customerInfo, specialInstructions: e.target.value})}
-                    className="h-8 text-sm"
+                    className="h-9 lg:h-8 text-xs lg:text-sm"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Coupon Section */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Percent className="h-5 w-5" />
-                  Coupon Code
+            {/* Discount Section */}
+            <Card className="border-gray-200">
+              <CardHeader className="pb-2 lg:pb-3 p-3 lg:p-6">
+                <CardTitle className="text-sm lg:text-lg flex items-center gap-2">
+                  <Percent className="h-4 w-4 lg:h-5 lg:w-5" />
+                  Discount
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {appliedCoupon ? (
-                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div>
-                      <p className="font-medium text-green-800">{appliedCoupon.code}</p>
-                      <p className="text-sm text-green-600">
-                        {appliedCoupon.discount_type === 'percentage' 
-                          ? `${appliedCoupon.discount_value}% off`
-                          : `₹${appliedCoupon.discount_value} off`
-                        }
-                      </p>
-                    </div>
+              <CardContent className="space-y-3 lg:space-y-4 p-3 lg:p-6 pt-0">
+                {/* Manual Discount Input */}
+                <div className="bg-gray-50 p-2.5 lg:p-3 rounded-lg">
+                  <Label className="text-xs lg:text-sm font-medium mb-2 block">Manual Discount</Label>
+                  
+                  {/* Discount Type Toggle */}
+                  <div className="flex gap-2 mb-2">
                     <Button
+                      type="button"
+                      variant={manualDiscountType === 'fixed' ? 'default' : 'outline'}
                       size="sm"
-                      variant="ghost"
-                      onClick={removeCoupon}
+                      onClick={() => {
+                        setManualDiscountType('fixed');
+                        setManualDiscount(0);
+                      }}
+                      className="flex-1 h-8 text-xs"
                     >
-                      <X className="h-4 w-4" />
+                      ₹ Fixed
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={manualDiscountType === 'percentage' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setManualDiscountType('percentage');
+                        setManualDiscount(0);
+                      }}
+                      className="flex-1 h-8 text-xs"
+                    >
+                      % Percentage
                     </Button>
                   </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Enter coupon code"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
-                    />
-                    <Button onClick={applyCoupon} size="sm">
-                      Apply
-                    </Button>
-                  </div>
-                )}
+                  
+                  <Input
+                    type="number"
+                    placeholder={manualDiscountType === 'fixed' ? "Enter discount amount (₹)" : "Enter discount percentage (%)"}
+                    value={manualDiscount || ''}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value) || 0;
+                      if (manualDiscountType === 'percentage') {
+                        setManualDiscount(Math.max(0, Math.min(100, value))); // Cap at 100%
+                      } else {
+                        setManualDiscount(Math.max(0, value));
+                      }
+                    }}
+                    min="0"
+                    max={manualDiscountType === 'percentage' ? 100 : undefined}
+                    step={manualDiscountType === 'percentage' ? '0.1' : '1'}
+                    className="h-9 lg:h-8 text-xs lg:text-sm"
+                  />
+                  {manualDiscount > 0 && (
+                    <p className="text-xs text-gray-600 mt-1 font-medium">
+                      {manualDiscountType === 'percentage' 
+                        ? `Discount: ${manualDiscount}% = ₹${manualDiscountAmount.toFixed(2)}`
+                        : `Discount: ₹${manualDiscount.toFixed(2)}`
+                      }
+                    </p>
+                  )}
+                </div>
+
+                {/* Coupon Code */}
+                <div>
+                  <Label className="text-xs lg:text-sm font-medium mb-2 block">Coupon Code (Optional)</Label>
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between p-2.5 lg:p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div>
+                        <p className="font-medium text-green-800 text-xs lg:text-sm">{appliedCoupon.code}</p>
+                        <p className="text-xs text-green-600">
+                          {appliedCoupon.discount_type === 'percentage' 
+                            ? `${appliedCoupon.discount_value}% off`
+                            : `₹${appliedCoupon.discount_value} off`
+                          }
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={removeCoupon}
+                        className="h-8 w-8 p-0"
+                      >
+                        <X className="h-3 w-3 lg:h-4 lg:w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter coupon code"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        className="h-9 lg:h-8 text-xs lg:text-sm"
+                      />
+                      <Button onClick={applyCoupon} size="sm" className="h-9 lg:h-8 text-xs lg:text-sm">
+                        Apply
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
             {/* Order Items */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5" />
+            <Card className="border-gray-200">
+              <CardHeader className="pb-2 lg:pb-3 p-3 lg:p-6">
+                <CardTitle className="text-sm lg:text-lg flex items-center gap-2">
+                  <ShoppingCart className="h-4 w-4 lg:h-5 lg:w-5" />
                   Order Items
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-3 lg:p-6 pt-0">
                 {cart.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <ShoppingCart className="h-12 w-12 mx-auto mb-2 opacity-50" />
                     <p>No items in cart</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2 lg:space-y-3">
                     {cart.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{item.name}</p>
-                          <p className="text-xs text-gray-600">{formatCurrency(item.price)} each</p>
+                      <div key={item.id} className="flex flex-col p-2.5 lg:p-3 border rounded-lg gap-2">
+                        {/* Item Name and Price - Full Width */}
+                        <div className="flex-1 w-full">
+                          <p className="font-medium text-xs lg:text-sm break-words">{item.name}</p>
+                          <p className="text-xs text-gray-600 mt-0.5">{formatCurrency(item.price)} each</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="w-8 text-center text-sm">{item.quantity}</span>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => removeFromCart(item.id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <div className="ml-2">
-                          <p className="font-medium text-sm">{formatCurrency(item.total)}</p>
+                        {/* Quantity Controls and Actions - Bottom Row */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 lg:gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              className="h-8 w-8 lg:h-9 lg:w-9 p-0"
+                            >
+                              <Minus className="h-3 w-3 lg:h-4 lg:w-4" />
+                            </Button>
+                            <span className="w-8 lg:w-10 text-center text-xs lg:text-sm font-medium">{item.quantity}</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              className="h-8 w-8 lg:h-9 lg:w-9 p-0"
+                            >
+                              <Plus className="h-3 w-3 lg:h-4 lg:w-4" />
+                            </Button>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <p className="font-medium text-sm lg:text-base">{formatCurrency(item.total)}</p>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeFromCart(item.id)}
+                              className="text-red-600 hover:text-red-700 h-8 w-8 lg:h-9 lg:w-9 p-0"
+                            >
+                              <Trash2 className="h-3 w-3 lg:h-4 lg:w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -953,23 +1087,41 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
 
             {/* Order Summary */}
             {cart.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Order Summary</CardTitle>
+              <Card className="border-gray-200">
+                <CardHeader className="pb-2 lg:pb-3 p-3 lg:p-6">
+                  <CardTitle className="text-sm lg:text-lg">Order Summary</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex justify-between">
+                <CardContent className="space-y-2 p-3 lg:p-6 pt-0">
+                  <div className="flex justify-between text-sm lg:text-base">
                     <span>Subtotal:</span>
                     <span>{formatCurrency(subtotal)}</span>
                   </div>
-                  {appliedCoupon && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Discount:</span>
-                      <span>-{formatCurrency(discountAmount)}</span>
+                  {discountAmount > 0 && (
+                    <div className="space-y-1">
+                      {couponDiscount > 0 && (
+                        <div className="flex justify-between text-green-600 text-xs lg:text-sm">
+                          <span>Coupon Discount:</span>
+                          <span>-{formatCurrency(couponDiscount)}</span>
+                        </div>
+                      )}
+                      {manualDiscountAmount > 0 && (
+                        <div className="flex justify-between text-green-600 text-xs lg:text-sm">
+                          <span>
+                            Manual Discount {manualDiscountType === 'percentage' ? `(${manualDiscount}%)` : ''}:
+                          </span>
+                          <span>-{formatCurrency(manualDiscountAmount)}</span>
+                        </div>
+                      )}
+                      {(couponDiscount > 0 || manualDiscountAmount > 0) && (
+                        <div className="flex justify-between text-green-600 text-sm lg:text-base font-medium">
+                          <span>Total Discount:</span>
+                          <span>-{formatCurrency(discountAmount)}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                   <div className="border-t pt-2">
-                    <div className="flex justify-between font-bold text-lg">
+                    <div className="flex justify-between font-bold text-base lg:text-lg">
                       <span>Total:</span>
                       <span>{formatCurrency(total)}</span>
                     </div>
@@ -980,11 +1132,11 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
 
             {/* Action Buttons */}
             {cart.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-2 pt-2 lg:pt-0">
                 <Button
                   onClick={createOrder}
                   disabled={isLoading}
-                  className="w-full bg-green-600 hover:bg-green-700"
+                  className="w-full bg-green-600 hover:bg-green-700 h-11 lg:h-10 text-sm lg:text-base font-semibold"
                 >
                   {isLoading ? (
                     <>
@@ -1000,12 +1152,14 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-full h-10 lg:h-9 text-sm lg:text-base"
                   onClick={() => {
                     setCart([]);
-                    setCustomerInfo({ name: '', phone: '', block: '', specialInstructions: '' });
+                    setCustomerInfo({ name: '', phone: '', block: '', deliveryAddress: '', specialInstructions: '', orderType: 'delivery' });
                     setAppliedCoupon(null);
                     setCouponCode('');
+                    setManualDiscount(0);
+                    setManualDiscountType('fixed');
                   }}
                 >
                   Clear Cart

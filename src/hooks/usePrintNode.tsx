@@ -227,10 +227,13 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
       } else if (cafe.name.toLowerCase().includes('stardom')) {
         console.log('✅ usePrintNode - Using Stardom API key');
         console.log('✅ usePrintNode - Stardom API key value:', import.meta.env.VITE_STARDOM_PRINTNODE_API_KEY ? 'Found' : 'Not found');
+        console.log('✅ usePrintNode - Stardom API key length:', import.meta.env.VITE_STARDOM_PRINTNODE_API_KEY?.length || 0);
+        console.log('✅ usePrintNode - Stardom API key prefix:', import.meta.env.VITE_STARDOM_PRINTNODE_API_KEY?.substring(0, 10) || 'N/A');
         const apiKey = import.meta.env.VITE_STARDOM_PRINTNODE_API_KEY;
         if (!apiKey || apiKey === 'your-stardom-printnode-api-key') {
           console.warn('⚠️ VITE_STARDOM_PRINTNODE_API_KEY not set, using main API key');
           console.warn('⚠️ This will show the wrong PrintNode account!');
+          console.warn('⚠️ Fallback API key:', import.meta.env.VITE_PRINTNODE_API_KEY ? 'Found' : 'Not found');
           const fallbackKey =
             import.meta.env.VITE_PRINTNODE_API_KEY ||
             import.meta.env.VITE_SHARED_PRINTNODE_API_KEY;
@@ -238,9 +241,12 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
             console.error('VITE_PRINTNODE_API_KEY environment variable is not set');
             return '';
           }
+          console.warn('⚠️ Using fallback API key instead of Stardom-specific key!');
           return fallbackKey;
         }
         console.log('✅ usePrintNode - Stardom API key is valid, using it');
+        console.log('✅ usePrintNode - Expected key prefix: F9oYR_ArBi');
+        console.log('✅ usePrintNode - Actual key prefix:', apiKey.substring(0, 10));
         return apiKey;
       }
 
@@ -311,12 +317,35 @@ export const usePrintNode = (cafeId?: string): UsePrintNodeReturn => {
         const info = await printNodeService.getAccountInfo();
         setAccountInfo(info);
         console.log('PrintNode account info:', info);
+      } else {
+        // If not available, try to get more details about the error
+        try {
+          const info = await printNodeService.getAccountInfo();
+          console.log('PrintNode account info (after failed availability check):', info);
+        } catch (infoError: any) {
+          console.error('PrintNode 401 Unauthorized - API key issue:', {
+            error: infoError.message,
+            status: infoError.status,
+            hint: 'Check if VITE_STARDOM_PRINTNODE_API_KEY is set correctly in Vercel for Production environment'
+          });
+          setError('PrintNode API key authentication failed. Check environment variables in Vercel.');
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('PrintNode availability check failed:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.status,
+        statusText: error.statusText,
+        hint: '401 Unauthorized usually means the API key is missing or incorrect'
+      });
       setIsAvailable(false);
       setIsConnected(false);
-      setError(error instanceof Error ? error.message : 'PrintNode service unavailable');
+      if (error.status === 401) {
+        setError('PrintNode API key authentication failed. Verify VITE_STARDOM_PRINTNODE_API_KEY is set in Vercel for Production.');
+      } else {
+        setError(error instanceof Error ? error.message : 'PrintNode service unavailable');
+      }
     }
   }, [printNodeService]);
 

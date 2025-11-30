@@ -11,6 +11,7 @@ const AISENSY_PHONE_NUMBER = Deno.env.get('AISENSY_PHONE_NUMBER') || '9196258512
 interface WhatsAppRequest {
   phoneNumber: string;
   message: string;
+  campaignName?: string; // Optional: campaign name, defaults to 'Order Notification'
 }
 
 serve(async (req) => {
@@ -26,7 +27,7 @@ serve(async (req) => {
   }
 
   try {
-    const { phoneNumber, message } = await req.json() as WhatsAppRequest;
+    const { phoneNumber, message, campaignName } = await req.json() as WhatsAppRequest;
 
     if (!phoneNumber || !message) {
       return new Response(
@@ -50,103 +51,109 @@ serve(async (req) => {
       apiBaseUrl: AISENSY_API_BASE_URL
     });
 
-    // Try different common endpoints
-    const endpoints = [
-      '/campaign/v1/send',
-      '/v1/send',
-      '/api/v1/send',
-      '/campaign/send',
-      '/whatsapp/send',
-      '/send'
-    ];
+    // Aisensy API endpoint (from official documentation)
+    const apiUrl = `${AISENSY_API_BASE_URL}/campaign/t1/api/v2`;
+    
+    console.log(`📡 Using Aisensy API endpoint: ${apiUrl}`);
 
-    let lastError: Error | null = null;
+    // Extract customer name from message if possible
+    // Message format: "*Customer:* John Doe" or "👤 *Customer:* John Doe"
+    const customerNameMatch = message.match(/(?:👤\s*)?\*Customer:\*\s*(.+?)(?:\n|$)/);
+    const customerName = customerNameMatch ? customerNameMatch[1].trim() : 'Customer';
+    
+    // Use provided campaignName or default
+    // IMPORTANT: This campaign must be created in Aisensy dashboard first and set to "Live"
+    const finalCampaignName = campaignName || Deno.env.get('AISENSY_DEFAULT_CAMPAIGN_NAME') || 'Order Notification';
+    
+    // Request body according to Aisensy API documentation
+    // The message will be sent as template parameters
+    // You need to create a WhatsApp template in Aisensy that accepts the message as a parameter
+    const requestBody = {
+      apiKey: AISENSY_API_KEY,
+      campaignName: finalCampaignName,
+      destination: cleanNumber,
+      userName: customerName,
+      source: AISENSY_PHONE_NUMBER, // Optional: source of lead
+      templateParams: [message] // Send full message as first template param
+    };
 
-    for (const endpoint of endpoints) {
-      const apiUrl = `${AISENSY_API_BASE_URL}${endpoint}`;
-      
-      console.log(`📡 Trying endpoint: ${endpoint}`);
+    try {
+      console.log('📤 Sending request to Aisensy API:', {
+        url: apiUrl,
+        destination: cleanNumber,
+        userName: customerName,
+        messageLength: message.length
+      });
 
-      // Try different request body formats
-      const requestBodies = [
-        // Format 1: Standard format
-        {
-          phoneNumber: cleanNumber,
-          message: message,
-          source: AISENSY_PHONE_NUMBER
-        },
-        // Format 2: Alternative format
-        {
-          to: cleanNumber,
-          text: message,
-          from: AISENSY_PHONE_NUMBER
-        },
-        // Format 3: Another common format
-        {
-          recipient: cleanNumber,
-          message: message
-        }
-      ];
-
-      for (let i = 0; i < requestBodies.length; i++) {
-        try {
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${AISENSY_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBodies[i])
-          });
-
-          const responseText = await response.text();
-          console.log(`Response from ${endpoint} (format ${i + 1}):`, response.status, responseText);
-
-          if (response.ok) {
-            console.log(`✅ Success with endpoint ${endpoint}, format ${i + 1}`);
-            return new Response(
-              JSON.stringify({
-                success: true,
-                endpoint,
-                format: i + 1,
-                response: responseText
-              }),
-              {
-                status: 200,
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Access-Control-Allow-Origin': '*',
-                },
-              }
-            );
-          } else if (response.status !== 404) {
-            // If not 404, the endpoint exists but format might be wrong
-            lastError = new Error(`API returned ${response.status}: ${responseText}`);
-            continue;
-          }
-        } catch (error) {
-          console.log(`Error with ${endpoint} format ${i + 1}:`, error);
-          lastError = error as Error;
-          continue;
-        }
-      }
-    }
-
-    // If all endpoints failed
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: 'All Aisensy endpoints failed',
-        details: lastError?.message || 'Unknown error'
-      }),
-      {
-        status: 500,
+      const response = await fetch(apiUrl, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
         },
+        body: JSON.stringify(requestBody)
+      });
+
+      const responseText = await response.text();
+      console.log(`📥 Aisensy API Response:`, response.status, responseText.substring(0, 500));
+
+      if (response.ok) {
+        console.log(`✅ Successfully sent WhatsApp message via Aisensy`);
+        return new Response(
+          JSON.stringify({
+            success: true,
+            endpoint: '/campaign/t1/api/v2',
+            response: responseText
+          }),
+          {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            },
+          }
+        );
+      } else {
+        // Parse error response
+        let errorMessage = 'Unknown error';
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.errorMessage || errorData.message || responseText;
+        } catch {
+          errorMessage = responseText.substring(0, 200);
+        }
+        
+        console.error(`❌ Aisensy API error (${response.status}):`, errorMessage);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: `Aisensy API error: ${errorMessage}`,
+            status: response.status
+          }),
+          {
+            status: response.status,
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            },
+          }
+        );
       }
-    );
+    } catch (error) {
+      console.error('❌ Error calling Aisensy API:', error);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    }
 
   } catch (error) {
     console.error('❌ Error in send-whatsapp function:', error);

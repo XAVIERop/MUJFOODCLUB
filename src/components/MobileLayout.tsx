@@ -7,6 +7,7 @@ import { FeaturedCafeGrid } from './FeaturedCafeGrid';
 import CafeIconGrid from './CafeIconGrid';
 import CafeCategories from './CafeCategories';
 import { Button } from './ui/button';
+import { shouldUserSeeCafe } from '@/utils/residencyUtils';
 
 interface Cafe {
   id: string;
@@ -30,6 +31,7 @@ interface MobileLayoutProps {
   selectedBlock: string;
   cafeFilter: 'all' | 'ghs' | 'outside';
   onCafeFilterChange: (filter: 'all' | 'ghs' | 'outside') => void;
+  profile?: any; // User profile for scope filtering
 }
 
 const MobileLayout: React.FC<MobileLayoutProps> = ({ 
@@ -37,18 +39,24 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   onBlockChange, 
   selectedBlock,
   cafeFilter,
-  onCafeFilterChange
+  onCafeFilterChange,
+  profile
 }) => {
-  // Filter cafes based on selected filter
+  // Filter cafes based on selected filter AND user scope
+  // For outside users, "all" should only show cafes they can see (off-campus cafes)
   const filteredCafes = (() => {
+    // First, apply scope filtering to ensure outside users don't see GHS cafes
+    const scopedCafes = cafes.filter(cafe => shouldUserSeeCafe(profile, cafe));
+    
+    // Then apply the selected filter
     if (cafeFilter === 'all') {
-      return cafes;
+      return scopedCafes; // Already filtered by scope
     } else if (cafeFilter === 'ghs') {
-      return cafes.filter(cafe => !cafe.location_scope || cafe.location_scope === 'ghs');
+      return scopedCafes.filter(cafe => !cafe.location_scope || cafe.location_scope === 'ghs');
     } else if (cafeFilter === 'outside') {
-      return cafes.filter(cafe => cafe.location_scope === 'off_campus');
+      return scopedCafes.filter(cafe => cafe.location_scope === 'off_campus');
     }
-    return cafes;
+    return scopedCafes;
   })();
   return (
     <div className="min-h-screen bg-gray-50 pb-20 pt-16">

@@ -21,6 +21,8 @@ interface MenuItem {
   is_available: boolean;
   out_of_stock: boolean;
   cafe_id: string;
+  daily_stock_quantity?: number | null;
+  current_stock_quantity?: number | null;
 }
 
 interface GroupedMenuItem {
@@ -35,7 +37,11 @@ interface GroupedMenuItem {
     price: number;
     is_available: boolean;
     out_of_stock: boolean;
+    daily_stock_quantity?: number | null;
+    current_stock_quantity?: number | null;
   }[];
+  daily_stock_quantity?: number | null;
+  current_stock_quantity?: number | null;
 }
 
 interface CartItem {
@@ -62,6 +68,7 @@ interface Cafe {
   phone: string;
   hours: string;
   accepting_orders: boolean;
+  enable_daily_stock?: boolean;
   average_rating: number | null;
   total_ratings: number | null;
   image_url?: string | null;
@@ -176,7 +183,9 @@ const MenuModern = () => {
             description: item.description,
             preparation_time: item.preparation_time,
             is_vegetarian: item.is_vegetarian,
-            portions: []
+            portions: [],
+            daily_stock_quantity: item.daily_stock_quantity,
+            current_stock_quantity: item.current_stock_quantity
           };
         }
         // Push two synthetic portions for Paneer and Chicken using the same price
@@ -336,7 +345,9 @@ const MenuModern = () => {
             description: item.description,
             preparation_time: item.preparation_time,
             is_vegetarian: item.is_vegetarian,
-            portions: []
+            portions: [],
+            daily_stock_quantity: item.daily_stock_quantity,
+            current_stock_quantity: item.current_stock_quantity
           };
         }
         // Add Single Stuffing (current price) and Double Stuffing (price difference based on item price)
@@ -375,7 +386,9 @@ const MenuModern = () => {
           description: item.description,
           preparation_time: item.preparation_time,
           is_vegetarian: item.is_vegetarian,
-          portions: []
+          portions: [],
+          daily_stock_quantity: item.daily_stock_quantity,
+          current_stock_quantity: item.current_stock_quantity
         };
       }
       
@@ -384,7 +397,9 @@ const MenuModern = () => {
         name: hasVariant ? portionType : 'Full',
         price: item.price,
         is_available: item.is_available,
-        out_of_stock: item.out_of_stock
+        out_of_stock: item.out_of_stock,
+        daily_stock_quantity: item.daily_stock_quantity,
+        current_stock_quantity: item.current_stock_quantity
       });
       
       return acc;

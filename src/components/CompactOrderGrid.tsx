@@ -356,11 +356,11 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
               </div>
               <div class="info-row">
                 <span>Customer:</span>
-                <span>${orderData.user?.full_name || orderData.customer_name || 'N/A'}</span>
+                <span>${orderData.customer_name || orderData.user?.full_name || 'N/A'}</span>
               </div>
               <div class="info-row">
                 <span>Phone:</span>
-                <span>${orderData.user?.phone || orderData.phone_number || 'N/A'}</span>
+                <span>${orderData.phone_number || orderData.user?.phone || 'N/A'}</span>
               </div>
               <div class="info-row">
                 <span>${orderData.delivery_address ? 'Address:' : 'Block:'}</span>
@@ -522,7 +522,7 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
             <div class="order-info">
               <div class="info-row">
                 <span>Name:</span>
-                <span>${orderData.user?.full_name || orderData.customer_name || 'N/A'} (M: ${orderData.user?.phone || orderData.phone_number || 'N/A'})</span>
+                <span>${orderData.customer_name || orderData.user?.full_name || 'N/A'} (M: ${orderData.phone_number || orderData.user?.phone || 'N/A'})</span>
               </div>
               <div class="info-row">
                 <span>Date:</span>
@@ -717,8 +717,8 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
         order_id: order.id,
         order_number: order.order_number,
         cafe_name: order.cafe?.name || 'Unknown Cafe',
-        customer_name: order.user?.full_name || 'Walk-in Customer',
-        customer_phone: order.user?.phone || order.phone_number || 'N/A',
+      customer_name: order.customer_name || order.user?.full_name || 'Walk-in Customer',
+      customer_phone: order.phone_number || order.user?.phone || 'N/A',
         delivery_block: order.delivery_block || order.user?.block || 'N/A',
         items: items.map(item => {
           // For table orders, use delivery_notes from order if item doesn't have special_instructions
@@ -813,8 +813,8 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
           'Order Number': order.order_number,
           'Amount': formatCurrency(order.total_amount),
           'Items': itemNames,
-          'Customer Name': order.user?.full_name || order.customer_name || 'N/A',
-          'Phone Number': order.user?.phone || order.phone_number || 'N/A',
+          'Customer Name': order.customer_name || order.user?.full_name || 'N/A',
+          'Phone Number': order.phone_number || order.user?.phone || 'N/A',
           'Block': order.delivery_block,
           'Order Time': new Date(order.created_at).toLocaleString('en-IN'),
           'Cancelled Time': getTimeElapsed(order.created_at)
@@ -1104,13 +1104,13 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Customer:</span>
                       <span className="font-medium">
-                        {order.user?.full_name || order.customer_name || 'N/A'}
+                        {order.customer_name || order.user?.full_name || 'N/A'}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Phone:</span>
                       <span className="font-medium">
-                        {order.user?.phone || order.phone_number || 'N/A'}
+                        {order.phone_number || order.user?.phone || 'N/A'}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -1244,18 +1244,18 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
               <div>
                 <span className="text-muted-foreground">Customer:</span>
                 <p className="font-medium mt-1">
-                  {selectedOrder.user?.full_name || selectedOrder.customer_name || 'N/A'}
+                  {selectedOrder.customer_name || selectedOrder.user?.full_name || 'N/A'}
                 </p>
               </div>
               <div>
                 <span className="text-muted-foreground">Phone:</span>
                 <p className="font-medium mt-1">
-                  {(selectedOrder.user?.phone || selectedOrder.phone_number) ? (
+                  {(selectedOrder.phone_number || selectedOrder.user?.phone) ? (
                     <a 
-                      href={`tel:${selectedOrder.user?.phone || selectedOrder.phone_number}`}
+                      href={`tel:${selectedOrder.phone_number || selectedOrder.user?.phone}`}
                       className="text-primary hover:underline flex items-center gap-1"
                     >
-                      📞 {selectedOrder.user?.phone || selectedOrder.phone_number}
+                      📞 {selectedOrder.phone_number || selectedOrder.user?.phone}
                     </a>
                   ) : (
                     'N/A'

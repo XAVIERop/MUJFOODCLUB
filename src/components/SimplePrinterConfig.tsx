@@ -63,9 +63,13 @@ const SimplePrinterConfig: React.FC = () => {
               <span className="text-sm">Connected via {connectionType.toUpperCase()}</span>
             </div>
           ) : (
-            <div className="flex items-center text-red-600">
+            <div className="flex items-center text-yellow-600">
               <XCircle className="w-4 h-4 mr-1" />
-              <span className="text-sm">Disconnected</span>
+              <span className="text-sm">
+                {connectionType === 'usb' 
+                  ? 'Browser Printing Available' 
+                  : 'Not Connected'}
+              </span>
             </div>
           )}
         </div>
@@ -82,7 +86,7 @@ const SimplePrinterConfig: React.FC = () => {
 
         {/* Help Text */}
         <div className="text-xs text-gray-600 space-y-1">
-          <p><strong>USB (Wired):</strong> Your printer is connected via USB cable. This is the easiest option.</p>
+          <p><strong>USB (Wired):</strong> Uses browser printing. Click "Test Connection" to verify your printer works. Physical connection cannot be automatically detected.</p>
           <p><strong>Network:</strong> Your printer is connected via WiFi/Ethernet. You'll need the IP address.</p>
         </div>
       </CardContent>

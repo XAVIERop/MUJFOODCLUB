@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Clock, 
@@ -44,6 +45,7 @@ import { useCafeStaff } from '@/hooks/useCafeStaff';
 import { orderPushNotificationService } from '@/services/orderPushNotificationService';
 import StaffManagement from '@/components/StaffManagement';
 import EnhancedOrderGrid from '@/components/EnhancedOrderGrid';
+import MenuManagement from '@/components/MenuManagement';
 // Lazy load POSAnalytics to avoid loading recharts (391KB) on initial page load
 const POSAnalytics = lazy(() => import('@/components/POSAnalytics'));
 import ThermalPrinter from '@/components/ThermalPrinter';
@@ -151,6 +153,12 @@ const POSDashboard = () => {
   }, []);
   const [cafeId, setCafeId] = useState<string | null>(null);
   const [cafeName, setCafeName] = useState<string>('');
+  // Daily stock settings
+  const [enableDailyStock, setEnableDailyStock] = useState<boolean>(false);
+  const [stockResetTime, setStockResetTime] = useState<string>('11:00');
+  const [updatingStockSettings, setUpdatingStockSettings] = useState<boolean>(false);
+  // Menu items for stock tracking
+  const [menuItems, setMenuItems] = useState<any[]>([]);
   const [showNoOrdersNotification, setShowNoOrdersNotification] = useState(true);
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -259,7 +267,7 @@ const POSDashboard = () => {
             unit_price,
             total_price,
             special_instructions,
-            menu_item:menu_items(name, description, is_vegetarian)
+            menu_item:menu_items(name, description, is_vegetarian, category)
           )
         `)
         .eq('cafe_id', cafeId)
@@ -297,7 +305,7 @@ const POSDashboard = () => {
             .from('order_items')
             .select(`
               *,
-              menu_item:menu_items(name, description, is_vegetarian)
+              menu_item:menu_items(name, description, is_vegetarian, category)
             `)
             .eq('order_id', order.id);
 
@@ -373,8 +381,8 @@ const POSDashboard = () => {
       let bValue: any = b[sortBy as keyof Order];
 
       if (sortBy === 'user') {
-        aValue = a.user?.full_name || a.customer_name || '';
-        bValue = b.user?.full_name || b.customer_name || '';
+        aValue = a.customer_name || a.user?.full_name || '';
+        bValue = b.customer_name || b.user?.full_name || '';
       }
 
       if (sortBy === 'created_at') {
@@ -828,8 +836,8 @@ const POSDashboard = () => {
         order_id: completeOrder.id,
         order_number: completeOrder.order_number,
         cafe_name: completeOrder.cafe?.name || 'Cafe',
-        customer_name: completeOrder.user?.full_name || completeOrder.customer_name || 'Customer',
-        customer_phone: completeOrder.user?.phone || completeOrder.phone_number || 'N/A',
+        customer_name: completeOrder.customer_name || completeOrder.user?.full_name || 'Customer',
+        customer_phone: completeOrder.phone_number || completeOrder.user?.phone || 'N/A',
         delivery_block: completeOrder.delivery_block || completeOrder.user?.block || 'N/A',
         table_number: tableNumber, // Explicitly pass table_number (even if empty)
         delivery_address: completeOrder.delivery_address || '',
@@ -958,8 +966,8 @@ const POSDashboard = () => {
         order_id: order.id,
         order_number: order.order_number,
         cafe_name: order.cafe?.name || 'Cafe',
-        customer_name: order.user?.full_name || 'Customer',
-        customer_phone: order.user?.phone || order.phone_number || 'N/A',
+        customer_name: order.customer_name || order.user?.full_name || 'Customer',
+        customer_phone: order.phone_number || order.user?.phone || 'N/A',
         delivery_block: order.delivery_block || order.user?.block || 'N/A',
         table_number: order.table_number || '',
         delivery_address: order.delivery_address || '',
@@ -1171,11 +1179,11 @@ const POSDashboard = () => {
                 </div>
                 <div class="info-row">
                   <span>Customer:</span>
-                  <span>${orderData.user?.full_name || 'Walk-in Customer'}</span>
+                  <span>${orderData.customer_name || orderData.user?.full_name || 'Walk-in Customer'}</span>
                 </div>
                 <div class="info-row">
                   <span>Phone:</span>
-                  <span>${orderData.user?.phone || orderData.phone_number || 'N/A'}</span>
+                  <span>${orderData.phone_number || orderData.user?.phone || 'N/A'}</span>
                 </div>
                 <div class="info-row">
                   <span>Type:</span>
@@ -1326,8 +1334,8 @@ const POSDashboard = () => {
                 <div class="cafe-name">${orderData.cafe?.name || 'Chatkara'}</div>
                 
                 <div class="customer-info">
-                  <div>${orderData.user?.phone || orderData.phone_number || 'N/A'} - ${formatReceiptOrderType(orderData)}</div>
-                  <div>Name: ${orderData.user?.full_name || 'WALK-IN'}</div>
+                  <div>${orderData.phone_number || orderData.user?.phone || 'N/A'} - ${formatReceiptOrderType(orderData)}</div>
+                  <div>Name: ${orderData.customer_name || orderData.user?.full_name || 'WALK-IN'}</div>
                 </div>
                 
                 <div class="order-details">
@@ -1492,11 +1500,11 @@ const POSDashboard = () => {
               <div class="order-info">
                 <div class="info-row">
                   <span>M:</span>
-                  <span style="font-size: 16px; font-weight: bold;">${orderData.user?.phone || orderData.phone_number || 'N/A'}</span>
+                  <span style="font-size: 16px; font-weight: bold;">${orderData.phone_number || orderData.user?.phone || 'N/A'}</span>
                 </div>
                 <div class="info-row">
                   <span>Name:</span>
-                  <span>${orderData.user?.full_name || 'Walk-in Customer'}</span>
+                  <span>${orderData.customer_name || orderData.user?.full_name || 'Walk-in Customer'}</span>
                 </div>
                 <div class="info-row">
                   <span>Type:</span>
@@ -1819,6 +1827,67 @@ const POSDashboard = () => {
     fetchCafeName();
   }, [cafeId]);
 
+  // Fetch cafe stock settings
+  useEffect(() => {
+    const fetchCafeStockSettings = async () => {
+      if (!cafeId) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('cafes')
+          .select('enable_daily_stock, stock_reset_time')
+          .eq('id', cafeId)
+          .single();
+
+        if (error) throw error;
+
+        setEnableDailyStock(data?.enable_daily_stock || false);
+        // Convert TIME to HH:MM format for input
+        if (data?.stock_reset_time) {
+          const timeStr = data.stock_reset_time;
+          // Handle both "HH:MM:SS" and "HH:MM" formats
+          setStockResetTime(timeStr.substring(0, 5));
+        } else {
+          setStockResetTime('11:00');
+        }
+      } catch (error: any) {
+        console.error('Error fetching cafe stock settings:', error);
+      }
+    };
+
+    fetchCafeStockSettings();
+  }, [cafeId]);
+
+  // Fetch menu items for stock warnings
+  useEffect(() => {
+    const fetchMenuItemsForStock = async () => {
+      if (!cafeId || !enableDailyStock) {
+        setMenuItems([]);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('menu_items')
+          .select('id, name, daily_stock_quantity, current_stock_quantity')
+          .eq('cafe_id', cafeId)
+          .not('daily_stock_quantity', 'is', null);
+
+        if (error) throw error;
+        setMenuItems(data || []);
+      } catch (error: any) {
+        console.error('Error fetching menu items for stock warnings:', error);
+      }
+    };
+
+    fetchMenuItemsForStock();
+    // Refresh stock data every 30 seconds when daily stock is enabled
+    const interval = enableDailyStock ? setInterval(fetchMenuItemsForStock, 30000) : null;
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [cafeId, enableDailyStock]);
+
   useEffect(() => {
     const fetchCafeId = async () => {
       if (!user || !profile) {
@@ -2089,48 +2158,49 @@ const POSDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 pt-16 pb-24 lg:pb-6">
       <Header />
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <div className="max-w-7xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
         {/* Enhanced Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           {/* Main Header Row */}
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex items-center justify-between">
+          <div className="p-3 sm:p-6 border-b border-gray-100">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
               {/* Title Section */}
-              <div className="flex items-center space-x-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">POS Dashboard</h1>
-                  <p className="text-sm text-gray-600 mt-1">Professional Point of Sale System</p>
+              <div className="flex items-center justify-between sm:justify-start space-x-2 sm:space-x-4 flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">POS Dashboard</h1>
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1 hidden sm:block">Professional Point of Sale System</p>
                 </div>
                 
                 {/* Status Badge */}
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 flex-shrink-0">
                   <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                  <span className={`text-sm font-medium ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`text-xs sm:text-sm font-medium ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
                     {isConnected ? 'Connected' : 'Disconnected'}
                   </span>
                 </div>
               </div>
 
               {/* User Profile & Actions */}
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-3 flex-shrink-0">
                 {/* User Info */}
-                <div className="text-right">
-                  <div className="text-sm font-medium text-gray-900">
+                <div className="text-right min-w-0 flex-shrink-0">
+                  <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[120px] sm:max-w-none">
                     {cafeName || 'Cafe'}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-[10px] sm:text-xs text-gray-500 truncate">
                     {profile?.user_type?.replace('_', ' ').toUpperCase() || 'STAFF'}
                   </div>
                 </div>
 
                 {/* Primary Actions */}
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => navigate('/cafe-management?from=pos-dashboard')}
+                    className="h-8 px-2 sm:px-3"
                   >
-                    <Settings className="w-4 h-4 mr-1" />
+                    <Settings className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
                     <span className="hidden sm:inline">Management</span>
                   </Button>
                   
@@ -2139,8 +2209,9 @@ const POSDashboard = () => {
                     variant="outline" 
                     size="sm"
                     disabled={isRefreshing}
+                    className="h-8 px-2 sm:px-3"
                   >
-                    <RefreshCw className={`w-4 h-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 sm:mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
                     <span className="hidden sm:inline">{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
                   </Button>
                 </div>
@@ -2149,48 +2220,50 @@ const POSDashboard = () => {
           </div>
 
           {/* Secondary Actions Row */}
-          <div className="px-6 py-4 bg-gray-50 border-b border-gray-100">
-            <div className="flex items-center justify-between">
+          <div className="px-3 sm:px-6 py-3 sm:py-4 bg-gray-50 border-b border-gray-100">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
               {/* Automation Controls */}
-              <div className="flex items-center space-x-3">
-                <span className="text-sm font-medium text-gray-700">Automation:</span>
-                <div className="flex items-center space-x-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <span className="text-xs sm:text-sm font-medium text-gray-700 flex-shrink-0">Automation:</span>
+                <div className="flex items-center flex-wrap gap-2 min-w-0">
                   <Button 
                     onClick={handleManualAutoCancellation}
                     variant="outline"
                     size="sm"
-                    className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                    className="text-orange-600 border-orange-200 hover:bg-orange-50 h-8 px-2 sm:px-3 text-xs"
                   >
-                    <AlertCircle className="w-4 h-4 mr-1" />
-                    Check Auto-Cancel
+                    <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Check Auto-Cancel</span>
+                    <span className="sm:hidden">Check</span>
                   </Button>
                   <Button 
                     onClick={toggleAutoCancellation}
                     variant={autoCancelStatus.isRunning ? "destructive" : "outline"}
                     size="sm"
-                    className={autoCancelStatus.isRunning ? "" : "text-green-600 border-green-200 hover:bg-green-50"}
+                    className={`h-8 px-2 sm:px-3 text-xs ${autoCancelStatus.isRunning ? "" : "text-green-600 border-green-200 hover:bg-green-50"}`}
                   >
-                    <Clock className="w-4 h-4 mr-1" />
-                    {autoCancelStatus.isRunning ? 'Stop Auto-Cancel' : 'Start Auto-Cancel'}
+                    <Clock className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+                    <span className="hidden sm:inline">{autoCancelStatus.isRunning ? 'Stop Auto-Cancel' : 'Start Auto-Cancel'}</span>
+                    <span className="sm:hidden">{autoCancelStatus.isRunning ? 'Stop' : 'Start'}</span>
                   </Button>
                   {autoCancelStatus.isRunning && (
-                    <Badge variant="secondary" className="text-xs">
-                      Running (2min intervals)
+                    <Badge variant="secondary" className="text-[10px] sm:text-xs whitespace-nowrap">
+                      Running (2min)
                     </Badge>
                   )}
                 </div>
               </div>
 
               {/* System Info */}
-              <div className="flex items-center space-x-4 text-sm text-gray-500">
+              <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm text-gray-500 flex-shrink-0">
                 {isRefreshing && (
                   <div className="flex items-center text-blue-600">
-                    <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
-                    Updating...
+                    <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1 animate-spin" />
+                    <span className="hidden sm:inline">Updating...</span>
                   </div>
                 )}
                 {cafeName && (
-                  <div className="hidden lg:block">
+                  <div className="hidden lg:block truncate max-w-[150px]">
                     {cafeName}
                   </div>
                 )}
@@ -2233,6 +2306,67 @@ const POSDashboard = () => {
         </div>
           </CollapsibleContent>
         </Collapsible>
+
+        {/* Stock Warnings Banner */}
+        {enableDailyStock && (() => {
+          const lowStockItems = menuItems?.filter((item: any) => 
+            item.daily_stock_quantity !== null && 
+            item.current_stock_quantity !== null &&
+            (item.current_stock_quantity <= 5 || item.current_stock_quantity < 0)
+          ) || [];
+          
+          const criticalStockItems = lowStockItems.filter((item: any) => 
+            item.current_stock_quantity < -10 || item.current_stock_quantity <= 0
+          );
+          
+          if (lowStockItems.length > 0) {
+            return (
+              <div className={`rounded-lg p-4 border-2 ${
+                criticalStockItems.length > 0 
+                  ? 'bg-red-50 border-red-300' 
+                  : 'bg-orange-50 border-orange-300'
+              }`}>
+                <div className="flex items-start gap-3">
+                  <AlertCircle className={`h-5 w-5 mt-0.5 flex-shrink-0 ${
+                    criticalStockItems.length > 0 ? 'text-red-600' : 'text-orange-600'
+                  }`} />
+                  <div className="flex-1">
+                    <h3 className={`font-semibold mb-2 ${
+                      criticalStockItems.length > 0 ? 'text-red-900' : 'text-orange-900'
+                    }`}>
+                      {criticalStockItems.length > 0 
+                        ? `⚠️ Critical Stock Alert: ${criticalStockItems.length} item(s) out of stock or oversold beyond limit`
+                        : `⚠️ Low Stock Alert: ${lowStockItems.length} item(s) running low`}
+                    </h3>
+                    <div className="space-y-2">
+                      {lowStockItems.slice(0, 5).map((item: any) => (
+                        <div key={item.id} className="flex items-center justify-between text-sm">
+                          <span className="font-medium">{item.name}</span>
+                          <Badge variant={item.current_stock_quantity < -10 ? 'destructive' : 'outline'} className="ml-2">
+                            {item.current_stock_quantity < -10 
+                              ? `Critical: ${item.current_stock_quantity}` 
+                              : item.current_stock_quantity <= 0
+                              ? `Out of Stock`
+                              : `Only ${item.current_stock_quantity} left`}
+                            {item.current_stock_quantity < 0 && item.current_stock_quantity >= -10 && (
+                              <span className="ml-1 text-orange-600">(High cancellation risk)</span>
+                            )}
+                          </Badge>
+                        </div>
+                      ))}
+                      {lowStockItems.length > 5 && (
+                        <p className="text-sm text-muted-foreground">
+                          ...and {lowStockItems.length - 5} more item(s). Check Inventory tab for details.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
@@ -2289,53 +2423,47 @@ const POSDashboard = () => {
           }} 
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-9 gap-1 sm:gap-2">
-            <TabsTrigger value="orders" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <Receipt className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Orders</span>
-              <span className="sm:hidden">O</span>
-            </TabsTrigger>
-            <TabsTrigger value="staff" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Staff</span>
-              <span className="sm:hidden">S</span>
-            </TabsTrigger>
-            <TabsTrigger value="manual-order" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Manual Order</span>
-              <span className="sm:hidden">M</span>
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Analytics</span>
-              <span className="sm:hidden">A</span>
-            </TabsTrigger>
-            <TabsTrigger value="database" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <Database className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Database</span>
-              <span className="sm:hidden">D</span>
-            </TabsTrigger>
-            <TabsTrigger value="inventory" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <Package className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Inventory</span>
-              <span className="sm:hidden">I</span>
-            </TabsTrigger>
-            <TabsTrigger value="customers" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Customers</span>
-              <span className="sm:hidden">C</span>
-            </TabsTrigger>
-            <TabsTrigger value="print" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <Receipt className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Print</span>
-              <span className="sm:hidden">P</span>
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Settings</span>
-              <span className="sm:hidden">S</span>
-            </TabsTrigger>
-          </TabsList>
+          {/* Mobile: Horizontal Scrollable Tabs | Desktop: Grid Layout */}
+          <div className="w-full overflow-x-auto scrollbar-hide -mx-3 sm:mx-0 px-3 sm:px-0">
+            <TabsList className="flex sm:grid sm:grid-cols-9 w-full sm:w-full gap-1 sm:gap-2 min-w-max sm:min-w-0">
+              <TabsTrigger value="orders" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 px-3 sm:px-2">
+                <Receipt className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Orders</span>
+              </TabsTrigger>
+              <TabsTrigger value="staff" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 px-3 sm:px-2">
+                <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Staff</span>
+              </TabsTrigger>
+              <TabsTrigger value="manual-order" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 px-3 sm:px-2">
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Manual</span>
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 px-3 sm:px-2">
+                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Analytics</span>
+              </TabsTrigger>
+              <TabsTrigger value="database" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 px-3 sm:px-2">
+                <Database className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Database</span>
+              </TabsTrigger>
+              <TabsTrigger value="inventory" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 px-3 sm:px-2">
+                <Package className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Inventory</span>
+              </TabsTrigger>
+              <TabsTrigger value="customers" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 px-3 sm:px-2">
+                <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Customers</span>
+              </TabsTrigger>
+              <TabsTrigger value="print" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 px-3 sm:px-2">
+                <Receipt className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Print</span>
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 px-3 sm:px-2">
+                <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>Settings</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Orders Tab */}
           <TabsContent value="orders" className="space-y-6">
@@ -2906,16 +3034,9 @@ const POSDashboard = () => {
             </PasswordProtectedSection>
           </TabsContent>
 
-          {/* Inventory Tab */}
+          {/* Inventory/Menu Management Tab */}
           <TabsContent value="inventory" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Inventory Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Inventory features coming soon...</p>
-              </CardContent>
-            </Card>
+            <MenuManagement cafeId={cafeId} />
           </TabsContent>
 
           {/* Customers Tab */}
@@ -2966,8 +3087,8 @@ const POSDashboard = () => {
               order={selectedOrder ? {
                 id: selectedOrder.id,
                 order_number: selectedOrder.order_number,
-                customer_name: selectedOrder.user?.full_name || selectedOrder.customer_name || 'Walk-in Customer',
-                customer_phone: selectedOrder.user?.phone || selectedOrder.phone_number || 'N/A',
+                customer_name: selectedOrder.customer_name || selectedOrder.user?.full_name || 'Walk-in Customer',
+                customer_phone: selectedOrder.phone_number || selectedOrder.user?.phone || 'N/A',
                 items: (orderItems[selectedOrder.id] || []).map(item => ({
                   id: item.id,
                   name: item.menu_item?.name || 'Unknown Item',
@@ -3008,6 +3129,125 @@ const POSDashboard = () => {
                 {/* Sound Debugger */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Sound Debugger</h3>
+                </div>
+
+                {/* Daily Stock Management Settings */}
+                <div className="space-y-4 border-t pt-6">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Daily Stock Management
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Enable daily stock tracking for menu items. Stock automatically resets at the specified time each day.
+                  </p>
+                  
+                  <div className="space-y-4">
+                    {/* Enable Daily Stock Toggle */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex-1">
+                        <Label htmlFor="enable-daily-stock" className="text-base font-medium">
+                          Enable Daily Stock Tracking
+                        </Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          When enabled, you can set daily stock quantities for menu items. Stock automatically deducts when orders reach "preparing" status.
+                        </p>
+                      </div>
+                      <Switch
+                        id="enable-daily-stock"
+                        checked={enableDailyStock}
+                        onCheckedChange={async (checked) => {
+                          if (!cafeId) return;
+                          setUpdatingStockSettings(true);
+                          try {
+                            const { error } = await supabase
+                              .from('cafes')
+                              .update({ enable_daily_stock: checked })
+                              .eq('id', cafeId);
+
+                            if (error) throw error;
+
+                            setEnableDailyStock(checked);
+                            toast({
+                              title: 'Success',
+                              description: checked 
+                                ? 'Daily stock tracking enabled' 
+                                : 'Daily stock tracking disabled',
+                            });
+                          } catch (error: any) {
+                            toast({
+                              title: 'Error',
+                              description: error.message || 'Failed to update stock settings',
+                              variant: 'destructive',
+                            });
+                          } finally {
+                            setUpdatingStockSettings(false);
+                          }
+                        }}
+                        disabled={updatingStockSettings}
+                      />
+                    </div>
+
+                    {/* Stock Reset Time */}
+                    {enableDailyStock && (
+                      <div className="p-4 border rounded-lg space-y-3">
+                        <div>
+                          <Label htmlFor="stock-reset-time" className="text-base font-medium">
+                            Daily Stock Reset Time
+                          </Label>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Stock will automatically reset to daily quantities at this time each day. Default is 11:00 AM.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Input
+                            id="stock-reset-time"
+                            type="time"
+                            value={stockResetTime}
+                            onChange={(e) => setStockResetTime(e.target.value)}
+                            className="w-40"
+                            disabled={updatingStockSettings}
+                          />
+                          <Button
+                            onClick={async () => {
+                              if (!cafeId) return;
+                              setUpdatingStockSettings(true);
+                              try {
+                                // Convert HH:MM to TIME format (HH:MM:SS)
+                                const timeValue = `${stockResetTime}:00`;
+                                
+                                const { error } = await supabase
+                                  .from('cafes')
+                                  .update({ stock_reset_time: timeValue })
+                                  .eq('id', cafeId);
+
+                                if (error) throw error;
+
+                                toast({
+                                  title: 'Success',
+                                  description: `Stock reset time updated to ${stockResetTime}`,
+                                });
+                              } catch (error: any) {
+                                toast({
+                                  title: 'Error',
+                                  description: error.message || 'Failed to update reset time',
+                                  variant: 'destructive',
+                                });
+                              } finally {
+                                setUpdatingStockSettings(false);
+                              }
+                            }}
+                            disabled={updatingStockSettings}
+                            size="sm"
+                          >
+                            Save Time
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Current reset time: {stockResetTime || 'Not set'} (24-hour format)
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Print Settings */}
@@ -3098,7 +3338,7 @@ const POSDashboard = () => {
 
         {/* Manual Fetch Orders Button for Testing */}
         {cafeId && orders.length === 0 && showNoOrdersNotification && (
-          <div className="fixed top-4 right-4 z-50 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded shadow-lg">
+          <div className="fixed top-20 right-4 z-[9999] bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded shadow-lg sm:top-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="font-bold">No Orders Found</p>

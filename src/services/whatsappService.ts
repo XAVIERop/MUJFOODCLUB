@@ -229,7 +229,7 @@ ${itemsText}${notesText}
 
       // Call Supabase Edge Function to send WhatsApp message
       // This avoids CORS issues by making the API call server-side
-      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/send-whatsapp`;
+      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/dynamic-function`;
       
       console.log('📱 Calling Supabase Edge Function:', edgeFunctionUrl);
       console.log('📱 Request payload:', {
@@ -261,7 +261,7 @@ ${itemsText}${notesText}
         console.error('❌ Edge Function returned non-JSON response:', responseText.substring(0, 200));
         if (response.status === 404) {
           console.error('❌ Edge Function not found (404). Deploy it first!');
-          console.error('   Run: supabase functions deploy send-whatsapp');
+          console.error('   Run: supabase functions deploy dynamic-function');
         }
         return false;
       }
@@ -279,7 +279,7 @@ ${itemsText}${notesText}
         console.error('❌ Aisensy API error:', responseData.error || 'Unknown error');
         if (response.status === 404) {
           console.error('💡 Edge Function not deployed. Deploy it using:');
-          console.error('   supabase functions deploy send-whatsapp');
+          console.error('   supabase functions deploy dynamic-function');
         } else if (response.status === 500) {
           console.error('💡 Edge Function error. Check Supabase logs for details.');
         }

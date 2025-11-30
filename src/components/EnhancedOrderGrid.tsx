@@ -116,6 +116,18 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
   const [hoveredOrder, setHoveredOrder] = useState<Order | null>(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [cancelDialogOrder, setCancelDialogOrder] = useState<Order | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Calculate time elapsed since order creation
   const getTimeElapsed = (createdAt: string): string => {
@@ -319,8 +331,8 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
       order_id: order.id,
       order_number: order.order_number,
       cafe_name: order.cafe?.name || order.cafes?.name || 'Unknown Cafe',
-      customer_name: order.user?.full_name || order.customer_name || 'Walk-in Customer',
-      customer_phone: order.user?.phone || order.phone_number || 'N/A',
+      customer_name: order.customer_name || order.user?.full_name || 'Walk-in Customer',
+      customer_phone: order.phone_number || order.user?.phone || 'N/A',
       delivery_block: order.delivery_block || order.user?.block || 'N/A',
       items: items.map(item => {
         // For table orders, use delivery_notes from order if item doesn't have special_instructions
@@ -644,7 +656,7 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
                   <div className="text-xs text-gray-600 space-y-0.5">
                     <div className="flex items-center space-x-1">
                       <User className="h-2.5 w-2.5" />
-                      <span className="truncate">{order.user?.full_name || order.customer_name || 'Walk-in'}</span>
+                      <span className="truncate">{order.customer_name || order.user?.full_name || 'Walk-in'}</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
@@ -760,13 +772,21 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
           />
           
           {/* Popup */}
+          {/* Mobile: Centered | Desktop: Positioned near card */}
           <div
-            className="order-popup fixed z-50 bg-white border border-gray-200 rounded-lg shadow-2xl p-4 max-w-sm min-w-[320px] max-h-[80vh] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
-            style={{
-              left: `${popupPosition.x}px`,
-              top: `${popupPosition.y}px`,
-              transform: getPopupTransform(popupPosition.x, popupPosition.y)
-            }}
+            className="order-popup fixed z-50 bg-white border border-gray-200 rounded-lg shadow-2xl p-4 max-w-sm min-w-[320px] w-[90vw] max-h-[80vh] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200
+                       top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+                       lg:absolute lg:top-auto lg:left-auto lg:translate-x-0 lg:translate-y-0 lg:w-auto"
+            style={
+              isMobile
+                ? {} // Mobile: CSS classes handle centering, no inline styles
+                : {
+                    // Desktop: Use calculated position with transform
+                    left: `${popupPosition.x}px`,
+                    top: `${popupPosition.y}px`,
+                    transform: getPopupTransform(popupPosition.x, popupPosition.y)
+                  }
+            }
             onClick={(e) => e.stopPropagation()}
           >
           <div className="flex items-center justify-between mb-3">
@@ -791,11 +811,11 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
               <div className="text-sm text-gray-600 space-y-1">
                 <div className="flex items-center space-x-2">
                   <User className="h-3 w-3" />
-                  <span>{hoveredOrder.user?.full_name || hoveredOrder.customer_name || 'Walk-in Customer'}</span>
+                  <span>{hoveredOrder.customer_name || hoveredOrder.user?.full_name || 'Walk-in Customer'}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Phone className="h-3 w-3" />
-                  <span>{hoveredOrder.user?.phone || hoveredOrder.phone_number || 'N/A'}</span>
+                  <span>{hoveredOrder.phone_number || hoveredOrder.user?.phone || 'N/A'}</span>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
@@ -958,6 +978,10 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
           onCancel={() => {
             // Refresh the order list by calling onStatusUpdate
             onStatusUpdate(cancelDialogOrder.id, 'cancelled');
+            setCancelDialogOrder(null);
+          }}
+          onClose={() => {
+            // Clear cancel dialog state when dialog is dismissed/closed without canceling
             setCancelDialogOrder(null);
           }}
           trigger={<div style={{ display: 'none' }} />}
