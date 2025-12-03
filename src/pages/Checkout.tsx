@@ -675,78 +675,126 @@ const Checkout = () => {
         team_member_credit: 0 // No team member credit for guest orders
       };
 
-      console.log('🛒 Inserting order into database...');
-      console.log('🛒 Order data being inserted:', JSON.stringify(orderData, null, 2));
-      console.log('🛒 isGuestOrder:', isGuestOrder);
-      console.log('🛒 user_id value:', orderData.user_id);
-      console.log('🛒 user_id type:', typeof orderData.user_id);
-      console.log('🛒 user_id === null:', orderData.user_id === null);
-      
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert(orderData)
-        .select(`
-          id,
-          order_number,
-          status,
-          total_amount,
-          created_at
-        `)
-        .single();
-
-      if (orderError) {
-        console.error('❌ Order creation error:', orderError);
-        console.error('❌ Order error details:', {
-          message: orderError.message,
-          details: orderError.details,
-          hint: orderError.hint,
-          code: orderError.code
-        });
-        throw new Error(`Failed to create order: ${orderError.message || 'Unknown database error'}`);
-      }
-
-      if (!order || !order.id) {
-        console.error('❌ Order was not created - no order data returned');
-        throw new Error('Order creation failed - no order data returned from database');
-      }
-
-      console.log('✅ Order created successfully:', order.order_number, 'ID:', order.id);
-
-      // Create order items (using the exact same pattern as the working CafeScanner)
-      const orderItems = Object.values(cart).map((cartItem) => {
+      // Prepare order items for atomic creation
+      const orderItemsForRPC = Object.values(cart).map((cartItem) => {
         if (!cartItem.item.id) {
           console.error('❌ Missing menu_item_id for item:', cartItem.item);
           throw new Error(`Missing menu item ID for "${cartItem.item.name}". Please remove this item and try again.`);
         }
         return {
-          order_id: order.id,
           menu_item_id: cartItem.item.id,
           quantity: cartItem.quantity,
           unit_price: cartItem.item.price,
           total_price: cartItem.item.price * cartItem.quantity,
-          special_instructions: cartItem.notes
+          special_instructions: cartItem.notes || null
         };
       });
 
-      console.log('🛒 Creating order items:', orderItems.length, 'items');
-      console.log('🛒 Order items data:', orderItems);
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) {
-        console.error('❌ Order items creation error:', itemsError);
-        console.error('❌ Order items error details:', {
-          message: itemsError.message,
-          details: itemsError.details,
-          hint: itemsError.hint,
-          code: itemsError.code
+      console.log('🛒 Preparing atomic order creation...');
+      console.log('🛒 Order data:', JSON.stringify(orderData, null, 2));
+      console.log('🛒 Order items count:', orderItemsForRPC.length);
+      console.log('🛒 isGuestOrder:', isGuestOrder);
+      console.log('🛒 user_id value:', orderData.user_id);
+      console.log('🛒 user_id type:', typeof orderData.user_id);
+      console.log('🛒 user_id === null:', orderData.user_id === null);
+      
+      // Use atomic RPC function to create order + items in single transaction
+      // Note: Parameter order matters - required params first, then optional ones
+      const { data: rpcResult, error: rpcError } = await supabase
+        .rpc('create_order_with_items', {
+          // Required parameters (must come first)
+          p_user_id: orderData.user_id,
+          p_cafe_id: orderData.cafe_id,
+          p_order_number: orderData.order_number,
+          p_total_amount: orderData.total_amount,
+          p_delivery_block: orderData.delivery_block,
+          p_order_items: orderItemsForRPC,
+          // Optional parameters (all have defaults)
+          p_order_type: orderData.order_type,
+          p_table_number: orderData.table_number,
+          p_delivery_address: orderData.delivery_address,
+          p_delivery_latitude: orderData.delivery_latitude,
+          p_delivery_longitude: orderData.delivery_longitude,
+          p_delivery_notes: orderData.delivery_notes || null,
+          p_customer_name: orderData.customer_name,
+          p_phone_number: orderData.phone_number,
+          p_payment_method: orderData.payment_method,
+          p_points_earned: orderData.points_earned,
+          p_referral_code_used: orderData.referral_code_used,
+          p_discount_amount: orderData.discount_amount,
+          p_team_member_credit: orderData.team_member_credit,
+          p_estimated_delivery: orderData.estimated_delivery
         });
-        throw new Error(`Failed to create order items: ${itemsError.message || 'Unknown error'}`);
+
+      if (rpcError) {
+        console.error('❌ Atomic order creation error:', rpcError);
+        console.error('❌ RPC error details:', {
+          message: rpcError.message,
+          details: rpcError.details,
+          hint: rpcError.hint,
+          code: rpcError.code
+        });
+        throw new Error(`Failed to create order: ${rpcError.message || 'Unknown database error'}`);
+      }
+
+      if (!rpcResult || !rpcResult.id) {
+        console.error('❌ Order was not created - no order data returned from RPC');
+        throw new Error('Order creation failed - no order data returned from database');
+      }
+
+      console.log('✅ Order and items created atomically:', rpcResult.order_number, 'ID:', rpcResult.id, 'Items:', rpcResult.items_inserted);
+
+      // Fetch the complete order data for subsequent operations
+      let order: {
+        id: string;
+        order_number: string;
+        status: string;
+        total_amount: number;
+        created_at: string;
+        delivery_address?: string | null;
+        delivery_latitude?: number | null;
+        delivery_longitude?: number | null;
+      } | null = null;
+
+      const { data: fetchedOrder, error: fetchError } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          order_number,
+          status,
+          total_amount,
+          created_at,
+          delivery_address,
+          delivery_latitude,
+          delivery_longitude
+        `)
+        .eq('id', rpcResult.id)
+        .single();
+
+      if (fetchError || !fetchedOrder) {
+        console.error('❌ Error fetching created order:', fetchError);
+        // Use RPC result as fallback
+        order = {
+          id: rpcResult.id,
+          order_number: rpcResult.order_number,
+          status: 'received',
+          total_amount: orderData.total_amount,
+          created_at: new Date().toISOString(),
+          delivery_address: orderData.delivery_address,
+          delivery_latitude: orderData.delivery_latitude,
+          delivery_longitude: orderData.delivery_longitude
+        };
+        console.warn('⚠️ Using fallback order data from RPC result');
+      } else {
+        order = fetchedOrder;
       }
       
-      console.log('✅ Order items created successfully');
+      // Verify order is available
+      if (!order || !order.id) {
+        throw new Error('Order creation failed - could not retrieve order data');
+      }
+      
+      console.log('✅ Order retrieved successfully:', order.order_number, 'ID:', order.id);
 
       // Track referral usage if referral code was used (skip for guest orders)
       if (!isGuestOrder && user?.id && referralCode && referralValidation?.isValid) {
@@ -791,12 +839,15 @@ const Checkout = () => {
           customer_name: isGuestOrder ? guestName.trim() : (profile?.full_name || 'Customer'),
           phone_number: phoneNumberToUse || '+91 0000000000',
           delivery_block: deliveryDetails.block || 'N/A',
-          total_amount: order.total_amount.toString(),
+          total_amount: order.total_amount,
           created_at: order.created_at,
           items_text: Object.values(cart).map(item => 
             `• ${item.item.name} x${item.quantity} - ₹${(item.item.price * item.quantity).toFixed(2)}`
           ).join('\n'),
           delivery_notes: deliveryDetails.deliveryNotes || '',
+          delivery_address: order.delivery_address || undefined,
+          delivery_latitude: order.delivery_latitude || undefined,
+          delivery_longitude: order.delivery_longitude || undefined,
           frontend_url: window.location.origin,
           order_items: Object.values(cart).map(item => ({
             quantity: item.quantity,
