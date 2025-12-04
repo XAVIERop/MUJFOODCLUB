@@ -10,17 +10,17 @@
 
 ```
 PRINTNODE_API_KEY_DEFAULT=your-main-printnode-api-key
-PRINTNODE_API_KEY_CHATKARA=your-chatkara-printnode-api-key
-PRINTNODE_API_KEY_PUNJABI_TADKA=your-punjabi-tadka-printnode-api-key
-PRINTNODE_API_KEY_MUNCHBOX=your-munchbox-printnode-api-key
-PRINTNODE_API_KEY_GRABIT=your-grabit-printnode-api-key
+PRINTNODE_API_KEY_CHATKARA=1JE7Kj-YjoHCtN8-fyP1KeWtd7harHsiwsjP_b2uuaQ
+PRINTNODE_API_KEY_PUNJABI_TADKA=h1eH0zGw6wni65llkoecd1a3k51uSdCWAJhYnL_De-A
+PRINTNODE_API_KEY_MUNCHBOX=MBrJ7izrR8n9gTb5-RluWjjtxReJHShZA2Ay7luWnkQ
+PRINTNODE_API_KEY_GRABIT=W9DlDvh1U7pzq65y6gXCyQHueRbcj5LEtGbh0DUXlkk
 PRINTNODE_API_KEY_24_SEVEN_MART=your-24sevenmart-printnode-api-key
-PRINTNODE_API_KEY_BANNAS_CHOWKI=your-bannas-chowki-printnode-api-key
-PRINTNODE_API_KEY_AMOR=your-amor-printnode-api-key
-PRINTNODE_API_KEY_STARDOM=your-stardom-printnode-api-key
-PRINTNODE_API_KEY_PIZZA_BAKERS=your-pizza-bakers-printnode-api-key
-PRINTNODE_API_KEY_COOKHOUSE=your-cookhouse-printnode-api-key
-PRINTNODE_API_KEY_FOODCOURT=your-foodcourt-printnode-api-key
+PRINTNODE_API_KEY_BANNAS_CHOWKI=oMh77mhbjVReZ0f29xihaMgtDd1IslQj0jyMyAeMhqs
+PRINTNODE_API_KEY_AMOR=ok4BvG5yFrzRXfx4OZ08AVnwhhKehn4ZwoRu3O9iUXY
+PRINTNODE_API_KEY_STARDOM=F9oYR_ArBi4UCBvVne7CuC7S4cGrOhZmXv2pQMvhbe0
+PRINTNODE_API_KEY_PIZZA_BAKERS=lqcFxuYUnhlI4_B5q0eX30KrSZYBzAtvTCO6GzNRI0I
+PRINTNODE_API_KEY_COOKHOUSE=n_Trl9Kw4OfgXa9cEQCWrg4eqytQOGwDZJr8wELH6Qc
+PRINTNODE_API_KEY_FOODCOURT=TYqkDtkjFvRAfg5_zcR1nUE00Ou2zenJHG-9LpGqkkg
 ```
 
 4. Also add Supabase service role key (for database access):
