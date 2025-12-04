@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, CheckCircle, X } from 'lucide-react';
 import Header from '@/components/Header';
 import ModernMenuLayout from '@/components/ModernMenuLayout';
+import { WhatsAppService } from '@/services/whatsappService';
 
 interface MenuItem {
   id: string;
@@ -363,6 +364,78 @@ const TableOrder = () => {
         title: 'Order Placed!',
         description: `Your order #${order.order_number} has been sent to the kitchen`,
       });
+
+      // Send WhatsApp notification to cafe
+      try {
+        console.log('📱 [TABLE ORDER] Starting WhatsApp notification process...');
+        console.log('📱 [TABLE ORDER] Order:', order.order_number);
+        console.log('📱 [TABLE ORDER] Cafe ID:', cafe?.id);
+        console.log('📱 [TABLE ORDER] Cafe Name:', cafe?.name);
+        
+        const whatsappService = WhatsAppService.getInstance();
+        console.log('📱 [TABLE ORDER] WhatsApp service instance created');
+        
+        // Fetch order items with menu item details for WhatsApp
+        const { data: orderItemsData, error: itemsError } = await supabase
+          .from('order_items')
+          .select(`
+            quantity,
+            unit_price,
+            total_price,
+            menu_item:menu_items (
+              name,
+              price
+            )
+          `)
+          .eq('order_id', order.id);
+
+        if (itemsError) {
+          console.error('📱 [TABLE ORDER] Error fetching order items:', itemsError);
+        }
+
+        // Format order data for WhatsApp
+        const orderData = {
+          id: order.id,
+          order_number: order.order_number,
+          customer_name: guestName.trim(),
+          phone_number: `+91${guestPhone}`,
+          delivery_block: 'DINE_IN',
+          total_amount: getTotalAmount().toString(),
+          created_at: order.created_at || new Date().toISOString(),
+          delivery_notes: notes.trim() || '',
+          order_items: orderItemsData?.map((item: any) => ({
+            quantity: item.quantity,
+            menu_item: {
+              name: item.menu_item?.name || 'Unknown Item',
+              price: item.menu_item?.price || item.unit_price
+            },
+            total_price: item.total_price
+          })) || Object.values(cart).map(({ item, quantity }) => ({
+            quantity: quantity,
+            menu_item: {
+              name: item.name,
+              price: item.price
+            },
+            total_price: item.price * quantity
+          }))
+        };
+        
+        console.log('📱 [TABLE ORDER] Order data formatted:', JSON.stringify(orderData, null, 2));
+        console.log('📱 [TABLE ORDER] Calling WhatsApp service...');
+        
+        const whatsappSuccess = await whatsappService.sendOrderNotification(cafe?.id || '', orderData);
+        
+        console.log('📱 [TABLE ORDER] WhatsApp service result:', whatsappSuccess);
+        
+        if (whatsappSuccess) {
+          console.log('✅ [TABLE ORDER] WhatsApp notification sent successfully');
+        } else {
+          console.log('❌ [TABLE ORDER] WhatsApp notification failed');
+        }
+      } catch (whatsappError) {
+        console.error('❌ [TABLE ORDER] WhatsApp notification error:', whatsappError);
+        // Don't fail the order if WhatsApp fails
+      }
     } catch (error: any) {
       console.error('Order placement error:', error);
       

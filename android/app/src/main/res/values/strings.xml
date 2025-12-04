@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MUJ Food Club</string>
+    <string name="title_activity_main">MUJ Food Club</string>
+    <string name="package_name">in.mujfoodclub.app</string>
+    <string name="custom_url_scheme">in.mujfoodclub.app</string>
+</resources>
