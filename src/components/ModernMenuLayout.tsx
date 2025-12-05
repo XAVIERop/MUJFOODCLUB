@@ -335,6 +335,25 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
         </div>
       )}
 
+      {/* Banna's Chowki Tuesday Non-Veg Unavailable Banner */}
+      {(() => {
+        const isTuesday = new Date().getDay() === 2; // 0 = Sunday, 2 = Tuesday
+        const isBannasChowki = cafe?.name?.toLowerCase().includes('banna');
+        const tuesdayNonVegDisabled = (cafe as any)?.tuesday_nonveg_disabled || false;
+        return isTuesday && isBannasChowki && tuesdayNonVegDisabled ? (
+          <div className="bg-orange-50 border-b-2 border-orange-300 px-4 py-3 -mt-2 relative z-20">
+            <div className="flex items-center gap-3 text-center justify-center">
+              <div className="w-5 h-5 rounded-full bg-orange-500 flex-shrink-0 flex items-center justify-center">
+                <span className="text-white text-xs font-bold">!</span>
+              </div>
+              <p className="text-sm font-semibold text-orange-800">
+                Non Veg Not Available - Only for Tuesdays
+              </p>
+            </div>
+          </div>
+        ) : null;
+      })()}
+
       {/* Dev Sweets Ordering Notice Banner */}
       {cafe?.name && (cafe.name.toLowerCase().includes('dev') && cafe.name.toLowerCase().includes('sweet')) && (
         <div className="bg-blue-50 border-b-2 border-blue-200 px-4 py-3 -mt-2 relative z-20">

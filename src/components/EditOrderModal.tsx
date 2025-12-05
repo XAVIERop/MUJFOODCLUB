@@ -144,11 +144,10 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
     }
   };
 
-  // Validation: Only COD orders and not completed
+  // Validation: Only orders that are not completed or cancelled
   const canEdit = useMemo(() => {
     if (!order) return false;
     if (order.status === 'completed' || order.status === 'cancelled') return false;
-    if (order.payment_method !== 'cod') return false;
     return true;
   }, [order]);
 
@@ -449,9 +448,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
         {!canEdit && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
             <p className="text-sm text-red-800">
-              {order.status === 'completed' || order.status === 'cancelled'
-                ? 'This order cannot be edited because it is already completed or cancelled.'
-                : 'This order can only be edited if it is a COD (Cash on Delivery) order.'}
+              This order cannot be edited because it is already completed or cancelled.
             </p>
           </div>
         )}

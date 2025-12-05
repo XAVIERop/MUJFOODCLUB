@@ -72,6 +72,7 @@ interface Cafe {
   average_rating: number | null;
   total_ratings: number | null;
   image_url?: string | null;
+  tuesday_nonveg_disabled?: boolean;
 }
 
 const MenuModern = () => {
@@ -189,19 +190,25 @@ const MenuModern = () => {
           };
         }
         // Push two synthetic portions for Paneer and Chicken using the same price
+        // Check Tuesday restriction for Chicken (non-veg) portion
+        const isTuesday = new Date().getDay() === 2;
+        const isBannasChowki = cafe?.name?.toLowerCase().includes('banna');
+        const tuesdayNonVegDisabled = cafe?.tuesday_nonveg_disabled || false;
+        const chickenOutOfStock = (isTuesday && isBannasChowki && tuesdayNonVegDisabled) ? true : item.out_of_stock;
+        
         acc[key].portions.push({
           id: `${item.id}-paneer`,
           name: 'Paneer',
           price: item.price,
           is_available: item.is_available,
-          out_of_stock: item.out_of_stock
+          out_of_stock: item.out_of_stock // Paneer (veg) keeps original status
         });
         acc[key].portions.push({
           id: `${item.id}-chicken`,
           name: 'Chicken',
           price: item.price,
           is_available: item.is_available,
-          out_of_stock: item.out_of_stock
+          out_of_stock: chickenOutOfStock // Chicken (non-veg) marked out of stock on Tuesdays if setting enabled
         });
         return acc;
       }
@@ -509,10 +516,10 @@ const MenuModern = () => {
           return;
         }
         
-        // Fetch cafe details
+        // Fetch cafe details (including Tuesday non-veg setting)
         const { data: cafeData, error: cafeError } = await supabase
           .from('cafes')
-          .select('*')
+          .select('*, tuesday_nonveg_disabled')
           .eq('id', cafeId)
           .single();
 
@@ -532,7 +539,11 @@ const MenuModern = () => {
           has_image: !!cafeData.image_url
         });
         
-        setCafe(cafeData);
+        // Store cafe data with Tuesday setting
+        setCafe({
+          ...cafeData,
+          tuesday_nonveg_disabled: cafeData.tuesday_nonveg_disabled || false
+        });
 
         // Fetch menu items (including out-of-stock items)
         const { data: menuData, error: menuError } = await supabase
@@ -546,22 +557,38 @@ const MenuModern = () => {
           return;
         }
         
-        setMenuItems(menuData || []);
+        // Check if it's Tuesday, cafe is Banna's Chowki, and setting is enabled
+        const isTuesday = new Date().getDay() === 2; // 0 = Sunday, 2 = Tuesday
+        const isBannasChowki = cafeData.name?.toLowerCase().includes('banna');
+        const tuesdayNonVegDisabled = cafeData.tuesday_nonveg_disabled || false;
+        
+        // If Tuesday, Banna's Chowki, and setting is enabled, mark all non-veg items as out of stock
+        let processedMenuData = menuData || [];
+        if (isTuesday && isBannasChowki && tuesdayNonVegDisabled) {
+          console.log('🥬 Tuesday non-veg restriction enabled for Banna\'s Chowki - marking all non-veg items as out of stock');
+          processedMenuData = processedMenuData.map(item => ({
+            ...item,
+            out_of_stock: item.is_vegetarian === false ? true : item.out_of_stock
+          }));
+        }
+        
+        setMenuItems(processedMenuData);
         
         // Debug logging for out-of-stock items
-        const outOfStockItems = menuData?.filter(item => item.out_of_stock === true) || [];
+        const outOfStockItems = processedMenuData.filter(item => item.out_of_stock === true) || [];
         if (outOfStockItems.length > 0) {
-          console.log('🔍 Found out-of-stock items in database:', outOfStockItems.map(item => ({
+          console.log('🔍 Found out-of-stock items:', outOfStockItems.map(item => ({
             name: item.name,
             out_of_stock: item.out_of_stock,
-            is_available: item.is_available
+            is_available: item.is_available,
+            is_vegetarian: item.is_vegetarian
           })));
         } else {
-          console.log('✅ No out-of-stock items found in database');
+          console.log('✅ No out-of-stock items found');
         }
         
         // Group menu items by name and portion
-        const grouped = groupMenuItems(menuData || []);
+        const grouped = groupMenuItems(processedMenuData);
         setGroupedMenuItems(grouped);
         
       } catch (error) {

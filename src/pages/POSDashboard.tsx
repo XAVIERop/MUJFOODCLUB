@@ -157,6 +157,9 @@ const POSDashboard = () => {
   const [enableDailyStock, setEnableDailyStock] = useState<boolean>(false);
   const [stockResetTime, setStockResetTime] = useState<string>('11:00');
   const [updatingStockSettings, setUpdatingStockSettings] = useState<boolean>(false);
+  // Tuesday non-veg restriction setting (for Banna's Chowki)
+  const [tuesdayNonVegDisabled, setTuesdayNonVegDisabled] = useState<boolean>(false);
+  const [updatingTuesdaySetting, setUpdatingTuesdaySetting] = useState<boolean>(false);
   // Menu items for stock tracking
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [showNoOrdersNotification, setShowNoOrdersNotification] = useState(true);
@@ -1930,7 +1933,7 @@ const POSDashboard = () => {
     fetchCafeName();
   }, [cafeId]);
 
-  // Fetch cafe stock settings
+  // Fetch cafe stock settings and Tuesday non-veg setting
   useEffect(() => {
     const fetchCafeStockSettings = async () => {
       if (!cafeId) return;
@@ -1938,7 +1941,7 @@ const POSDashboard = () => {
       try {
         const { data, error } = await supabase
           .from('cafes')
-          .select('enable_daily_stock, stock_reset_time')
+          .select('enable_daily_stock, stock_reset_time, tuesday_nonveg_disabled, name')
           .eq('id', cafeId)
           .single();
 
@@ -1953,6 +1956,8 @@ const POSDashboard = () => {
         } else {
           setStockResetTime('11:00');
         }
+        // Fetch Tuesday non-veg setting
+        setTuesdayNonVegDisabled(data?.tuesday_nonveg_disabled || false);
       } catch (error: any) {
         console.error('Error fetching cafe stock settings:', error);
       }
@@ -3349,6 +3354,63 @@ const POSDashboard = () => {
                         <p className="text-xs text-muted-foreground">
                           Current reset time: {stockResetTime || 'Not set'} (24-hour format)
                         </p>
+                      </div>
+                    )}
+
+                    {/* Tuesday Non-Veg Restriction (Banna's Chowki only) */}
+                    {cafeName?.toLowerCase().includes('banna') && (
+                      <div className="space-y-4 border-t pt-6 mt-6">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                          <ChefHat className="h-5 w-5" />
+                          Tuesday Non-Veg Restriction
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          When enabled, all non-vegetarian items will be automatically marked as out of stock on Tuesdays. A banner will be shown to customers on the menu page.
+                        </p>
+                        
+                        <div className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="flex-1">
+                            <Label htmlFor="tuesday-nonveg-disabled" className="text-base font-medium">
+                              Disable Non-Veg on Tuesdays
+                            </Label>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Enable this to automatically mark all non-vegetarian items as out of stock every Tuesday.
+                            </p>
+                          </div>
+                          <Switch
+                            id="tuesday-nonveg-disabled"
+                            checked={tuesdayNonVegDisabled}
+                            onCheckedChange={async (checked) => {
+                              if (!cafeId) return;
+                              setUpdatingTuesdaySetting(true);
+                              try {
+                                const { error } = await supabase
+                                  .from('cafes')
+                                  .update({ tuesday_nonveg_disabled: checked })
+                                  .eq('id', cafeId);
+
+                                if (error) throw error;
+
+                                setTuesdayNonVegDisabled(checked);
+                                toast({
+                                  title: 'Success',
+                                  description: checked 
+                                    ? 'Tuesday non-veg restriction enabled' 
+                                    : 'Tuesday non-veg restriction disabled',
+                                });
+                              } catch (error: any) {
+                                toast({
+                                  title: 'Error',
+                                  description: error.message || 'Failed to update Tuesday setting',
+                                  variant: 'destructive',
+                                });
+                              } finally {
+                                setUpdatingTuesdaySetting(false);
+                              }
+                            }}
+                            disabled={updatingTuesdaySetting}
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
