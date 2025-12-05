@@ -25,6 +25,8 @@ import { directPrinterService } from '@/services/directPrinterService';
 // import { useLocalPrint } from '@/hooks/useLocalPrint'; // Disabled - using cafe-specific PrintNode service
 import { usePrintNode } from '@/hooks/usePrintNode';
 import CafeCancellationDialog from './CafeCancellationDialog';
+import EditOrderModal from './EditOrderModal';
+import { supabase } from '@/integrations/supabase/client';
 
 interface OrderItem {
   id: string;
@@ -52,6 +54,7 @@ interface Order {
   table_number?: string;
   customer_name?: string;
   phone_number?: string;
+  payment_method?: string;
   cafe_id: string;
   cafes?: {
     id: string;
@@ -72,6 +75,8 @@ interface CompactOrderGridProps {
   onOrderSelect: (order: Order) => void;
   onStatusUpdate: (orderId: string, newStatus: Order['status']) => void;
   loading?: boolean;
+  cafeId?: string;
+  onOrderUpdated?: () => void;
 }
 
 const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
@@ -79,7 +84,9 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
   orderItems,
   onOrderSelect,
   onStatusUpdate,
-  loading = false
+  loading = false,
+  cafeId,
+  onOrderUpdated
 }) => {
   console.log('CompactOrderGrid received orderItems:', orderItems);
   const { toast } = useToast();
@@ -93,6 +100,9 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
   const [showSimpleReceipt, setShowSimpleReceipt] = useState(false);
   const [simpleReceiptOrder, setSimpleReceiptOrder] = useState<Order | null>(null);
+  const [editOrderModalOpen, setEditOrderModalOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
 
   // Calculate time elapsed since order creation
   const getTimeElapsed = (createdAt: string): string => {
@@ -168,6 +178,29 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
     setSelectedOrder(order);
     onOrderSelect(order);
   };
+
+  // Fetch menu items when cafeId is available
+  useEffect(() => {
+    if (cafeId) {
+      const fetchMenuItems = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('menu_items')
+            .select('*')
+            .eq('cafe_id', cafeId)
+            .order('category', { ascending: true })
+            .order('name', { ascending: true });
+
+          if (error) throw error;
+          setMenuItems(data || []);
+        } catch (error) {
+          console.error('Error fetching menu items:', error);
+        }
+      };
+
+      fetchMenuItems();
+    }
+  }, [cafeId]);
 
   // Prevent body scroll when order details card is open on mobile
   useEffect(() => {
@@ -1352,6 +1385,23 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
 
               {/* Additional Actions */}
               <div className="flex gap-2 mt-4">
+                {/* Edit Order Button - Only for COD orders that are not completed */}
+                {selectedOrder && 
+                 selectedOrder.status !== 'completed' && 
+                 selectedOrder.status !== 'cancelled' &&
+                 selectedOrder.payment_method === 'cod' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setEditingOrder(selectedOrder);
+                      setEditOrderModalOpen(true);
+                    }}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Order
+                  </Button>
+                )}
                 <Button variant="outline" size="sm">
                   <Eye className="w-4 h-4 mr-2" />
                   View Full Details
@@ -1376,6 +1426,29 @@ const CompactOrderGrid: React.FC<CompactOrderGridProps> = memo(({
             setShowSimpleReceipt(false);
             setSimpleReceiptOrder(null);
           }}
+        />
+      )}
+
+      {/* Edit Order Modal */}
+      {editingOrder && cafeId && (
+        <EditOrderModal
+          order={editingOrder}
+          orderItems={orderItems[editingOrder.id] || []}
+          menuItems={menuItems}
+          isOpen={editOrderModalOpen}
+          onClose={() => {
+            setEditOrderModalOpen(false);
+            setEditingOrder(null);
+          }}
+          onOrderUpdated={() => {
+            if (onOrderUpdated) {
+              onOrderUpdated();
+            }
+            setEditOrderModalOpen(false);
+            setEditingOrder(null);
+            setSelectedOrder(null); // Close order details
+          }}
+          cafeId={cafeId}
         />
       )}
     </div>

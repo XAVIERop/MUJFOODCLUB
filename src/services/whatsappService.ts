@@ -10,6 +10,9 @@ export interface OrderData {
   total_amount: number;
   created_at: string;
   delivery_notes?: string;
+  delivery_address?: string;
+  delivery_latitude?: number;
+  delivery_longitude?: number;
   order_items: Array<{
     quantity: number;
     menu_item: {
@@ -70,13 +73,13 @@ export class WhatsAppService {
       
       console.log('📱 [WHATSAPP SERVICE] All checks passed, formatting message...');
       
-      // Format the message
-      const message = this.formatOrderMessage(orderData, cafeSettings.name);
-      console.log('📱 [WHATSAPP SERVICE] Message formatted:', message);
+      // Format the message (returns array of parameters for multi-parameter template)
+      const messageParts = this.formatOrderMessage(orderData, cafeSettings.name);
+      console.log('📱 [WHATSAPP SERVICE] Message formatted (4 params):', messageParts);
       
-      // Send the notification
+      // Send the notification with 4 template parameters
       console.log('📱 [WHATSAPP SERVICE] Sending message to:', cafeSettings.whatsapp_phone);
-      const success = await this.sendMessage(cafeSettings.whatsapp_phone, message);
+      const success = await this.sendMessage(cafeSettings.whatsapp_phone, messageParts);
       
       if (success) {
         console.log('✅ [WHATSAPP SERVICE] Notification sent successfully to:', cafeSettings.whatsapp_phone);
@@ -125,8 +128,10 @@ export class WhatsAppService {
 
   /**
    * Format order data into WhatsApp message
+   * Returns an array of 4 message parts for template parameters
+   * IMPORTANT: Template parameters cannot contain newlines, tabs, or more than 4 consecutive spaces
    */
-  private formatOrderMessage(orderData: OrderData, cafeName: string): string {
+  private formatOrderMessage(orderData: OrderData, cafeName: string): string[] {
     const orderTime = new Date(orderData.created_at).toLocaleString('en-IN', {
       hour: '2-digit',
       minute: '2-digit',
@@ -136,37 +141,81 @@ export class WhatsAppService {
       year: 'numeric'
     });
 
+    // Format items - join with commas (no newlines allowed in parameters)
+    // Clean item names to remove any problematic characters
     const itemsText = orderData.order_items
-      .map(item => `• *${item.menu_item.name}* x${item.quantity} - ₹${item.total_price}`)
-      .join('\n');
+      .map(item => {
+        const cleanName = item.menu_item.name
+          .replace(/[^\w\s]/g, '') // Remove special chars except spaces
+          .replace(/\s+/g, ' ')
+          .trim();
+        return `${cleanName} x${item.quantity} - Rs ${item.total_price}`;
+      })
+      .join(', ');
 
-    const notesText = orderData.delivery_notes && orderData.delivery_notes.trim() 
-      ? `\n📋 *Notes:* ${orderData.delivery_notes}` 
-      : '';
+    // Clean customer name and phone
+    const cleanCustomerName = (orderData.customer_name || 'Customer')
+      .replace(/[^\w\s]/g, '') // Remove special chars
+      .replace(/\s+/g, ' ')
+      .trim()
+      .substring(0, 50);
+    
+    const cleanPhone = (orderData.phone_number || 'N/A')
+      .replace(/[^\d+-]/g, '') // Keep only digits, +, -
+      .trim()
+      .substring(0, 20);
 
-    return `🍽️ *MUJ Food Club* - New Order Alert!
+    // Parameter 1: Order number, customer, phone (with emojis and bold)
+    const param1 = `📦 *Order:* ${orderData.order_number} | 👤 *Customer:* ${cleanCustomerName} | 📱 *Phone:* ${cleanPhone}`;
+    
+    // Parameter 2: Block and time (with emojis and bold)
+    const blockDisplay = orderData.delivery_block === 'OFF_CAMPUS' || !orderData.delivery_block ? 'N/A' : orderData.delivery_block;
+    const blockEmoji = orderData.delivery_block === 'DINE_IN' ? '🪑' : orderData.delivery_block === 'OFF_CAMPUS' ? '📍' : '🏠';
+    const param2 = `${blockEmoji} *Block:* ${blockDisplay} | ⏰ *Time:* ${orderTime}`;
+    
+    // Parameter 3: Items list (with emoji and bold, limit length to avoid issues)
+    const param3 = `🍽️ *Items:* ${itemsText.substring(0, 150)}${itemsText.length > 150 ? '...' : ''}`;
+    
+    // Parameter 4: Total, notes, and address (for outside cafes) (with emojis and bold)
+    let param4 = `💰 *Total:* Rs ${orderData.total_amount}`;
+    
+    // Add delivery address for outside cafes (simplified)
+    if (orderData.delivery_block === 'OFF_CAMPUS' && orderData.delivery_address) {
+      const cleanAddress = orderData.delivery_address
+        .replace(/[^\w\s,.-]/g, '') // Only allow alphanumeric, spaces, comma, period, dash
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 60); // Shorter address to avoid issues
+      if (cleanAddress) {
+        param4 += ` | 📍 *Address:* ${cleanAddress}`;
+      }
+    }
+    
+    // Add special instructions/notes if available (for table orders)
+    if (orderData.delivery_notes && orderData.delivery_notes.trim()) {
+      const cleanNotes = orderData.delivery_notes
+        .replace(/[^\w\s,.-]/g, '') // Clean special chars except safe ones
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 50); // Limit length
+      if (cleanNotes) {
+        param4 += ` | 📝 *Notes:* ${cleanNotes}`;
+      }
+    }
 
-📋 *Order:* #${orderData.order_number}
-👤 *Customer:* ${orderData.customer_name}
-📱 *Phone:* ${orderData.phone_number}
-📍 *Block:* ${orderData.delivery_block}
-💰 *Total:* ₹${orderData.total_amount}
-⏰ *Time:* ${orderTime}
-
-📝 *Items:*
-${itemsText}${notesText}
-
-🔗 *Full Dashboard:* ${window.location.origin}/pos-dashboard`;
+    return [param1, param2, param3, param4];
   }
 
   /**
    * Send WhatsApp message using Aisensy WhatsApp Business API
    * Falls back to Meta API if Aisensy is not configured
+   * @param phoneNumber - Recipient phone number
+   * @param message - Message string or array of template parameters
    */
-  private async sendMessage(phoneNumber: string, message: string): Promise<boolean> {
+  private async sendMessage(phoneNumber: string, message: string | string[]): Promise<boolean> {
     try {
       console.log('📱 WhatsApp Service: Sending message to:', phoneNumber);
-      console.log('📱 WhatsApp Service: Message:', message);
+      console.log('📱 WhatsApp Service: Message:', Array.isArray(message) ? `[${message.length} parameters]` : message);
       
       // Debug: Check environment variables
       console.log('🔍 Environment Variables Debug (Aisensy):');
@@ -195,8 +244,10 @@ ${itemsText}${notesText}
   /**
    * Send message via Aisensy WhatsApp Business API
    * Uses Supabase Edge Function to avoid CORS issues
+   * @param phoneNumber - Recipient phone number
+   * @param message - Message string or array of template parameters
    */
-  private async sendViaAisensy(phoneNumber: string, message: string): Promise<boolean> {
+  private async sendViaAisensy(phoneNumber: string, message: string | string[]): Promise<boolean> {
     try {
       // Format phone number for Aisensy (remove + and spaces, keep only digits)
       let cleanNumber = phoneNumber.replace(/[^0-9]/g, '');
@@ -226,16 +277,19 @@ ${itemsText}${notesText}
         console.error('   Supabase Anon Key:', supabaseAnonKey ? '✅ Set' : '❌ Missing');
         return false;
       }
-
+      
       // Call Supabase Edge Function to send WhatsApp message
       // This avoids CORS issues by making the API call server-side
       const edgeFunctionUrl = `${supabaseUrl}/functions/v1/dynamic-function`;
       
+      // Use 4 parameters format
+      const messageParts = Array.isArray(message) ? message : [message];
+      
       console.log('📱 Calling Supabase Edge Function:', edgeFunctionUrl);
       console.log('📱 Request payload:', {
         phoneNumber: cleanNumber,
-        messageLength: message.length,
-        messagePreview: message.substring(0, 100) + '...'
+        messagePartsCount: messageParts.length,
+        messagePreview: messageParts.map(p => p.substring(0, 50) + '...')
       });
       
       const response = await fetch(edgeFunctionUrl, {
@@ -247,7 +301,8 @@ ${itemsText}${notesText}
         },
         body: JSON.stringify({
           phoneNumber: cleanNumber,
-          message: message
+          messageParts: messageParts,
+          campaignName: 'Order Notification V2'
         })
       });
 
@@ -261,7 +316,7 @@ ${itemsText}${notesText}
         console.error('❌ Edge Function returned non-JSON response:', responseText.substring(0, 200));
         if (response.status === 404) {
           console.error('❌ Edge Function not found (404). Deploy it first!');
-          console.error('   Run: supabase functions deploy dynamic-function');
+          console.error('   Run: supabase functions deploy send-whatsapp');
         }
         return false;
       }
@@ -279,7 +334,7 @@ ${itemsText}${notesText}
         console.error('❌ Aisensy API error:', responseData.error || 'Unknown error');
         if (response.status === 404) {
           console.error('💡 Edge Function not deployed. Deploy it using:');
-          console.error('   supabase functions deploy dynamic-function');
+          console.error('   supabase functions deploy send-whatsapp');
         } else if (response.status === 500) {
           console.error('💡 Edge Function error. Check Supabase logs for details.');
         }

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfileSubscriptions } from './useSubscriptionManager';
+import { queryClient } from '@/lib/queryClient';
 
 interface AuthContextType {
   user: User | null;
@@ -537,13 +538,91 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      console.log('🚪 Starting logout process...');
+      
+      // Step 1: Clear React Query cache first
+      console.log('🧹 Clearing React Query cache...');
+      queryClient.clear();
+      
+      // Step 2: Clear all localStorage items related to auth
+      console.log('🧹 Clearing localStorage...');
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (
+          key.startsWith('sb-') || // Supabase keys
+          key.includes('auth') ||
+          key.includes('session') ||
+          key.includes('user') ||
+          key.includes('profile') ||
+          key === 'admin_authenticated' ||
+          key === 'printedOrders'
+        )) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          console.warn(`Failed to remove ${key}:`, e);
+        }
+      });
+      
+      // Step 3: Clear sessionStorage
+      console.log('🧹 Clearing sessionStorage...');
+      try {
+        sessionStorage.clear();
+      } catch (e) {
+        console.warn('Failed to clear sessionStorage:', e);
+      }
+      
+      // Step 4: Sign out from Supabase
+      console.log('🚪 Signing out from Supabase...');
+      const { error: signOutError } = await supabase.auth.signOut();
+      
+      if (signOutError) {
+        console.error('Supabase signOut error:', signOutError);
+        // Continue with logout even if Supabase signOut fails
+      }
+      
+      // Step 5: Clear React state
+      console.log('🧹 Clearing React state...');
       setUser(null);
       setSession(null);
       setProfile(null);
-      window.location.href = '/';
+      
+      // Step 6: Wait a bit to ensure auth state change is processed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Step 7: Verify session is cleared
+      const { data: { session: remainingSession } } = await supabase.auth.getSession();
+      if (remainingSession) {
+        console.warn('⚠️ Session still exists after signOut, forcing clear...');
+        // Force clear by removing auth tokens manually
+        try {
+          // Clear Supabase auth storage
+          const supabaseKeys = Object.keys(localStorage).filter(key => key.startsWith('sb-'));
+          supabaseKeys.forEach(key => localStorage.removeItem(key));
+        } catch (e) {
+          console.warn('Failed to force clear auth:', e);
+        }
+      }
+      
+      // Step 8: Redirect with cache-busting
+      console.log('🔄 Redirecting to home...');
+      // Use replace instead of href to prevent back button issues
+      // Add timestamp to prevent caching
+      window.location.replace(`/?logout=${Date.now()}`);
+      
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('❌ Error signing out:', error);
+      // Even if there's an error, try to redirect
+      try {
+        window.location.replace('/');
+      } catch (redirectError) {
+        console.error('Failed to redirect:', redirectError);
+      }
     }
   };
 

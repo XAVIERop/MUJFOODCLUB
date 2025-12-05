@@ -442,58 +442,104 @@ const ManualOrderEntry: React.FC<ManualOrderEntryProps> = ({ cafeId }) => {
       // Generate manual order number (MO prefix for Manual Order)
       const orderNumber = `MO-${Date.now().toString().slice(-6)}`;
 
-      // Create order directly via Supabase
-      // Note: Could be refactored to use a database function for consistency, but current implementation works
-      const { data: orderData, error: orderError } = await supabase
+      // Prepare order items for atomic creation
+      const orderItemsForRPC = cart.map(item => ({
+        menu_item_id: item.menu_item_id,
+        quantity: item.quantity,
+        unit_price: item.price,
+        total_price: item.total,
+        special_instructions: item.special_instructions || null
+      }));
+
+      // Determine delivery_block based on order type
+      const deliveryBlock = customerInfo.orderType === 'dine_in' ? 'DINE_IN' : 
+                            customerInfo.orderType === 'takeaway' ? 'TAKEAWAY' : 
+                            customerInfo.orderType === 'delivery' && cafeLocationScope === 'off_campus' 
+                              ? 'OFF_CAMPUS'
+                              : customerInfo.block || null;
+
+      // Use atomic RPC function to create order + items in single transaction
+      // Note: Parameter order matters - required params first, then optional ones
+      const { data: rpcResult, error: rpcError } = await supabase
+        .rpc('create_order_with_items', {
+          // Required parameters (must come first)
+          p_user_id: user?.id || '00000000-0000-0000-0000-000000000001', // Use system user ID
+          p_cafe_id: cafeId,
+          p_order_number: orderNumber,
+          p_total_amount: total,
+          p_delivery_block: deliveryBlock,
+          p_order_items: orderItemsForRPC,
+          // Optional parameters (all have defaults)
+          p_order_type: customerInfo.orderType,
+          p_table_number: customerInfo.orderType === 'dine_in' ? customerInfo.block : null,
+          p_delivery_address: customerInfo.orderType === 'delivery' && cafeLocationScope === 'off_campus' 
+                              ? customerInfo.deliveryAddress || null 
+                              : null,
+          p_delivery_latitude: null,
+          p_delivery_longitude: null,
+          p_delivery_notes: customerInfo.specialInstructions || null,
+          p_customer_name: customerInfo.name || 'Manual Order',
+          p_phone_number: customerInfo.phone || null,
+          p_payment_method: 'cod',
+          p_points_earned: Math.floor(total / 10),
+          p_referral_code_used: null,
+          p_discount_amount: discountAmount,
+          p_team_member_credit: 0,
+          p_estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString()
+        });
+
+      if (rpcError) {
+        console.error('❌ Atomic order creation error:', rpcError);
+        throw rpcError;
+      }
+
+      if (!rpcResult || !rpcResult.id) {
+        console.error('❌ Order was not created - no order data returned from RPC');
+        throw new Error('Order creation failed - no order data returned from database');
+      }
+
+      console.log('✅ Order and items created atomically:', rpcResult.order_number, 'ID:', rpcResult.id, 'Items:', rpcResult.items_inserted);
+
+      // Fetch the complete order data for subsequent operations
+      let orderData: any = null;
+
+      const { data: fetchedOrder, error: fetchError } = await supabase
         .from('orders')
-        .insert({
-          order_number: orderNumber,
-          cafe_id: cafeId,
-          user_id: user?.id || '00000000-0000-0000-0000-000000000001', // Use system user ID
+        .select('*')
+        .eq('id', rpcResult.id)
+        .single();
+
+      if (fetchError || !fetchedOrder) {
+        console.error('❌ Error fetching created order:', fetchError);
+        // Use RPC result as fallback
+        orderData = {
+          id: rpcResult.id,
+          order_number: rpcResult.order_number,
           status: 'received',
           total_amount: total,
           order_type: customerInfo.orderType,
-          delivery_block: customerInfo.orderType === 'dine_in' ? 'DINE_IN' : 
-                          customerInfo.orderType === 'takeaway' ? 'TAKEAWAY' : 
-                          customerInfo.orderType === 'delivery' && cafeLocationScope === 'off_campus' 
-                            ? 'OFF_CAMPUS'
-                            : customerInfo.block || null,
+          delivery_block: deliveryBlock,
+          table_number: customerInfo.orderType === 'dine_in' ? customerInfo.block : null,
           delivery_address: customerInfo.orderType === 'delivery' && cafeLocationScope === 'off_campus' 
                             ? customerInfo.deliveryAddress || null 
                             : null,
-          table_number: customerInfo.orderType === 'dine_in' ? customerInfo.block : null,
           payment_method: 'cod',
           points_earned: Math.floor(total / 10),
           estimated_delivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
           customer_name: customerInfo.name || 'Manual Order',
           phone_number: customerInfo.phone || null,
-          delivery_notes: customerInfo.specialInstructions || null
-        })
-        .select()
-        .single();
-
-      if (orderError) {
-        console.error('Order creation error:', orderError);
-        throw orderError;
+          delivery_notes: customerInfo.specialInstructions || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        console.warn('⚠️ Using fallback order data from RPC result');
+      } else {
+        orderData = fetchedOrder;
       }
 
-      // Create order items
-      const orderItems = cart.map(item => ({
-        order_id: orderData.id,
-        menu_item_id: item.menu_item_id,
-        quantity: item.quantity,
-        unit_price: item.price,
-        total_price: item.total,
-        special_instructions: item.special_instructions
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) {
-        console.error('Items creation error:', itemsError);
-        throw itemsError;
+      // Verify order is available
+      if (!orderData || !orderData.id) {
+        throw new Error('Order creation failed - could not retrieve order data');
       }
 
       // Apply coupon if exists (skip for now as coupons table might not exist)

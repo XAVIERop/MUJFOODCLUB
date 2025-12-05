@@ -299,6 +299,8 @@ const POSDashboard = () => {
         
         // Fetch order items separately for simple data
         const itemsData: {[key: string]: OrderItem[]} = {};
+        const ordersWithoutItems: string[] = []; // Track orders missing items
+        
         for (const order of transformedOrders) {
           console.log(`🔍 Fetching items for order ${order.id} (${order.order_number})`);
           const { data: items, error: itemsError } = await supabase
@@ -312,16 +314,57 @@ const POSDashboard = () => {
           if (itemsError) {
             console.error(`❌ Error fetching items for order ${order.id}:`, itemsError);
             console.error('Items error details:', itemsError.message, itemsError.details, itemsError.hint);
+            ordersWithoutItems.push(order.id);
           } else {
             console.log(`✅ Items for order ${order.id}:`, items?.length || 0, 'items');
             if (items && items.length > 0) {
               itemsData[order.id] = items;
               console.log('Items data:', items);
+            } else {
+              // Order exists but has no items - might be a race condition
+              console.warn(`⚠️ Order ${order.order_number} (${order.id}) has no items - will retry fetching`);
+              ordersWithoutItems.push(order.id);
             }
           }
         }
         console.log('Final itemsData:', itemsData);
         setOrderItems(itemsData);
+        
+        // Retry fetching items for orders that are missing items (race condition fix)
+        if (ordersWithoutItems.length > 0) {
+          console.log(`🔄 Retrying fetch for ${ordersWithoutItems.length} orders without items...`);
+          setTimeout(async () => {
+            const retryItemsData: {[key: string]: OrderItem[]} = {};
+            for (const orderId of ordersWithoutItems) {
+              try {
+                const { data: items, error: itemsError } = await supabase
+                  .from('order_items')
+                  .select(`
+                    *,
+                    menu_item:menu_items(name, description, is_vegetarian, category)
+                  `)
+                  .eq('order_id', orderId);
+                
+                if (itemsError) {
+                  console.error(`❌ Retry failed for order ${orderId}:`, itemsError);
+                } else if (items && items.length > 0) {
+                  console.log(`✅ Retry successful for order ${orderId}: found ${items.length} items`);
+                  retryItemsData[orderId] = items;
+                } else {
+                  console.warn(`⚠️ Order ${orderId} still has no items after retry - may be a data issue`);
+                }
+              } catch (error) {
+                console.error(`❌ Error retrying fetch for order ${orderId}:`, error);
+              }
+            }
+            
+            // Update order items with retry results
+            if (Object.keys(retryItemsData).length > 0) {
+              setOrderItems(prev => ({ ...prev, ...retryItemsData }));
+              console.log('✅ Updated order items after retry:', retryItemsData);
+            }
+          }, 500); // Wait 500ms before retry to allow items to be inserted
+        }
       } else {
         console.log('Full query successful, found orders:', data?.length || 0);
         console.log('Sample order data:', data?.[0]);
@@ -330,15 +373,57 @@ const POSDashboard = () => {
         
         // Extract order items from the joined data
         const itemsData: {[key: string]: OrderItem[]} = {};
+        const ordersWithoutItems: string[] = []; // Track orders missing items
+        
         for (const order of data || []) {
           console.log(`🔍 Processing order ${order.id} (${order.order_number}):`, order.order_items?.length || 0, 'items');
           if (order.order_items && order.order_items.length > 0) {
             itemsData[order.id] = order.order_items;
             console.log('Order items:', order.order_items);
+          } else {
+            // Order exists but has no items - might be a race condition
+            console.warn(`⚠️ Order ${order.order_number} (${order.id}) has no items - will retry fetching`);
+            ordersWithoutItems.push(order.id);
           }
         }
         console.log('Final itemsData from joined query:', itemsData);
         setOrderItems(itemsData);
+        
+        // Retry fetching items for orders that are missing items (race condition fix)
+        if (ordersWithoutItems.length > 0) {
+          console.log(`🔄 Retrying fetch for ${ordersWithoutItems.length} orders without items...`);
+          setTimeout(async () => {
+            const retryItemsData: {[key: string]: OrderItem[]} = {};
+            for (const orderId of ordersWithoutItems) {
+              try {
+                const { data: items, error: itemsError } = await supabase
+                  .from('order_items')
+                  .select(`
+                    *,
+                    menu_item:menu_items(name, description, is_vegetarian, category)
+                  `)
+                  .eq('order_id', orderId);
+                
+                if (itemsError) {
+                  console.error(`❌ Retry failed for order ${orderId}:`, itemsError);
+                } else if (items && items.length > 0) {
+                  console.log(`✅ Retry successful for order ${orderId}: found ${items.length} items`);
+                  retryItemsData[orderId] = items;
+                } else {
+                  console.warn(`⚠️ Order ${orderId} still has no items after retry - may be a data issue`);
+                }
+              } catch (error) {
+                console.error(`❌ Error retrying fetch for order ${orderId}:`, error);
+              }
+            }
+            
+            // Update order items with retry results
+            if (Object.keys(retryItemsData).length > 0) {
+              setOrderItems(prev => ({ ...prev, ...retryItemsData }));
+              console.log('✅ Updated order items after retry:', retryItemsData);
+            }
+          }, 500); // Wait 500ms before retry to allow items to be inserted
+        }
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -2738,6 +2823,7 @@ const POSDashboard = () => {
             {/* Enhanced Grid View */}
             {useCompactLayout && (
             <EnhancedOrderGrid
+              onOrderUpdated={fetchOrders}
               orders={filteredOrders}
               orderItems={orderItems}
               onOrderSelect={handleOrderSelect}

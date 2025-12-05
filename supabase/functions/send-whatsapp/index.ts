@@ -10,7 +10,8 @@ const AISENSY_PHONE_NUMBER = Deno.env.get('AISENSY_PHONE_NUMBER') || '9196258512
 
 interface WhatsAppRequest {
   phoneNumber: string;
-  message: string;
+  message?: string; // Single message (for backward compatibility)
+  messageParts?: string[]; // Multiple template parameters (for new format)
   campaignName?: string; // Optional: campaign name, defaults to 'Order Notification'
 }
 
@@ -27,11 +28,29 @@ serve(async (req) => {
   }
 
   try {
-    const { phoneNumber, message, campaignName } = await req.json() as WhatsAppRequest;
+    const { phoneNumber, message, messageParts, campaignName } = await req.json() as WhatsAppRequest;
 
-    if (!phoneNumber || !message) {
+    if (!phoneNumber || (!message && !messageParts)) {
       return new Response(
-        JSON.stringify({ success: false, error: 'phoneNumber and message are required' }),
+        JSON.stringify({ success: false, error: 'phoneNumber and message/messageParts are required' }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    }
+
+    // Use messageParts if provided (4 parameters), otherwise fallback to single message
+    const templateParams = messageParts && messageParts.length > 0 
+      ? messageParts 
+      : (message ? [message] : []);
+
+    if (templateParams.length === 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'message or messageParts is required' }),
         {
           status: 400,
           headers: {
@@ -47,7 +66,8 @@ serve(async (req) => {
 
     console.log('📱 Sending WhatsApp via Aisensy:', {
       to: cleanNumber,
-      messageLength: message.length,
+      templateParamsCount: templateParams.length,
+      messageLength: templateParams.join(' ').length,
       apiBaseUrl: AISENSY_API_BASE_URL
     });
 
@@ -56,33 +76,99 @@ serve(async (req) => {
     
     console.log(`📡 Using Aisensy API endpoint: ${apiUrl}`);
 
-    // Extract customer name from message if possible
-    // Message format: "*Customer:* John Doe" or "👤 *Customer:* John Doe"
-    const customerNameMatch = message.match(/(?:👤\s*)?\*Customer:\*\s*(.+?)(?:\n|$)/);
-    const customerName = customerNameMatch ? customerNameMatch[1].trim() : 'Customer';
+    // Extract customer name from first parameter - try multiple patterns
+    const firstParam = templateParams[0] || '';
+    let customerName = 'Customer'; // Default fallback
+    
+    // Try to extract customer name from various patterns
+    const patterns = [
+      /Customer:\s*([^|]+)/,           // "Customer: John Doe |"
+      /customer:\s*([^|]+)/i,          // Case insensitive
+      /Customer\s+([^|]+)/,            // "Customer John Doe |"
+      /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/, // Any capitalized name pattern
+    ];
+    
+    for (const pattern of patterns) {
+      const match = firstParam.match(pattern);
+      if (match && match[1]) {
+        customerName = match[1].trim();
+        break;
+      }
+    }
+    
+    // Clean userName - Aisensy requires alphanumeric and spaces only, max 50 chars
+    customerName = customerName
+      .replace(/[^\w\s]/g, '') // Remove special characters
+      .replace(/\s+/g, ' ')    // Normalize spaces
+      .trim()
+      .substring(0, 50);       // Max 50 characters
+    
+    // If still empty or just whitespace, use default
+    if (!customerName || customerName.length === 0) {
+      customerName = 'Customer';
+    }
     
     // Use provided campaignName or default
-    // IMPORTANT: This campaign must be created in Aisensy dashboard first and set to "Live"
-    const finalCampaignName = campaignName || Deno.env.get('AISENSY_DEFAULT_CAMPAIGN_NAME') || 'Order Notification';
+    // IMPORTANT: Make sure this campaign name exactly matches what's in Aisensy dashboard
+    const finalCampaignName = campaignName || Deno.env.get('AISENSY_DEFAULT_CAMPAIGN_NAME') || 'Order Notification V2';
     
-    // Request body according to Aisensy API documentation
-    // The message will be sent as template parameters
-    // You need to create a WhatsApp template in Aisensy that accepts the message as a parameter
-    const requestBody = {
+    console.log('📋 Campaign Configuration:', {
+      provided: campaignName,
+      env: Deno.env.get('AISENSY_DEFAULT_CAMPAIGN_NAME'),
+      final: finalCampaignName,
+      templateParamsCount: templateParams.length
+    });
+    
+    // Build paramsFallbackValue - use numeric keys "1", "2", "3", "4"
+    // IMPORTANT: Don't clean templateParams themselves, only clean fallback values
+    // Keep emojis and asterisks (*) for bold formatting in templateParams
+    const paramsFallbackValue: Record<string, string> = {};
+    templateParams.forEach((param, index) => {
+      // For fallback, create a clean version but preserve emojis and asterisks
+      // Remove only truly problematic characters, keep emojis, asterisks, and common punctuation
+      const cleanParam = param
+        .replace(/[^\w\s|.,:()*-]/g, '') // Keep safe characters including asterisks for bold
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 150); // Shorter fallback
+      paramsFallbackValue[`${index + 1}`] = cleanParam || `Param ${index + 1}`;
+    });
+    
+    // Request body - adjust based on template parameter count
+    // If single parameter, use simpler format; if multiple, use full format
+    const requestBody: any = {
       apiKey: AISENSY_API_KEY,
       campaignName: finalCampaignName,
       destination: cleanNumber,
       userName: customerName,
-      source: AISENSY_PHONE_NUMBER, // Optional: source of lead
-      templateParams: [message] // Send full message as first template param
+      source: AISENSY_PHONE_NUMBER,
+      media: {},
+      buttons: [],
+      carouselCards: [],
+      location: {},
+      attributes: {}
     };
+    
+    // Add template parameters based on count
+    if (templateParams.length === 1) {
+      // Single parameter template
+      requestBody.templateParams = templateParams[0];
+      requestBody.paramsFallbackValue = { "1": paramsFallbackValue["1"] || templateParams[0].substring(0, 150) };
+    } else {
+      // Multi-parameter template (2, 3, 4, etc.)
+      requestBody.templateParams = templateParams;
+      requestBody.paramsFallbackValue = paramsFallbackValue;
+    }
 
     try {
+      // Log the actual message content being sent for debugging
       console.log('📤 Sending request to Aisensy API:', {
         url: apiUrl,
         destination: cleanNumber,
         userName: customerName,
-        messageLength: message.length
+        templateParamsCount: templateParams.length,
+        templateParams: templateParams,
+        campaignName: finalCampaignName
       });
 
       const response = await fetch(apiUrl, {
@@ -94,7 +180,18 @@ serve(async (req) => {
       });
 
       const responseText = await response.text();
-      console.log(`📥 Aisensy API Response:`, response.status, responseText.substring(0, 500));
+      console.log(`📥 Aisensy API Response (Status ${response.status}):`, responseText);
+      
+      // Log full request body for debugging
+      console.log('📋 Full Request Body:', JSON.stringify(requestBody, null, 2));
+      console.log('📋 Request Details:', {
+        campaignName: finalCampaignName,
+        templateParamsCount: templateParams.length,
+        templateParams: templateParams,
+        userName: customerName,
+        userNameLength: customerName.length,
+        destination: cleanNumber
+      });
 
       if (response.ok) {
         console.log(`✅ Successfully sent WhatsApp message via Aisensy`);

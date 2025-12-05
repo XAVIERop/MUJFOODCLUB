@@ -36,6 +36,8 @@ import { directPrinterService } from '@/services/directPrinterService';
 import { usePrintNode } from '@/hooks/usePrintNode';
 import { unifiedPrintService } from '@/services/unifiedPrintService';
 import CafeCancellationDialog from './CafeCancellationDialog';
+import EditOrderModal from './EditOrderModal';
+import { supabase } from '@/integrations/supabase/client';
 
 interface OrderItem {
   id: string;
@@ -64,6 +66,7 @@ interface Order {
   table_number?: string;
   customer_name?: string;
   phone_number?: string;
+  payment_method?: string;
   cafe_id: string;
   cafes?: {
     id: string;
@@ -88,6 +91,7 @@ interface EnhancedOrderGridProps {
   staff?: Array<{id: string; staff_name: string | null; role: string; profile?: {full_name: string}}>;
   onStaffUpdate?: (orderId: string, staffId: string | null) => void;
   getStaffDisplayName?: (staff: any) => string;
+  onOrderUpdated?: () => void; // Callback when order is edited
 }
 
 const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
@@ -99,7 +103,8 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
   cafeId,
   staff = [],
   onStaffUpdate,
-  getStaffDisplayName
+  getStaffDisplayName,
+  onOrderUpdated
 }) => {
   const { toast } = useToast();
   const { isConnected, isPrinting, printBothReceipts } = usePrinter();
@@ -117,6 +122,9 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [cancelDialogOrder, setCancelDialogOrder] = useState<Order | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [editOrderModalOpen, setEditOrderModalOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
 
   // Detect mobile screen size
   useEffect(() => {
@@ -313,6 +321,29 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [hoveredOrder]);
+
+  // Fetch menu items when cafeId is available
+  useEffect(() => {
+    if (cafeId) {
+      const fetchMenuItems = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('menu_items')
+            .select('*')
+            .eq('cafe_id', cafeId)
+            .order('category', { ascending: true })
+            .order('name', { ascending: true });
+
+          if (error) throw error;
+          setMenuItems(data || []);
+        } catch (error) {
+          console.error('Error fetching menu items:', error);
+        }
+      };
+
+      fetchMenuItems();
+    }
+  }, [cafeId]);
 
   // Helper function to create receipt data
   const createReceiptData = (order: Order) => {
@@ -900,6 +931,28 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
 
             {/* Actions */}
             <div className="flex flex-wrap gap-2 pt-2 border-t">
+              {/* Edit Order Button - Only for COD orders that are not completed */}
+              {hoveredOrder && 
+               hoveredOrder.status !== 'completed' && 
+               hoveredOrder.status !== 'cancelled' &&
+               hoveredOrder.payment_method === 'cod' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingOrder(hoveredOrder);
+                    setEditOrderModalOpen(true);
+                    closePopup();
+                  }}
+                  className="text-lg px-3 py-2"
+                  title="Edit Order"
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+              )}
+              
               {/* Only show Update button for orders that are not cancelled or completed */}
               {hoveredOrder && hoveredOrder.status !== 'cancelled' && hoveredOrder.status !== 'completed' && (
                 <Button
@@ -1016,6 +1069,28 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
             setShowSimpleReceipt(false);
             setSimpleReceiptOrder(null);
           }}
+        />
+      )}
+
+      {/* Edit Order Modal */}
+      {editingOrder && cafeId && (
+        <EditOrderModal
+          order={editingOrder}
+          orderItems={orderItems[editingOrder.id] || []}
+          menuItems={menuItems}
+          isOpen={editOrderModalOpen}
+          onClose={() => {
+            setEditOrderModalOpen(false);
+            setEditingOrder(null);
+          }}
+          onOrderUpdated={() => {
+            if (onOrderUpdated) {
+              onOrderUpdated();
+            }
+            setEditOrderModalOpen(false);
+            setEditingOrder(null);
+          }}
+          cafeId={cafeId}
         />
       )}
 
