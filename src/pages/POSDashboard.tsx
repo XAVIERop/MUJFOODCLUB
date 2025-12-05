@@ -789,9 +789,10 @@ const POSDashboard = () => {
   const autoPrintReceiptWithCafeService = async (order: Order) => {
     console.log('🚀 UNIFIED PRINT: Using Unified Print Service!');
     
-    // Fetch cafe data to check if it's Grabit or Pizza Bakers
+    // Fetch cafe data to check if it's Grabit, Pizza Bakers, or Banna's Chowki
     let isGrabit = false;
     let isPizzaBakers = false;
+    let isBannasChowki = false;
     
     if (order.cafe_id && cafeId) {
       const { data: cafeData } = await supabase
@@ -805,12 +806,14 @@ const POSDashboard = () => {
         const cafeSlug = cafeData.slug?.toLowerCase() || '';
         isGrabit = cafeName.includes('grabit') || cafeSlug === 'grabit';
         isPizzaBakers = cafeName.includes('pizza bakers');
+        isBannasChowki = cafeName.includes('banna');
         
         console.log('🔍 AUTO-PRINT: Cafe check:', {
           cafeName: cafeData.name,
           cafeSlug: cafeData.slug,
           isGrabit,
-          isPizzaBakers
+          isPizzaBakers,
+          isBannasChowki
         });
       }
     }
@@ -982,7 +985,16 @@ const POSDashboard = () => {
         throw new Error('Cafe ID not available for printing');
       }
       
-      const result = await unifiedPrintService.printBoth(receiptData, cafeId);
+      // Banna's Chowki: Only print KOT automatically (not receipt)
+      // KOT will automatically split into veg and non-veg
+      let result;
+      if (isBannasChowki) {
+        console.log('🥬 AUTO-PRINT: Banna\'s Chowki - printing KOT only (veg + non-veg split)');
+        result = await unifiedPrintService.printKOT(receiptData, cafeId);
+      } else {
+        // For other cafes, print both KOT and Receipt
+        result = await unifiedPrintService.printBoth(receiptData, cafeId);
+      }
       
       if (result.success) {
         console.log('✅ UNIFIED PRINT: Success!', result);
@@ -992,6 +1004,7 @@ const POSDashboard = () => {
         
         // Mark this order as printed to prevent duplicates (only for non-Grabit orders)
         // For Grabit, we don't mark as printed so it can be reprinted if needed
+        // Banna's Chowki should be marked as printed to prevent duplicate KOT prints
         if (!isGrabit) {
           setPrintedOrders(prev => new Set(prev).add(order.id));
           
@@ -999,16 +1012,21 @@ const POSDashboard = () => {
           const printedOrdersArray = Array.from(printedOrders);
           printedOrdersArray.push(order.id);
           localStorage.setItem('printedOrders', JSON.stringify(printedOrdersArray));
+          
+          if (isBannasChowki) {
+            console.log('✅ AUTO-PRINT: Banna\'s Chowki order marked as printed to prevent duplicates:', order.order_number);
+          }
         }
         
         // Check if this is Banna's Chowki for split printing message
-        const isBannasChowki = receiptData.cafe_name?.toLowerCase().includes('banna');
         const printMessage = isBannasChowki && result.method?.includes('split')
-          ? `KOTs (Veg & Non-Veg) and Receipt for order #${order.order_number} printed`
+          ? `KOTs (Veg & Non-Veg) for order #${order.order_number} printed automatically`
+          : isBannasChowki
+          ? `KOT for order #${order.order_number} printed automatically`
           : `KOT and Receipt for order #${order.order_number} printed using ${result.method}${isGrabit ? ' (Auto-printed for Grabit)' : ''}`;
         
         toast({
-          title: "Receipt Printed",
+          title: isBannasChowki ? "KOT Printed" : "Receipt Printed",
           description: printMessage,
         });
       } else {

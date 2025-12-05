@@ -931,11 +931,11 @@ const EnhancedOrderGrid: React.FC<EnhancedOrderGridProps> = ({
 
             {/* Actions */}
             <div className="flex flex-wrap gap-2 pt-2 border-t">
-              {/* Edit Order Button - Only for COD orders that are not completed */}
+              {/* Edit Order Button - Only for COD/Cash orders (delivery/table) that are not completed */}
               {hoveredOrder && 
                hoveredOrder.status !== 'completed' && 
                hoveredOrder.status !== 'cancelled' &&
-               hoveredOrder.payment_method === 'cod' && (
+               (hoveredOrder.payment_method === 'cod' || hoveredOrder.payment_method === 'cash' || hoveredOrder.order_type === 'table_order') && (
                 <Button
                   size="sm"
                   variant="outline"
