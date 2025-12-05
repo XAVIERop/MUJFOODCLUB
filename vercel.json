@@ -38,7 +38,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://maps.googleapis.com https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob: https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com https://www.google-analytics.com; connect-src 'self' https://*.supabase.co https://api.printnode.com https://api.twilio.com https://*.vercel.app https://*.vercel.live https://maps.googleapis.com https://www.google-analytics.com wss://*.supabase.co; frame-src 'self' https://docs.google.com https://mozilla.github.io blob:; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+          "value": "default-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://maps.googleapis.com https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob: http: https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com https://www.google-analytics.com https://ik.imagekit.io https://*.imagekit.io; connect-src 'self' https://*.supabase.co https://api.printnode.com https://api.twilio.com https://*.vercel.app https://*.vercel.live https://maps.googleapis.com https://www.google-analytics.com https://ik.imagekit.io https://*.imagekit.io wss://*.supabase.co; frame-src 'self' https://docs.google.com https://mozilla.github.io blob:; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
         },
         {
           "key": "X-Permitted-Cross-Domain-Policies",
@@ -46,7 +46,7 @@
         },
         {
           "key": "Cross-Origin-Embedder-Policy",
-          "value": "require-corp"
+          "value": "unsafe-none"
         },
         {
           "key": "Cross-Origin-Opener-Policy",
@@ -54,7 +54,7 @@
         },
         {
           "key": "Cross-Origin-Resource-Policy",
-          "value": "same-origin"
+          "value": "cross-origin"
         },
         {
           "key": "Cache-Control",

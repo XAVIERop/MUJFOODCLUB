@@ -245,7 +245,7 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
       )}
 
       {/* Image Section with Dark Overlay */}
-      <div className="relative h-48 overflow-hidden">
+      <div className="relative h-48 overflow-hidden bg-gray-200">
         <img
           src={getCafeImage()}
           alt={`${cafe.name} Food`}
@@ -253,7 +253,12 @@ export const EnhancedCafeCard: React.FC<EnhancedCafeCardProps> = memo(({ cafe, s
           onLoad={() => console.log(`✅ Image loaded successfully for ${cafe.name}:`, getCafeImage())}
           onError={(e) => {
             console.error(`❌ Image failed to load for ${cafe.name}:`, getCafeImage());
-            console.error('Error details:', e);
+            // Set fallback placeholder
+            const target = e.target as HTMLImageElement;
+            if (target && !target.src.includes('placeholder')) {
+              target.src = '/placeholder.svg';
+              target.onerror = null; // Prevent infinite loop
+            }
           }}
         />
         

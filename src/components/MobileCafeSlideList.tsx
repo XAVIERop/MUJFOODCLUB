@@ -129,11 +129,18 @@ const MobileCafeSlideList: React.FC<MobileCafeSlideListProps> = ({ cafes }) => {
             className="min-w-[240px] bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
           >
             {/* Real Cafe Image */}
-            <div className="h-32 relative overflow-hidden">
+            <div className="h-32 relative overflow-hidden bg-gray-200">
               <img
                 src={getCafeImage(cafe)}
                 alt={`${cafe.name} Food`}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (target && !target.src.includes('placeholder')) {
+                    target.src = '/placeholder.svg';
+                    target.onerror = null;
+                  }
+                }}
               />
               <div className="absolute inset-0 bg-black/20" />
               

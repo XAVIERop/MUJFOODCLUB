@@ -164,6 +164,11 @@ export const HorizontalCafeCard: React.FC<HorizontalCafeCardProps> = memo(({ caf
             className="w-full h-full object-cover"
             onLoad={() => console.log(`✅ Image loaded successfully for ${cafe.name}:`, getCafeImage())}
             onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              if (target && !target.src.includes('placeholder')) {
+                target.src = '/placeholder.svg';
+                target.onerror = null;
+              }
               console.error(`❌ Image failed to load for ${cafe.name}:`, getCafeImage());
               console.error('Error details:', e);
             }}

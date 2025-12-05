@@ -242,7 +242,13 @@ const ModernMenuLayout: React.FC<ModernMenuLayoutProps> = ({
           src={imageSrc}
           alt={cafe?.name || 'Cafe'}
           className="absolute inset-0 w-full h-full object-cover"
-          onError={handleImageError}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            if (target && !target.src.includes('placeholder')) {
+              target.src = '/placeholder.svg';
+              target.onerror = null;
+            }
+          }}
           onLoad={() => console.log('✅ Image loaded successfully:', imageSrc)}
           style={{ minHeight: '100%', minWidth: '100%' }}
         />

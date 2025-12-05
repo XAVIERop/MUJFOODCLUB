@@ -124,4 +124,16 @@ export function getOptimizedImageUrl(
   });
 }
 
+/**
+ * Handle image load errors with fallback
+ * Sets a placeholder image when the original fails to load
+ */
+export function handleImageError(e: React.SyntheticEvent<HTMLImageElement, Event>, fallback: string = '/placeholder.svg') {
+  const target = e.target as HTMLImageElement;
+  if (target && !target.src.includes('placeholder') && !target.src.includes(fallback)) {
+    target.src = fallback;
+    target.onerror = null; // Prevent infinite loop
+  }
+}
+
 
