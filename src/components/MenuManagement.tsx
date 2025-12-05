@@ -838,7 +838,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ cafeId }) => {
               )}
 
               {/* Action Buttons */}
-              <div className="space-y-2">
+            <div className="space-y-2">
                 <Label>Actions</Label>
                 <div className="flex gap-2">
                   <Button
@@ -862,7 +862,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ cafeId }) => {
             </div>
 
             {/* Items Count Preview */}
-            <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+          <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md text-center md:text-left">
               <strong>{getBulkFilteredItems.length}</strong> item(s) will be affected
               {bulkFilterType === 'category' && bulkFilterCategory !== 'all' && (
                 <span> in <strong>{bulkFilterCategory}</strong> category</span>
@@ -972,7 +972,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ cafeId }) => {
             </div>
 
             {/* Items Count Preview */}
-            <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+            <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md text-center md:text-left">
               <strong>{getBulkPriceFilteredItems.length}</strong> item(s) will be affected
               {bulkPriceFilterType === 'category' && bulkPriceFilterCategory !== 'all' && (
                 <span> in <strong>{bulkPriceFilterCategory}</strong> category</span>
@@ -1089,7 +1089,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ cafeId }) => {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Search and Filters Row */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -1164,7 +1164,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ cafeId }) => {
                 return (
                   <div
                     key={item.id}
-                    className={`flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors ${
+                    className={`flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors ${
                       isSelected ? 'bg-blue-50 border-blue-300' : ''
                     } ${!item.is_available || item.out_of_stock ? 'opacity-60' : ''} ${
                       isLowStock(item) ? 'border-orange-400 bg-orange-50/30' : ''
@@ -1218,10 +1218,12 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ cafeId }) => {
                       )}
                     </div>
 
-                    {/* Price Editing */}
-                    <div className="flex items-center gap-2">
-                      {isEditing ? (
-                        <div className="flex items-center gap-2">
+                    {/* Right-side controls wrapper (stack on mobile) */}
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap md:flex-nowrap gap-3 md:gap-4 w-full md:w-auto justify-between md:justify-end">
+                      {/* Price Editing */}
+                      <div className="flex items-center gap-2">
+                        {isEditing ? (
+                          <div className="flex items-center gap-2">
                           <Input
                             type="number"
                             value={editPrice}
@@ -1252,30 +1254,30 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ cafeId }) => {
                           >
                             <X className="h-4 w-4" />
                           </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="text-right min-w-[80px]">
-                            <p className="font-semibold">{formatCurrency(item.price)}</p>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => startEditPrice(item)}
-                            disabled={isUpdating}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
+                        ) : (
+                          <>
+                            <div className="text-right min-w-[80px]">
+                              <p className="font-semibold">{formatCurrency(item.price)}</p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => startEditPrice(item)}
+                              disabled={isUpdating}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
 
-                    {/* Vegetarian Status Selector */}
-                    <div className="flex items-center gap-2 min-w-[140px]">
+                      {/* Vegetarian Status Selector */}
+                      <div className="flex items-center gap-2 min-w-[140px]">
                       <Label htmlFor={`veg-${item.id}`} className="text-sm whitespace-nowrap">
                         Type:
                       </Label>
-                      <Select
+                        <Select
                         value={item.is_vegetarian === null ? 'not-set' : item.is_vegetarian ? 'veg' : 'non-veg'}
                         onValueChange={(value) => {
                           const newValue = value === 'not-set' ? null : value === 'veg';
@@ -1291,12 +1293,12 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ cafeId }) => {
                           <SelectItem value="non-veg">🍗 Non-Veg</SelectItem>
                           <SelectItem value="not-set">Not Set</SelectItem>
                         </SelectContent>
-                      </Select>
-                    </div>
+                        </Select>
+                      </div>
 
-                    {/* Availability Toggles */}
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
+                      {/* Availability Toggles */}
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
                         <Label htmlFor={`available-${item.id}`} className="text-sm">
                           Available
                         </Label>
@@ -1306,8 +1308,8 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ cafeId }) => {
                           onCheckedChange={() => toggleAvailability(item.id, item.is_available)}
                           disabled={isUpdating}
                         />
-                      </div>
-                      <div className="flex items-center gap-2">
+                        </div>
+                        <div className="flex items-center gap-2">
                         <Label htmlFor={`out-of-stock-${item.id}`} className="text-sm">
                           Out of Stock
                         </Label>
@@ -1317,11 +1319,11 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ cafeId }) => {
                           onCheckedChange={() => toggleOutOfStock(item.id, item.out_of_stock)}
                           disabled={isUpdating}
                         />
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Daily Stock Management */}
-                    <div className="flex items-center gap-3 min-w-[200px]">
+                      {/* Daily Stock Management */}
+                      <div className="flex items-center gap-3 min-w-[200px]">
                       {editingStockItem === item.id ? (
                         <div className="flex items-center gap-2">
                           <Input
@@ -1410,6 +1412,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ cafeId }) => {
                           </Button>
                         </div>
                       )}
+                      </div>
                     </div>
                   </div>
                 );

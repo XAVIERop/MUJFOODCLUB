@@ -432,7 +432,13 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="
+          max-w-4xl w-full overflow-y-auto
+          h-[calc(100vh-4rem)] top-16 translate-y-0
+          sm:h-auto sm:max-h-[90vh] sm:top-1/2 sm:-translate-y-1/2
+        "
+      >
         <DialogHeader>
           <DialogTitle>Edit Order #{order.order_number}</DialogTitle>
           <DialogDescription>
